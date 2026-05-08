@@ -24,8 +24,19 @@ const NICHE_KEYWORDS = {
   tech:      ["technology", "software", "developer", "open source", "programming"],
 };
 
+
+// ─── Languages config ─────────────────────────────────────────────────────────
+const LANG_CONFIG = {
+  en: { newsApi: "en", youtube: "en", wiki: "en.wikipedia.org", redditSuffix: "", label: "🇬🇧 English" },
+  fr: { newsApi: "fr", youtube: "fr", wiki: "fr.wikipedia.org", redditSuffix: "france", label: "🇫🇷 Français" },
+  es: { newsApi: "es", youtube: "es", wiki: "es.wikipedia.org", redditSuffix: "es", label: "🇪🇸 Español" },
+  de: { newsApi: "de", youtube: "de", wiki: "de.wikipedia.org", redditSuffix: "de", label: "🇩🇪 Deutsch" },
+  it: { newsApi: "it", youtube: "it", wiki: "it.wikipedia.org", redditSuffix: "italy", label: "🇮🇹 Italiano" },
+  pt: { newsApi: "pt", youtube: "pt", wiki: "pt.wikipedia.org", redditSuffix: "portugal", label: "🇵🇹 Português" },
+};
+
 // ─── Source 1 : Hacker News ───────────────────────────────────────────────────
-async function fetchHackerNews(niche) {
+async function fetchHackerNews(niche, lang = "en") {
   try {
     const res = await fetch("https://hacker-news.firebaseio.com/v0/topstories.json");
     const ids = await res.json();
@@ -59,17 +70,60 @@ async function fetchHackerNews(niche) {
 
 // ─── Source 2 : Reddit ────────────────────────────────────────────────────────
 const NICHE_SUBREDDITS = {
-  ai:         ["artificial", "MachineLearning", "ChatGPT", "LocalLLaMA"],
-  saas:       ["SaaS", "startups", "Entrepreneur", "indiehackers"],
-  marketing:  ["marketing", "content_marketing", "SEO", "socialmedia"],
-  finance:    ["investing", "personalfinance", "CryptoCurrency", "stocks"],
-  leadership: ["Entrepreneur", "leadership", "productivity", "business"],
-  tech:       ["programming", "technology", "webdev", "javascript"],
+  en: {
+    ai:         ["artificial", "MachineLearning", "ChatGPT", "LocalLLaMA"],
+    saas:       ["SaaS", "startups", "Entrepreneur", "indiehackers"],
+    marketing:  ["marketing", "content_marketing", "SEO", "socialmedia"],
+    finance:    ["investing", "personalfinance", "CryptoCurrency", "stocks"],
+    leadership: ["Entrepreneur", "leadership", "productivity", "business"],
+    tech:       ["programming", "technology", "webdev", "javascript"],
+  },
+  fr: {
+    ai:         ["france", "Intelligence_artificielle", "ChatGPT"],
+    saas:       ["france", "entrepreneuriat", "startups"],
+    marketing:  ["france", "webmarketing", "SEO"],
+    finance:    ["france", "vosfinances", "BitcoinFR"],
+    leadership: ["france", "entrepreneuriat", "developpement_personnel"],
+    tech:       ["france", "programmation", "informatique"],
+  },
+  es: {
+    ai:         ["es", "inteligenciaartificial", "ChatGPT"],
+    saas:       ["es", "emprendedores", "startups"],
+    marketing:  ["es", "marketing", "SEO"],
+    finance:    ["es", "finanzas", "inversion"],
+    leadership: ["es", "emprendedores", "productividad"],
+    tech:       ["es", "programacion", "tecnologia"],
+  },
+  de: {
+    ai:         ["de", "KuenstlicheIntelligenz", "ChatGPT"],
+    saas:       ["de", "Existenzgruendung", "startups"],
+    marketing:  ["de", "marketing", "SEO"],
+    finance:    ["de", "Finanzen", "Aktien"],
+    leadership: ["de", "Fuehrung", "produktivitaet"],
+    tech:       ["de", "de_EDV", "Programmieren"],
+  },
+  it: {
+    ai:         ["italy", "intelligenzaartificiale", "ChatGPT"],
+    saas:       ["italy", "startups", "Imprenditoria"],
+    marketing:  ["italy", "marketing", "SEO"],
+    finance:    ["italy", "finanza", "investimenti"],
+    leadership: ["italy", "Imprenditoria", "produttivita"],
+    tech:       ["italy", "informatica", "programmazione"],
+  },
+  pt: {
+    ai:         ["portugal", "brdev", "ChatGPT"],
+    saas:       ["portugal", "empreendedorismo", "startups"],
+    marketing:  ["portugal", "marketing", "SEO"],
+    finance:    ["portugal", "financas", "investimentos"],
+    leadership: ["portugal", "empreendedorismo", "produtividade"],
+    tech:       ["portugal", "brdev", "programacao"],
+  },
 };
 
-async function fetchReddit(niche) {
+async function fetchReddit(niche, lang = "en") {
   try {
-    const subreddits = NICHE_SUBREDDITS[niche] || NICHE_SUBREDDITS.tech;
+    const langSubs = NICHE_SUBREDDITS[lang] || NICHE_SUBREDDITS.en;
+    const subreddits = langSubs[niche] || langSubs.tech;
     const results = [];
 
     for (const sub of subreddits.slice(0, 2)) {
@@ -106,13 +160,14 @@ async function fetchReddit(niche) {
 }
 
 // ─── Source 3 : NewsAPI ───────────────────────────────────────────────────────
-async function fetchNews(niche) {
+async function fetchNews(niche, lang = "en") {
   try {
     const keywords = NICHE_KEYWORDS[niche] || NICHE_KEYWORDS.tech;
     const query = keywords.slice(0, 3).join(" OR ");
+    const newsLang = LANG_CONFIG[lang]?.newsApi || "en";
 
     const res = await fetch(
-      `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=popularity&pageSize=5&language=en`,
+      `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=popularity&pageSize=5&language=${newsLang}`,
       { headers: { "X-Api-Key": process.env.NEWS_API_KEY } }
     );
     const data = await res.json();
@@ -144,13 +199,14 @@ const NICHE_YOUTUBE_CATEGORIES = {
   tech: "28",
 };
 
-async function fetchYouTube(niche) {
+async function fetchYouTube(niche, lang = "en") {
   try {
     const keywords = NICHE_KEYWORDS[niche] || NICHE_KEYWORDS.tech;
     const query = keywords[0];
+    const ytLang = LANG_CONFIG[lang]?.youtube || "en";
 
     const res = await fetch(
-      `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&order=viewCount&maxResults=5&relevanceLanguage=en&key=${process.env.YOUTUBE_API_KEY}`
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&order=viewCount&maxResults=5&relevanceLanguage=${ytLang}&key=${process.env.YOUTUBE_API_KEY}`
     );
     const data = await res.json();
 
@@ -197,25 +253,26 @@ async function fetchProductHunt() {
 }
 
 // ─── Source 6 : Wikipedia Trending ───────────────────────────────────────────
-async function fetchWikipedia() {
+async function fetchWikipedia(lang = "en") {
   try {
     const yesterday = new Date(Date.now() - 86400000);
     const y = yesterday.getFullYear();
     const m = String(yesterday.getMonth() + 1).padStart(2, "0");
     const d = String(yesterday.getDate()).padStart(2, "0");
+    const wikiDomain = LANG_CONFIG[lang]?.wiki || "en.wikipedia.org";
 
     const res = await fetch(
-      `https://wikimedia.org/api/rest_v1/metrics/pageviews/top/en.wikipedia/all-access/${y}/${m}/${d}`
+      `https://wikimedia.org/api/rest_v1/metrics/pageviews/top/${wikiDomain}/all-access/${y}/${m}/${d}`
     );
     const data = await res.json();
 
     return (data?.items?.[0]?.articles || [])
-      .filter(a => !["Main_Page", "Special:", "Wikipedia:"].some(skip => a.article.startsWith(skip)))
+      .filter(a => !["Main_Page", "Special:", "Wikipedia:", "Spécial:", "Accueil"].some(skip => a.article.startsWith(skip)))
       .slice(0, 5)
       .map(a => ({
         source: "Wikipedia Trending",
         title: a.article.replace(/_/g, " "),
-        url: `https://en.wikipedia.org/wiki/${a.article}`,
+        url: `https://${wikiDomain}/wiki/${a.article}`,
         score: a.views,
         engagement: a.views,
         icon: "📖",
@@ -226,7 +283,7 @@ async function fetchWikipedia() {
 }
 
 // ─── Source 7 : GitHub Trending ───────────────────────────────────────────────
-async function fetchGitHub(niche) {
+async function fetchGitHub(niche, lang = "en") {
   try {
     const keywords = NICHE_KEYWORDS[niche] || NICHE_KEYWORDS.tech;
     const query = keywords[0];
@@ -288,19 +345,22 @@ async function fetchRSS(niche) {
 // Agrège toutes les sources en parallèle
 router.get("/trends", authenticateToken, async (req, res) => {
   const niche = req.query.niche || "tech";
+  const lang = req.query.lang || "en";
   const validNiches = ["ai", "saas", "marketing", "finance", "leadership", "tech"];
+  const validLangs = ["en", "fr", "es", "de", "it", "pt"];
   const selectedNiche = validNiches.includes(niche) ? niche : "tech";
+  const selectedLang = validLangs.includes(lang) ? lang : "en";
 
   try {
     // Fetch toutes les sources en parallèle
     const [hn, reddit, news, youtube, ph, wiki, github, rss] = await Promise.allSettled([
-      fetchHackerNews(selectedNiche),
-      fetchReddit(selectedNiche),
-      fetchNews(selectedNiche),
-      fetchYouTube(selectedNiche),
+      fetchHackerNews(selectedNiche, selectedLang),
+      fetchReddit(selectedNiche, selectedLang),
+      fetchNews(selectedNiche, selectedLang),
+      fetchYouTube(selectedNiche, selectedLang),
       fetchProductHunt(),
-      fetchWikipedia(),
-      fetchGitHub(selectedNiche),
+      fetchWikipedia(selectedLang),
+      fetchGitHub(selectedNiche, selectedLang),
       fetchRSS(selectedNiche),
     ]);
 
@@ -328,6 +388,7 @@ router.get("/trends", authenticateToken, async (req, res) => {
 
     res.json({
       niche: selectedNiche,
+      lang: selectedLang,
       total: scored.length,
       fetchedAt: new Date().toISOString(),
       sources: {
@@ -351,6 +412,14 @@ router.get("/trends", authenticateToken, async (req, res) => {
 // ─── GET /scraping/niches ──────────────────────────────────────────────────────
 router.get("/niches", authenticateToken, (req, res) => {
   res.json({
+    languages: [
+      { key: "en", label: "🇬🇧 English" },
+      { key: "fr", label: "🇫🇷 Français" },
+      { key: "es", label: "🇪🇸 Español" },
+      { key: "de", label: "🇩🇪 Deutsch" },
+      { key: "it", label: "🇮🇹 Italiano" },
+      { key: "pt", label: "🇵🇹 Português" },
+    ],
     niches: [
       { key: "ai",         label: "🤖 Artificial Intelligence" },
       { key: "saas",       label: "💼 SaaS & Startups" },
