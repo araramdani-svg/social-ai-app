@@ -90,8 +90,8 @@ export default function Index({ openApp, openLogin }) {
 
 const styles = {
   page: {
-    height: "100vh",
-    overflow: "hidden",
+    minHeight: "100vh",
+    overflow: "auto", 
     background: "linear-gradient(135deg,#020617 0%,#0f172a 50%,#1a0a0a 100%)",
     color: "white",
     padding: "20px 48px",
