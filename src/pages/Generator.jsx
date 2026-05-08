@@ -117,7 +117,7 @@ const growthData = [
   const token = localStorage.getItem("token");
 
   const api = async (route, body = {}, method = "POST") => {
-    const res = await fetch(`http://localhost:5000/${route}`, {
+    const res = await fetch(`https://social-ai-app-production.up.railway.app/${route}`, {
       method,
       headers: {
         "Content-Type": "application/json",

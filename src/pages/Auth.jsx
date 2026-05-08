@@ -12,8 +12,8 @@ export default function Auth({ loginSuccess }) {
     try {
       const route =
         mode === "login"
-          ? "http://localhost:5000/auth/login"
-          : "http://localhost:5000/auth/register";
+          ? "https://social-ai-app-production.up.railway.app/auth/login"
+          : "https://social-ai-app-production.up.railway.app/auth/register";
 
       const res = await fetch(route, {
         method: "POST",
