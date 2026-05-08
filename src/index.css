@@ -138,6 +138,16 @@ aside > div:first-child {
     height: auto !important;
     max-height: 200px !important;
   }
+  div[style*="display: flex"][style*="height: 100vh"] > div:last-child {
+    overflow-y: auto !important;
+    height: calc(100vh - 200px) !important;
+    flex: 1 !important;
+  }
+
+  body, #root {
+    overflow-y: auto !important;
+    height: auto !important;
+  }
 }
 
 @media (max-width: 480px) {
