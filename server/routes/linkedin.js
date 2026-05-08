@@ -9,7 +9,6 @@ const LINKEDIN_CLIENT_SECRET = process.env.LINKEDIN_CLIENT_SECRET;
 const LINKEDIN_REDIRECT_URI = process.env.LINKEDIN_REDIRECT_URI;
 const FRONTEND_URL = process.env.FRONTEND_URL;
 
-// ─── Middleware auth ───────────────────────────────────────────────────────────
 const authenticateToken = (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.status(401).json({ message: "Access denied" });
@@ -20,12 +19,9 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// ─── GET /linkedin/connect ─────────────────────────────────────────────────────
-// Redirige l'user vers la page d'auth LinkedIn
 router.get("/connect", authenticateToken, (req, res) => {
   const scope = "openid profile email w_member_social";
   const state = Buffer.from(JSON.stringify({ userId: req.user.id })).toString("base64");
-
   const authUrl =
     `https://www.linkedin.com/oauth/v2/authorization` +
     `?response_type=code` +
@@ -33,44 +29,57 @@ router.get("/connect", authenticateToken, (req, res) => {
     `&redirect_uri=${encodeURIComponent(LINKEDIN_REDIRECT_URI)}` +
     `&scope=${encodeURIComponent(scope)}` +
     `&state=${state}`;
-
   res.json({ url: authUrl });
 });
 
-// ─── GET /linkedin/callback ────────────────────────────────────────────────────
-// LinkedIn redirige ici après auth — échange le code contre un access token
 router.get("/callback", async (req, res) => {
-  const { code, state } = req.query;
+  const { code, state, error } = req.query;
+  console.log("LinkedIn callback hit - code:", code, "state:", state, "error:", error);
 
-  if (!code) return res.redirect(`${FRONTEND_URL}?linkedin=error`);
+  if (error || !code) {
+    console.error("LinkedIn OAuth error:", error);
+    return res.redirect(`${FRONTEND_URL}?linkedin=error`);
+  }
 
   try {
-    const { userId } = JSON.parse(Buffer.from(state, "base64").toString());
-    console.log("LinkedIn callback - userId:", userId);
-    console.log("LinkedIn callback - code:", code);
+    let userId = 1;
+    try {
+      const decoded = JSON.parse(Buffer.from(state, "base64").toString());
+      userId = decoded.userId;
+    } catch (e) {
+      console.error("State decode error:", e.message);
+    }
 
+    console.log("userId:", userId);
+
+    const params = new URLSearchParams({
+      grant_type: "authorization_code",
+      code,
+      redirect_uri: LINKEDIN_REDIRECT_URI,
+      client_id: LINKEDIN_CLIENT_ID,
+      client_secret: LINKEDIN_CLIENT_SECRET,
+    });
+
+    console.log("Fetching token from LinkedIn...");
     const tokenRes = await fetch("https://www.linkedin.com/oauth/v2/accessToken", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        grant_type: "authorization_code",
-        code,
-        redirect_uri: LINKEDIN_REDIRECT_URI,
-        client_id: LINKEDIN_CLIENT_ID,
-        client_secret: LINKEDIN_CLIENT_SECRET,
-      }),
+      body: params.toString(),
     });
 
     const tokenData = await tokenRes.json();
-    console.log("LinkedIn token response:", JSON.stringify(tokenData));
+    console.log("Token response:", JSON.stringify(tokenData));
 
-    if (!tokenData.access_token) throw new Error("No access token");
+    if (!tokenData.access_token) {
+      console.error("No access token in response");
+      return res.redirect(`${FRONTEND_URL}?linkedin=error`);
+    }
 
     const profileRes = await fetch("https://api.linkedin.com/v2/userinfo", {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
     const profile = await profileRes.json();
-    console.log("LinkedIn profile:", JSON.stringify(profile));
+    console.log("Profile:", JSON.stringify(profile));
 
     await db.query(
       `UPDATE users SET linkedin_access_token=$1, linkedin_user_id=$2, linkedin_name=$3 WHERE id=$4`,
@@ -79,14 +88,11 @@ router.get("/callback", async (req, res) => {
 
     res.redirect(`${FRONTEND_URL}?linkedin=connected`);
   } catch (err) {
-    console.error("LinkedIn callback error message:", err.message);
-    console.error("LinkedIn callback error stack:", err.stack);
-    res.redirect(`${FRONTEND_URL}?linkedin=error&msg=${encodeURIComponent(err.message)}`);
+    console.error("LinkedIn callback error:", err.message, err.stack);
+    res.redirect(`${FRONTEND_URL}?linkedin=error`);
   }
 });
 
-// ─── GET /linkedin/status ──────────────────────────────────────────────────────
-// Vérifie si l'user a connecté son compte LinkedIn
 router.get("/status", authenticateToken, async (req, res) => {
   const result = await db.query(
     "SELECT linkedin_user_id, linkedin_name FROM users WHERE id=$1",
@@ -99,8 +105,6 @@ router.get("/status", authenticateToken, async (req, res) => {
   });
 });
 
-// ─── POST /linkedin/post ───────────────────────────────────────────────────────
-// Publie un post sur LinkedIn au nom de l'user
 router.post("/post", authenticateToken, async (req, res) => {
   const { text } = req.body;
   if (!text) return res.status(400).json({ message: "Text is required" });
@@ -152,8 +156,6 @@ router.post("/post", authenticateToken, async (req, res) => {
   }
 });
 
-// ─── DELETE /linkedin/disconnect ───────────────────────────────────────────────
-// Déconnecte le compte LinkedIn
 router.delete("/disconnect", authenticateToken, async (req, res) => {
   await db.query(
     "UPDATE users SET linkedin_access_token=NULL, linkedin_user_id=NULL, linkedin_name=NULL WHERE id=$1",
