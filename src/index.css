@@ -1,3 +1,7 @@
+html, body, #root {
+  overflow-y: auto !important;
+  height: auto !important;
+}
 body {
   font-family: Arial, sans-serif;
   background: #0f172a;
