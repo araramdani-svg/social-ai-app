@@ -7,19 +7,26 @@ import "./server/config/db.js";
 import authRoutes from "./server/routes/auth.js";
 import generateRoutes from "./server/routes/generate.js";
 import analyzeRoutes from "./server/routes/analyze.js";
+import stripeRoutes from "./server/routes/stripe.js";
 
-// ✅ dotenv en premier — avant tout accès à process.env
+// ✅ dotenv en premier
 dotenv.config();
 
 const app = express();
 app.use(cors());
+
+// ⚠️ IMPORTANT : le webhook Stripe doit recevoir le raw body AVANT express.json()
+app.use("/stripe/webhook", express.raw({ type: "application/json" }));
+
 app.use(express.json());
 
-// ✅ Chaque router monté une seule fois
+// ─── Routes ───────────────────────────────────────────────────────────────────
 app.use("/auth", authRoutes);
 app.use("/generate", generateRoutes);
 app.use("/analyze", analyzeRoutes);
+app.use("/stripe", stripeRoutes);
 
+// ─── OpenAI ───────────────────────────────────────────────────────────────────
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
