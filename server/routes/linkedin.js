@@ -20,7 +20,7 @@ const authenticateToken = (req, res, next) => {
 };
 
 router.get("/connect", authenticateToken, (req, res) => {
-  const scope = "openid profile email w_member_social";
+  const scope = "openid profile email";
   const state = Buffer.from(JSON.stringify({ userId: req.user.id })).toString("base64");
   const authUrl =
     `https://www.linkedin.com/oauth/v2/authorization` +
