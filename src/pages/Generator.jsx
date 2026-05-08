@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { t } from "../translations.js";
 import logo from "../assets/logo.png";
 import {
   LineChart,
@@ -720,22 +721,26 @@ setTimeout(() => {
     )
   };
 
-  const pageHeader = (title, subtitle) => (
-  <div style={{ marginBottom:20 }}>
-    <div style={{ display:"flex", alignItems:"center", gap:16, marginBottom:6 }}>
-      <img src={logo} alt="logo" style={{ width:38, height:38, objectFit:"contain", filter:"drop-shadow(0 0 10px rgba(220,38,38,.4))" }} />
-      <div style={{ display:"flex", alignItems:"baseline", gap:12 }}>
-        <h1 style={{ fontSize:28, fontWeight:900, letterSpacing:"2px", margin:0, color:"#fff" }}>{title}</h1>
-        <span style={{ fontSize:10, fontWeight:700, color:"#ef4444", letterSpacing:"2px", background:"rgba(220,38,38,0.1)", border:"1px solid rgba(220,38,38,0.25)", borderRadius:4, padding:"2px 8px" }}>GROWTHPILOT</span>
+  const pageHeader = (tabKey) => {
+    const title = t(trendsLang, `headers.${tabKey}`);
+    const subtitle = t(trendsLang, `subtitles.${tabKey}`);
+    return (
+      <div style={{ marginBottom:20 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:16, marginBottom:6 }}>
+          <img src={logo} alt="logo" style={{ width:38, height:38, objectFit:"contain", filter:"drop-shadow(0 0 10px rgba(220,38,38,.4))" }} />
+          <div style={{ display:"flex", alignItems:"baseline", gap:12 }}>
+            <h1 style={{ fontSize:28, fontWeight:900, letterSpacing:"2px", margin:0, color:"#fff" }}>{title}</h1>
+            <span style={{ fontSize:10, fontWeight:700, color:"#ef4444", letterSpacing:"2px", background:"rgba(220,38,38,0.1)", border:"1px solid rgba(220,38,38,0.25)", borderRadius:4, padding:"2px 8px" }}>GROWTHPILOT</span>
+          </div>
+        </div>
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <div style={{ width:3, height:14, background:"#ef4444", borderRadius:2 }}/>
+          <p style={{ margin:0, fontSize:13, color:"#64748b", letterSpacing:"0.5px" }}>{subtitle}</p>
+        </div>
+        <div style={{ height:1, background:"linear-gradient(90deg,rgba(220,38,38,0.4),transparent)", marginTop:14 }}/>
       </div>
-    </div>
-    <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-      <div style={{ width:3, height:14, background:"#ef4444", borderRadius:2 }}/>
-      <p style={{ margin:0, fontSize:13, color:"#64748b", letterSpacing:"0.5px" }}>{subtitle}</p>
-    </div>
-    <div style={{ height:1, background:"linear-gradient(90deg,rgba(220,38,38,0.4),transparent)", marginTop:14 }}/>
-  </div>
-);
+    );
+  };
 
   return (
     <div style={styles.page}>
@@ -746,49 +751,25 @@ setTimeout(() => {
         </div>
 
         {[
-          "home",
-          "dashboard",
-          "insights",
-          "create",
-          "memory",
-          "scheduler",
-          "autopost",
-          "analyze",
-          "planner",
-          "history",
-          "publish",
-          "team",
-          "integrations",
-          "trends",
-        ].map((t) => (
+          "home","dashboard","insights","create","memory","scheduler",
+          "autopost","analyze","planner","history","publish","team",
+          "integrations","trends",
+        ].map((tabKey) => (
           <button
-            key={t}
+            key={tabKey}
             style={{
-  ...styles.nav,
-  background:
-    tab === t
-      ? "rgba(220,38,38,0.1)"
-      : "transparent",
-
-  border: "none",
-  borderRadius: 8,
-  color: tab === t ? "#ef4444" : "#64748b",
-
-  borderLeft:
-    tab === t
-      ? "3px solid #ef4444"
-      : "3px solid transparent",
-
-  boxShadow:
-    tab === t
-      ? "0 0 16px rgba(220,38,38,0.12)"
-      : "none",
-
-  textShadow: "none"
+              ...styles.nav,
+              background: tab === tabKey ? "rgba(220,38,38,0.1)" : "transparent",
+              border: "none",
+              borderRadius: 8,
+              color: tab === tabKey ? "#ef4444" : "#64748b",
+              borderLeft: tab === tabKey ? "3px solid #ef4444" : "3px solid transparent",
+              boxShadow: tab === tabKey ? "0 0 16px rgba(220,38,38,0.12)" : "none",
+              textShadow: "none"
             }}
-            onClick={() => setTab(t)}
+            onClick={() => setTab(tabKey)}
           >
-            {t.toUpperCase()}
+            {t(trendsLang, `nav.${tabKey}`)}
           </button>
         ))}
       </aside>
@@ -1224,7 +1205,7 @@ setTimeout(() => {
                       <span>{postMetrics.readTime} min read</span>
                     </div>
                     <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-                      {[["SAVE",savePost],["DRAFT",saveDraft],["COPY",copyPost],["EXPORT",exportPost],["ANALYZE",analyze],["PLAN",generatePlanner]].map(([label,fn])=>(
+                      {[[{t(trendsLang, "buttons.save")},savePost],[{t(trendsLang, "buttons.draft")},saveDraft],[{t(trendsLang, "buttons.copy")},copyPost],[{t(trendsLang, "buttons.export")},exportPost],[{t(trendsLang, "buttons.analyze")},analyze],[{t(trendsLang, "buttons.plan")},generatePlanner]].map(([label,fn])=>(
                         <button key={label} style={{ ...styles.button, margin:0, fontSize:12, padding:"10px 14px" }} onClick={fn}>{label}</button>
                       ))}
                     </div>
@@ -1437,7 +1418,7 @@ setTimeout(() => {
         )}
         {tab === "memory" && (
           <>
-            {pageHeader("BRAND MEMORY", "Train AI on your brand identity")}
+            {pageHeader("memory")}
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, height:"calc(100vh - 160px)" }}>
 
               {/* Colonne gauche — formulaire */}
@@ -1810,7 +1791,7 @@ setTimeout(() => {
         )}
         {tab==="team" && (
           <>
-            {pageHeader("TEAM MODE", "Collaborative content operations")}
+            {pageHeader("team")}
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, height:"calc(100vh - 160px)" }}>
 
               {/* Colonne gauche — membres + stats */}
@@ -1884,7 +1865,7 @@ setTimeout(() => {
 
         {tab==="trends" && (
           <>
-            {pageHeader("TRENDS", "Real-time viral topics from 8 sources")}
+            {pageHeader("trends")}
 
             {/* Niche selector */}
             <div style={{ display:"flex", gap:8, marginBottom:20, flexWrap:"wrap" }}>
@@ -1919,7 +1900,7 @@ setTimeout(() => {
                 onClick={() => fetchTrends(trendsNiche, trendsLang)}
                 disabled={trendsLoading}
               >
-                {trendsLoading ? "⏳ Loading..." : "🔄 REFRESH"}
+                {trendsLoading ? t(trendsLang, "buttons.loading") : t(trendsLang, "buttons.refresh")}
               </button>
             </div>
 
@@ -1976,7 +1957,7 @@ setTimeout(() => {
 
         {tab==="integrations" && (
           <>
-            {pageHeader("INTEGRATIONS", "Connect your social platforms")}
+            {pageHeader("integrations")}
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, alignContent:"start" }}>
 
               {/* LinkedIn */}
@@ -1990,7 +1971,7 @@ setTimeout(() => {
                   <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:6 }}>
                     <div style={{ width:8, height:8, borderRadius:"50%", background: linkedinStatus.connected ? "#22c55e" : "#475569" }} />
                     <span style={{ color: linkedinStatus.connected ? "#22c55e" : "#475569", fontSize:11, fontWeight:700 }}>
-                      {linkedinStatus.connected ? "CONNECTED" : "DISCONNECTED"}
+                      {linkedinStatus.connected ? {t(trendsLang, "labels.connected")} : {t(trendsLang, "labels.disconnected")}}
                     </span>
                   </div>
                 </div>
@@ -2006,7 +1987,7 @@ setTimeout(() => {
                         onClick={postToLinkedin}
                         disabled={linkedinPosting}
                       >
-                        {linkedinPosting ? "Publishing..." : "📤 POST NOW"}
+                        {linkedinPosting ? t(trendsLang, "buttons.publishing") : t(trendsLang, "buttons.postNow")}
                       </button>
                       <button
                         style={{ ...styles.buttonSecondary, margin:0 }}
