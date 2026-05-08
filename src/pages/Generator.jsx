@@ -143,6 +143,13 @@ const growthData = [
     }
   };
 
+  // Re-fetch trends quand la langue change
+  useEffect(() => {
+    if (tab === "trends" && trends.length > 0) {
+      fetchTrends(trendsNiche, trendsLang);
+    }
+  }, [trendsLang]);
+
   const useAsTopic = (title) => {
     setTab("create");
     setTopic(title.slice(0, 80));
