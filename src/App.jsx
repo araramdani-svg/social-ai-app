@@ -7,6 +7,17 @@ import Pricing from "./pages/Pricing";
 function App() {
   const [page, setPage] = useState("landing");
   const [token, setToken] = useState(null);
+  const [trendsLang, setTrendsLang] = useState("en");
+  const [showLangMenu, setShowLangMenu] = useState(false);
+
+  const LANGS = [
+    { key:"en", flag:"🇬🇧" },
+    { key:"fr", flag:"🇫🇷" },
+    { key:"es", flag:"🇪🇸" },
+    { key:"de", flag:"🇩🇪" },
+    { key:"it", flag:"🇮🇹" },
+    { key:"pt", flag:"🇵🇹" },
+  ];
 
   useEffect(() => {
     const savedToken = localStorage.getItem("token");
@@ -20,16 +31,16 @@ function App() {
 
   // Écoute le paramètre URL pour redirection post-paiement
   useEffect(() => {
-  const params = new URLSearchParams(window.location.search);
-  if (params.get("upgrade") === "success") {
-    window.history.replaceState({}, "", "/");
-    const savedToken = localStorage.getItem("token");
-    if (savedToken) {
-      setToken(savedToken);
-      setPage("pricing"); // ← était "generator"
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("upgrade") === "success") {
+      window.history.replaceState({}, "", "/");
+      const savedToken = localStorage.getItem("token");
+      if (savedToken) {
+        setToken(savedToken);
+        setPage("generator");
+      }
     }
-  }
-}, []);
+  }, []);
 
   const logout = () => {
     localStorage.removeItem("token");
@@ -83,6 +94,30 @@ function App() {
               🏠
             </button>
 
+            {/* Language selector */}
+            <div style={{ position:"relative" }}>
+              <button
+                style={iconStyle}
+                onClick={() => setShowLangMenu(!showLangMenu)}
+                title="Language"
+              >
+                {LANGS.find(l => l.key === trendsLang)?.flag || "🌍"}
+              </button>
+              {showLangMenu && (
+                <div style={{ position:"absolute", top:60, right:0, background:"#1a2235", border:"1px solid rgba(220,38,38,0.3)", borderRadius:12, overflow:"hidden", zIndex:99999, minWidth:140, boxShadow:"0 20px 60px rgba(0,0,0,0.5)" }}>
+                  {LANGS.map(l => (
+                    <button
+                      key={l.key}
+                      style={{ width:"100%", padding:"10px 16px", background: trendsLang === l.key ? "rgba(220,38,38,0.15)" : "transparent", border:"none", borderLeft: trendsLang === l.key ? "3px solid #ef4444" : "3px solid transparent", color: trendsLang === l.key ? "#ef4444" : "#94a3b8", fontWeight: trendsLang === l.key ? 800 : 600, fontSize:13, cursor:"pointer", textAlign:"left", display:"flex", alignItems:"center", gap:8 }}
+                      onClick={() => { setTrendsLang(l.key); setShowLangMenu(false); }}
+                    >
+                      {l.flag} {l.key.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <button
               onClick={() => setPage("pricing")}
               style={iconStyle}
@@ -106,7 +141,7 @@ function App() {
             </button>
           </div>
 
-          <Generator token={token} />
+          <Generator token={token} trendsLang={trendsLang} setTrendsLang={setTrendsLang} />
         </div>
       )}
     </>

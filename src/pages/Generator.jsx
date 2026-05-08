@@ -15,7 +15,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 
 
-export default function Generator() {
+export default function Generator({ token: tokenProp, trendsLang: langProp, setTrendsLang: setLangProp }) {
   const [tab, setTab] = useState("home");
   const [drafts, setDrafts] = useState([]);
   const [workspace, setWorkspace] = useState("PERSONAL");
@@ -114,19 +114,23 @@ const growthData = [
     banned_words: ""
   });
 
-  const token = localStorage.getItem("token");
+  const token = tokenProp || localStorage.getItem("token");
 
   // Trends state
   const [trends, setTrends] = useState([]);
   const [trendsNiche, setTrendsNiche] = useState("ai");
   const [trendsLoading, setTrendsLoading] = useState(false);
   const [trendsSources, setTrendsSources] = useState({});
+  const [trendsLangLocal, setTrendsLangLocal] = useState("en");
+  const trendsLang = langProp || trendsLangLocal;
+  const setTrendsLang = setLangProp || setTrendsLangLocal;
 
-  const fetchTrends = async (niche) => {
+  const fetchTrends = async (niche, lang) => {
+    const selectedLang = lang || trendsLang;
     setTrendsLoading(true);
     try {
       const res = await fetch(
-        `https://social-ai-app-production.up.railway.app/scraping/trends?niche=${niche}`,
+        `https://social-ai-app-production.up.railway.app/scraping/trends?niche=${niche}&lang=${selectedLang}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await res.json();
@@ -1898,14 +1902,14 @@ setTimeout(() => {
                     cursor:"pointer",
                     letterSpacing:"0.5px",
                   }}
-                  onClick={() => { setTrendsNiche(n.key); fetchTrends(n.key); }}
+                  onClick={() => { setTrendsNiche(n.key); fetchTrends(n.key, trendsLang); }}
                 >
                   {n.label}
                 </button>
               ))}
               <button
                 style={{ padding:"8px 20px", borderRadius:20, background:"linear-gradient(135deg,#4f46e5,#7c3aed)", border:"none", color:"white", fontWeight:800, fontSize:12, cursor:"pointer", marginLeft:"auto" }}
-                onClick={() => fetchTrends(trendsNiche)}
+                onClick={() => fetchTrends(trendsNiche, trendsLang)}
                 disabled={trendsLoading}
               >
                 {trendsLoading ? "⏳ Loading..." : "🔄 REFRESH"}
