@@ -116,6 +116,35 @@ const growthData = [
 
   const token = localStorage.getItem("token");
 
+  // Trends state
+  const [trends, setTrends] = useState([]);
+  const [trendsNiche, setTrendsNiche] = useState("ai");
+  const [trendsLoading, setTrendsLoading] = useState(false);
+  const [trendsSources, setTrendsSources] = useState({});
+
+  const fetchTrends = async (niche) => {
+    setTrendsLoading(true);
+    try {
+      const res = await fetch(
+        `https://social-ai-app-production.up.railway.app/scraping/trends?niche=${niche}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = await res.json();
+      setTrends(data.trends || []);
+      setTrendsSources(data.sources || {});
+    } catch {
+      showToast("Failed to fetch trends");
+    } finally {
+      setTrendsLoading(false);
+    }
+  };
+
+  const useAsTopic = (title) => {
+    setTab("create");
+    setTopic(title.slice(0, 80));
+    showToast("✓ Topic imported to Create");
+  };
+
   // LinkedIn state
   const [linkedinStatus, setLinkedinStatus] = useState({ connected: false, name: null });
   const [linkedinPosting, setLinkedinPosting] = useState(false);
@@ -719,6 +748,7 @@ setTimeout(() => {
           "publish",
           "team",
           "integrations",
+          "trends",
         ].map((t) => (
           <button
             key={t}
@@ -1837,6 +1867,98 @@ setTimeout(() => {
                 ))}
               </div>
 
+            </div>
+          </>
+        )}
+
+        {tab==="trends" && (
+          <>
+            {pageHeader("TRENDS", "Real-time viral topics from 8 sources")}
+
+            {/* Niche selector */}
+            <div style={{ display:"flex", gap:8, marginBottom:20, flexWrap:"wrap" }}>
+              {[
+                { key:"ai", label:"🤖 AI" },
+                { key:"saas", label:"💼 SaaS" },
+                { key:"marketing", label:"📣 Marketing" },
+                { key:"finance", label:"💰 Finance" },
+                { key:"leadership", label:"🎯 Leadership" },
+                { key:"tech", label:"⚡ Tech" },
+              ].map(n => (
+                <button
+                  key={n.key}
+                  style={{
+                    padding:"8px 16px",
+                    borderRadius:20,
+                    border: trendsNiche === n.key ? "none" : "1px solid rgba(220,38,38,0.3)",
+                    background: trendsNiche === n.key ? "linear-gradient(135deg,#dc2626,#991b1b)" : "transparent",
+                    color: trendsNiche === n.key ? "white" : "#64748b",
+                    fontWeight:700,
+                    fontSize:12,
+                    cursor:"pointer",
+                    letterSpacing:"0.5px",
+                  }}
+                  onClick={() => { setTrendsNiche(n.key); fetchTrends(n.key); }}
+                >
+                  {n.label}
+                </button>
+              ))}
+              <button
+                style={{ padding:"8px 20px", borderRadius:20, background:"linear-gradient(135deg,#4f46e5,#7c3aed)", border:"none", color:"white", fontWeight:800, fontSize:12, cursor:"pointer", marginLeft:"auto" }}
+                onClick={() => fetchTrends(trendsNiche)}
+                disabled={trendsLoading}
+              >
+                {trendsLoading ? "⏳ Loading..." : "🔄 REFRESH"}
+              </button>
+            </div>
+
+            {/* Sources status */}
+            {Object.keys(trendsSources).length > 0 && (
+              <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
+                {Object.entries(trendsSources).map(([src, count]) => (
+                  <div key={src} style={{ padding:"4px 10px", borderRadius:6, background: count > 0 ? "rgba(34,197,94,0.1)" : "rgba(71,85,105,0.1)", border:`1px solid ${count > 0 ? "rgba(34,197,94,0.3)" : "rgba(71,85,105,0.2)"}`, fontSize:11, color: count > 0 ? "#22c55e" : "#475569", fontWeight:600 }}>
+                    {count > 0 ? "✓" : "○"} {src} {count > 0 ? `(${count})` : ""}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Trends list */}
+            {trends.length === 0 && !trendsLoading && (
+              <div style={{ ...styles.card, textAlign:"center", padding:40 }}>
+                <div style={{ fontSize:32, marginBottom:12 }}>🌍</div>
+                <div style={{ color:"#64748b", fontSize:14 }}>Select a niche and click REFRESH to load trends</div>
+              </div>
+            )}
+
+            <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+              {trends.map((t, i) => (
+                <div key={i} style={{ ...styles.card, marginTop:0, padding:"14px 18px", display:"flex", alignItems:"center", gap:14 }}>
+                  <div style={{ fontSize:20, flexShrink:0 }}>{t.icon}</div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ color:"#fff", fontSize:13, fontWeight:600, marginBottom:3, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{t.title}</div>
+                    <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                      <span style={{ color:"#ef4444", fontSize:11, fontWeight:700 }}>{t.source}</span>
+                      {t.engagement > 0 && <span style={{ color:"#475569", fontSize:11 }}>👥 {t.engagement.toLocaleString()}</span>}
+                      {t.publishedAt && <span style={{ color:"#475569", fontSize:11 }}>{new Date(t.publishedAt).toLocaleDateString()}</span>}
+                    </div>
+                  </div>
+                  <div style={{ display:"flex", gap:8, flexShrink:0 }}>
+                    <div style={{ background:"rgba(220,38,38,0.15)", border:"1px solid rgba(220,38,38,0.3)", borderRadius:6, padding:"4px 8px", fontSize:11, fontWeight:800, color:"#ef4444" }}>
+                      {t.viralScore}
+                    </div>
+                    <button
+                      style={{ padding:"6px 12px", borderRadius:8, background:"linear-gradient(135deg,#dc2626,#991b1b)", border:"none", color:"white", fontSize:11, fontWeight:700, cursor:"pointer" }}
+                      onClick={() => useAsTopic(t.title)}
+                    >
+                      USE →
+                    </button>
+                    <a href={t.url} target="_blank" rel="noopener noreferrer" style={{ padding:"6px 12px", borderRadius:8, background:"transparent", border:"1px solid rgba(220,38,38,0.3)", color:"#ef4444", fontSize:11, fontWeight:700, cursor:"pointer", textDecoration:"none" }}>
+                      VIEW
+                    </a>
+                  </div>
+                </div>
+              ))}
             </div>
           </>
         )}
