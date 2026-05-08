@@ -8,6 +8,8 @@ import authRoutes from "./server/routes/auth.js";
 import generateRoutes from "./server/routes/generate.js";
 import analyzeRoutes from "./server/routes/analyze.js";
 import stripeRoutes from "./server/routes/stripe.js";
+import linkedinRoutes from "./server/routes/linkedin.js";
+// ...
 
 // ✅ dotenv en premier
 dotenv.config();
@@ -17,7 +19,7 @@ app.use(cors());
 
 // ⚠️ IMPORTANT : le webhook Stripe doit recevoir le raw body AVANT express.json()
 app.use("/stripe/webhook", express.raw({ type: "application/json" }));
-
+app.use("/linkedin", linkedinRoutes);
 app.use(express.json());
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
