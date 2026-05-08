@@ -241,7 +241,7 @@ const growthData = [
   };
   const loadProjects = async () => {
     const data = await api("auth/projects", {}, "GET");
-    setProjects(data || []);
+    setProjects(Array.isArray(data) ? data : []);
     return data || [];
   };
 
