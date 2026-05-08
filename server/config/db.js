@@ -1,30 +1,48 @@
-import sqlite3 from "sqlite3";
+import pkg from "pg";
+const { Pool } = pkg;
 
-const db = new sqlite3.Database("./growthpilot.db", (err) => {
-  if (err) {
-    console.error(err.message);
-  } else {
-    console.log("SQLite connected");
-  }
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
 });
 
-db.serialize(() => {
-  db.run(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      email TEXT UNIQUE,
-      password TEXT
-    )
-  `);
+await pool.query(`
+  CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    email TEXT UNIQUE,
+    password TEXT
+  )
+`);
 
-  db.run(`
-    CREATE TABLE IF NOT EXISTS posts (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER,
-      content TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-});
+await pool.query(`
+  CREATE TABLE IF NOT EXISTS posts (
+    id SERIAL PRIMARY KEY,
+    title TEXT,
+    content TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )
+`);
 
-export default db;
+await pool.query(`
+  CREATE TABLE IF NOT EXISTS projects (
+    id SERIAL PRIMARY KEY,
+    name TEXT,
+    workspace TEXT,
+    campaign TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
+await pool.query(`
+  CREATE TABLE IF NOT EXISTS brand_memory (
+    id SERIAL PRIMARY KEY,
+    project_name TEXT UNIQUE,
+    niche TEXT,
+    audience TEXT,
+    tone TEXT,
+    cta TEXT,
+    banned_words TEXT
+  )
+`);
+
+export default pool;
