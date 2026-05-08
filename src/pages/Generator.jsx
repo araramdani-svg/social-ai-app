@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { t } from "../translations.js";
+import { t as tr } from "../translations.js";
 import logo from "../assets/logo.png";
 import {
   LineChart,
@@ -722,8 +722,8 @@ setTimeout(() => {
   };
 
   const pageHeader = (tabKey) => {
-    const title = t(trendsLang, `headers.${tabKey}`);
-    const subtitle = t(trendsLang, `subtitles.${tabKey}`);
+    const title = tr(trendsLang, `headers.${tabKey}`);
+    const subtitle = tr(trendsLang, `subtitles.${tabKey}`);
     return (
       <div style={{ marginBottom:20 }}>
         <div style={{ display:"flex", alignItems:"center", gap:16, marginBottom:6 }}>
@@ -769,7 +769,7 @@ setTimeout(() => {
             }}
             onClick={() => setTab(tabKey)}
           >
-            {t(trendsLang, `nav.${tabKey}`)}
+            {tr(trendsLang, `nav.${tabKey}`)}
           </button>
         ))}
       </aside>
@@ -1205,7 +1205,7 @@ setTimeout(() => {
                       <span>{postMetrics.readTime} min read</span>
                     </div>
                     <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-                      {[[{t(trendsLang, "buttons.save")},savePost],[{t(trendsLang, "buttons.draft")},saveDraft],[{t(trendsLang, "buttons.copy")},copyPost],[{t(trendsLang, "buttons.export")},exportPost],[{t(trendsLang, "buttons.analyze")},analyze],[{t(trendsLang, "buttons.plan")},generatePlanner]].map(([label,fn])=>(
+                      {[[{tr(trendsLang, "buttons.save")},savePost],[{tr(trendsLang, "buttons.draft")},saveDraft],[{tr(trendsLang, "buttons.copy")},copyPost],[{tr(trendsLang, "buttons.export")},exportPost],[{tr(trendsLang, "buttons.analyze")},analyze],[{tr(trendsLang, "buttons.plan")},generatePlanner]].map(([label,fn])=>(
                         <button key={label} style={{ ...styles.button, margin:0, fontSize:12, padding:"10px 14px" }} onClick={fn}>{label}</button>
                       ))}
                     </div>
@@ -1900,7 +1900,7 @@ setTimeout(() => {
                 onClick={() => fetchTrends(trendsNiche, trendsLang)}
                 disabled={trendsLoading}
               >
-                {trendsLoading ? t(trendsLang, "buttons.loading") : t(trendsLang, "buttons.refresh")}
+                {trendsLoading ? tr(trendsLang, "buttons.loading") : tr(trendsLang, "buttons.refresh")}
               </button>
             </div>
 
@@ -1971,7 +1971,7 @@ setTimeout(() => {
                   <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:6 }}>
                     <div style={{ width:8, height:8, borderRadius:"50%", background: linkedinStatus.connected ? "#22c55e" : "#475569" }} />
                     <span style={{ color: linkedinStatus.connected ? "#22c55e" : "#475569", fontSize:11, fontWeight:700 }}>
-                      {linkedinStatus.connected ? {t(trendsLang, "labels.connected")} : {t(trendsLang, "labels.disconnected")}}
+                      {linkedinStatus.connected ? {tr(trendsLang, "labels.connected")} : {tr(trendsLang, "labels.disconnected")}}
                     </span>
                   </div>
                 </div>
@@ -1987,7 +1987,7 @@ setTimeout(() => {
                         onClick={postToLinkedin}
                         disabled={linkedinPosting}
                       >
-                        {linkedinPosting ? t(trendsLang, "buttons.publishing") : t(trendsLang, "buttons.postNow")}
+                        {linkedinPosting ? tr(trendsLang, "buttons.publishing") : tr(trendsLang, "buttons.postNow")}
                       </button>
                       <button
                         style={{ ...styles.buttonSecondary, margin:0 }}
