@@ -70,25 +70,36 @@ const NICHE_SUBREDDITS = {
 async function fetchReddit(niche) {
   try {
     const subreddits = NICHE_SUBREDDITS[niche] || NICHE_SUBREDDITS.tech;
-    const sub = subreddits[0];
+    const results = [];
 
-    const res = await fetch(
-      `https://www.reddit.com/r/${sub}/hot.json?limit=10`,
-      { headers: { "User-Agent": "GrowthPILOT/1.0" } }
-    );
-    const data = await res.json();
-
-    return (data?.data?.children || [])
-      .filter(p => p.data.score > 100 && !p.data.stickied)
-      .slice(0, 5)
-      .map(p => ({
-        source: `Reddit r/${sub}`,
-        title: p.data.title,
-        url: `https://reddit.com${p.data.permalink}`,
-        score: p.data.score,
-        engagement: p.data.num_comments,
-        icon: "🔴",
-      }));
+    for (const sub of subreddits.slice(0, 2)) {
+      try {
+        const res = await fetch(
+          `https://www.reddit.com/r/${sub}/top.json?limit=5&t=day`,
+          {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (compatible; GrowthPILOT/1.0; +https://aigrowthpilot.app)",
+              "Accept": "application/json",
+            }
+          }
+        );
+        if (!res.ok) continue;
+        const data = await res.json();
+        const posts = (data?.data?.children || [])
+          .filter(p => p.data.score > 50 && !p.data.stickied)
+          .slice(0, 3)
+          .map(p => ({
+            source: `Reddit r/${sub}`,
+            title: p.data.title,
+            url: `https://reddit.com${p.data.permalink}`,
+            score: p.data.score,
+            engagement: p.data.num_comments,
+            icon: "🔴",
+          }));
+        results.push(...posts);
+      } catch { continue; }
+    }
+    return results.slice(0, 5);
   } catch {
     return [];
   }
@@ -163,24 +174,21 @@ async function fetchYouTube(niche) {
 // ─── Source 5 : Product Hunt ──────────────────────────────────────────────────
 async function fetchProductHunt() {
   try {
+    // Utilise le feed RSS public de Product Hunt
     const res = await fetch(
-      "https://www.producthunt.com/frontend/graphql",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query: `{ posts(order: VOTES, first: 5) { edges { node { name tagline votesCount url } } } }`
-        })
-      }
+      "https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fwww.producthunt.com%2Ffeed&count=5",
+      { headers: { "Accept": "application/json" } }
     );
     const data = await res.json();
+    if (data.status !== "ok") return [];
 
-    return (data?.data?.posts?.edges || []).map(({ node }) => ({
+    return (data?.items || []).slice(0, 5).map(item => ({
       source: "Product Hunt",
-      title: `${node.name} — ${node.tagline}`,
-      url: node.url,
-      score: node.votesCount,
-      engagement: node.votesCount,
+      title: item.title,
+      url: item.link,
+      score: 0,
+      engagement: 0,
+      publishedAt: item.pubDate,
       icon: "🚀",
     }));
   } catch {
@@ -244,21 +252,23 @@ async function fetchGitHub(niche) {
 
 // ─── Source 8 : RSS Feeds ─────────────────────────────────────────────────────
 const RSS_FEEDS = {
-  ai:         "https://feeds.feedburner.com/oreilly/radar",
-  saas:       "https://www.indiehackers.com/feed.rss",
-  marketing:  "https://feeds.feedburner.com/copyblogger",
-  finance:    "https://feeds.a.dj.com/rss/RSSMarketsMain.xml",
-  leadership: "https://hbr.org/feed",
-  tech:       "https://feeds.feedburner.com/TechCrunch",
+  ai:         "https://techcrunch.com/category/artificial-intelligence/feed/",
+  saas:       "https://techcrunch.com/category/startups/feed/",
+  marketing:  "https://feeds.feedburner.com/MarketingLand",
+  finance:    "https://feeds.finance.yahoo.com/rss/2.0/headline",
+  leadership: "https://feeds.feedburner.com/fastcompany/headlines",
+  tech:       "https://feeds.arstechnica.com/arstechnica/index",
 };
 
 async function fetchRSS(niche) {
   try {
     const feedUrl = RSS_FEEDS[niche] || RSS_FEEDS.tech;
     const res = await fetch(
-      `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}&count=5`
+      `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}&count=5`,
+      { headers: { "Accept": "application/json" } }
     );
     const data = await res.json();
+    if (data.status !== "ok") return [];
 
     return (data?.items || []).slice(0, 5).map(item => ({
       source: data?.feed?.title || "RSS",
