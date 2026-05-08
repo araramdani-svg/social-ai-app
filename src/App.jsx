@@ -2,21 +2,44 @@ import { useState, useEffect } from "react";
 import Landing from "./pages/Index";
 import Generator from "./pages/Generator";
 import Auth from "./pages/Auth";
+import Pricing from "./pages/Pricing";
 
 function App() {
   const [page, setPage] = useState("landing");
+  const [token, setToken] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-
-    if (token) {
+    const savedToken = localStorage.getItem("token");
+    if (savedToken && savedToken !== "guest") {
+      setToken(savedToken);
       setPage("generator");
+    } else if (savedToken === "guest") {
+      setPage("generator");
+    }
+  }, []);
+
+  // Écoute le paramètre URL pour redirection post-paiement
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("upgrade") === "success") {
+      window.history.replaceState({}, "", "/");
+      const savedToken = localStorage.getItem("token");
+      if (savedToken) {
+        setToken(savedToken);
+        setPage("generator");
+      }
     }
   }, []);
 
   const logout = () => {
     localStorage.removeItem("token");
+    setToken(null);
     setPage("landing");
+  };
+
+  const handleLoginSuccess = (newToken) => {
+    setToken(newToken);
+    setPage("generator");
   };
 
   return (
@@ -28,12 +51,22 @@ function App() {
             setPage("generator");
           }}
           openLogin={() => setPage("auth")}
+          openPricing={() => setPage("pricing")}
         />
       )}
 
       {page === "auth" && (
-        <Auth loginSuccess={() => setPage("generator")} />
+        <Auth loginSuccess={handleLoginSuccess} />
       )}
+
+      {page === "pricing" && (
+        <Pricing
+          token={token}
+          openLogin={() => setPage("auth")}
+          openApp={() => setPage("generator")}
+        />
+      )}
+
       {page === "generator" && (
         <div>
           <div
@@ -43,14 +76,19 @@ function App() {
               right: 20,
               display: "flex",
               gap: 12,
-              zIndex: 9999
+              zIndex: 9999,
             }}
           >
-            <button
-              onClick={() => window.location.reload()}
-              style={iconStyle}
-            >
+            <button onClick={() => window.location.reload()} style={iconStyle}>
               🏠
+            </button>
+
+            <button
+              onClick={() => setPage("pricing")}
+              style={iconStyle}
+              title="Upgrade plan"
+            >
+              💳
             </button>
 
             <button
@@ -63,32 +101,18 @@ function App() {
               👤
             </button>
 
-            <button
-              onClick={logout}
-              style={iconStyle}
-            >
+            <button onClick={logout} style={iconStyle}>
               ↩
             </button>
           </div>
 
-          <Generator />
+          <Generator token={token} />
         </div>
       )}
     </>
   );
 }
 
-const styles = {
-  topButton:{
-    padding:"12px 20px",
-    border:"none",
-    borderRadius:12,
-    background:"#4f46e5",
-    color:"white",
-    cursor:"pointer",
-    fontWeight:700
-  }
-};
 const iconStyle = {
   width: 52,
   height: 52,
@@ -98,6 +122,7 @@ const iconStyle = {
   color: "white",
   cursor: "pointer",
   fontSize: "20px",
-  boxShadow: "0 10px 30px rgba(0,0,0,.25)"
+  boxShadow: "0 10px 30px rgba(0,0,0,.25)",
 };
+
 export default App;
