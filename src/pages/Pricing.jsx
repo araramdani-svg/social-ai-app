@@ -268,6 +268,7 @@ export default function Pricing({ openLogin, openApp, token }) {
 const styles = {
   page: {
     minHeight: "100vh",
+    overflowY: "auto",
     background: "linear-gradient(135deg,#020617 0%,#0f172a 50%,#1a0a0a 100%)",
     color: "white",
     padding: "20px 48px 60px",
