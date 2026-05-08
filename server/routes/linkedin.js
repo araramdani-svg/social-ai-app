@@ -79,8 +79,9 @@ router.get("/callback", async (req, res) => {
 
     res.redirect(`${FRONTEND_URL}?linkedin=connected`);
   } catch (err) {
-    console.error("LinkedIn callback error:", err);
-    res.redirect(`${FRONTEND_URL}?linkedin=error`);
+    console.error("LinkedIn callback error message:", err.message);
+    console.error("LinkedIn callback error stack:", err.stack);
+    res.redirect(`${FRONTEND_URL}?linkedin=error&msg=${encodeURIComponent(err.message)}`);
   }
 });
 
