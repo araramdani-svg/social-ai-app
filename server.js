@@ -9,6 +9,8 @@ import generateRoutes from "./server/routes/generate.js";
 import analyzeRoutes from "./server/routes/analyze.js";
 import stripeRoutes from "./server/routes/stripe.js";
 import linkedinRoutes from "./server/routes/linkedin.js";
+import scrapingRoutes from "./server/routes/scraping.js";
+
 // ...
 
 // ✅ dotenv en premier
@@ -21,7 +23,7 @@ app.use(cors());
 app.use("/stripe/webhook", express.raw({ type: "application/json" }));
 app.use("/linkedin", linkedinRoutes);
 app.use(express.json());
-
+app.use("/scraping", scrapingRoutes);
 // ─── Routes ───────────────────────────────────────────────────────────────────
 app.use("/auth", authRoutes);
 app.use("/generate", generateRoutes);
