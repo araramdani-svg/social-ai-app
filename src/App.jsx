@@ -20,16 +20,16 @@ function App() {
 
   // Écoute le paramètre URL pour redirection post-paiement
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("upgrade") === "success") {
-      window.history.replaceState({}, "", "/");
-      const savedToken = localStorage.getItem("token");
-      if (savedToken) {
-        setToken(savedToken);
-        setPage("generator");
-      }
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("upgrade") === "success") {
+    window.history.replaceState({}, "", "/");
+    const savedToken = localStorage.getItem("token");
+    if (savedToken) {
+      setToken(savedToken);
+      setPage("pricing"); // ← était "generator"
     }
-  }, []);
+  }
+}, []);
 
   const logout = () => {
     localStorage.removeItem("token");
