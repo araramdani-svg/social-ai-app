@@ -5,25 +5,46 @@ import db from "../db.js";
 
 const router = express.Router();
 
+// ✅ JWT_SECRET via variable d'environnement — jamais hardcodé
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error("❌ FATAL: JWT_SECRET is not defined in environment variables");
+  process.exit(1);
+}
+
+// ─── Middleware auth ───────────────────────────────────────────────────────────
 const authenticateToken = (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.status(401).json({ message: "Access denied" });
-  jwt.verify(token, "growthpilot-secret", (err, user) => {
+  jwt.verify(token, JWT_SECRET, (err, user) => {
     if (err) return res.status(403).json({ message: "Invalid token" });
     req.user = user;
     next();
   });
 };
 
+// ─── Validation basique ────────────────────────────────────────────────────────
+const validateEmailPassword = (email, password) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || !emailRegex.test(email)) return "Invalid email format";
+  if (!password || password.length < 8) return "Password must be at least 8 characters";
+  return null;
+};
+
+// ─── Auth routes (publiques) ───────────────────────────────────────────────────
 router.post("/register", async (req, res) => {
   const { email, password } = req.body;
+
+  const validationError = validateEmailPassword(email, password);
+  if (validationError) return res.status(400).json({ message: validationError });
+
   const hashed = await bcrypt.hash(password, 10);
   try {
     const result = await db.query(
       "INSERT INTO users(email,password) VALUES($1,$2) RETURNING id",
       [email, hashed]
     );
-    const token = jwt.sign({ id: result.rows[0].id, email }, "growthpilot-secret", { expiresIn: "7d" });
+    const token = jwt.sign({ id: result.rows[0].id, email }, JWT_SECRET, { expiresIn: "7d" });
     res.json({ token });
   } catch {
     res.status(400).json({ message: "User already exists" });
@@ -32,27 +53,32 @@ router.post("/register", async (req, res) => {
 
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
+
+  const validationError = validateEmailPassword(email, password);
+  if (validationError) return res.status(400).json({ message: validationError });
+
   const result = await db.query("SELECT * FROM users WHERE email=$1", [email]);
   const user = result.rows[0];
   if (!user) return res.status(400).json({ message: "User not found" });
   const valid = await bcrypt.compare(password, user.password);
   if (!valid) return res.status(400).json({ message: "Invalid password" });
-  const token = jwt.sign({ id: user.id, email }, "growthpilot-secret", { expiresIn: "7d" });
+  const token = jwt.sign({ id: user.id, email }, JWT_SECRET, { expiresIn: "7d" });
   res.json({ token });
 });
 
-router.post("/save-post", async (req, res) => {
+// ─── Routes protégées (token requis) ──────────────────────────────────────────
+router.post("/save-post", authenticateToken, async (req, res) => {
   const { title, content } = req.body;
   await db.query("INSERT INTO posts(title,content) VALUES($1,$2)", [title, content]);
   res.json({ success: true });
 });
 
-router.get("/posts", async (req, res) => {
+router.get("/posts", authenticateToken, async (req, res) => {
   const result = await db.query("SELECT * FROM posts ORDER BY created_at DESC");
   res.json(result.rows);
 });
 
-router.post("/create-project", async (req, res) => {
+router.post("/create-project", authenticateToken, async (req, res) => {
   const { name, workspace, campaign } = req.body;
   const result = await db.query(
     "INSERT INTO projects(name,workspace,campaign) VALUES($1,$2,$3) RETURNING id",
@@ -61,23 +87,23 @@ router.post("/create-project", async (req, res) => {
   res.json({ success: true, id: result.rows[0].id });
 });
 
-router.get("/projects", async (req, res) => {
+router.get("/projects", authenticateToken, async (req, res) => {
   const result = await db.query("SELECT * FROM projects ORDER BY created_at DESC");
   res.json(result.rows);
 });
 
-router.delete("/delete-project/:name", async (req, res) => {
+router.delete("/delete-project/:name", authenticateToken, async (req, res) => {
   await db.query("DELETE FROM projects WHERE name=$1", [req.params.name]);
   res.json({ success: true });
 });
 
-router.post("/rename-project", async (req, res) => {
+router.post("/rename-project", authenticateToken, async (req, res) => {
   const { oldName, newName } = req.body;
   await db.query("UPDATE projects SET name=$1 WHERE name=$2", [newName, oldName]);
   res.json({ success: true });
 });
 
-router.post("/save-brand-memory", async (req, res) => {
+router.post("/save-brand-memory", authenticateToken, async (req, res) => {
   const { project_name, niche, audience, tone, cta, banned_words } = req.body;
   await db.query(
     `INSERT INTO brand_memory(project_name,niche,audience,tone,cta,banned_words)
@@ -88,7 +114,7 @@ router.post("/save-brand-memory", async (req, res) => {
   res.json({ success: true });
 });
 
-router.get("/brand-memory/:project", async (req, res) => {
+router.get("/brand-memory/:project", authenticateToken, async (req, res) => {
   const result = await db.query("SELECT * FROM brand_memory WHERE project_name=$1", [req.params.project]);
   res.json(result.rows[0] || {});
 });
