@@ -1,5 +1,8 @@
 {
   "name": "social-ai-app",
+  "engines": {
+    "node": "18.x"
+  },
   "private": true,
   "version": "0.0.0",
   "type": "module",
