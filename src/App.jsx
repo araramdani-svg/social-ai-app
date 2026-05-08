@@ -1,75 +1,103 @@
 import { useState, useEffect } from "react";
+import Landing from "./pages/Index";
+import Generator from "./pages/Generator";
+import Auth from "./pages/Auth";
 
-export default function App() {
-  const [input, setInput] = useState("");
-  const [posts, setPosts] = useState([]);
+function App() {
+  const [page, setPage] = useState("landing");
 
-  // Charger les posts au démarrage
   useEffect(() => {
-    const saved = localStorage.getItem("posts");
-    if (saved) setPosts(JSON.parse(saved));
+    const token = localStorage.getItem("token");
+
+    if (token) {
+      setPage("generator");
+    }
   }, []);
 
-  // Sauvegarder à chaque changement
-  useEffect(() => {
-    localStorage.setItem("posts", JSON.stringify(posts));
-  }, [posts]);
-
-  function handleGenerate() {
-    const fakePost = `🔥 Post about "${input}"\n\nThis is a demo AI post.`;
-
-    setPosts([fakePost, ...posts]);
-    setInput("");
-  }
-
-  function handleDelete(index) {
-    const newPosts = posts.filter((_, i) => i !== index);
-    setPosts(newPosts);
-  }
-
-  function handleCopy(text) {
-    navigator.clipboard.writeText(text);
-    alert("Copied!");
-  }
+  const logout = () => {
+    localStorage.removeItem("token");
+    setPage("landing");
+  };
 
   return (
-    <div style={{ maxWidth: 800, margin: "0 auto", padding: 30 }}>
-      <h1>🚀 Social AI Studio</h1>
-
-      <div style={{ display: "flex", gap: 10 }}>
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Enter a topic..."
-          style={{ flex: 1, padding: 10 }}
+    <>
+      {page === "landing" && (
+        <Landing
+          openApp={() => {
+            localStorage.setItem("token", "guest");
+            setPage("generator");
+          }}
+          openLogin={() => setPage("auth")}
         />
+      )}
 
-        <button onClick={handleGenerate}>
-          Generate
-        </button>
-      </div>
-
-      <div style={{ marginTop: 30 }}>
-        {posts.map((p, i) => (
+      {page === "auth" && (
+        <Auth loginSuccess={() => setPage("generator")} />
+      )}
+      {page === "generator" && (
+        <div>
           <div
-            key={i}
             style={{
-              padding: 15,
-              marginBottom: 10,
-              border: "1px solid #ddd",
-              borderRadius: 10,
-              whiteSpace: "pre-line",
+              position: "fixed",
+              top: 20,
+              right: 20,
+              display: "flex",
+              gap: 12,
+              zIndex: 9999
             }}
           >
-            <p>{p}</p>
+            <button
+              onClick={() => window.location.reload()}
+              style={iconStyle}
+            >
+              🏠
+            </button>
 
-            <div style={{ display: "flex", gap: 10 }}>
-              <button onClick={() => handleCopy(p)}>Copy</button>
-              <button onClick={() => handleDelete(i)}>Delete</button>
-            </div>
+            <button
+              onClick={() => {
+                const event = new CustomEvent("openProfile");
+                window.dispatchEvent(event);
+              }}
+              style={iconStyle}
+            >
+              👤
+            </button>
+
+            <button
+              onClick={logout}
+              style={iconStyle}
+            >
+              ↩
+            </button>
           </div>
-        ))}
-      </div>
-    </div>
+
+          <Generator />
+        </div>
+      )}
+    </>
   );
 }
+
+const styles = {
+  topButton:{
+    padding:"12px 20px",
+    border:"none",
+    borderRadius:12,
+    background:"#4f46e5",
+    color:"white",
+    cursor:"pointer",
+    fontWeight:700
+  }
+};
+const iconStyle = {
+  width: 52,
+  height: 52,
+  borderRadius: "14px",
+  border: "none",
+  background: "#1e293b",
+  color: "white",
+  cursor: "pointer",
+  fontSize: "20px",
+  boxShadow: "0 10px 30px rgba(0,0,0,.25)"
+};
+export default App;

@@ -20,5 +20,47 @@ button {
 }
 
 button:hover {
-  background: #4338ca;
+  opacity: 0.88;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: .6;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: .6;
+  }
+}
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+aside {
+  overflow-y: auto;
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+aside > div:first-child {
+  position: sticky;
+  top: 0;
+  background: #111827;
+  z-index: 10;
+  padding-bottom: 8px;
+}
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+* {
+  scrollbar-width: none;
 }

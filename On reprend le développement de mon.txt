@@ -1,0 +1,81 @@
+On reprend le développement de mon SaaS React/Vite **GrowthPilot**.
+
+Contexte technique :
+
+* Stack : React + Vite
+* Front principal : `Generator.jsx`
+* Landing : `Index.jsx`
+* App routing local via `App.jsx`
+* Auth avec Express + SQLite backend
+
+État actuel du produit :
+
+* Landing premium avec logo casque + wifi
+* Sidebar avec branding réduit
+* Dashboard avec charts
+* Tabs : Home / Dashboard / Create / Memory / Scheduler / AutoPost / Analytics / Planner / Publish / Team
+* Loader IA premium
+* Toast notifications
+* Onboarding first login
+* Profile modal
+* Delete account backend
+* Save/Delete project
+* Brand memory
+* Animations Framer Motion
+
+Style visuel :
+
+* thème dark premium
+* violet/indigo gradients
+* branding racing / tech
+
+Fichiers principaux actuels :
+
+* `src/pages/Generator.jsx` → logique principale
+* `src/pages/Index.jsx` → landing
+* `src/App.jsx`
+* `server/routes/auth.js`
+
+Fonctionnalités déjà codées :
+
+* `showToast()`
+* `loading + loader overlay`
+* `completeOnboarding()`
+* `generate()`
+* `analyze()`
+* animated stats dashboard (à finaliser)
+
+Méthode de travail :
+Je veux uniquement des instructions ultra précises :
+
+1. fichier concerné
+2. chercher
+3. remplacer par
+4. où coller
+
+Ne réécris pas des fichiers complets sauf si je le demande.
+
+On continue exactement où on s’est arrêté.
+
+-------------
+
+On passe à la suite UX
+
+Vu où tu en es, je te conseillerais de reprendre avec l’un de ces 3 sujets :
+
+1. Finaliser dashboard animations
+→ terminer les compteurs + micro interactions
+
+2. Backend réel SaaS
+→ persistance solide, users isolés, vraie gestion compte
+
+3. Phase “wow effect” UI
+→ effets premium visibles immédiatement :
+
+live activity feed
+animated KPI cards
+AI typing simulation
+publish timeline
+
+Le plus rentable visuellement à court terme : 3
+
