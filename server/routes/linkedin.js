@@ -46,8 +46,9 @@ router.get("/callback", async (req, res) => {
 
   try {
     const { userId } = JSON.parse(Buffer.from(state, "base64").toString());
+    console.log("LinkedIn callback - userId:", userId);
+    console.log("LinkedIn callback - code:", code);
 
-    // Échange le code contre un access token
     const tokenRes = await fetch("https://www.linkedin.com/oauth/v2/accessToken", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -61,19 +62,18 @@ router.get("/callback", async (req, res) => {
     });
 
     const tokenData = await tokenRes.json();
+    console.log("LinkedIn token response:", JSON.stringify(tokenData));
+
     if (!tokenData.access_token) throw new Error("No access token");
 
-    // Récupère le profil LinkedIn
     const profileRes = await fetch("https://api.linkedin.com/v2/userinfo", {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
     const profile = await profileRes.json();
+    console.log("LinkedIn profile:", JSON.stringify(profile));
 
-    // Sauvegarde le token en DB
     await db.query(
-      `UPDATE users 
-       SET linkedin_access_token=$1, linkedin_user_id=$2, linkedin_name=$3
-       WHERE id=$4`,
+      `UPDATE users SET linkedin_access_token=$1, linkedin_user_id=$2, linkedin_name=$3 WHERE id=$4`,
       [tokenData.access_token, profile.sub, profile.name, userId]
     );
 
