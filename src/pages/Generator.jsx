@@ -985,15 +985,15 @@ setTimeout(() => {
               }}
             >
               {[
-                ["create", "Generate strategic authority content"],
-                ["dashboard", "Monitor performance metrics"],
-                ["memory", "Train your brand intelligence"],
-                ["scheduler", "Plan publishing windows"],
-                ["autopost", "Automate deployment"],
-                ["analyze", "Audit and optimize posts"],
-                ["planner", "Build campaign roadmaps"],
-                ["publish", "Launch instantly"],
-                ["team", "Coordinate execution"]
+                ["create",    tr(trendsLang, "subtitles.create")],
+                ["dashboard", tr(trendsLang, "ui.qlDashboard")],
+                ["memory",    tr(trendsLang, "subtitles.memory")],
+                ["scheduler", tr(trendsLang, "subtitles.scheduler")],
+                ["autopost",  tr(trendsLang, "subtitles.autopost")],
+                ["analyze",   tr(trendsLang, "subtitles.analyze")],
+                ["planner",   tr(trendsLang, "subtitles.planner")],
+                ["publish",   tr(trendsLang, "subtitles.publish")],
+                ["team",      tr(trendsLang, "subtitles.team")]
               ].map(([key, desc]) => (
                 <motion.div
                   key={key}
@@ -1082,11 +1082,11 @@ setTimeout(() => {
               }}
             >
               {[
-                ["POSTS", animatedStats.posts],
-                ["PROJECTS", animatedStats.projects],
-                ["PUBLISHED", animatedStats.published],
-                ["AVG SCORE", animatedStats.avgScore],
-                ["STREAK", animatedStats.streak]
+                [tr(trendsLang, "ui.statPosts"),     animatedStats.posts],
+                [tr(trendsLang, "ui.statProjects"),  animatedStats.projects],
+                [tr(trendsLang, "ui.statPublished"), animatedStats.published],
+                [tr(trendsLang, "ui.statAvgScore"),  animatedStats.avgScore],
+                [tr(trendsLang, "ui.statStreak"),    animatedStats.streak]
               ].map(([label, value], i) => (
                 <motion.div
                   key={i}
@@ -1246,21 +1246,21 @@ setTimeout(() => {
               <div style={{ overflowY:"auto", paddingRight:8, display:"flex", flexDirection:"column", gap:8 }}>
                 {saveStatus && <div style={styles.card}>{saveStatus}</div>}
                 <input style={styles.input} placeholder="PROJECT TITLE" value={projectTitle} onChange={(e) => setProjectTitle(e.target.value)} />
-                <input style={styles.input} placeholder="SEARCH PROJECT" value={searchProject} onChange={(e) => setSearchProject(e.target.value)} />
+                <input style={styles.input} placeholder={tr(trendsLang, "ui.phSearchProject")} value={searchProject} onChange={(e) => setSearchProject(e.target.value)} />
                 <select style={{ ...styles.input, maxWidth:"100%", width:"100%", boxSizing:"border-box" }} value={selectedProject} onChange={(e) => selectProject(e.target.value)}>
                   <option value="">{tr(trendsLang, "ui.selectProject")}</option>
                   {filteredProjects.map((p) => (
                     <option key={p.name}>{p.name}</option>
                   ))}
                 </select>
-                <input style={styles.input} placeholder="RENAME PROJECT" value={renameValue} onChange={(e) => setRenameValue(e.target.value)} />
+                <input style={styles.input} placeholder={tr(trendsLang, "ui.phRenameProject")} value={renameValue} onChange={(e) => setRenameValue(e.target.value)} />
                 <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
                   <button style={{ ...styles.button, margin:0 }} onClick={renameProject}>{tr(trendsLang, "ui.rename")}</button>
                   <button style={{ ...styles.button, margin:0 }} onClick={createProject}>{tr(trendsLang, "buttons.createProject")}</button>
                   <button style={{ ...styles.button, margin:0 }} onClick={duplicateProject}>{tr(trendsLang, "ui.duplicate")}</button>
                   <button style={{ ...styles.buttonDanger, margin:0 }} onClick={() => selectedProject && deleteProject(selectedProject)}>DELETE</button>
                 </div>
-                <input style={styles.input} placeholder="TOPIC" value={topic} onChange={(e) => setTopic(e.target.value)} />
+                <input style={styles.input} placeholder={tr(trendsLang, "ui.phTopic")} value={topic} onChange={(e) => setTopic(e.target.value)} />
                 <button style={{ ...styles.button, margin:0, alignSelf:"flex-start" }} disabled={loading} onClick={generate}>
                   {loading ? "AI WRITING..." : "GENERATE"}
                 </button>
@@ -1290,7 +1290,14 @@ setTimeout(() => {
                       ))}
                     </div>
                     <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-                      {[["VIRAL","viral"],["AUTHORITY","authority"],["STORY","story"],["HOOK","hook"],["SHORT","short"],["CTA","cta"]].map(([label,mode])=>(
+                      {[
+                        [tr(trendsLang,"ui.tplViral"),     "viral"],
+                        [tr(trendsLang,"ui.tplAuthority"), "authority"],
+                        [tr(trendsLang,"ui.tplStory"),     "story"],
+                        [tr(trendsLang,"ui.tplHook"),      "hook"],
+                        [tr(trendsLang,"ui.tplShort"),     "short"],
+                        [tr(trendsLang,"ui.tplCta"),       "cta"],
+                      ].map(([label,mode])=>(
                         <button key={label} style={{ ...styles.buttonSecondary, margin:0, fontSize:12, padding:"10px 14px" }} onClick={()=>rewrite(mode)}>{label}</button>
                       ))}
                     </div>
@@ -1310,10 +1317,10 @@ setTimeout(() => {
               <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
                   {[
-                    ["BEST PROJECT", insights.bestProject, "#ef4444"],
-                    ["TOP PLATFORM", insights.topPlatform, "#3b82f6"],
-                    ["CADENCE", insights.cadence, "#f59e0b"],
-                    ["AVG SCORE", "87", "#22c55e"],
+                    [tr(trendsLang, "ui.bestProject"), insights.bestProject, "#ef4444"],
+                    [tr(trendsLang, "ui.topPlatform"), insights.topPlatform, "#3b82f6"],
+                    [tr(trendsLang, "ui.cadence"),     insights.cadence,     "#f59e0b"],
+                    [tr(trendsLang, "ui.statAvgScore"), "87",                "#22c55e"],
                   ].map(([label,val,color])=>(
                     <div key={label} style={{ ...styles.card, marginTop:0, padding:16 }}>
                       <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>{label}</div>
@@ -1583,11 +1590,11 @@ setTimeout(() => {
 
               {/* Colonne gauche — formulaire */}
               <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                <input style={styles.input} placeholder="NICHE" value={memory.niche} onChange={(e)=>setMemory({...memory,niche:e.target.value})} />
-                <input style={styles.input} placeholder="AUDIENCE" value={memory.audience} onChange={(e)=>setMemory({...memory,audience:e.target.value})} />
-                <input style={styles.input} placeholder="TONE OF VOICE" value={memory.tone} onChange={(e)=>setMemory({...memory,tone:e.target.value})} />
-                <input style={styles.input} placeholder="DEFAULT CTA" value={memory.cta} onChange={(e)=>setMemory({...memory,cta:e.target.value})} />
-                <input style={styles.input} placeholder="BANNED WORDS (comma separated)" value={memory.banned_words} onChange={(e)=>setMemory({...memory,banned_words:e.target.value})} />
+                <input style={styles.input} placeholder={tr(trendsLang, "ui.phNiche")}       value={memory.niche}        onChange={(e)=>setMemory({...memory,niche:e.target.value})} />
+                <input style={styles.input} placeholder={tr(trendsLang, "ui.phAudience")}    value={memory.audience}     onChange={(e)=>setMemory({...memory,audience:e.target.value})} />
+                <input style={styles.input} placeholder={tr(trendsLang, "ui.phTone")}        value={memory.tone}         onChange={(e)=>setMemory({...memory,tone:e.target.value})} />
+                <input style={styles.input} placeholder={tr(trendsLang, "ui.phCta")}         value={memory.cta}          onChange={(e)=>setMemory({...memory,cta:e.target.value})} />
+                <input style={styles.input} placeholder={tr(trendsLang, "ui.phBannedWords")} value={memory.banned_words} onChange={(e)=>setMemory({...memory,banned_words:e.target.value})} />
                 <button style={{ ...styles.button, margin:0, alignSelf:"flex-start" }} onClick={saveBrandMemory}>{tr(trendsLang, "ui.saveMemory")}</button>
               </div>
 
@@ -1595,15 +1602,15 @@ setTimeout(() => {
               <div style={{ ...styles.card, marginTop:0, display:"flex", flexDirection:"column", gap:16 }}>
                 <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.brandIntelligence")}</h3>
                 {[
-                  ["NICHE", memory.niche],
-                  ["AUDIENCE", memory.audience],
-                  ["TONE", memory.tone],
-                  ["CTA", memory.cta],
-                  ["BANNED WORDS", memory.banned_words],
+                  [tr(trendsLang, "ui.memNiche"),       memory.niche],
+                  [tr(trendsLang, "ui.memAudience"),    memory.audience],
+                  [tr(trendsLang, "ui.memTone"),        memory.tone],
+                  [tr(trendsLang, "ui.memCta"),         memory.cta],
+                  [tr(trendsLang, "ui.memBannedWords"), memory.banned_words],
                 ].map(([label, value]) => (
                   <div key={label} style={{ borderBottom:"1px solid rgba(220,38,38,0.1)", paddingBottom:12 }}>
                     <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:4 }}>{label}</div>
-                    <div style={{ color: value ? "#fff" : "#334155", fontSize:14 }}>{value || "Not defined"}</div>
+                    <div style={{ color: value ? "#fff" : "#334155", fontSize:14 }}>{value || tr(trendsLang, "ui.memNotDefined")}</div>
                   </div>
                 ))}
               </div>
@@ -1622,12 +1629,12 @@ setTimeout(() => {
               marginBottom:10
             }}>
               {[
-                ["SCORE", analysis?.score || 87],
-                ["HOOK", analysis?.hookScore || 82],
-                ["VIRALITY", analysis?.viralScore || 79],
-                ["CLARITY", analysis?.clarityScore || 91],
-                ["CTA", analysis?.ctaScore || 76],
-                ["READABILITY", analysis?.readability || 88]
+                [tr(trendsLang,"ui.scoreLabel"),       analysis?.score || 87],
+                [tr(trendsLang,"ui.hookLabel"),        analysis?.hookScore || 82],
+                [tr(trendsLang,"ui.viralityLabel"),    analysis?.viralScore || 79],
+                [tr(trendsLang,"ui.clarityLabel"),     analysis?.clarityScore || 91],
+                [tr(trendsLang,"ui.ctaLabel"),         analysis?.ctaScore || 76],
+                [tr(trendsLang,"ui.readabilityLabel"), analysis?.readability || 88]
               ].map(([label,value],i)=>(
                 <div
                   key={i}
@@ -2073,7 +2080,7 @@ setTimeout(() => {
             {trends.length === 0 && !trendsLoading && (
               <div style={{ ...styles.card, textAlign:"center", padding:40 }}>
                 <div style={{ fontSize:32, marginBottom:12 }}>🌍</div>
-                <div style={{ color:"#64748b", fontSize:14 }}>Select a niche and click REFRESH to load trends</div>
+                <div style={{ color:"#64748b", fontSize:14 }}>{tr(trendsLang, "ui.trendsEmpty")}</div>
               </div>
             )}
 
@@ -2163,10 +2170,10 @@ setTimeout(() => {
 
               {/* Facebook / Instagram — coming soon */}
               {[
-                { name:"Facebook", icon:"f", color:"#1877f2", sub:"Pages & Groups" },
-                { name:"Instagram", icon:"📸", color:"#e1306c", sub:"Business account" },
-                { name:"X (Twitter)", icon:"𝕏", color:"#1da1f2", sub:"Requires paid API" },
-                { name:"TikTok", icon:"🎵", color:"#ff0050", sub:"Creator account" },
+                { name:"Facebook", icon:"f",  color:"#1877f2", sub: tr(trendsLang, "ui.subFacebook") },
+                { name:"Instagram", icon:"📸", color:"#e1306c", sub: tr(trendsLang, "ui.subInstagram") },
+                { name:"X (Twitter)", icon:"𝕏", color:"#1da1f2", sub: tr(trendsLang, "ui.subX") },
+                { name:"TikTok", icon:"🎵",   color:"#ff0050", sub: tr(trendsLang, "ui.subTikTok") },
               ].map((p) => (
                 <div key={p.name} style={{ ...styles.card, marginTop:0, opacity:0.5 }}>
                   <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
