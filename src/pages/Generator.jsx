@@ -297,7 +297,7 @@ const growthData = [
   };
   const loadProjects = async () => {
     const data = await api("auth/projects", {}, "GET");
-    setProjects(Array.isArray(data) ? data : []);
+    setProjects(data || []);
     return data || [];
   };
 
@@ -1454,7 +1454,7 @@ setTimeout(() => {
                   <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>Account Information</h2>
                   <div style={{ display:"grid", gap:16 }}>
                     {[
-                      { label:"Email", value: token ? JSON.parse(atob(token.split(".")[1])).email : "—" },
+                      { label:"Email", value: token && token !== "guest" ? (() => { try { return JSON.parse(atob(token.split(".")[1])).email; } catch { return "—"; } })() : "—" },
                       { label:"Member since", value:"May 2026" },
                       { label:"Workspace", value: workspace || "PERSONAL" },
                       { label:"Plan", value:"PREMIUM" },
@@ -1507,7 +1507,7 @@ setTimeout(() => {
                   <div>
                     <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>CURRENT EMAIL</div>
                     <div style={{ padding:"14px 18px", background:"#0f172a", borderRadius:10, border:"1px solid rgba(220,38,38,0.15)", color:"#94a3b8", fontSize:14 }}>
-                      {token ? JSON.parse(atob(token.split(".")[1])).email : "—"}
+                      {token && token !== "guest" ? (() => { try { return JSON.parse(atob(token.split(".")[1])).email; } catch { return "—"; } })() : "—"}
                     </div>
                   </div>
                   <div>
