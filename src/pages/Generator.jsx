@@ -1431,26 +1431,26 @@ setTimeout(() => {
 
               {/* Plan badge */}
               <div style={{ ...styles.card, marginTop:0, padding:16, borderLeft:`3px solid ${getPlanColor(userPlan.plan)}`, marginBottom:8 }}>
-                <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px", marginBottom:6 }}>CURRENT PLAN</div>
+                <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px", marginBottom:6 }}>{tr(trendsLang, "profile.currentPlan")}</div>
                 <div style={{ color: getPlanColor(userPlan.plan), fontSize:18, fontWeight:900, letterSpacing:"1px" }}>{getPlanIcon(userPlan.plan)} {userPlan.plan.toUpperCase()}{userPlan.interval ? ` · ${userPlan.interval}` : ""}</div>
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginTop:12 }}>
                   <div style={{ textAlign:"center" }}>
                     <div style={{ color:"#ef4444", fontSize:20, fontWeight:800 }}>{projects.length}</div>
-                    <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px" }}>PROJECTS</div>
+                    <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px" }}>{tr(trendsLang, "profile.projects")}</div>
                   </div>
                   <div style={{ textAlign:"center" }}>
                     <div style={{ color:"#22c55e", fontSize:20, fontWeight:800 }}>{stats.posts}</div>
-                    <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px" }}>POSTS</div>
+                    <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px" }}>{tr(trendsLang, "profile.posts")}</div>
                   </div>
                 </div>
               </div>
 
               {/* Menu navigation */}
               {[
-                { key:"account", icon:"👤", label:"Account Info" },
-                { key:"password", icon:"🔐", label:"Change Password" },
-                { key:"email", icon:"✉️", label:"Change Email" },
-                { key:"danger", icon:"⚠️", label:"Danger Zone" },
+                { key:"account", icon:"👤", label: tr(trendsLang, "profile.menuAccount") },
+                { key:"password", icon:"🔐", label: tr(trendsLang, "profile.menuPassword") },
+                { key:"email", icon:"✉️", label: tr(trendsLang, "profile.menuEmail") },
+                { key:"danger", icon:"⚠️", label: tr(trendsLang, "profile.menuDanger") },
               ].map(s => (
                 <button
                   key={s.key}
@@ -1475,13 +1475,13 @@ setTimeout(() => {
               {/* Account Info */}
               {profileSection === "account" && (
                 <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
-                  <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>Account Information</h2>
+                  <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>{tr(trendsLang, "profile.accountTitle")}</h2>
                   <div style={{ display:"grid", gap:16 }}>
                     {[
-                      { label:"Email", value: token && token !== "guest" ? (() => { try { return JSON.parse(atob(token.split(".")[1])).email; } catch { return "—"; } })() : "—" },
-                      { label:"Member since", value:"May 2026" },
-                      { label:"Workspace", value: workspace || "PERSONAL" },
-                      { label:"Plan", value:`${userPlan.plan}${userPlan.interval ? " · " + userPlan.interval : ""}` },
+                      { label: tr(trendsLang, "profile.fieldEmail"), value: token && token !== "guest" ? (() => { try { return JSON.parse(atob(token.split(".")[1])).email; } catch { return "—"; } })() : "—" },
+                      { label: tr(trendsLang, "profile.fieldMember"), value:"May 2026" },
+                      { label: tr(trendsLang, "profile.fieldWorkspace"), value: workspace || "PERSONAL" },
+                      { label: tr(trendsLang, "profile.fieldPlan"), value:`${userPlan.plan}${userPlan.interval ? " · " + userPlan.interval : ""}` },
                     ].map(({ label, value }) => (
                       <div key={label} style={{ padding:"16px 20px", background:"#0f172a", borderRadius:10, border:"1px solid rgba(220,38,38,0.15)", borderLeft:"3px solid rgba(220,38,38,0.4)" }}>
                         <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:6 }}>{label.toUpperCase()}</div>
@@ -1495,12 +1495,12 @@ setTimeout(() => {
               {/* Change Password */}
               {profileSection === "password" && (
                 <div style={{ display:"flex", flexDirection:"column", gap:20, maxWidth:480 }}>
-                  <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>Change Password</h2>
-                  <p style={{ color:"#64748b", fontSize:13, margin:0 }}>Your password must be at least 8 characters long.</p>
+                  <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>{tr(trendsLang, "profile.passwordTitle")}</h2>
+                  <p style={{ color:"#64748b", fontSize:13, margin:0 }}>{tr(trendsLang, "profile.passwordHint")}</p>
                   {[
-                    { label:"Current Password", value:currentPassword, setter:setCurrentPassword },
-                    { label:"New Password", value:newPassword, setter:setNewPassword },
-                    { label:"Confirm New Password", value:confirmPassword, setter:setConfirmPassword },
+                    { label: tr(trendsLang, "profile.labelCurrentPw"), value:currentPassword, setter:setCurrentPassword },
+                    { label: tr(trendsLang, "profile.labelNewPw"), value:newPassword, setter:setNewPassword },
+                    { label: tr(trendsLang, "profile.labelConfirmPw"), value:confirmPassword, setter:setConfirmPassword },
                   ].map(({ label, value, setter }) => (
                     <div key={label}>
                       <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>{label.toUpperCase()}</div>
@@ -1508,7 +1508,7 @@ setTimeout(() => {
                         type="password"
                         value={value}
                         onChange={e => setter(e.target.value)}
-                        placeholder={`Enter ${label.toLowerCase()}`}
+                        placeholder={label}
                         style={{ ...styles.input, maxWidth:"100%", marginBottom:0 }}
                       />
                     </div>
@@ -1518,7 +1518,7 @@ setTimeout(() => {
                     onClick={changePassword}
                     disabled={profileLoading}
                   >
-                    {profileLoading ? "Updating..." : "🔐 UPDATE PASSWORD"}
+                    {profileLoading ? tr(trendsLang, "profile.updating") : tr(trendsLang, "profile.updatePassword")}
                   </button>
                 </div>
               )}
@@ -1526,21 +1526,21 @@ setTimeout(() => {
               {/* Change Email */}
               {profileSection === "email" && (
                 <div style={{ display:"flex", flexDirection:"column", gap:20, maxWidth:480 }}>
-                  <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>Change Email Address</h2>
-                  <p style={{ color:"#64748b", fontSize:13, margin:0 }}>Enter your new email address below.</p>
+                  <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>{tr(trendsLang, "profile.emailTitle")}</h2>
+                  <p style={{ color:"#64748b", fontSize:13, margin:0 }}>{tr(trendsLang, "profile.emailHint")}</p>
                   <div>
-                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>CURRENT EMAIL</div>
+                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>{tr(trendsLang, "profile.labelCurrentEmail").toUpperCase()}</div>
                     <div style={{ padding:"14px 18px", background:"#0f172a", borderRadius:10, border:"1px solid rgba(220,38,38,0.15)", color:"#94a3b8", fontSize:14 }}>
                       {token && token !== "guest" ? (() => { try { return JSON.parse(atob(token.split(".")[1])).email; } catch { return "—"; } })() : "—"}
                     </div>
                   </div>
                   <div>
-                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>NEW EMAIL ADDRESS</div>
+                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>{tr(trendsLang, "profile.labelNewEmail").toUpperCase()}</div>
                     <input
                       type="email"
                       value={newEmail}
                       onChange={e => setNewEmail(e.target.value)}
-                      placeholder="Enter new email address"
+                      placeholder={tr(trendsLang, "profile.labelNewEmail")}
                       style={{ ...styles.input, maxWidth:"100%", marginBottom:0 }}
                     />
                   </div>
@@ -1549,7 +1549,7 @@ setTimeout(() => {
                     onClick={changeEmailAddress}
                     disabled={profileLoading}
                   >
-                    {profileLoading ? "Updating..." : "✉️ UPDATE EMAIL"}
+                    {profileLoading ? tr(trendsLang, "profile.updating") : tr(trendsLang, "profile.updateEmail")}
                   </button>
                 </div>
               )}
