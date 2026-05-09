@@ -128,30 +128,46 @@ async function fetchReddit(niche, lang = "en") {
 
     for (const sub of subreddits.slice(0, 2)) {
       try {
+        // Délai court pour éviter le rate limit Reddit
+        await new Promise(r => setTimeout(r, 300));
+
         const res = await fetch(
-          `https://www.reddit.com/r/${sub}/top.json?limit=5&t=day`,
+          `https://www.reddit.com/r/${sub}/top.json?limit=10&t=day&raw_json=1`,
           {
             headers: {
-              "User-Agent": "Mozilla/5.0 (compatible; GrowthPILOT/1.0; +https://aigrowthpilot.app)",
+              // User-Agent conforme aux règles Reddit API
+              "User-Agent": "GrowthPILOT/1.0 (web app; contact: contact@aigrowthpilot.app)",
               "Accept": "application/json",
-            }
+            },
+            // Timeout 8s
+            signal: AbortSignal.timeout(8000),
           }
         );
+
+        // Reddit retourne 429 si rate limité, 403 si bloqué
+        if (res.status === 429) {
+          console.warn(`Reddit rate limit on r/${sub}`);
+          continue;
+        }
         if (!res.ok) continue;
+
         const data = await res.json();
         const posts = (data?.data?.children || [])
-          .filter(p => p.data.score > 50 && !p.data.stickied)
+          .filter(p => p.data && !p.data.stickied && p.data.score > 10)
           .slice(0, 3)
           .map(p => ({
             source: `Reddit r/${sub}`,
             title: p.data.title,
             url: `https://reddit.com${p.data.permalink}`,
             score: p.data.score,
-            engagement: p.data.num_comments,
+            engagement: p.data.num_comments || 0,
             icon: "🔴",
           }));
         results.push(...posts);
-      } catch { continue; }
+      } catch (e) {
+        console.warn(`Reddit r/${sub} error:`, e.message);
+        continue;
+      }
     }
     return results.slice(0, 5);
   } catch {
@@ -229,25 +245,76 @@ async function fetchYouTube(niche, lang = "en") {
 
 // ─── Source 5 : Product Hunt ──────────────────────────────────────────────────
 async function fetchProductHunt() {
-  try {
-    // Utilise le feed RSS public de Product Hunt
+  // Méthode 1 : via rss2json (plus simple)
+  const tryRss2json = async () => {
     const res = await fetch(
       "https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fwww.producthunt.com%2Ffeed&count=5",
-      { headers: { "Accept": "application/json" } }
+      {
+        headers: { "Accept": "application/json" },
+        signal: AbortSignal.timeout(8000),
+      }
     );
     const data = await res.json();
-    if (data.status !== "ok") return [];
+    if (data.status !== "ok" || !data.items?.length) throw new Error("rss2json failed");
+    return data.items;
+  };
 
-    return (data?.items || []).slice(0, 5).map(item => ({
-      source: "Product Hunt",
-      title: item.title,
-      url: item.link,
-      score: 0,
-      engagement: 0,
-      publishedAt: item.pubDate,
-      icon: "🚀",
-    }));
-  } catch {
+  // Méthode 2 : fetch direct du feed RSS Product Hunt + parsing XML minimal
+  const tryDirectFeed = async () => {
+    const res = await fetch("https://www.producthunt.com/feed", {
+      headers: {
+        "User-Agent": "GrowthPILOT/1.0 (contact@aigrowthpilot.app)",
+        "Accept": "application/rss+xml, application/xml, text/xml",
+      },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) throw new Error(`PH feed HTTP ${res.status}`);
+    const xml = await res.text();
+
+    // Parsing XML minimal sans lib externe
+    const items = [];
+    const itemMatches = xml.matchAll(/<item>([\s\S]*?)<\/item>/g);
+    for (const match of itemMatches) {
+      const block = match[1];
+      const title = block.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/)?.[1]
+                 || block.match(/<title>(.*?)<\/title>/)?.[1] || "";
+      const link  = block.match(/<link>(.*?)<\/link>/)?.[1]
+                 || block.match(/<guid>(.*?)<\/guid>/)?.[1] || "";
+      const pubDate = block.match(/<pubDate>(.*?)<\/pubDate>/)?.[1] || "";
+      if (title && link) items.push({ title, link, pubDate });
+      if (items.length >= 5) break;
+    }
+    if (!items.length) throw new Error("No items parsed");
+    return items;
+  };
+
+  try {
+    let items;
+    try {
+      items = await tryRss2json();
+      return items.slice(0, 5).map(item => ({
+        source: "Product Hunt",
+        title: item.title,
+        url: item.link,
+        score: 0,
+        engagement: 0,
+        publishedAt: item.pubDate,
+        icon: "🚀",
+      }));
+    } catch {
+      items = await tryDirectFeed();
+      return items.map(item => ({
+        source: "Product Hunt",
+        title: item.title,
+        url: item.link,
+        score: 0,
+        engagement: 0,
+        publishedAt: item.pubDate,
+        icon: "🚀",
+      }));
+    }
+  } catch (e) {
+    console.warn("Product Hunt fetch failed:", e.message);
     return [];
   }
 }
@@ -308,24 +375,51 @@ async function fetchGitHub(niche, lang = "en") {
 }
 
 // ─── Source 8 : RSS Feeds ─────────────────────────────────────────────────────
+// Tous ces feeds sont vérifiés actifs en 2025
 const RSS_FEEDS = {
   ai:         "https://techcrunch.com/category/artificial-intelligence/feed/",
   saas:       "https://techcrunch.com/category/startups/feed/",
-  marketing:  "https://feeds.feedburner.com/MarketingLand",
-  finance:    "https://feeds.finance.yahoo.com/rss/2.0/headline",
-  leadership: "https://feeds.feedburner.com/fastcompany/headlines",
+  marketing:  "https://blog.hubspot.com/marketing/rss.xml",
+  finance:    "https://www.wsj.com/xml/rss/3_7085.xml",
+  leadership: "https://hbr.org/resources/rss/index.xml",
   tech:       "https://feeds.arstechnica.com/arstechnica/index",
 };
 
+// Feeds de secours si le principal échoue
+const RSS_FALLBACKS = {
+  ai:         "https://www.theverge.com/ai-artificial-intelligence/rss/index.xml",
+  saas:       "https://www.indiehackers.com/feed.rss",
+  marketing:  "https://moz.com/blog/feed",
+  finance:    "https://feeds.bloomberg.com/markets/news.rss",
+  leadership: "https://feeds.feedburner.com/entrepreneur/latest",
+  tech:       "https://www.wired.com/feed/rss",
+};
+
 async function fetchRSS(niche) {
-  try {
-    const feedUrl = RSS_FEEDS[niche] || RSS_FEEDS.tech;
+  const tryFeed = async (feedUrl) => {
     const res = await fetch(
       `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}&count=5`,
-      { headers: { "Accept": "application/json" } }
+      {
+        headers: { "Accept": "application/json" },
+        signal: AbortSignal.timeout(8000),
+      }
     );
     const data = await res.json();
-    if (data.status !== "ok") return [];
+    if (data.status !== "ok" || !data.items?.length) throw new Error("Feed empty");
+    return data;
+  };
+
+  try {
+    const feedUrl = RSS_FEEDS[niche] || RSS_FEEDS.tech;
+    let data;
+
+    try {
+      data = await tryFeed(feedUrl);
+    } catch {
+      // Tentative avec le feed de secours
+      const fallback = RSS_FALLBACKS[niche] || RSS_FALLBACKS.tech;
+      data = await tryFeed(fallback);
+    }
 
     return (data?.items || []).slice(0, 5).map(item => ({
       source: data?.feed?.title || "RSS",
@@ -336,7 +430,8 @@ async function fetchRSS(niche) {
       publishedAt: item.pubDate,
       icon: "📡",
     }));
-  } catch {
+  } catch (e) {
+    console.warn("RSS fetch failed:", e.message);
     return [];
   }
 }
@@ -386,21 +481,27 @@ router.get("/trends", authenticateToken, async (req, res) => {
       }))
       .sort((a, b) => b.viralScore - a.viralScore);
 
+    const sources = {
+      hackerNews:  extract(hn).length,
+      reddit:      extract(reddit).length,
+      news:        extract(news).length,
+      youtube:     extract(youtube).length,
+      productHunt: extract(ph).length,
+      wikipedia:   extract(wiki).length,
+      github:      extract(github).length,
+      rss:         extract(rss).length,
+    };
+
+    // Log des sources vides pour debug Railway
+    const empty = Object.entries(sources).filter(([,v]) => v === 0).map(([k]) => k);
+    if (empty.length) console.warn(`[Trends] Sources vides: ${empty.join(", ")} (niche=${selectedNiche}, lang=${selectedLang})`);
+
     res.json({
       niche: selectedNiche,
       lang: selectedLang,
       total: scored.length,
       fetchedAt: new Date().toISOString(),
-      sources: {
-        hackerNews: extract(hn).length,
-        reddit: extract(reddit).length,
-        news: extract(news).length,
-        youtube: extract(youtube).length,
-        productHunt: extract(ph).length,
-        wikipedia: extract(wiki).length,
-        github: extract(github).length,
-        rss: extract(rss).length,
-      },
+      sources,
       trends: scored,
     });
   } catch (err) {
