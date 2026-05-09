@@ -871,10 +871,10 @@ setTimeout(() => {
                   style={{ width:90, marginBottom:20 }}
                 />
 
-                <h1>Welcome to GrowthPILOT</h1>
+                <h1>{tr(trendsLang, "ui.welcomeTitle")}</h1>
               </div>
               <p style={{color:"#94a3b8"}}>
-                Your AI content operating system is ready.
+                {tr(trendsLang, "ui.welcomeSub")}
               </p>
 
               <div style={styles.onboardingSteps}>
@@ -887,7 +887,7 @@ setTimeout(() => {
                 style={styles.button}
                 onClick={completeOnboarding}
               >
-                START BUILDING
+                {tr(trendsLang, "ui.startBuilding")}
               </button>
             </div>
           </div>
@@ -1047,7 +1047,7 @@ setTimeout(() => {
               </h2>
 
               <p style={{ marginTop: 15 }}>
-                Create, optimize and publish authority content
+                {tr(trendsLang, "ui.createOptimize")}
                 through a single high-performance command center.
               </p>
 
@@ -1120,7 +1120,7 @@ setTimeout(() => {
                   overflow: "hidden"
                 }}
               >
-                <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px", marginBottom:10 }}>LIVE AI ACTIVITY</h3>
+                <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px", marginBottom:10 }}>{tr(trendsLang, "ui.liveActivity")}</h3>
 
                 {liveFeed.slice(0, 3).map((item) => (
                   <div
@@ -1145,7 +1145,7 @@ setTimeout(() => {
                   overflow: "hidden"
                 }}
               >
-                <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px", marginBottom:10 }}>PUBLISH TIMELINE</h3>
+                <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px", marginBottom:10 }}>{tr(trendsLang, "ui.publishTimeline")}</h3>
 
                 {timelineData.slice(0, 3).map((item, i) => (
                   <div
@@ -1180,7 +1180,7 @@ setTimeout(() => {
                 paddingBottom: 24
               }}
             >
-              <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px", marginBottom:10 }}>CONTENT PERFORMANCE</h3>
+              <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px", marginBottom:10 }}>{tr(trendsLang, "ui.contentPerformance")}</h3>
 
               <ResponsiveContainer width="100%" height="72%">
                 <LineChart
@@ -1248,16 +1248,16 @@ setTimeout(() => {
                 <input style={styles.input} placeholder="PROJECT TITLE" value={projectTitle} onChange={(e) => setProjectTitle(e.target.value)} />
                 <input style={styles.input} placeholder="SEARCH PROJECT" value={searchProject} onChange={(e) => setSearchProject(e.target.value)} />
                 <select style={{ ...styles.input, maxWidth:"100%", width:"100%", boxSizing:"border-box" }} value={selectedProject} onChange={(e) => selectProject(e.target.value)}>
-                  <option value="">SELECT PROJECT</option>
+                  <option value="">{tr(trendsLang, "ui.selectProject")}</option>
                   {filteredProjects.map((p) => (
                     <option key={p.name}>{p.name}</option>
                   ))}
                 </select>
                 <input style={styles.input} placeholder="RENAME PROJECT" value={renameValue} onChange={(e) => setRenameValue(e.target.value)} />
                 <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-                  <button style={{ ...styles.button, margin:0 }} onClick={renameProject}>RENAME</button>
-                  <button style={{ ...styles.button, margin:0 }} onClick={createProject}>CREATE PROJECT</button>
-                  <button style={{ ...styles.button, margin:0 }} onClick={duplicateProject}>DUPLICATE</button>
+                  <button style={{ ...styles.button, margin:0 }} onClick={renameProject}>{tr(trendsLang, "ui.rename")}</button>
+                  <button style={{ ...styles.button, margin:0 }} onClick={createProject}>{tr(trendsLang, "buttons.createProject")}</button>
+                  <button style={{ ...styles.button, margin:0 }} onClick={duplicateProject}>{tr(trendsLang, "ui.duplicate")}</button>
                   <button style={{ ...styles.buttonDanger, margin:0 }} onClick={() => selectedProject && deleteProject(selectedProject)}>DELETE</button>
                 </div>
                 <input style={styles.input} placeholder="TOPIC" value={topic} onChange={(e) => setTopic(e.target.value)} />
@@ -1268,10 +1268,10 @@ setTimeout(() => {
 
               {/* Colonne droite — résultat */}
               <div style={{ ...styles.card, marginTop:0, display:"flex", flexDirection:"column", gap:12, overflow:"auto" }}>
-                <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px" }}>OUTPUT</h3>
+                <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.output")}</h3>
                 <textarea
                   style={{ ...styles.textarea, height:280, minHeight:"unset", flex:"none", borderRadius:10, border:"1px solid rgba(220,38,38,0.15)", resize:"none", background:"#0f172a", overflowY:"auto" }}
-                  placeholder="Your generated content will appear here..."
+                  placeholder={tr(trendsLang, "ui.outputPlaceholder")}
                   value={post}
                   onChange={(e) => setPost(e.target.value)}
                 />
@@ -1324,7 +1324,7 @@ setTimeout(() => {
 
                 {/* AI Recommendation */}
                 <div style={{ ...styles.card, marginTop:0, padding:20, borderLeft:"3px solid #3b82f6", flex:1 }}>
-                  <div style={{ color:"#3b82f6", fontSize:11, letterSpacing:"1.5px", marginBottom:12 }}>⚡ AI RECOMMENDATION</div>
+                  <div style={{ color:"#3b82f6", fontSize:11, letterSpacing:"1.5px", marginBottom:12 }}>{tr(trendsLang, "ui.aiRecommendation")}</div>
                   <p style={{ color:"#94a3b8", fontSize:14, lineHeight:1.8 }}>{insights.recommendation}</p>
                   <div style={{ marginTop:16, display:"flex", flexDirection:"column", gap:8 }}>
                     {[
@@ -1344,7 +1344,7 @@ setTimeout(() => {
 
               {/* Colonne droite — performance */}
               <div style={{ ...styles.card, marginTop:0, display:"flex", flexDirection:"column", gap:16 }}>
-                <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px" }}>PLATFORM PERFORMANCE</h3>
+                <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.platformPerformance")}</h3>
                 {[
                   { platform:"LinkedIn", score:87, color:"#0077b5" },
                   { platform:"X (Twitter)", score:72, color:"#1da1f2" },
@@ -1362,7 +1362,7 @@ setTimeout(() => {
                 ))}
 
                 <div style={{ marginTop:8, borderTop:"1px solid rgba(220,38,38,0.1)", paddingTop:16 }}>
-                  <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px", marginBottom:12 }}>GROWTH SIGNALS</h3>
+                  <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px", marginBottom:12 }}>{tr(trendsLang, "ui.growthSignals")}</h3>
                   {[
                     { signal:"Engagement rate", value:"+12%", color:"#22c55e" },
                     { signal:"Reach", value:"+8%", color:"#22c55e" },
@@ -1387,27 +1387,27 @@ setTimeout(() => {
 
               {/* Colonne gauche — actions */}
               <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-                <button style={{ ...styles.button, margin:0, alignSelf:"flex-start" }} onClick={loadHistory}>LOAD HISTORY</button>
+                <button style={{ ...styles.button, margin:0, alignSelf:"flex-start" }} onClick={loadHistory}>{tr(trendsLang, "ui.loadHistory")}</button>
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
                   <div style={{ ...styles.card, marginTop:0, padding:16 }}>
-                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>TOTAL POSTS</div>
+                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.totalPosts")}</div>
                     <div style={{ color:"#ef4444", fontSize:28, fontWeight:800, marginTop:8 }}>{history.length}</div>
                   </div>
                   <div style={{ ...styles.card, marginTop:0, padding:16 }}>
-                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>PROJECTS</div>
+                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>{tr(trendsLang, "profile.projects")}</div>
                     <div style={{ color:"#22c55e", fontSize:28, fontWeight:800, marginTop:8 }}>{projects.length}</div>
                   </div>
                 </div>
                 <div style={{ ...styles.card, marginTop:0, flex:1, display:"flex", alignItems:"center", justifyContent:"center" }}>
-                  <p style={{ color:"#334155", fontSize:13, textAlign:"center" }}>Click LOAD HISTORY to fetch your saved posts from the server.</p>
+                  <p style={{ color:"#334155", fontSize:13, textAlign:"center" }}>{tr(trendsLang, "ui.clickLoadHistory")}</p>
                 </div>
               </div>
 
               {/* Colonne droite — liste */}
               <div style={{ ...styles.card, marginTop:0, display:"flex", flexDirection:"column", gap:12, overflowY:"auto" }}>
-                <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px" }}>CONTENT HISTORY</h3>
+                <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.contentHistory")}</h3>
                 {history.length === 0 && (
-                  <p style={{ color:"#334155", fontSize:14 }}>No history loaded yet.</p>
+                  <p style={{ color:"#334155", fontSize:14 }}>{tr(trendsLang, "ui.noHistoryLoaded")}</p>
                 )}
                 {history.map((h,i)=>(
                   <div key={i} style={{ borderBottom:"1px solid rgba(220,38,38,0.1)", paddingBottom:12, cursor:"pointer" }}
@@ -1431,26 +1431,26 @@ setTimeout(() => {
 
               {/* Plan badge */}
               <div style={{ ...styles.card, marginTop:0, padding:16, borderLeft:`3px solid ${getPlanColor(userPlan.plan)}`, marginBottom:8 }}>
-                <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px", marginBottom:6 }}>{tr(trendsLang, "profile.currentPlan")}</div>
+                <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px", marginBottom:6 }}>CURRENT PLAN</div>
                 <div style={{ color: getPlanColor(userPlan.plan), fontSize:18, fontWeight:900, letterSpacing:"1px" }}>{getPlanIcon(userPlan.plan)} {userPlan.plan.toUpperCase()}{userPlan.interval ? ` · ${userPlan.interval}` : ""}</div>
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginTop:12 }}>
                   <div style={{ textAlign:"center" }}>
                     <div style={{ color:"#ef4444", fontSize:20, fontWeight:800 }}>{projects.length}</div>
-                    <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px" }}>{tr(trendsLang, "profile.projects")}</div>
+                    <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px" }}>PROJECTS</div>
                   </div>
                   <div style={{ textAlign:"center" }}>
                     <div style={{ color:"#22c55e", fontSize:20, fontWeight:800 }}>{stats.posts}</div>
-                    <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px" }}>{tr(trendsLang, "profile.posts")}</div>
+                    <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px" }}>POSTS</div>
                   </div>
                 </div>
               </div>
 
               {/* Menu navigation */}
               {[
-                { key:"account", icon:"👤", label: tr(trendsLang, "profile.menuAccount") },
-                { key:"password", icon:"🔐", label: tr(trendsLang, "profile.menuPassword") },
-                { key:"email", icon:"✉️", label: tr(trendsLang, "profile.menuEmail") },
-                { key:"danger", icon:"⚠️", label: tr(trendsLang, "profile.menuDanger") },
+                { key:"account", icon:"👤", label:"Account Info" },
+                { key:"password", icon:"🔐", label:"Change Password" },
+                { key:"email", icon:"✉️", label:"Change Email" },
+                { key:"danger", icon:"⚠️", label:"Danger Zone" },
               ].map(s => (
                 <button
                   key={s.key}
@@ -1475,13 +1475,13 @@ setTimeout(() => {
               {/* Account Info */}
               {profileSection === "account" && (
                 <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
-                  <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>{tr(trendsLang, "profile.accountTitle")}</h2>
+                  <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>Account Information</h2>
                   <div style={{ display:"grid", gap:16 }}>
                     {[
-                      { label: tr(trendsLang, "profile.fieldEmail"), value: token && token !== "guest" ? (() => { try { return JSON.parse(atob(token.split(".")[1])).email; } catch { return "—"; } })() : "—" },
-                      { label: tr(trendsLang, "profile.fieldMember"), value:"May 2026" },
-                      { label: tr(trendsLang, "profile.fieldWorkspace"), value: workspace || "PERSONAL" },
-                      { label: tr(trendsLang, "profile.fieldPlan"), value:`${userPlan.plan}${userPlan.interval ? " · " + userPlan.interval : ""}` },
+                      { label:"Email", value: token && token !== "guest" ? (() => { try { return JSON.parse(atob(token.split(".")[1])).email; } catch { return "—"; } })() : "—" },
+                      { label:"Member since", value:"May 2026" },
+                      { label:"Workspace", value: workspace || "PERSONAL" },
+                      { label:"Plan", value:`${userPlan.plan}${userPlan.interval ? " · " + userPlan.interval : ""}` },
                     ].map(({ label, value }) => (
                       <div key={label} style={{ padding:"16px 20px", background:"#0f172a", borderRadius:10, border:"1px solid rgba(220,38,38,0.15)", borderLeft:"3px solid rgba(220,38,38,0.4)" }}>
                         <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:6 }}>{label.toUpperCase()}</div>
@@ -1495,12 +1495,12 @@ setTimeout(() => {
               {/* Change Password */}
               {profileSection === "password" && (
                 <div style={{ display:"flex", flexDirection:"column", gap:20, maxWidth:480 }}>
-                  <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>{tr(trendsLang, "profile.passwordTitle")}</h2>
-                  <p style={{ color:"#64748b", fontSize:13, margin:0 }}>{tr(trendsLang, "profile.passwordHint")}</p>
+                  <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>Change Password</h2>
+                  <p style={{ color:"#64748b", fontSize:13, margin:0 }}>Your password must be at least 8 characters long.</p>
                   {[
-                    { label: tr(trendsLang, "profile.labelCurrentPw"), value:currentPassword, setter:setCurrentPassword },
-                    { label: tr(trendsLang, "profile.labelNewPw"), value:newPassword, setter:setNewPassword },
-                    { label: tr(trendsLang, "profile.labelConfirmPw"), value:confirmPassword, setter:setConfirmPassword },
+                    { label:"Current Password", value:currentPassword, setter:setCurrentPassword },
+                    { label:"New Password", value:newPassword, setter:setNewPassword },
+                    { label:"Confirm New Password", value:confirmPassword, setter:setConfirmPassword },
                   ].map(({ label, value, setter }) => (
                     <div key={label}>
                       <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>{label.toUpperCase()}</div>
@@ -1508,7 +1508,7 @@ setTimeout(() => {
                         type="password"
                         value={value}
                         onChange={e => setter(e.target.value)}
-                        placeholder={label}
+                        placeholder={`Enter ${label.toLowerCase()}`}
                         style={{ ...styles.input, maxWidth:"100%", marginBottom:0 }}
                       />
                     </div>
@@ -1518,7 +1518,7 @@ setTimeout(() => {
                     onClick={changePassword}
                     disabled={profileLoading}
                   >
-                    {profileLoading ? tr(trendsLang, "profile.updating") : tr(trendsLang, "profile.updatePassword")}
+                    {profileLoading ? "Updating..." : "🔐 UPDATE PASSWORD"}
                   </button>
                 </div>
               )}
@@ -1526,21 +1526,21 @@ setTimeout(() => {
               {/* Change Email */}
               {profileSection === "email" && (
                 <div style={{ display:"flex", flexDirection:"column", gap:20, maxWidth:480 }}>
-                  <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>{tr(trendsLang, "profile.emailTitle")}</h2>
-                  <p style={{ color:"#64748b", fontSize:13, margin:0 }}>{tr(trendsLang, "profile.emailHint")}</p>
+                  <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>Change Email Address</h2>
+                  <p style={{ color:"#64748b", fontSize:13, margin:0 }}>Enter your new email address below.</p>
                   <div>
-                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>{tr(trendsLang, "profile.labelCurrentEmail").toUpperCase()}</div>
+                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>CURRENT EMAIL</div>
                     <div style={{ padding:"14px 18px", background:"#0f172a", borderRadius:10, border:"1px solid rgba(220,38,38,0.15)", color:"#94a3b8", fontSize:14 }}>
                       {token && token !== "guest" ? (() => { try { return JSON.parse(atob(token.split(".")[1])).email; } catch { return "—"; } })() : "—"}
                     </div>
                   </div>
                   <div>
-                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>{tr(trendsLang, "profile.labelNewEmail").toUpperCase()}</div>
+                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>NEW EMAIL ADDRESS</div>
                     <input
                       type="email"
                       value={newEmail}
                       onChange={e => setNewEmail(e.target.value)}
-                      placeholder={tr(trendsLang, "profile.labelNewEmail")}
+                      placeholder="Enter new email address"
                       style={{ ...styles.input, maxWidth:"100%", marginBottom:0 }}
                     />
                   </div>
@@ -1549,7 +1549,7 @@ setTimeout(() => {
                     onClick={changeEmailAddress}
                     disabled={profileLoading}
                   >
-                    {profileLoading ? tr(trendsLang, "profile.updating") : tr(trendsLang, "profile.updateEmail")}
+                    {profileLoading ? "Updating..." : "✉️ UPDATE EMAIL"}
                   </button>
                 </div>
               )}
@@ -1557,11 +1557,11 @@ setTimeout(() => {
               {/* Danger Zone */}
               {profileSection === "danger" && (
                 <div style={{ display:"flex", flexDirection:"column", gap:20, maxWidth:480 }}>
-                  <h2 style={{ color:"#ef4444", fontSize:18, fontWeight:800, margin:0 }}>⚠️ Danger Zone</h2>
-                  <p style={{ color:"#64748b", fontSize:13, margin:0 }}>These actions are irreversible. Please proceed with caution.</p>
+                  <h2 style={{ color:"#ef4444", fontSize:18, fontWeight:800, margin:0 }}>⚠️ {tr(trendsLang, "profile.dangerTitle")}</h2>
+                  <p style={{ color:"#64748b", fontSize:13, margin:0 }}>{tr(trendsLang, "ui.dangerWarning")}</p>
                   <div style={{ padding:24, border:"1px solid rgba(220,38,38,0.3)", borderRadius:12, background:"rgba(220,38,38,0.05)" }}>
-                    <div style={{ color:"#fff", fontWeight:700, marginBottom:8 }}>Delete Account</div>
-                    <div style={{ color:"#64748b", fontSize:13, marginBottom:16 }}>Permanently delete your account and all associated data. This action cannot be undone.</div>
+                    <div style={{ color:"#fff", fontWeight:700, marginBottom:8 }}>{tr(trendsLang, "ui.deleteAccountLabel")}</div>
+                    <div style={{ color:"#64748b", fontSize:13, marginBottom:16 }}>{tr(trendsLang, "ui.deleteAccountDesc")}</div>
                     <button
                       style={{ ...styles.buttonDanger, margin:0 }}
                       onClick={() => { if(window.confirm("Are you sure? This action is irreversible.")) deleteAccount(); }}
@@ -1588,12 +1588,12 @@ setTimeout(() => {
                 <input style={styles.input} placeholder="TONE OF VOICE" value={memory.tone} onChange={(e)=>setMemory({...memory,tone:e.target.value})} />
                 <input style={styles.input} placeholder="DEFAULT CTA" value={memory.cta} onChange={(e)=>setMemory({...memory,cta:e.target.value})} />
                 <input style={styles.input} placeholder="BANNED WORDS (comma separated)" value={memory.banned_words} onChange={(e)=>setMemory({...memory,banned_words:e.target.value})} />
-                <button style={{ ...styles.button, margin:0, alignSelf:"flex-start" }} onClick={saveBrandMemory}>SAVE MEMORY</button>
+                <button style={{ ...styles.button, margin:0, alignSelf:"flex-start" }} onClick={saveBrandMemory}>{tr(trendsLang, "ui.saveMemory")}</button>
               </div>
 
               {/* Colonne droite — récap brand */}
               <div style={{ ...styles.card, marginTop:0, display:"flex", flexDirection:"column", gap:16 }}>
-                <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px" }}>BRAND INTELLIGENCE</h3>
+                <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.brandIntelligence")}</h3>
                 {[
                   ["NICHE", memory.niche],
                   ["AUDIENCE", memory.audience],
@@ -1668,7 +1668,7 @@ setTimeout(() => {
                 letterSpacing:"1.5px",
                 marginBottom:18
               }}>
-                AI FEEDBACK
+                {tr(trendsLang, "ui.aiFeedback")}
               </h3>
 
               <div style={{
@@ -1688,7 +1688,7 @@ setTimeout(() => {
                     color:"#fff",
                     marginBottom:14
                   }}>
-                    Strategic Insight
+                    {tr(trendsLang, "ui.strategicInsight")}
                   </h4>
 
                   <p style={{
@@ -1706,9 +1706,9 @@ setTimeout(() => {
                     marginTop:18,
                     flexWrap:"wrap"
                   }}>
-                    <span style={styles.feedbackGood}>HOOK STRONG</span>
-                    <span style={styles.feedbackWarn}>CTA WEAK</span>
-                    <span style={styles.feedbackGood}>READABLE</span>
+                    <span style={styles.feedbackGood}>{tr(trendsLang, "ui.hookStrong")}</span>
+                    <span style={styles.feedbackWarn}>{tr(trendsLang, "ui.ctaWeak")}</span>
+                    <span style={styles.feedbackGood}>{tr(trendsLang, "ui.readable")}</span>
                   </div>
                 </div>
 
@@ -1724,7 +1724,7 @@ setTimeout(() => {
                     letterSpacing:"1.5px",
                     marginBottom:10
                   }}>
-                    PLATFORM DISTRIBUTION
+                    {tr(trendsLang, "ui.platformDistribution")}
                   </h3>
 
                   <ResponsiveContainer width="100%" height={135}>
@@ -1748,20 +1748,20 @@ setTimeout(() => {
 
               {/* Colonne gauche — formulaire */}
               <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                <p style={{ color:"#64748b", fontSize:12, letterSpacing:"1px", marginBottom:4 }}>SELECT DATE</p>
+                <p style={{ color:"#64748b", fontSize:12, letterSpacing:"1px", marginBottom:4 }}>{tr(trendsLang, "ui.selectDate")}</p>
                 <input style={styles.input} type="date" value={scheduleDate} onChange={(e)=>setScheduleDate(e.target.value)} />
-                <p style={{ color:"#64748b", fontSize:12, letterSpacing:"1px", marginBottom:4 }}>SELECT TIME</p>
+                <p style={{ color:"#64748b", fontSize:12, letterSpacing:"1px", marginBottom:4 }}>{tr(trendsLang, "ui.selectTime")}</p>
                 <input style={styles.input} type="time" value={scheduleTime} onChange={(e)=>setScheduleTime(e.target.value)} />
-                <button style={{ ...styles.button, margin:0, alignSelf:"flex-start", marginTop:8 }} onClick={schedulePost}>SCHEDULE POST</button>
+                <button style={{ ...styles.button, margin:0, alignSelf:"flex-start", marginTop:8 }} onClick={schedulePost}>{tr(trendsLang, "ui.schedulePost")}</button>
 
                 {/* Stats rapides */}
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginTop:16 }}>
                   <div style={{ ...styles.card, marginTop:0, padding:16 }}>
-                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>SCHEDULED</div>
+                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.scheduled")}</div>
                     <div style={{ color:"#ef4444", fontSize:28, fontWeight:800, marginTop:8 }}>{scheduledPosts.length}</div>
                   </div>
                   <div style={{ ...styles.card, marginTop:0, padding:16 }}>
-                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>PUBLISHED</div>
+                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.published")}</div>
                     <div style={{ color:"#22c55e", fontSize:28, fontWeight:800, marginTop:8 }}>{publishLog.length}</div>
                   </div>
                 </div>
@@ -1769,15 +1769,15 @@ setTimeout(() => {
 
               {/* Colonne droite — queue */}
               <div style={{ ...styles.card, marginTop:0, display:"flex", flexDirection:"column", gap:12, overflowY:"auto" }}>
-                <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px" }}>PUBLISH QUEUE</h3>
+                <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.publishQueue")}</h3>
                 {scheduledPosts.length === 0 && (
-                  <p style={{ color:"#334155", fontSize:14 }}>No posts scheduled yet.</p>
+                  <p style={{ color:"#334155", fontSize:14 }}>{tr(trendsLang, "ui.noPostsScheduled")}</p>
                 )}
                 {scheduledPosts.map((s,i)=>(
                   <div key={i} style={{ borderBottom:"1px solid rgba(220,38,38,0.1)", paddingBottom:12 }}>
                     <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
                       <span style={{ color:"#ef4444", fontSize:12, fontWeight:700 }}>{s.date} · {s.time}</span>
-                      <span style={{ color:"#22c55e", fontSize:11, fontWeight:700 }}>SCHEDULED</span>
+                      <span style={{ color:"#22c55e", fontSize:11, fontWeight:700 }}>{tr(trendsLang, "ui.scheduled")}</span>
                     </div>
                     <p style={{ color:"#94a3b8", fontSize:13 }}>{s.content}</p>
                   </div>
@@ -1794,7 +1794,7 @@ setTimeout(() => {
 
               {/* Colonne gauche */}
               <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-                <p style={{ color:"#64748b", fontSize:12, letterSpacing:"1px" }}>SELECT PLATFORM</p>
+                <p style={{ color:"#64748b", fontSize:12, letterSpacing:"1px" }}>{tr(trendsLang, "ui.selectPlatform")}</p>
                 <div style={{ display:"flex", gap:10 }}>
                   {["LINKEDIN","X","THREADS"].map(p=>(
                     <button key={p} onClick={()=>setAutoPlatform(p)} style={{
@@ -1807,15 +1807,15 @@ setTimeout(() => {
                   ))}
                 </div>
 
-                <button style={{ ...styles.button, margin:0, alignSelf:"flex-start", marginTop:8 }} onClick={autoPublish}>QUEUE POST</button>
+                <button style={{ ...styles.button, margin:0, alignSelf:"flex-start", marginTop:8 }} onClick={autoPublish}>{tr(trendsLang, "ui.queuePost")}</button>
 
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginTop:8 }}>
                   <div style={{ ...styles.card, marginTop:0, padding:16 }}>
-                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>QUEUED</div>
+                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.queued")}</div>
                     <div style={{ color:"#ef4444", fontSize:28, fontWeight:800, marginTop:8 }}>{autoPosts.length}</div>
                   </div>
                   <div style={{ ...styles.card, marginTop:0, padding:16 }}>
-                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>PUBLISHED</div>
+                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.published")}</div>
                     <div style={{ color:"#22c55e", fontSize:28, fontWeight:800, marginTop:8 }}>{publishLog.length}</div>
                   </div>
                 </div>
@@ -1823,9 +1823,9 @@ setTimeout(() => {
 
               {/* Colonne droite — queue */}
               <div style={{ ...styles.card, marginTop:0, display:"flex", flexDirection:"column", gap:12, overflowY:"auto" }}>
-                <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px" }}>AUTO QUEUE</h3>
+                <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.autoQueue")}</h3>
                 {autoPosts.length === 0 && (
-                  <p style={{ color:"#334155", fontSize:14 }}>No posts queued yet.</p>
+                  <p style={{ color:"#334155", fontSize:14 }}>{tr(trendsLang, "ui.noPostsQueued")}</p>
                 )}
                 {autoPosts.map((p,i)=>(
                   <div key={i} style={{ borderBottom:"1px solid rgba(220,38,38,0.1)", paddingBottom:12 }}>
@@ -1850,16 +1850,16 @@ setTimeout(() => {
               {/* Colonne gauche — infos */}
               <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
                 <div style={{ ...styles.card, marginTop:0, padding:16 }}>
-                  <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>HOW TO USE</div>
+                  <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>{tr(trendsLang, "ui.howToUse")}</div>
                   <p style={{ color:"#94a3b8", fontSize:13, lineHeight:1.6 }}>Go to <span style={{ color:"#ef4444", fontWeight:700 }}>CREATE</span>, generate a post, then click <span style={{ color:"#ef4444", fontWeight:700 }}>PLAN</span> to auto-generate a 30-day content roadmap based on your topic.</p>
                 </div>
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
                   <div style={{ ...styles.card, marginTop:0, padding:16 }}>
-                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>PLANNED POSTS</div>
+                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.plannedPosts")}</div>
                     <div style={{ color:"#ef4444", fontSize:28, fontWeight:800, marginTop:8 }}>{planner.length}</div>
                   </div>
                   <div style={{ ...styles.card, marginTop:0, padding:16 }}>
-                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>SCHEDULED</div>
+                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.scheduled")}</div>
                     <div style={{ color:"#22c55e", fontSize:28, fontWeight:800, marginTop:8 }}>{scheduledPosts.length}</div>
                   </div>
                 </div>
@@ -1869,7 +1869,7 @@ setTimeout(() => {
               <div style={{ ...styles.card, marginTop:0, display:"flex", flexDirection:"column", gap:10, overflowY:"auto" }}>
                 <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px" }}>30-DAY ROADMAP</h3>
                 {planner.length === 0 && (
-                  <p style={{ color:"#334155", fontSize:14 }}>No plan generated yet.</p>
+                  <p style={{ color:"#334155", fontSize:14 }}>{tr(trendsLang, "ui.noPlanGenerated")}</p>
                 )}
                 {planner.map((p,i)=>(
                   <div key={i} style={{ borderBottom:"1px solid rgba(220,38,38,0.1)", paddingBottom:10 }}>
@@ -1890,7 +1890,7 @@ setTimeout(() => {
 
               {/* Colonne gauche */}
               <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-                <p style={{ color:"#64748b", fontSize:12, letterSpacing:"1px" }}>SELECT PLATFORM & PUBLISH</p>
+                <p style={{ color:"#64748b", fontSize:12, letterSpacing:"1px" }}>{tr(trendsLang, "ui.selectPublish")}</p>
                 <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
                   {["LINKEDIN","X","THREADS"].map(p=>(
                     <button key={p} style={{ ...styles.button, margin:0 }} onClick={()=>publish(p)}>{p}</button>
@@ -1905,18 +1905,18 @@ setTimeout(() => {
 
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginTop:8 }}>
                   <div style={{ ...styles.card, marginTop:0, padding:16 }}>
-                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>PUBLISHED</div>
+                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.published")}</div>
                     <div style={{ color:"#22c55e", fontSize:28, fontWeight:800, marginTop:8 }}>{publishLog.length}</div>
                   </div>
                   <div style={{ ...styles.card, marginTop:0, padding:16 }}>
-                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>QUEUED</div>
+                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.queued")}</div>
                     <div style={{ color:"#ef4444", fontSize:28, fontWeight:800, marginTop:8 }}>{autoPosts.length}</div>
                   </div>
                 </div>
 
                 {/* Aperçu du post */}
                 <div style={{ ...styles.card, marginTop:0, flex:1 }}>
-                  <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px", marginBottom:12 }}>POST PREVIEW</h3>
+                  <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px", marginBottom:12 }}>{tr(trendsLang, "ui.postPreview")}</h3>
                   <p style={{ color: post ? "#94a3b8" : "#334155", fontSize:13, lineHeight:1.6 }}>
                     {post ? post.slice(0, 300) + (post.length > 300 ? "..." : "") : "No content generated yet. Go to CREATE to generate a post."}
                   </p>
@@ -1925,15 +1925,15 @@ setTimeout(() => {
 
               {/* Colonne droite — publish log */}
               <div style={{ ...styles.card, marginTop:0, display:"flex", flexDirection:"column", gap:12, overflowY:"auto" }}>
-                <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px" }}>PUBLISH LOG</h3>
+                <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.publishLog")}</h3>
                 {publishLog.length === 0 && (
-                  <p style={{ color:"#334155", fontSize:14 }}>No publications yet.</p>
+                  <p style={{ color:"#334155", fontSize:14 }}>{tr(trendsLang, "ui.noPublications")}</p>
                 )}
                 {publishLog.map((p,i)=>(
                   <div key={i} style={{ borderBottom:"1px solid rgba(220,38,38,0.1)", paddingBottom:12 }}>
                     <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
                       <span style={{ color:"#ef4444", fontSize:12, fontWeight:700 }}>{p.dest}</span>
-                      <span style={{ color:"#22c55e", fontSize:11, fontWeight:700 }}>PUBLISHED</span>
+                      <span style={{ color:"#22c55e", fontSize:11, fontWeight:700 }}>{tr(trendsLang, "ui.published")}</span>
                     </div>
                     <p style={{ color:"#475569", fontSize:11 }}>{p.date}</p>
                   </div>
@@ -1954,9 +1954,9 @@ setTimeout(() => {
                 {/* Stats */}
                 <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:10 }}>
                   {[
-                    ["PROJECTS", projects.length, "#ef4444"],
-                    ["QUEUED", autoPosts.length, "#f59e0b"],
-                    ["SCHEDULED", scheduledPosts.length, "#22c55e"],
+                    [tr(trendsLang, "profile.projects"), projects.length, "#ef4444"],
+                    [tr(trendsLang, "ui.queued"), autoPosts.length, "#f59e0b"],
+                    [tr(trendsLang, "ui.scheduled"), scheduledPosts.length, "#22c55e"],
                   ].map(([label, val, color])=>(
                     <div key={label} style={{ ...styles.card, marginTop:0, padding:14 }}>
                       <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px" }}>{label}</div>
@@ -1967,13 +1967,13 @@ setTimeout(() => {
 
                 {/* Workspace */}
                 <div style={{ ...styles.card, marginTop:0, padding:16 }}>
-                  <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>WORKSPACE</div>
+                  <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>{tr(trendsLang, "ui.workspace")}</div>
                   <div style={{ color:"#ef4444", fontSize:18, fontWeight:800 }}>{workspace || "PERSONAL"}</div>
                 </div>
 
                 {/* Membres simulés */}
                 <div style={{ ...styles.card, marginTop:0, flex:1, display:"flex", flexDirection:"column", gap:10 }}>
-                  <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px", marginBottom:4 }}>TEAM MEMBERS</h3>
+                  <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px", marginBottom:4 }}>{tr(trendsLang, "ui.teamMembers")}</h3>
                   {[
                     { name:"You", role:"ADMIN", status:"online", color:"#22c55e" },
                     { name:"Content Writer", role:"EDITOR", status:"idle", color:"#f59e0b" },
@@ -1995,7 +1995,7 @@ setTimeout(() => {
 
               {/* Colonne droite — activité */}
               <div style={{ ...styles.card, marginTop:0, display:"flex", flexDirection:"column", gap:12, overflowY:"auto" }}>
-                <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px" }}>TEAM ACTIVITY</h3>
+                <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.teamActivity")}</h3>
                 {[
                   { user:"You", action:"Generated post", time:"just now", color:"#22c55e" },
                   { user:"Content Writer", action:"Saved draft", time:"5 min ago", color:"#f59e0b" },
@@ -2024,12 +2024,12 @@ setTimeout(() => {
             {/* Niche selector */}
             <div style={{ display:"flex", gap:8, marginBottom:20, flexWrap:"wrap" }}>
               {[
-                { key:"ai", label:"🤖 AI" },
-                { key:"saas", label:"💼 SaaS" },
-                { key:"marketing", label:"📣 Marketing" },
-                { key:"finance", label:"💰 Finance" },
-                { key:"leadership", label:"🎯 Leadership" },
-                { key:"tech", label:"⚡ Tech" },
+                { key:"ai",         label: tr(trendsLang, "ui.nicheAI") },
+                { key:"saas",       label: tr(trendsLang, "ui.nicheSaaS") },
+                { key:"marketing",  label: tr(trendsLang, "ui.nicheMarketing") },
+                { key:"finance",    label: tr(trendsLang, "ui.nicheFinance") },
+                { key:"leadership", label: tr(trendsLang, "ui.nicheLeadership") },
+                { key:"tech",       label: tr(trendsLang, "ui.nicheTech") },
               ].map(n => (
                 <button
                   key={n.key}
@@ -2120,7 +2120,7 @@ setTimeout(() => {
                   <div style={{ width:40, height:40, borderRadius:8, background:"#0077b5", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, fontWeight:900, color:"white" }}>in</div>
                   <div>
                     <div style={{ color:"#fff", fontWeight:800, fontSize:15 }}>LinkedIn</div>
-                    <div style={{ color:"#64748b", fontSize:12 }}>Publish posts directly</div>
+                    <div style={{ color:"#64748b", fontSize:12 }}>{tr(trendsLang, "ui.linkedinDesc")}</div>
                   </div>
                   <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:6 }}>
                     <div style={{ width:8, height:8, borderRadius:"50%", background: linkedinStatus.connected ? "#22c55e" : "#475569" }} />
@@ -2147,16 +2147,16 @@ setTimeout(() => {
                         style={{ ...styles.buttonSecondary, margin:0 }}
                         onClick={disconnectLinkedin}
                       >
-                        Disconnect
+                        {tr(trendsLang, "buttons.disconnect")}
                       </button>
                     </div>
                     <p style={{ color:"#475569", fontSize:11, marginTop:10 }}>
-                      ⚠️ Publishing requires LinkedIn approval (pending). Connection is active.
+                      {tr(trendsLang, "messages.linkedinPending")}
                     </p>
                   </>
                 ) : (
                   <button style={{ ...styles.button, margin:0, width:"100%" }} onClick={connectLinkedin}>
-                    🔗 CONNECT LINKEDIN
+                    {tr(trendsLang, "buttons.connectLinkedin")}
                   </button>
                 )}
               </div>
@@ -2176,11 +2176,11 @@ setTimeout(() => {
                       <div style={{ color:"#64748b", fontSize:12 }}>{p.sub}</div>
                     </div>
                     <div style={{ marginLeft:"auto" }}>
-                      <span style={{ color:"#475569", fontSize:11, fontWeight:700, background:"rgba(71,85,105,0.2)", padding:"4px 8px", borderRadius:4 }}>COMING SOON</span>
+                      <span style={{ color:"#475569", fontSize:11, fontWeight:700, background:"rgba(71,85,105,0.2)", padding:"4px 8px", borderRadius:4 }}>{tr(trendsLang, "labels.comingSoon")}</span>
                     </div>
                   </div>
                   <button style={{ ...styles.buttonSecondary, margin:0, width:"100%", cursor:"not-allowed" }} disabled>
-                    Coming Soon
+                    {tr(trendsLang, "ui.comingSoonLabel")}
                   </button>
                 </div>
               ))}
