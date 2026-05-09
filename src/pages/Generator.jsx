@@ -240,12 +240,18 @@ const growthData = [
     return "🆓";
   };
   const [linkedinPosting, setLinkedinPosting] = useState(false);
+  const [threadsStatus, setThreadsStatus] = useState({ connected: false, username: null });
+  const [threadsPosting, setThreadsPosting] = useState(false);
 
   useEffect(() => {
     if (token && token !== "guest") {
       fetch("https://social-ai-app-production.up.railway.app/linkedin/status", {
         headers: { Authorization: `Bearer ${token}` }
       }).then(r => r.json()).then(setLinkedinStatus).catch(() => {});
+
+      fetch("https://social-ai-app-production.up.railway.app/threads/status", {
+        headers: { Authorization: `Bearer ${token}` }
+      }).then(r => r.json()).then(setThreadsStatus).catch(() => {});
     }
     const params = new URLSearchParams(window.location.search);
     if (params.get("linkedin") === "connected") {
@@ -255,6 +261,12 @@ const growthData = [
       }).then(r => r.json()).then(data => {
         setLinkedinStatus(data);
       }).catch(() => {});
+    }
+    if (params.get("threads") === "connected") {
+      window.history.replaceState({}, "", "/");
+      fetch("https://social-ai-app-production.up.railway.app/threads/status", {
+        headers: { Authorization: `Bearer ${token}` }
+      }).then(r => r.json()).then(setThreadsStatus).catch(() => {});
     }
   }, []);
 
@@ -290,6 +302,41 @@ const growthData = [
       showToast("LinkedIn post failed");
     } finally {
       setLinkedinPosting(false);
+    }
+  };
+
+  const connectThreads = async () => {
+    const res = await fetch("https://social-ai-app-production.up.railway.app/threads/connect", {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (data.url) window.location.href = data.url;
+  };
+
+  const disconnectThreads = async () => {
+    await fetch("https://social-ai-app-production.up.railway.app/threads/disconnect", {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    setThreadsStatus({ connected: false, username: null });
+  };
+
+  const postToThreads = async () => {
+    if (!post) return;
+    setThreadsPosting(true);
+    try {
+      const res = await fetch("https://social-ai-app-production.up.railway.app/threads/post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ text: post })
+      });
+      const data = await res.json();
+      if (data.success) showToast(tr(trendsLang, "buttons.publishedThreads"));
+      else showToast("Threads post failed");
+    } catch {
+      showToast("Threads post failed");
+    } finally {
+      setThreadsPosting(false);
     }
   };
 
@@ -2160,11 +2207,52 @@ setTimeout(() => {
                 )}
               </div>
 
-              {/* Facebook / Instagram — coming soon */}
+              {/* Threads — connecteur actif */}
+              <div style={{ ...styles.card, marginTop:0 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
+                  <div style={{ width:40, height:40, borderRadius:8, background:"linear-gradient(135deg,#000,#333)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, fontWeight:900, color:"white" }}>🧵</div>
+                  <div>
+                    <div style={{ color:"#fff", fontWeight:800, fontSize:15 }}>Threads</div>
+                    <div style={{ color:"#64748b", fontSize:12 }}>{tr(trendsLang, "ui.linkedinDesc")}</div>
+                  </div>
+                  <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:6 }}>
+                    <div style={{ width:8, height:8, borderRadius:"50%", background: threadsStatus.connected ? "#22c55e" : "#475569" }} />
+                    <span style={{ color: threadsStatus.connected ? "#22c55e" : "#475569", fontSize:11, fontWeight:700 }}>
+                      {threadsStatus.connected ? tr(trendsLang, "labels.connected") : tr(trendsLang, "labels.disconnected")}
+                    </span>
+                  </div>
+                </div>
+                {threadsStatus.connected ? (
+                  <>
+                    <div style={{ background:"rgba(34,197,94,0.08)", border:"1px solid rgba(34,197,94,0.2)", borderRadius:8, padding:"10px 14px", marginBottom:14, fontSize:13, color:"#22c55e" }}>
+                      ✓ Connected as <strong>@{threadsStatus.username}</strong>
+                    </div>
+                    <div style={{ display:"flex", gap:10 }}>
+                      <button
+                        style={{ ...styles.button, margin:0, flex:1, opacity: threadsPosting ? 0.6 : 1 }}
+                        onClick={postToThreads}
+                        disabled={threadsPosting}
+                      >
+                        {threadsPosting ? tr(trendsLang, "buttons.publishing") : tr(trendsLang, "buttons.postNow")}
+                      </button>
+                      <button style={{ ...styles.buttonSecondary, margin:0 }} onClick={disconnectThreads}>
+                        {tr(trendsLang, "buttons.disconnectThreads")}
+                        {tr(trendsLang, "buttons.disconnect")}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <button style={{ ...styles.button, margin:0, width:"100%" }} onClick={connectThreads}>
+                    {tr(trendsLang, "buttons.connectThreads")}
+                  </button>
+                )}
+              </div>
+
+              {/* Facebook / Instagram / X / TikTok — coming soon */}
               {[
                 { name:"Facebook", icon:"f", color:"#1877f2", sub: tr(trendsLang, "ui.subFacebook") },
                 { name:"Instagram", icon:"📸", color:"#e1306c", sub: tr(trendsLang, "ui.subInstagram") },
-                { name:"X (Twitter)", icon:"𝕏", color:"#1da1f2", sub: tr(trendsLang, "ui.subX") },
+                { name:"X (Twitter)", icon:"𝕏", color:"#000", sub: tr(trendsLang, "ui.subX") },
                 { name:"TikTok", icon:"🎵", color:"#ff0050", sub: tr(trendsLang, "ui.subTikTok") },
               ].map((p) => (
                 <div key={p.name} style={{ ...styles.card, marginTop:0, opacity:0.5 }}>
