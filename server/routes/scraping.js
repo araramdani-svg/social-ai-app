@@ -356,69 +356,47 @@ async function fetchYouTube(niche, lang = "en") {
   }
 }
 
-// ─── Source 5 : Product Hunt ──────────────────────────────────────────────────
+// ─── Source 5 : Lobste.rs + IndieHackers ─────────────────────────────────────
+// Remplacement de Product Hunt (bloqué par Cloudflare sur Railway)
+// Lobste.rs = communauté tech/startup, API JSON publique native
+// IndieHackers = parfait pour saas/startup, RSS public
 async function fetchProductHunt() {
-  // Méthode 1 : rss2json avec l'URL correcte
-  try {
-    const res = await fetch(
-      "https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fwww.producthunt.com%2Ffeed&count=5&api_key=",
-      {
-        headers: { "Accept": "application/json" },
-        signal: AbortSignal.timeout(8000),
-      }
-    );
-    const data = await res.json();
-    if (data.status === "ok" && data.items?.length) {
-      return data.items.slice(0, 5).map(item => ({
-        source: "Product Hunt",
-        title: item.title,
-        url: item.link || item.guid,
-        score: 0,
-        engagement: 0,
-        publishedAt: item.pubDate,
-        icon: "🚀",
-      }));
-    }
-  } catch {}
+  const results = [];
 
-  // Méthode 2 : fetch direct + parsing XML robuste (gère CDATA et encodages)
+  // Lobste.rs — API JSON native, jamais bloquée
   try {
-    const res = await fetch("https://www.producthunt.com/feed", {
+    const res = await fetch("https://lobste.rs/hottest.json", {
       headers: {
         "User-Agent": "GrowthPILOT/1.0 (contact@aigrowthpilot.app)",
-        "Accept": "application/rss+xml, application/xml, text/xml, */*",
+        "Accept": "application/json",
       },
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(8000),
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const xml = await res.text();
-
-    const items = [];
-    // Regex robuste : gère CDATA, encodages HTML, espaces
-    const itemRx = /<item[^>]*>([\s\S]*?)<\/item>/gi;
-    let match;
-    while ((match = itemRx.exec(xml)) !== null && items.length < 5) {
-      const block = match[1];
-      // Title : CDATA ou texte brut
-      const title = (
-        block.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/i)?.[1] ||
-        block.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || ""
-      ).trim();
-      // Link : balise link ou guid isPermaLink
-      const link = (
-        block.match(/<link>([\s\S]*?)<\/link>/i)?.[1] ||
-        block.match(/<guid[^>]*>(https?:\/\/[^\s<]+)<\/guid>/i)?.[1] || ""
-      ).trim();
-      const pubDate = block.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/i)?.[1]?.trim() || "";
-
-      if (title && link) {
-        items.push({ title, link, pubDate });
-      }
+    if (res.ok) {
+      const data = await res.json();
+      const posts = (data || [])
+        .filter(p => p.score > 3)
+        .slice(0, 4)
+        .map(p => ({
+          source: "Lobste.rs",
+          title: p.title,
+          url: p.url || `https://lobste.rs${p.short_id_url}`,
+          score: p.score,
+          engagement: p.comment_count || 0,
+          icon: "🦞",
+        }));
+      results.push(...posts);
     }
+  } catch (e) {
+    console.warn("Lobste.rs error:", e.message);
+  }
 
-    if (items.length) {
-      return items.map(item => ({
-        source: "Product Hunt",
+  // IndieHackers RSS — si Lobste.rs insuffisant
+  if (results.length < 3) {
+    try {
+      const { items } = await fetchRSSFeed("https://www.indiehackers.com/feed.rss");
+      const ihPosts = items.slice(0, 3).map(item => ({
+        source: "Indie Hackers",
         title: item.title,
         url: item.link,
         score: 0,
@@ -426,40 +404,13 @@ async function fetchProductHunt() {
         publishedAt: item.pubDate,
         icon: "🚀",
       }));
+      results.push(...ihPosts);
+    } catch (e) {
+      console.warn("IndieHackers error:", e.message);
     }
-  } catch (e) {
-    console.warn("Product Hunt direct feed error:", e.message);
   }
 
-  // Méthode 3 : API GraphQL Product Hunt (sans auth, données publiques limitées)
-  try {
-    const res = await fetch("https://api.producthunt.com/v2/api/graphql", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.PRODUCT_HUNT_TOKEN || ""}`,
-      },
-      body: JSON.stringify({
-        query: `{ posts(first: 5, order: VOTES) { edges { node { name tagline url votesCount } } } }`,
-      }),
-      signal: AbortSignal.timeout(8000),
-    });
-    const data = await res.json();
-    const posts = data?.data?.posts?.edges || [];
-    if (posts.length) {
-      return posts.map(({ node }) => ({
-        source: "Product Hunt",
-        title: `${node.name} — ${node.tagline}`,
-        url: node.url,
-        score: node.votesCount || 0,
-        engagement: 0,
-        icon: "🚀",
-      }));
-    }
-  } catch {}
-
-  console.warn("Product Hunt: toutes les méthodes ont échoué");
-  return [];
+  return results.slice(0, 5);
 }
 
 // ─── Source 6 : Wikipedia Trending ───────────────────────────────────────────
