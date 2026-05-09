@@ -138,7 +138,7 @@ const growthData = [
       setTrends(data.trends || []);
       setTrendsSources(data.sources || {});
     } catch {
-      showToast("Failed to fetch trends");
+      showToast(tr(trendsLang, "messages.fetchTrendsFailed"));
     } finally {
       setTrendsLoading(false);
     }
@@ -210,7 +210,7 @@ const growthData = [
   const useAsTopic = (title) => {
     setTab("create");
     setTopic(title.slice(0, 80));
-    showToast("✓ Topic imported to Create");
+    showToast(tr(trendsLang, "messages.topicImported"));
   };
 
   // LinkedIn state
@@ -296,10 +296,10 @@ const growthData = [
         body: JSON.stringify({ text: post })
       });
       const data = await res.json();
-      if (data.success) showToast("Published on LinkedIn!");
-      else showToast("LinkedIn post failed");
+      if (data.success) showToast(tr(trendsLang, "messages.publishedLinkedin"));
+      else showToast(tr(trendsLang, "messages.linkedinFailed"));
     } catch {
-      showToast("LinkedIn post failed");
+      showToast(tr(trendsLang, "messages.linkedinFailed"));
     } finally {
       setLinkedinPosting(false);
     }
@@ -332,9 +332,9 @@ const growthData = [
       });
       const data = await res.json();
       if (data.success) showToast(tr(trendsLang, "buttons.publishedThreads"));
-      else showToast("Threads post failed");
+      else showToast(tr(trendsLang, "messages.threadsFailed"));
     } catch {
-      showToast("Threads post failed");
+      showToast(tr(trendsLang, "messages.threadsFailed"));
     } finally {
       setThreadsPosting(false);
     }
@@ -426,7 +426,7 @@ const growthData = [
   const completeOnboarding = () => {
   localStorage.setItem("gp_onboarded", "true");
   setShowOnboarding(false);
-  showToast("✓ Workspace ready");
+  showToast(tr(trendsLang, "messages.workspaceReady"));
 };
 
   useEffect(() => {
@@ -538,7 +538,7 @@ useEffect(() => {
 
     await loadProjects();
     await selectProject(projectTitle);
-    showToast("✓ Project saved");
+    showToast(tr(trendsLang, "messages.projectSaved"));
   };
 
   const selectProject = async (projectName) => {
@@ -567,7 +567,7 @@ useEffect(() => {
 
   const deleteProject = async (projectName) => {
     await api(`auth/delete-project/${projectName}`, {}, "DELETE");
-    showToast("✓ Project deleted");
+    showToast(tr(trendsLang, "messages.projectDeleted"));
 
     await loadProjects();
 
@@ -608,7 +608,7 @@ useEffect(() => {
   };
 
   const saveBrandMemory = async () => {
-    showToast("✓ Brand memory updated"),
+    showToast(tr(trendsLang, "messages.memoryUpdated")),
     await api("auth/save-brand-memory", {
       project_name: selectedProject || projectTitle,
       ...memory
@@ -623,7 +623,7 @@ useEffect(() => {
       content: post
     });
 
-    showToast("✓ Project saved");
+    showToast(tr(trendsLang, "messages.projectSaved"));
 
 setTimeout(() => {
   setSaveStatus("");
@@ -659,11 +659,11 @@ setTimeout(() => {
 
       if (data?.text) {
         setPost(data.text);
-        showToast("✓ Content generated");
+        showToast(tr(trendsLang, "messages.contentGenerated"));
       }
 
     } catch (error) {
-      showToast("Generation failed");
+      showToast(tr(trendsLang, "messages.generationFailed"));
     } finally {
       setLoading(false);
     }
@@ -693,7 +693,7 @@ setTimeout(() => {
       });
       if (data?.text) setPost(data.text);
     } catch {
-      showToast("Rewrite failed");
+      showToast(tr(trendsLang, "messages.rewriteFailed"));
     } finally {
       setLoading(false);
     }
@@ -725,10 +725,10 @@ setTimeout(() => {
 
       setAnalysis(data);
       setTab("analyze");
-      showToast("✓ Analysis complete");
+      showToast(tr(trendsLang, "messages.analysisComplete"));
 
     } catch (error) {
-      showToast("Analysis failed");
+      showToast(tr(trendsLang, "messages.analysisFailed"));
 
     } finally {
       setLoading(false);
@@ -758,7 +758,7 @@ setTimeout(() => {
     if (!post) return;
 
     await navigator.clipboard.writeText(post);
-    showToast("✓ Copied to clipboard");
+    showToast(tr(trendsLang, "messages.copied"));
 
 setTimeout(() => {
   setSaveStatus("");
@@ -766,7 +766,7 @@ setTimeout(() => {
   };
 
   const publish = (dest) => {
-    showToast("✓ Published successfully");
+    showToast(tr(trendsLang, "messages.published"));
 
     setPublishLog((prev) => [
       {
