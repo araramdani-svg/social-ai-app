@@ -1019,7 +1019,7 @@ setTimeout(() => {
                       letterSpacing: "1.5px"
                     }}
                   >
-                    {key.toUpperCase()}
+                    {tr(trendsLang, `nav.${key}`)}
                   </h2>
 
                   <p style={{ color: "#d4d4d8" }}>
