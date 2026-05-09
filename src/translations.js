@@ -33,6 +33,7 @@ const translations = {
       team: "TEAM MODE",
       integrations: "INTEGRATIONS",
       trends: "TRENDS",
+      profile: "PROFILE",
     },
     // Subtitles
     subtitles: {
@@ -158,6 +159,7 @@ const translations = {
       team: "ÉQUIPE",
       integrations: "INTÉGRATIONS",
       trends: "TENDANCES",
+      profile: "PROFIL",
     },
     headers: {
       home: "ACCUEIL",
@@ -174,6 +176,7 @@ const translations = {
       team: "MODE ÉQUIPE",
       integrations: "INTÉGRATIONS",
       trends: "TENDANCES",
+      profile: "PROFIL",
     },
     subtitles: {
       home: "Votre centre de commande de contenu IA",
@@ -293,6 +296,7 @@ const translations = {
       team: "EQUIPO",
       integrations: "INTEGRACIONES",
       trends: "TENDENCIAS",
+      profile: "PERFIL",
     },
     headers: {
       home: "INICIO", dashboard: "PANEL", insights: "ANÁLISIS", create: "CREAR",

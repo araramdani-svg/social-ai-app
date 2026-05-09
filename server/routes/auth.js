@@ -124,4 +124,43 @@ router.delete("/delete-account", authenticateToken, async (req, res) => {
   res.json({ success: true });
 });
 
+// ─── POST /auth/change-password ───────────────────────────────────────────────
+router.post("/change-password", authenticateToken, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!newPassword || newPassword.length < 8) {
+    return res.status(400).json({ message: "Password must be at least 8 characters" });
+  }
+  try {
+    const result = await db.query("SELECT * FROM users WHERE id=$1", [req.user.id]);
+    const user = result.rows[0];
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const valid = await bcrypt.compare(currentPassword, user.password);
+    if (!valid) return res.status(400).json({ message: "Current password is incorrect" });
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await db.query("UPDATE users SET password=$1 WHERE id=$2", [hashed, req.user.id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Change password error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// ─── POST /auth/change-email ───────────────────────────────────────────────────
+router.post("/change-email", authenticateToken, async (req, res) => {
+  const { newEmail } = req.body;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!newEmail || !emailRegex.test(newEmail)) {
+    return res.status(400).json({ message: "Invalid email address" });
+  }
+  try {
+    await db.query("UPDATE users SET email=$1 WHERE id=$2", [newEmail, req.user.id]);
+    res.json({ success: true });
+  } catch (err) {
+    if (err.code === "23505") return res.status(400).json({ message: "Email already in use" });
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 export default router;

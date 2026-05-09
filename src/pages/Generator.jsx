@@ -144,6 +144,62 @@ const growthData = [
     }
   };
 
+  // ─── Profile state ──────────────────────────────────────────────────────────
+  const [profileSection, setProfileSection] = useState("account"); // account | password | email | danger
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [profileMsg, setProfileMsg] = useState({ type: "", text: "" });
+  const [profileLoading, setProfileLoading] = useState(false);
+
+  const showProfileMsg = (type, text) => {
+    setProfileMsg({ type, text });
+    setTimeout(() => setProfileMsg({ type: "", text: "" }), 3000);
+  };
+
+  const changePassword = async () => {
+    if (!newPassword || !confirmPassword) return showProfileMsg("error", "Please fill all fields");
+    if (newPassword !== confirmPassword) return showProfileMsg("error", "Passwords do not match");
+    if (newPassword.length < 8) return showProfileMsg("error", "Password must be at least 8 characters");
+    setProfileLoading(true);
+    try {
+      const res = await fetch("https://social-ai-app-production.up.railway.app/auth/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ currentPassword, newPassword })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showProfileMsg("success", "✓ Password updated successfully");
+        setCurrentPassword(""); setNewPassword(""); setConfirmPassword("");
+      } else {
+        showProfileMsg("error", data.message || "Failed to update password");
+      }
+    } catch { showProfileMsg("error", "Server error"); }
+    finally { setProfileLoading(false); }
+  };
+
+  const changeEmailAddress = async () => {
+    if (!newEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) return showProfileMsg("error", "Invalid email address");
+    setProfileLoading(true);
+    try {
+      const res = await fetch("https://social-ai-app-production.up.railway.app/auth/change-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ newEmail })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showProfileMsg("success", "✓ Email updated successfully");
+        setNewEmail("");
+      } else {
+        showProfileMsg("error", data.message || "Failed to update email");
+      }
+    } catch { showProfileMsg("error", "Server error"); }
+    finally { setProfileLoading(false); }
+  };
+
   // Re-fetch trends quand la langue change
   useEffect(() => {
     if (tab === "trends" && trends.length > 0) {
@@ -1344,72 +1400,155 @@ setTimeout(() => {
         {tab==="profile" && (
         <>
           {pageHeader("profile")}
+          <div style={{ display:"grid", gridTemplateColumns:"280px 1fr", gap:20, height:"calc(100vh - 160px)" }}>
 
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, height:"calc(100vh - 160px)" }}>
+            {/* Sidebar gauche — navigation */}
+            <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
 
-            {/* Colonne gauche — compte */}
-            <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-
-              {/* Badge plan */}
-              <div style={{ ...styles.card, marginTop:0, padding:20, borderLeft:"3px solid #f59e0b" }}>
-                <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>CURRENT PLAN</div>
-                <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-                  <span style={{ color:"#f59e0b", fontSize:22, fontWeight:900, letterSpacing:"2px" }}>⚡ PREMIUM</span>
-                </div>
-              </div>
-
-              {/* Infos compte */}
-              <div style={{ ...styles.card, marginTop:0, padding:20 }}>
-                <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>ACCOUNT</div>
-                <div style={{ color:"#fff", fontSize:14 }}>demo@growthpilot.ai</div>
-              </div>
-
-              {/* Stats */}
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
-                <div style={{ ...styles.card, marginTop:0, padding:16 }}>
-                  <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>PROJECTS</div>
-                  <div style={{ color:"#ef4444", fontSize:28, fontWeight:800, marginTop:8 }}>{projects.length}</div>
-                </div>
-                <div style={{ ...styles.card, marginTop:0, padding:16 }}>
-                  <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>POSTS</div>
-                  <div style={{ color:"#22c55e", fontSize:28, fontWeight:800, marginTop:8 }}>{stats.posts}</div>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div style={{ ...styles.card, marginTop:0, padding:20, display:"flex", flexDirection:"column", gap:10 }}>
-                <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:4 }}>ACCOUNT SETTINGS</div>
-                <button style={{ ...styles.button, margin:0, alignSelf:"flex-start" }} onClick={() => { const pass = prompt("Enter new password"); if(pass) alert("Password updated"); }}>CHANGE PASSWORD</button>
-                <button style={{ ...styles.button, margin:0, alignSelf:"flex-start" }} onClick={changeEmail}>CHANGE EMAIL ADDRESS</button>
-                <button style={{ ...styles.buttonDanger, margin:0, alignSelf:"flex-start" }} onClick={deleteAccount}>DELETE ACCOUNT</button>
-              </div>
-
-            </div>
-
-            {/* Colonne droite — activité */}
-            <div style={{ ...styles.card, marginTop:0, display:"flex", flexDirection:"column", gap:12 }}>
-              <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px" }}>ACCOUNT ACTIVITY</h3>
-              {[
-                { action:"Account created", time:"Today", color:"#22c55e" },
-                { action:"Brand memory saved", time:"Today", color:"#3b82f6" },
-                { action:"First post generated", time:"Today", color:"#f59e0b" },
-                { action:"Plan upgraded to PREMIUM", time:"Today", color:"#f59e0b" },
-              ].map((a,i)=>(
-                <div key={i} style={{ borderBottom:"1px solid rgba(220,38,38,0.08)", paddingBottom:12 }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
-                    <span style={{ color:a.color, fontSize:12, fontWeight:700 }}>●</span>
-                    <span style={{ color:"#475569", fontSize:11 }}>{a.time}</span>
+              {/* Plan badge */}
+              <div style={{ ...styles.card, marginTop:0, padding:16, borderLeft:"3px solid #f59e0b", marginBottom:8 }}>
+                <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px", marginBottom:6 }}>CURRENT PLAN</div>
+                <div style={{ color:"#f59e0b", fontSize:18, fontWeight:900, letterSpacing:"1px" }}>⚡ PREMIUM</div>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginTop:12 }}>
+                  <div style={{ textAlign:"center" }}>
+                    <div style={{ color:"#ef4444", fontSize:20, fontWeight:800 }}>{projects.length}</div>
+                    <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px" }}>PROJECTS</div>
                   </div>
-                  <p style={{ color:"#94a3b8", fontSize:13 }}>{a.action}</p>
+                  <div style={{ textAlign:"center" }}>
+                    <div style={{ color:"#22c55e", fontSize:20, fontWeight:800 }}>{stats.posts}</div>
+                    <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px" }}>POSTS</div>
+                  </div>
                 </div>
-              ))}
-
-              <div style={{ marginTop:"auto", padding:"16px 0", borderTop:"1px solid rgba(220,38,38,0.1)" }}>
-                <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>WORKSPACE</div>
-                <div style={{ color:"#ef4444", fontSize:16, fontWeight:800 }}>{workspace || "PERSONAL"}</div>
               </div>
+
+              {/* Menu navigation */}
+              {[
+                { key:"account", icon:"👤", label:"Account Info" },
+                { key:"password", icon:"🔐", label:"Change Password" },
+                { key:"email", icon:"✉️", label:"Change Email" },
+                { key:"danger", icon:"⚠️", label:"Danger Zone" },
+              ].map(s => (
+                <button
+                  key={s.key}
+                  style={{ padding:"12px 16px", borderRadius:8, background: profileSection === s.key ? "rgba(220,38,38,0.1)" : "transparent", border:"none", borderLeft: profileSection === s.key ? "3px solid #ef4444" : "3px solid transparent", color: profileSection === s.key ? "#ef4444" : "#64748b", fontWeight:700, fontSize:13, cursor:"pointer", textAlign:"left", display:"flex", alignItems:"center", gap:10 }}
+                  onClick={() => { setProfileSection(s.key); setProfileMsg({ type:"", text:"" }); }}
+                >
+                  <span>{s.icon}</span> {s.label}
+                </button>
+              ))}
             </div>
 
+            {/* Colonne droite — contenu */}
+            <div style={{ ...styles.card, marginTop:0, padding:32, overflowY:"auto" }}>
+
+              {/* Message feedback */}
+              {profileMsg.text && (
+                <div style={{ padding:"12px 16px", borderRadius:8, marginBottom:20, background: profileMsg.type === "success" ? "rgba(34,197,94,0.1)" : "rgba(220,38,38,0.1)", border:`1px solid ${profileMsg.type === "success" ? "rgba(34,197,94,0.3)" : "rgba(220,38,38,0.3)"}`, color: profileMsg.type === "success" ? "#22c55e" : "#ef4444", fontSize:13, fontWeight:600 }}>
+                  {profileMsg.text}
+                </div>
+              )}
+
+              {/* Account Info */}
+              {profileSection === "account" && (
+                <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
+                  <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>Account Information</h2>
+                  <div style={{ display:"grid", gap:16 }}>
+                    {[
+                      { label:"Email", value: token ? JSON.parse(atob(token.split(".")[1])).email : "—" },
+                      { label:"Member since", value:"May 2026" },
+                      { label:"Workspace", value: workspace || "PERSONAL" },
+                      { label:"Plan", value:"PREMIUM" },
+                    ].map(({ label, value }) => (
+                      <div key={label} style={{ padding:"16px 20px", background:"#0f172a", borderRadius:10, border:"1px solid rgba(220,38,38,0.15)", borderLeft:"3px solid rgba(220,38,38,0.4)" }}>
+                        <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:6 }}>{label.toUpperCase()}</div>
+                        <div style={{ color:"#fff", fontSize:14, fontWeight:600 }}>{value}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Change Password */}
+              {profileSection === "password" && (
+                <div style={{ display:"flex", flexDirection:"column", gap:20, maxWidth:480 }}>
+                  <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>Change Password</h2>
+                  <p style={{ color:"#64748b", fontSize:13, margin:0 }}>Your password must be at least 8 characters long.</p>
+                  {[
+                    { label:"Current Password", value:currentPassword, setter:setCurrentPassword },
+                    { label:"New Password", value:newPassword, setter:setNewPassword },
+                    { label:"Confirm New Password", value:confirmPassword, setter:setConfirmPassword },
+                  ].map(({ label, value, setter }) => (
+                    <div key={label}>
+                      <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>{label.toUpperCase()}</div>
+                      <input
+                        type="password"
+                        value={value}
+                        onChange={e => setter(e.target.value)}
+                        placeholder={`Enter ${label.toLowerCase()}`}
+                        style={{ ...styles.input, maxWidth:"100%", marginBottom:0 }}
+                      />
+                    </div>
+                  ))}
+                  <button
+                    style={{ ...styles.button, margin:0, opacity: profileLoading ? 0.6 : 1 }}
+                    onClick={changePassword}
+                    disabled={profileLoading}
+                  >
+                    {profileLoading ? "Updating..." : "🔐 UPDATE PASSWORD"}
+                  </button>
+                </div>
+              )}
+
+              {/* Change Email */}
+              {profileSection === "email" && (
+                <div style={{ display:"flex", flexDirection:"column", gap:20, maxWidth:480 }}>
+                  <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>Change Email Address</h2>
+                  <p style={{ color:"#64748b", fontSize:13, margin:0 }}>Enter your new email address below.</p>
+                  <div>
+                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>CURRENT EMAIL</div>
+                    <div style={{ padding:"14px 18px", background:"#0f172a", borderRadius:10, border:"1px solid rgba(220,38,38,0.15)", color:"#94a3b8", fontSize:14 }}>
+                      {token ? JSON.parse(atob(token.split(".")[1])).email : "—"}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>NEW EMAIL ADDRESS</div>
+                    <input
+                      type="email"
+                      value={newEmail}
+                      onChange={e => setNewEmail(e.target.value)}
+                      placeholder="Enter new email address"
+                      style={{ ...styles.input, maxWidth:"100%", marginBottom:0 }}
+                    />
+                  </div>
+                  <button
+                    style={{ ...styles.button, margin:0, opacity: profileLoading ? 0.6 : 1 }}
+                    onClick={changeEmailAddress}
+                    disabled={profileLoading}
+                  >
+                    {profileLoading ? "Updating..." : "✉️ UPDATE EMAIL"}
+                  </button>
+                </div>
+              )}
+
+              {/* Danger Zone */}
+              {profileSection === "danger" && (
+                <div style={{ display:"flex", flexDirection:"column", gap:20, maxWidth:480 }}>
+                  <h2 style={{ color:"#ef4444", fontSize:18, fontWeight:800, margin:0 }}>⚠️ Danger Zone</h2>
+                  <p style={{ color:"#64748b", fontSize:13, margin:0 }}>These actions are irreversible. Please proceed with caution.</p>
+                  <div style={{ padding:24, border:"1px solid rgba(220,38,38,0.3)", borderRadius:12, background:"rgba(220,38,38,0.05)" }}>
+                    <div style={{ color:"#fff", fontWeight:700, marginBottom:8 }}>Delete Account</div>
+                    <div style={{ color:"#64748b", fontSize:13, marginBottom:16 }}>Permanently delete your account and all associated data. This action cannot be undone.</div>
+                    <button
+                      style={{ ...styles.buttonDanger, margin:0 }}
+                      onClick={() => { if(window.confirm("Are you sure? This action is irreversible.")) deleteAccount(); }}
+                    >
+                      🗑️ DELETE MY ACCOUNT
+                    </button>
+                  </div>
+                </div>
+              )}
+
+            </div>
           </div>
         </>
         )}
