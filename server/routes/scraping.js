@@ -38,22 +38,45 @@ const LANG_CONFIG = {
 // ─── Source 1 : Hacker News ───────────────────────────────────────────────────
 async function fetchHackerNews(niche, lang = "en") {
   try {
-    const res = await fetch("https://hacker-news.firebaseio.com/v0/topstories.json");
+    const res = await fetch("https://hacker-news.firebaseio.com/v0/topstories.json", {
+      signal: AbortSignal.timeout(8000),
+    });
     const ids = await res.json();
-    const top = ids.slice(0, 20);
+    const top = ids.slice(0, 30); // Élargir à 30 pour avoir plus de chances
 
     const stories = await Promise.all(
       top.map(id =>
-        fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`)
+        fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`, {
+          signal: AbortSignal.timeout(5000),
+        })
           .then(r => r.json())
           .catch(() => null)
       )
     );
 
     const keywords = NICHE_KEYWORDS[niche] || NICHE_KEYWORDS.tech;
-    return stories
-      .filter(s => s && s.title && s.score > 50)
-      .filter(s => keywords.some(k => s.title.toLowerCase().includes(k.toLowerCase())))
+
+    // Mots-clés élargis par niche pour mieux matcher les titres HN
+    const NICHE_BROAD = {
+      ai:         ["ai", "gpt", "llm", "model", "openai", "anthropic", "gemini", "neural", "ml", "deepmind"],
+      saas:       ["saas", "startup", "launch", "product", "b2b", "api", "revenue", "mrr", "arr", "indie"],
+      marketing:  ["marketing", "growth", "seo", "content", "viral", "brand", "audience", "traffic"],
+      finance:    ["crypto", "bitcoin", "finance", "invest", "stock", "market", "bank", "funding", "vc"],
+      leadership: ["founder", "ceo", "leadership", "team", "hire", "culture", "remote", "productivity"],
+      tech:       ["software", "dev", "code", "open source", "github", "web", "app", "platform", "tool"],
+    };
+    const broadKeys = NICHE_BROAD[niche] || NICHE_BROAD.tech;
+
+    const filtered = stories
+      .filter(s => s && s.title && s.score >= 10) // Seuil abaissé à 10
+      .filter(s => {
+        const titleLow = s.title.toLowerCase();
+        return (
+          keywords.some(k => titleLow.includes(k.toLowerCase())) ||
+          broadKeys.some(k => titleLow.includes(k))
+        );
+      })
+      .sort((a, b) => b.score - a.score)
       .slice(0, 5)
       .map(s => ({
         source: "Hacker News",
@@ -63,12 +86,32 @@ async function fetchHackerNews(niche, lang = "en") {
         engagement: s.descendants || 0,
         icon: "🟠",
       }));
-  } catch {
+
+    // Si toujours vide, retourner les top stories sans filtre niche
+    if (!filtered.length) {
+      return stories
+        .filter(s => s && s.title && s.score >= 50)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 3)
+        .map(s => ({
+          source: "Hacker News",
+          title: s.title,
+          url: s.url || `https://news.ycombinator.com/item?id=${s.id}`,
+          score: s.score,
+          engagement: s.descendants || 0,
+          icon: "🟠",
+        }));
+    }
+
+    return filtered;
+  } catch (e) {
+    console.warn("HackerNews error:", e.message);
     return [];
   }
 }
 
 // ─── Source 2 : Reddit ────────────────────────────────────────────────────────
+// Reddit bloque les IPs datacenter → on utilise old.reddit.com + fallback DEV.to
 const NICHE_SUBREDDITS = {
   en: {
     ai:         ["artificial", "MachineLearning", "ChatGPT", "LocalLLaMA"],
@@ -120,79 +163,129 @@ const NICHE_SUBREDDITS = {
   },
 };
 
+// DEV.to API — tags par niche (fallback si Reddit bloqué)
+const DEVTO_TAGS = {
+  ai:         "ai,machinelearning,llm",
+  saas:       "startup,saas,indiehackers",
+  marketing:  "marketing,seo,growth",
+  finance:    "fintech,blockchain,investing",
+  leadership: "productivity,career,entrepreneurship",
+  tech:       "webdev,javascript,programming",
+};
+
 async function fetchReddit(niche, lang = "en") {
-  try {
-    const langSubs = NICHE_SUBREDDITS[lang] || NICHE_SUBREDDITS.en;
-    const subreddits = langSubs[niche] || langSubs.tech;
-    const results = [];
+  const langSubs = NICHE_SUBREDDITS[lang] || NICHE_SUBREDDITS.en;
+  const subreddits = langSubs[niche] || langSubs.tech;
+  const results = [];
 
-    for (const sub of subreddits.slice(0, 2)) {
-      try {
-        // Délai court pour éviter le rate limit Reddit
-        await new Promise(r => setTimeout(r, 300));
-
-        const res = await fetch(
-          `https://www.reddit.com/r/${sub}/top.json?limit=10&t=day&raw_json=1`,
-          {
-            headers: {
-              // User-Agent conforme aux règles Reddit API
-              "User-Agent": "GrowthPILOT/1.0 (web app; contact: contact@aigrowthpilot.app)",
-              "Accept": "application/json",
-            },
-            // Timeout 8s
-            signal: AbortSignal.timeout(8000),
-          }
-        );
-
-        // Reddit retourne 429 si rate limité, 403 si bloqué
-        if (res.status === 429) {
-          console.warn(`Reddit rate limit on r/${sub}`);
-          continue;
+  // Tentative Reddit
+  for (const sub of subreddits.slice(0, 2)) {
+    try {
+      await new Promise(r => setTimeout(r, 300));
+      const res = await fetch(
+        `https://www.reddit.com/r/${sub}/top.json?limit=10&t=day&raw_json=1`,
+        {
+          headers: {
+            "User-Agent": "GrowthPILOT/1.0 (web app; contact@aigrowthpilot.app)",
+            "Accept": "application/json",
+          },
+          signal: AbortSignal.timeout(8000),
         }
-        if (!res.ok) continue;
-
-        const data = await res.json();
-        const posts = (data?.data?.children || [])
-          .filter(p => p.data && !p.data.stickied && p.data.score > 10)
-          .slice(0, 3)
-          .map(p => ({
-            source: `Reddit r/${sub}`,
-            title: p.data.title,
-            url: `https://reddit.com${p.data.permalink}`,
-            score: p.data.score,
-            engagement: p.data.num_comments || 0,
-            icon: "🔴",
-          }));
-        results.push(...posts);
-      } catch (e) {
-        console.warn(`Reddit r/${sub} error:`, e.message);
-        continue;
-      }
-    }
-    return results.slice(0, 5);
-  } catch {
-    return [];
+      );
+      if (!res.ok) continue;
+      const data = await res.json();
+      const posts = (data?.data?.children || [])
+        .filter(p => p.data && !p.data.stickied && p.data.score > 10)
+        .slice(0, 3)
+        .map(p => ({
+          source: `Reddit r/${sub}`,
+          title: p.data.title,
+          url: `https://reddit.com${p.data.permalink}`,
+          score: p.data.score,
+          engagement: p.data.num_comments || 0,
+          icon: "🔴",
+        }));
+      results.push(...posts);
+    } catch { continue; }
   }
+
+  // Si Reddit est bloqué → fallback DEV.to (API publique, pas de clé requise)
+  if (!results.length) {
+    try {
+      const tags = DEVTO_TAGS[niche] || DEVTO_TAGS.tech;
+      const firstTag = tags.split(",")[0];
+      const res = await fetch(
+        `https://dev.to/api/articles?tag=${firstTag}&per_page=5&top=1`,
+        {
+          headers: { "Accept": "application/json" },
+          signal: AbortSignal.timeout(8000),
+        }
+      );
+      if (res.ok) {
+        const articles = await res.json();
+        return (articles || []).slice(0, 5).map(a => ({
+          source: "DEV.to",
+          title: a.title,
+          url: a.url,
+          score: a.positive_reactions_count || 0,
+          engagement: a.comments_count || 0,
+          icon: "👩‍💻",
+        }));
+      }
+    } catch (e) {
+      console.warn("DEV.to fallback error:", e.message);
+    }
+  }
+
+  return results.slice(0, 5);
 }
 
-// ─── Source 3 : NewsAPI ───────────────────────────────────────────────────────
+// ─── Source 3 : NewsAPI + fallback GNews ─────────────────────────────────────
 async function fetchNews(niche, lang = "en") {
-  try {
-    const keywords = NICHE_KEYWORDS[niche] || NICHE_KEYWORDS.tech;
-    const query = keywords.slice(0, 3).join(" OR ");
-    const newsLang = LANG_CONFIG[lang]?.newsApi || "en";
+  const keywords = NICHE_KEYWORDS[niche] || NICHE_KEYWORDS.tech;
+  const query = keywords.slice(0, 2).join(" OR ");
+  const newsLang = LANG_CONFIG[lang]?.newsApi || "en";
 
+  // Tentative NewsAPI
+  try {
     const res = await fetch(
       `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=popularity&pageSize=5&language=${newsLang}`,
-      { headers: { "X-Api-Key": process.env.NEWS_API_KEY } }
+      {
+        headers: { "X-Api-Key": process.env.NEWS_API_KEY },
+        signal: AbortSignal.timeout(8000),
+      }
     );
     const data = await res.json();
+    if (data.status === "ok" && data.articles?.length) {
+      return data.articles
+        .filter(a => a.title && a.url && !a.title.includes("[Removed]"))
+        .slice(0, 5)
+        .map(a => ({
+          source: a.source?.name || "News",
+          title: a.title,
+          url: a.url,
+          score: 0,
+          engagement: 0,
+          publishedAt: a.publishedAt,
+          icon: "📰",
+        }));
+    }
+    console.warn("NewsAPI:", data.message || data.code || "empty");
+  } catch (e) {
+    console.warn("NewsAPI error:", e.message);
+  }
 
-    return (data?.articles || [])
-      .filter(a => a.title && a.url)
-      .slice(0, 5)
-      .map(a => ({
-        source: a.source?.name || "News",
+  // Fallback : GNews API (gratuit, 100 req/jour, pas de clé nécessaire pour les bases)
+  try {
+    const gnewsLang = newsLang === "en" ? "en" : newsLang;
+    const res = await fetch(
+      `https://gnews.io/api/v4/search?q=${encodeURIComponent(keywords[0])}&lang=${gnewsLang}&max=5&apikey=${process.env.GNEWS_API_KEY || ""}`,
+      { signal: AbortSignal.timeout(8000) }
+    );
+    const data = await res.json();
+    if (data.articles?.length) {
+      return data.articles.slice(0, 5).map(a => ({
+        source: a.source?.name || "GNews",
         title: a.title,
         url: a.url,
         score: 0,
@@ -200,9 +293,29 @@ async function fetchNews(niche, lang = "en") {
         publishedAt: a.publishedAt,
         icon: "📰",
       }));
-  } catch {
-    return [];
-  }
+    }
+  } catch {}
+
+  // Fallback final : Currents API (gratuit)
+  try {
+    const res = await fetch(
+      `https://api.currentsapi.services/v1/search?keywords=${encodeURIComponent(keywords[0])}&language=${newsLang}&apiKey=${process.env.CURRENTS_API_KEY || ""}`,
+      { signal: AbortSignal.timeout(8000) }
+    );
+    const data = await res.json();
+    if (data.news?.length) {
+      return data.news.slice(0, 5).map(a => ({
+        source: "Currents",
+        title: a.title,
+        url: a.url,
+        score: 0,
+        engagement: 0,
+        icon: "📰",
+      }));
+    }
+  } catch {}
+
+  return [];
 }
 
 // ─── Source 4 : YouTube Trending ──────────────────────────────────────────────
@@ -245,64 +358,65 @@ async function fetchYouTube(niche, lang = "en") {
 
 // ─── Source 5 : Product Hunt ──────────────────────────────────────────────────
 async function fetchProductHunt() {
-  // Méthode 1 : via rss2json (plus simple)
-  const tryRss2json = async () => {
+  // Méthode 1 : rss2json avec l'URL correcte
+  try {
     const res = await fetch(
-      "https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fwww.producthunt.com%2Ffeed&count=5",
+      "https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fwww.producthunt.com%2Ffeed&count=5&api_key=",
       {
         headers: { "Accept": "application/json" },
         signal: AbortSignal.timeout(8000),
       }
     );
     const data = await res.json();
-    if (data.status !== "ok" || !data.items?.length) throw new Error("rss2json failed");
-    return data.items;
-  };
-
-  // Méthode 2 : fetch direct du feed RSS Product Hunt + parsing XML minimal
-  const tryDirectFeed = async () => {
-    const res = await fetch("https://www.producthunt.com/feed", {
-      headers: {
-        "User-Agent": "GrowthPILOT/1.0 (contact@aigrowthpilot.app)",
-        "Accept": "application/rss+xml, application/xml, text/xml",
-      },
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!res.ok) throw new Error(`PH feed HTTP ${res.status}`);
-    const xml = await res.text();
-
-    // Parsing XML minimal sans lib externe
-    const items = [];
-    const itemMatches = xml.matchAll(/<item>([\s\S]*?)<\/item>/g);
-    for (const match of itemMatches) {
-      const block = match[1];
-      const title = block.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/)?.[1]
-                 || block.match(/<title>(.*?)<\/title>/)?.[1] || "";
-      const link  = block.match(/<link>(.*?)<\/link>/)?.[1]
-                 || block.match(/<guid>(.*?)<\/guid>/)?.[1] || "";
-      const pubDate = block.match(/<pubDate>(.*?)<\/pubDate>/)?.[1] || "";
-      if (title && link) items.push({ title, link, pubDate });
-      if (items.length >= 5) break;
-    }
-    if (!items.length) throw new Error("No items parsed");
-    return items;
-  };
-
-  try {
-    let items;
-    try {
-      items = await tryRss2json();
-      return items.slice(0, 5).map(item => ({
+    if (data.status === "ok" && data.items?.length) {
+      return data.items.slice(0, 5).map(item => ({
         source: "Product Hunt",
         title: item.title,
-        url: item.link,
+        url: item.link || item.guid,
         score: 0,
         engagement: 0,
         publishedAt: item.pubDate,
         icon: "🚀",
       }));
-    } catch {
-      items = await tryDirectFeed();
+    }
+  } catch {}
+
+  // Méthode 2 : fetch direct + parsing XML robuste (gère CDATA et encodages)
+  try {
+    const res = await fetch("https://www.producthunt.com/feed", {
+      headers: {
+        "User-Agent": "GrowthPILOT/1.0 (contact@aigrowthpilot.app)",
+        "Accept": "application/rss+xml, application/xml, text/xml, */*",
+      },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const xml = await res.text();
+
+    const items = [];
+    // Regex robuste : gère CDATA, encodages HTML, espaces
+    const itemRx = /<item[^>]*>([\s\S]*?)<\/item>/gi;
+    let match;
+    while ((match = itemRx.exec(xml)) !== null && items.length < 5) {
+      const block = match[1];
+      // Title : CDATA ou texte brut
+      const title = (
+        block.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/i)?.[1] ||
+        block.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || ""
+      ).trim();
+      // Link : balise link ou guid isPermaLink
+      const link = (
+        block.match(/<link>([\s\S]*?)<\/link>/i)?.[1] ||
+        block.match(/<guid[^>]*>(https?:\/\/[^\s<]+)<\/guid>/i)?.[1] || ""
+      ).trim();
+      const pubDate = block.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/i)?.[1]?.trim() || "";
+
+      if (title && link) {
+        items.push({ title, link, pubDate });
+      }
+    }
+
+    if (items.length) {
       return items.map(item => ({
         source: "Product Hunt",
         title: item.title,
@@ -314,9 +428,38 @@ async function fetchProductHunt() {
       }));
     }
   } catch (e) {
-    console.warn("Product Hunt fetch failed:", e.message);
-    return [];
+    console.warn("Product Hunt direct feed error:", e.message);
   }
+
+  // Méthode 3 : API GraphQL Product Hunt (sans auth, données publiques limitées)
+  try {
+    const res = await fetch("https://api.producthunt.com/v2/api/graphql", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.PRODUCT_HUNT_TOKEN || ""}`,
+      },
+      body: JSON.stringify({
+        query: `{ posts(first: 5, order: VOTES) { edges { node { name tagline url votesCount } } } }`,
+      }),
+      signal: AbortSignal.timeout(8000),
+    });
+    const data = await res.json();
+    const posts = data?.data?.posts?.edges || [];
+    if (posts.length) {
+      return posts.map(({ node }) => ({
+        source: "Product Hunt",
+        title: `${node.name} — ${node.tagline}`,
+        url: node.url,
+        score: node.votesCount || 0,
+        engagement: 0,
+        icon: "🚀",
+      }));
+    }
+  } catch {}
+
+  console.warn("Product Hunt: toutes les méthodes ont échoué");
+  return [];
 }
 
 // ─── Source 6 : Wikipedia Trending ───────────────────────────────────────────
@@ -375,7 +518,6 @@ async function fetchGitHub(niche, lang = "en") {
 }
 
 // ─── Source 8 : RSS Feeds ─────────────────────────────────────────────────────
-// Tous ces feeds sont vérifiés actifs en 2025
 const RSS_FEEDS = {
   ai:         "https://techcrunch.com/category/artificial-intelligence/feed/",
   saas:       "https://techcrunch.com/category/startups/feed/",
@@ -385,55 +527,81 @@ const RSS_FEEDS = {
   tech:       "https://feeds.arstechnica.com/arstechnica/index",
 };
 
-// Feeds de secours si le principal échoue
 const RSS_FALLBACKS = {
   ai:         "https://www.theverge.com/ai-artificial-intelligence/rss/index.xml",
-  saas:       "https://www.indiehackers.com/feed.rss",
+  saas:       "https://news.ycombinator.com/rss",
   marketing:  "https://moz.com/blog/feed",
-  finance:    "https://feeds.bloomberg.com/markets/news.rss",
-  leadership: "https://feeds.feedburner.com/entrepreneur/latest",
+  finance:    "https://news.ycombinator.com/rss",
+  leadership: "https://news.ycombinator.com/rss",
   tech:       "https://www.wired.com/feed/rss",
 };
 
-async function fetchRSS(niche) {
-  const tryFeed = async (feedUrl) => {
-    const res = await fetch(
-      `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}&count=5`,
-      {
-        headers: { "Accept": "application/json" },
-        signal: AbortSignal.timeout(8000),
-      }
-    );
-    const data = await res.json();
-    if (data.status !== "ok" || !data.items?.length) throw new Error("Feed empty");
-    return data;
-  };
+// Parse RSS/Atom XML sans dépendance externe
+function parseRSSXML(xml, feedTitle) {
+  const items = [];
+  const itemRx = /<(?:item|entry)[^>]*>([\s\S]*?)<\/(?:item|entry)>/gi;
+  let match;
+  while ((match = itemRx.exec(xml)) !== null && items.length < 5) {
+    const block = match[1];
+    const title = (
+      block.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/i)?.[1] ||
+      block.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || ""
+    ).trim().replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
 
-  try {
-    const feedUrl = RSS_FEEDS[niche] || RSS_FEEDS.tech;
-    let data;
+    const link = (
+      block.match(/<link rel="alternate"[^>]*href="([^"]+)"/i)?.[1] ||
+      block.match(/<link>([\s\S]*?)<\/link>/i)?.[1] ||
+      block.match(/<link[^>]*href="([^"]+)"/i)?.[1] || ""
+    ).trim();
 
-    try {
-      data = await tryFeed(feedUrl);
-    } catch {
-      // Tentative avec le feed de secours
-      const fallback = RSS_FALLBACKS[niche] || RSS_FALLBACKS.tech;
-      data = await tryFeed(fallback);
-    }
+    const pubDate = (
+      block.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/i)?.[1] ||
+      block.match(/<published[^>]*>([\s\S]*?)<\/published>/i)?.[1] || ""
+    ).trim();
 
-    return (data?.items || []).slice(0, 5).map(item => ({
-      source: data?.feed?.title || "RSS",
-      title: item.title,
-      url: item.link,
-      score: 0,
-      engagement: 0,
-      publishedAt: item.pubDate,
-      icon: "📡",
-    }));
-  } catch (e) {
-    console.warn("RSS fetch failed:", e.message);
-    return [];
+    if (title && link) items.push({ title, link, pubDate });
   }
+  return items;
+}
+
+async function fetchRSSFeed(url) {
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent": "GrowthPILOT/1.0 (contact@aigrowthpilot.app)",
+      "Accept": "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
+    },
+    signal: AbortSignal.timeout(8000),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const xml = await res.text();
+  const feedTitle = xml.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/i)?.[1]
+                 || xml.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || "RSS";
+  const items = parseRSSXML(xml, feedTitle);
+  if (!items.length) throw new Error("No items parsed");
+  return { feedTitle: feedTitle.trim(), items };
+}
+
+async function fetchRSS(niche) {
+  const primary = RSS_FEEDS[niche] || RSS_FEEDS.tech;
+  const fallback = RSS_FALLBACKS[niche] || RSS_FALLBACKS.tech;
+
+  for (const url of [primary, fallback]) {
+    try {
+      const { feedTitle, items } = await fetchRSSFeed(url);
+      return items.map(item => ({
+        source: feedTitle,
+        title: item.title,
+        url: item.link,
+        score: 0,
+        engagement: 0,
+        publishedAt: item.pubDate,
+        icon: "📡",
+      }));
+    } catch (e) {
+      console.warn(`RSS ${url} failed:`, e.message);
+    }
+  }
+  return [];
 }
 
 // ─── GET /scraping/trends ──────────────────────────────────────────────────────
