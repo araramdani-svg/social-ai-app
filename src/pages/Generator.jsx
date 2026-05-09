@@ -985,15 +985,15 @@ setTimeout(() => {
               }}
             >
               {[
-                ["create",    tr(trendsLang, "subtitles.create")],
+                ["create",    tr(trendsLang, "ui.qlCreate")],
                 ["dashboard", tr(trendsLang, "ui.qlDashboard")],
-                ["memory",    tr(trendsLang, "subtitles.memory")],
-                ["scheduler", tr(trendsLang, "subtitles.scheduler")],
-                ["autopost",  tr(trendsLang, "subtitles.autopost")],
-                ["analyze",   tr(trendsLang, "subtitles.analyze")],
-                ["planner",   tr(trendsLang, "subtitles.planner")],
-                ["publish",   tr(trendsLang, "subtitles.publish")],
-                ["team",      tr(trendsLang, "subtitles.team")]
+                ["memory",    tr(trendsLang, "ui.qlMemory")],
+                ["scheduler", tr(trendsLang, "ui.qlScheduler")],
+                ["autopost",  tr(trendsLang, "ui.qlAutopost")],
+                ["analyze",   tr(trendsLang, "ui.qlAnalyze")],
+                ["planner",   tr(trendsLang, "ui.qlPlanner")],
+                ["publish",   tr(trendsLang, "ui.qlPublish")],
+                ["team",      tr(trendsLang, "ui.qlTeam")]
               ].map(([key, desc]) => (
                 <motion.div
                   key={key}
@@ -1043,12 +1043,11 @@ setTimeout(() => {
                   letterSpacing: "1.5px"
                 }}
               >
-                READY FOR DEPLOYMENT
+                {tr(trendsLang, "ui.readyDeployment")}
               </h2>
 
               <p style={{ marginTop: 15 }}>
                 {tr(trendsLang, "ui.createOptimize")}
-                through a single high-performance command center.
               </p>
 
               <button
@@ -1057,7 +1056,7 @@ setTimeout(() => {
                 }}
                 onClick={() => setTab("create")}
               >
-                START MISSION
+                {tr(trendsLang, "ui.startMission")}
               </button>
             </div>
           </div>
@@ -1082,11 +1081,11 @@ setTimeout(() => {
               }}
             >
               {[
-                [tr(trendsLang, "ui.statPosts"),     animatedStats.posts],
-                [tr(trendsLang, "ui.statProjects"),  animatedStats.projects],
+                [tr(trendsLang, "ui.statPosts"), animatedStats.posts],
+                [tr(trendsLang, "ui.statProjects"), animatedStats.projects],
                 [tr(trendsLang, "ui.statPublished"), animatedStats.published],
-                [tr(trendsLang, "ui.statAvgScore"),  animatedStats.avgScore],
-                [tr(trendsLang, "ui.statStreak"),    animatedStats.streak]
+                [tr(trendsLang, "ui.statAvgScore"), animatedStats.avgScore],
+                [tr(trendsLang, "ui.statStreak"), animatedStats.streak]
               ].map(([label, value], i) => (
                 <motion.div
                   key={i}
@@ -1290,14 +1289,7 @@ setTimeout(() => {
                       ))}
                     </div>
                     <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-                      {[
-                        [tr(trendsLang,"ui.tplViral"),     "viral"],
-                        [tr(trendsLang,"ui.tplAuthority"), "authority"],
-                        [tr(trendsLang,"ui.tplStory"),     "story"],
-                        [tr(trendsLang,"ui.tplHook"),      "hook"],
-                        [tr(trendsLang,"ui.tplShort"),     "short"],
-                        [tr(trendsLang,"ui.tplCta"),       "cta"],
-                      ].map(([label,mode])=>(
+                      {[[tr(trendsLang,"ui.tplViral"),"viral"],[tr(trendsLang,"ui.tplAuthority"),"authority"],[tr(trendsLang,"ui.tplStory"),"story"],[tr(trendsLang,"ui.tplHook"),"hook"],[tr(trendsLang,"ui.tplShort"),"short"],[tr(trendsLang,"ui.tplCta"),"cta"]].map(([label,mode])=>(
                         <button key={label} style={{ ...styles.buttonSecondary, margin:0, fontSize:12, padding:"10px 14px" }} onClick={()=>rewrite(mode)}>{label}</button>
                       ))}
                     </div>
@@ -1319,8 +1311,8 @@ setTimeout(() => {
                   {[
                     [tr(trendsLang, "ui.bestProject"), insights.bestProject, "#ef4444"],
                     [tr(trendsLang, "ui.topPlatform"), insights.topPlatform, "#3b82f6"],
-                    [tr(trendsLang, "ui.cadence"),     insights.cadence,     "#f59e0b"],
-                    [tr(trendsLang, "ui.statAvgScore"), "87",                "#22c55e"],
+                    [tr(trendsLang, "ui.cadence"), insights.cadence, "#f59e0b"],
+                    [tr(trendsLang, "ui.statAvgScore"), "87", "#22c55e"],
                   ].map(([label,val,color])=>(
                     <div key={label} style={{ ...styles.card, marginTop:0, padding:16 }}>
                       <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>{label}</div>
@@ -1401,7 +1393,7 @@ setTimeout(() => {
                     <div style={{ color:"#ef4444", fontSize:28, fontWeight:800, marginTop:8 }}>{history.length}</div>
                   </div>
                   <div style={{ ...styles.card, marginTop:0, padding:16 }}>
-                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>{tr(trendsLang, "profile.projects")}</div>
+                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>PROJECTS</div>
                     <div style={{ color:"#22c55e", fontSize:28, fontWeight:800, marginTop:8 }}>{projects.length}</div>
                   </div>
                 </div>
@@ -1438,7 +1430,7 @@ setTimeout(() => {
 
               {/* Plan badge */}
               <div style={{ ...styles.card, marginTop:0, padding:16, borderLeft:`3px solid ${getPlanColor(userPlan.plan)}`, marginBottom:8 }}>
-                <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px", marginBottom:6 }}>CURRENT PLAN</div>
+                <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px", marginBottom:6 }}>{tr(trendsLang, "profile.currentPlan")}</div>
                 <div style={{ color: getPlanColor(userPlan.plan), fontSize:18, fontWeight:900, letterSpacing:"1px" }}>{getPlanIcon(userPlan.plan)} {userPlan.plan.toUpperCase()}{userPlan.interval ? ` · ${userPlan.interval}` : ""}</div>
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginTop:12 }}>
                   <div style={{ textAlign:"center" }}>
@@ -1454,10 +1446,10 @@ setTimeout(() => {
 
               {/* Menu navigation */}
               {[
-                { key:"account", icon:"👤", label:"Account Info" },
-                { key:"password", icon:"🔐", label:"Change Password" },
-                { key:"email", icon:"✉️", label:"Change Email" },
-                { key:"danger", icon:"⚠️", label:"Danger Zone" },
+                { key:"account", icon:"👤", label: tr(trendsLang, "profile.menuAccount") },
+                { key:"password", icon:"🔐", label: tr(trendsLang, "profile.menuPassword") },
+                { key:"email", icon:"✉️", label: tr(trendsLang, "profile.menuEmail") },
+                { key:"danger", icon:"⚠️", label: tr(trendsLang, "profile.menuDanger") },
               ].map(s => (
                 <button
                   key={s.key}
@@ -1482,13 +1474,13 @@ setTimeout(() => {
               {/* Account Info */}
               {profileSection === "account" && (
                 <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
-                  <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>Account Information</h2>
+                  <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>{tr(trendsLang, "profile.accountTitle")}</h2>
                   <div style={{ display:"grid", gap:16 }}>
                     {[
-                      { label:"Email", value: token && token !== "guest" ? (() => { try { return JSON.parse(atob(token.split(".")[1])).email; } catch { return "—"; } })() : "—" },
-                      { label:"Member since", value:"May 2026" },
-                      { label:"Workspace", value: workspace || "PERSONAL" },
-                      { label:"Plan", value:`${userPlan.plan}${userPlan.interval ? " · " + userPlan.interval : ""}` },
+                      { label: tr(trendsLang, "profile.fieldEmail"), value: token && token !== "guest" ? (() => { try { return JSON.parse(atob(token.split(".")[1])).email; } catch { return "—"; } })() : "—" },
+                      { label: tr(trendsLang, "profile.fieldMember"), value:"May 2026" },
+                      { label: tr(trendsLang, "profile.fieldWorkspace"), value: workspace || "PERSONAL" },
+                      { label: tr(trendsLang, "profile.fieldPlan"), value:`${userPlan.plan}${userPlan.interval ? " · " + userPlan.interval : ""}` },
                     ].map(({ label, value }) => (
                       <div key={label} style={{ padding:"16px 20px", background:"#0f172a", borderRadius:10, border:"1px solid rgba(220,38,38,0.15)", borderLeft:"3px solid rgba(220,38,38,0.4)" }}>
                         <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:6 }}>{label.toUpperCase()}</div>
@@ -1502,12 +1494,12 @@ setTimeout(() => {
               {/* Change Password */}
               {profileSection === "password" && (
                 <div style={{ display:"flex", flexDirection:"column", gap:20, maxWidth:480 }}>
-                  <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>Change Password</h2>
-                  <p style={{ color:"#64748b", fontSize:13, margin:0 }}>Your password must be at least 8 characters long.</p>
+                  <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>{tr(trendsLang, "profile.passwordTitle")}</h2>
+                  <p style={{ color:"#64748b", fontSize:13, margin:0 }}>{tr(trendsLang, "profile.passwordHint")}</p>
                   {[
-                    { label:"Current Password", value:currentPassword, setter:setCurrentPassword },
-                    { label:"New Password", value:newPassword, setter:setNewPassword },
-                    { label:"Confirm New Password", value:confirmPassword, setter:setConfirmPassword },
+                    { label: tr(trendsLang, "profile.labelCurrentPw"), value:currentPassword, setter:setCurrentPassword },
+                    { label: tr(trendsLang, "profile.labelNewPw"), value:newPassword, setter:setNewPassword },
+                    { label: tr(trendsLang, "profile.labelConfirmPw"), value:confirmPassword, setter:setConfirmPassword },
                   ].map(({ label, value, setter }) => (
                     <div key={label}>
                       <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>{label.toUpperCase()}</div>
@@ -1525,7 +1517,7 @@ setTimeout(() => {
                     onClick={changePassword}
                     disabled={profileLoading}
                   >
-                    {profileLoading ? "Updating..." : "🔐 UPDATE PASSWORD"}
+                    {profileLoading ? tr(trendsLang, "profile.updating") : tr(trendsLang, "profile.updatePassword")}
                   </button>
                 </div>
               )}
@@ -1533,21 +1525,21 @@ setTimeout(() => {
               {/* Change Email */}
               {profileSection === "email" && (
                 <div style={{ display:"flex", flexDirection:"column", gap:20, maxWidth:480 }}>
-                  <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>Change Email Address</h2>
-                  <p style={{ color:"#64748b", fontSize:13, margin:0 }}>Enter your new email address below.</p>
+                  <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>{tr(trendsLang, "profile.emailTitle")}</h2>
+                  <p style={{ color:"#64748b", fontSize:13, margin:0 }}>{tr(trendsLang, "profile.emailHint")}</p>
                   <div>
-                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>CURRENT EMAIL</div>
+                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>{tr(trendsLang, "profile.labelCurrentEmail").toUpperCase()}</div>
                     <div style={{ padding:"14px 18px", background:"#0f172a", borderRadius:10, border:"1px solid rgba(220,38,38,0.15)", color:"#94a3b8", fontSize:14 }}>
                       {token && token !== "guest" ? (() => { try { return JSON.parse(atob(token.split(".")[1])).email; } catch { return "—"; } })() : "—"}
                     </div>
                   </div>
                   <div>
-                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>NEW EMAIL ADDRESS</div>
+                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>{tr(trendsLang, "profile.labelNewEmail").toUpperCase()}</div>
                     <input
                       type="email"
                       value={newEmail}
                       onChange={e => setNewEmail(e.target.value)}
-                      placeholder="Enter new email address"
+                      placeholder={tr(trendsLang, "profile.labelNewEmail")}
                       style={{ ...styles.input, maxWidth:"100%", marginBottom:0 }}
                     />
                   </div>
@@ -1556,7 +1548,7 @@ setTimeout(() => {
                     onClick={changeEmailAddress}
                     disabled={profileLoading}
                   >
-                    {profileLoading ? "Updating..." : "✉️ UPDATE EMAIL"}
+                    {profileLoading ? tr(trendsLang, "profile.updating") : tr(trendsLang, "profile.updateEmail")}
                   </button>
                 </div>
               )}
@@ -1564,7 +1556,7 @@ setTimeout(() => {
               {/* Danger Zone */}
               {profileSection === "danger" && (
                 <div style={{ display:"flex", flexDirection:"column", gap:20, maxWidth:480 }}>
-                  <h2 style={{ color:"#ef4444", fontSize:18, fontWeight:800, margin:0 }}>⚠️ {tr(trendsLang, "profile.dangerTitle")}</h2>
+                  <h2 style={{ color:"#ef4444", fontSize:18, fontWeight:800, margin:0 }}>{`⚠️ ${tr(trendsLang, "profile.dangerTitle")}`}</h2>
                   <p style={{ color:"#64748b", fontSize:13, margin:0 }}>{tr(trendsLang, "ui.dangerWarning")}</p>
                   <div style={{ padding:24, border:"1px solid rgba(220,38,38,0.3)", borderRadius:12, background:"rgba(220,38,38,0.05)" }}>
                     <div style={{ color:"#fff", fontWeight:700, marginBottom:8 }}>{tr(trendsLang, "ui.deleteAccountLabel")}</div>
@@ -1590,10 +1582,10 @@ setTimeout(() => {
 
               {/* Colonne gauche — formulaire */}
               <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                <input style={styles.input} placeholder={tr(trendsLang, "ui.phNiche")}       value={memory.niche}        onChange={(e)=>setMemory({...memory,niche:e.target.value})} />
-                <input style={styles.input} placeholder={tr(trendsLang, "ui.phAudience")}    value={memory.audience}     onChange={(e)=>setMemory({...memory,audience:e.target.value})} />
-                <input style={styles.input} placeholder={tr(trendsLang, "ui.phTone")}        value={memory.tone}         onChange={(e)=>setMemory({...memory,tone:e.target.value})} />
-                <input style={styles.input} placeholder={tr(trendsLang, "ui.phCta")}         value={memory.cta}          onChange={(e)=>setMemory({...memory,cta:e.target.value})} />
+                <input style={styles.input} placeholder={tr(trendsLang, "ui.phNiche")} value={memory.niche} onChange={(e)=>setMemory({...memory,niche:e.target.value})} />
+                <input style={styles.input} placeholder={tr(trendsLang, "ui.phAudience")} value={memory.audience} onChange={(e)=>setMemory({...memory,audience:e.target.value})} />
+                <input style={styles.input} placeholder={tr(trendsLang, "ui.phTone")} value={memory.tone} onChange={(e)=>setMemory({...memory,tone:e.target.value})} />
+                <input style={styles.input} placeholder={tr(trendsLang, "ui.phCta")} value={memory.cta} onChange={(e)=>setMemory({...memory,cta:e.target.value})} />
                 <input style={styles.input} placeholder={tr(trendsLang, "ui.phBannedWords")} value={memory.banned_words} onChange={(e)=>setMemory({...memory,banned_words:e.target.value})} />
                 <button style={{ ...styles.button, margin:0, alignSelf:"flex-start" }} onClick={saveBrandMemory}>{tr(trendsLang, "ui.saveMemory")}</button>
               </div>
@@ -1602,10 +1594,10 @@ setTimeout(() => {
               <div style={{ ...styles.card, marginTop:0, display:"flex", flexDirection:"column", gap:16 }}>
                 <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.brandIntelligence")}</h3>
                 {[
-                  [tr(trendsLang, "ui.memNiche"),       memory.niche],
-                  [tr(trendsLang, "ui.memAudience"),    memory.audience],
-                  [tr(trendsLang, "ui.memTone"),        memory.tone],
-                  [tr(trendsLang, "ui.memCta"),         memory.cta],
+                  [tr(trendsLang, "ui.memNiche"), memory.niche],
+                  [tr(trendsLang, "ui.memAudience"), memory.audience],
+                  [tr(trendsLang, "ui.memTone"), memory.tone],
+                  [tr(trendsLang, "ui.memCta"), memory.cta],
                   [tr(trendsLang, "ui.memBannedWords"), memory.banned_words],
                 ].map(([label, value]) => (
                   <div key={label} style={{ borderBottom:"1px solid rgba(220,38,38,0.1)", paddingBottom:12 }}>
@@ -1629,11 +1621,11 @@ setTimeout(() => {
               marginBottom:10
             }}>
               {[
-                [tr(trendsLang,"ui.scoreLabel"),       analysis?.score || 87],
-                [tr(trendsLang,"ui.hookLabel"),        analysis?.hookScore || 82],
-                [tr(trendsLang,"ui.viralityLabel"),    analysis?.viralScore || 79],
-                [tr(trendsLang,"ui.clarityLabel"),     analysis?.clarityScore || 91],
-                [tr(trendsLang,"ui.ctaLabel"),         analysis?.ctaScore || 76],
+                [tr(trendsLang,"ui.scoreLabel"), analysis?.score || 87],
+                [tr(trendsLang,"ui.hookLabel"), analysis?.hookScore || 82],
+                [tr(trendsLang,"ui.viralityLabel"), analysis?.viralScore || 79],
+                [tr(trendsLang,"ui.clarityLabel"), analysis?.clarityScore || 91],
+                [tr(trendsLang,"ui.ctaLabel"), analysis?.ctaScore || 76],
                 [tr(trendsLang,"ui.readabilityLabel"), analysis?.readability || 88]
               ].map(([label,value],i)=>(
                 <div
@@ -1764,11 +1756,11 @@ setTimeout(() => {
                 {/* Stats rapides */}
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginTop:16 }}>
                   <div style={{ ...styles.card, marginTop:0, padding:16 }}>
-                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.scheduled")}</div>
+                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>SCHEDULED</div>
                     <div style={{ color:"#ef4444", fontSize:28, fontWeight:800, marginTop:8 }}>{scheduledPosts.length}</div>
                   </div>
                   <div style={{ ...styles.card, marginTop:0, padding:16 }}>
-                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.published")}</div>
+                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>PUBLISHED</div>
                     <div style={{ color:"#22c55e", fontSize:28, fontWeight:800, marginTop:8 }}>{publishLog.length}</div>
                   </div>
                 </div>
@@ -1784,7 +1776,7 @@ setTimeout(() => {
                   <div key={i} style={{ borderBottom:"1px solid rgba(220,38,38,0.1)", paddingBottom:12 }}>
                     <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
                       <span style={{ color:"#ef4444", fontSize:12, fontWeight:700 }}>{s.date} · {s.time}</span>
-                      <span style={{ color:"#22c55e", fontSize:11, fontWeight:700 }}>{tr(trendsLang, "ui.scheduled")}</span>
+                      <span style={{ color:"#22c55e", fontSize:11, fontWeight:700 }}>SCHEDULED</span>
                     </div>
                     <p style={{ color:"#94a3b8", fontSize:13 }}>{s.content}</p>
                   </div>
@@ -1818,11 +1810,11 @@ setTimeout(() => {
 
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginTop:8 }}>
                   <div style={{ ...styles.card, marginTop:0, padding:16 }}>
-                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.queued")}</div>
+                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>QUEUED</div>
                     <div style={{ color:"#ef4444", fontSize:28, fontWeight:800, marginTop:8 }}>{autoPosts.length}</div>
                   </div>
                   <div style={{ ...styles.card, marginTop:0, padding:16 }}>
-                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.published")}</div>
+                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>PUBLISHED</div>
                     <div style={{ color:"#22c55e", fontSize:28, fontWeight:800, marginTop:8 }}>{publishLog.length}</div>
                   </div>
                 </div>
@@ -1866,7 +1858,7 @@ setTimeout(() => {
                     <div style={{ color:"#ef4444", fontSize:28, fontWeight:800, marginTop:8 }}>{planner.length}</div>
                   </div>
                   <div style={{ ...styles.card, marginTop:0, padding:16 }}>
-                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.scheduled")}</div>
+                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>SCHEDULED</div>
                     <div style={{ color:"#22c55e", fontSize:28, fontWeight:800, marginTop:8 }}>{scheduledPosts.length}</div>
                   </div>
                 </div>
@@ -1912,11 +1904,11 @@ setTimeout(() => {
 
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginTop:8 }}>
                   <div style={{ ...styles.card, marginTop:0, padding:16 }}>
-                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.published")}</div>
+                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>PUBLISHED</div>
                     <div style={{ color:"#22c55e", fontSize:28, fontWeight:800, marginTop:8 }}>{publishLog.length}</div>
                   </div>
                   <div style={{ ...styles.card, marginTop:0, padding:16 }}>
-                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.queued")}</div>
+                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>QUEUED</div>
                     <div style={{ color:"#ef4444", fontSize:28, fontWeight:800, marginTop:8 }}>{autoPosts.length}</div>
                   </div>
                 </div>
@@ -1940,7 +1932,7 @@ setTimeout(() => {
                   <div key={i} style={{ borderBottom:"1px solid rgba(220,38,38,0.1)", paddingBottom:12 }}>
                     <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
                       <span style={{ color:"#ef4444", fontSize:12, fontWeight:700 }}>{p.dest}</span>
-                      <span style={{ color:"#22c55e", fontSize:11, fontWeight:700 }}>{tr(trendsLang, "ui.published")}</span>
+                      <span style={{ color:"#22c55e", fontSize:11, fontWeight:700 }}>PUBLISHED</span>
                     </div>
                     <p style={{ color:"#475569", fontSize:11 }}>{p.date}</p>
                   </div>
@@ -1961,7 +1953,7 @@ setTimeout(() => {
                 {/* Stats */}
                 <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:10 }}>
                   {[
-                    [tr(trendsLang, "profile.projects"), projects.length, "#ef4444"],
+                    [tr(trendsLang, "ui.statProjects"), projects.length, "#ef4444"],
                     [tr(trendsLang, "ui.queued"), autoPosts.length, "#f59e0b"],
                     [tr(trendsLang, "ui.scheduled"), scheduledPosts.length, "#22c55e"],
                   ].map(([label, val, color])=>(
@@ -2031,12 +2023,12 @@ setTimeout(() => {
             {/* Niche selector */}
             <div style={{ display:"flex", gap:8, marginBottom:20, flexWrap:"wrap" }}>
               {[
-                { key:"ai",         label: tr(trendsLang, "ui.nicheAI") },
-                { key:"saas",       label: tr(trendsLang, "ui.nicheSaaS") },
-                { key:"marketing",  label: tr(trendsLang, "ui.nicheMarketing") },
-                { key:"finance",    label: tr(trendsLang, "ui.nicheFinance") },
+                { key:"ai", label: tr(trendsLang, "ui.nicheAI") },
+                { key:"saas", label: tr(trendsLang, "ui.nicheSaaS") },
+                { key:"marketing", label: tr(trendsLang, "ui.nicheMarketing") },
+                { key:"finance", label: tr(trendsLang, "ui.nicheFinance") },
                 { key:"leadership", label: tr(trendsLang, "ui.nicheLeadership") },
-                { key:"tech",       label: tr(trendsLang, "ui.nicheTech") },
+                { key:"tech", label: tr(trendsLang, "ui.nicheTech") },
               ].map(n => (
                 <button
                   key={n.key}
@@ -2154,7 +2146,7 @@ setTimeout(() => {
                         style={{ ...styles.buttonSecondary, margin:0 }}
                         onClick={disconnectLinkedin}
                       >
-                        {tr(trendsLang, "buttons.disconnect")}
+                        Disconnect
                       </button>
                     </div>
                     <p style={{ color:"#475569", fontSize:11, marginTop:10 }}>
@@ -2170,10 +2162,10 @@ setTimeout(() => {
 
               {/* Facebook / Instagram — coming soon */}
               {[
-                { name:"Facebook", icon:"f",  color:"#1877f2", sub: tr(trendsLang, "ui.subFacebook") },
+                { name:"Facebook", icon:"f", color:"#1877f2", sub: tr(trendsLang, "ui.subFacebook") },
                 { name:"Instagram", icon:"📸", color:"#e1306c", sub: tr(trendsLang, "ui.subInstagram") },
                 { name:"X (Twitter)", icon:"𝕏", color:"#1da1f2", sub: tr(trendsLang, "ui.subX") },
-                { name:"TikTok", icon:"🎵",   color:"#ff0050", sub: tr(trendsLang, "ui.subTikTok") },
+                { name:"TikTok", icon:"🎵", color:"#ff0050", sub: tr(trendsLang, "ui.subTikTok") },
               ].map((p) => (
                 <div key={p.name} style={{ ...styles.card, marginTop:0, opacity:0.5 }}>
                   <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
