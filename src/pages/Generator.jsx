@@ -895,7 +895,7 @@ setTimeout(() => {
               overflow: "hidden"
             }}
           >
-            {pageHeader("MISSION CONTROL", "Command every GrowthPilot capability")}
+            {pageHeader("home")}
 
             <div
               style={{
@@ -991,7 +991,7 @@ setTimeout(() => {
               gap: 18
             }}
           >
-            {pageHeader("DASHBOARD", "Your AI content command center")}
+            {pageHeader("dashboard")}
 
             {/* KPI */}
             <div
@@ -1159,7 +1159,7 @@ setTimeout(() => {
         )}
         {tab === "create" && (
           <>
-            {pageHeader("CREATE", "Generate strategic content at scale")}
+            {pageHeader("create")}
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, height:"calc(100vh - 160px)" }}>
 
               {/* Colonne gauche — formulaire */}
@@ -1223,7 +1223,7 @@ setTimeout(() => {
         )}
         {tab === "insights" && (
           <>
-            {pageHeader("INSIGHTS", "Performance intelligence and strategic recommendations")}
+            {pageHeader("insights")}
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, height:"calc(100vh - 160px)" }}>
 
               {/* Colonne gauche */}
@@ -1302,7 +1302,7 @@ setTimeout(() => {
         )}
         {tab === "history" && (
           <>
-            {pageHeader("HISTORY", "All your generated content")}
+            {pageHeader("history")}
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, height:"calc(100vh - 160px)" }}>
 
               {/* Colonne gauche — actions */}
@@ -1343,10 +1343,7 @@ setTimeout(() => {
         )}
         {tab==="profile" && (
         <>
-          {pageHeader(
-            "PROFILE",
-            "Manage your account and preferences"
-          )}
+          {pageHeader("profile")}
 
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, height:"calc(100vh - 160px)" }}>
 
@@ -1453,10 +1450,7 @@ setTimeout(() => {
         )}
         {tab==="analyze" && (
           <>
-            {pageHeader(
-              "CONTENT ANALYTICS",
-              "Measure and optimize performance"
-            )}
+            {pageHeader("content analytics")}
 
             <div style={{
               display:"grid",
@@ -1586,7 +1580,7 @@ setTimeout(() => {
         )}
         {tab==="scheduler" && (
           <>
-            {pageHeader("SCHEDULER", "Plan and automate your publishing flow")}
+            {pageHeader("scheduler")}
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, height:"calc(100vh - 160px)" }}>
 
               {/* Colonne gauche — formulaire */}
@@ -1632,7 +1626,7 @@ setTimeout(() => {
         )}
         {tab==="autopost" && (
           <>
-            {pageHeader("AUTOPOST", "Automated multi-platform distribution")}
+            {pageHeader("autopost")}
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, height:"calc(100vh - 160px)" }}>
 
               {/* Colonne gauche */}
@@ -1687,7 +1681,7 @@ setTimeout(() => {
         )}
         {tab==="planner" && (
           <>
-            {pageHeader("PLANNER", "30-day strategic content roadmap")}
+            {pageHeader("planner")}
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, height:"calc(100vh - 160px)" }}>
 
               {/* Colonne gauche — infos */}
@@ -1727,10 +1721,7 @@ setTimeout(() => {
         )}
         {tab==="publish" && (
           <>
-            {pageHeader(
-              "PUBLISH CENTER",
-              "Distribute across every platform"
-            )}
+            {pageHeader("publish center")}
 
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, height:"calc(100vh - 160px)" }}>
 
