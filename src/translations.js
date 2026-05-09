@@ -34,6 +34,8 @@ const translations = {
       integrations: "INTEGRATIONS",
       trends: "TRENDS",
       profile: "PROFILE",
+      "content analytics": "CONTENT ANALYTICS",
+      "publish center": "PUBLISH CENTER",
     },
     // Subtitles
     subtitles: {
@@ -52,6 +54,8 @@ const translations = {
       integrations: "Connect your social platforms",
       trends: "Real-time viral topics from 8 sources",
       profile: "Manage your account settings",
+      "content analytics": "Measure and optimize your content performance",
+      "publish center": "Publish your content across platforms",
     },
     profile: {
       currentPlan: "CURRENT PLAN",
@@ -205,6 +209,8 @@ const translations = {
       integrations: "INTÉGRATIONS",
       trends: "TENDANCES",
       profile: "PROFIL",
+      "content analytics": "ANALYSE DE CONTENU",
+      "publish center": "CENTRE DE PUBLICATION",
     },
     subtitles: {
       home: "Votre centre de commande de contenu IA",
@@ -222,6 +228,8 @@ const translations = {
       integrations: "Connectez vos réseaux sociaux",
       trends: "Sujets viraux en temps réel depuis 8 sources",
       profile: "Gérez les paramètres de votre compte",
+      "content analytics": "Mesurez et optimisez vos performances de contenu",
+      "publish center": "Publiez votre contenu sur toutes les plateformes",
     },
     profile: {
       currentPlan: "PLAN ACTUEL",
@@ -360,6 +368,8 @@ const translations = {
       analyze: "ANALIZAR", planner: "PLANIFICADOR", history: "HISTORIAL",
       publish: "PUBLICAR", team: "MODO EQUIPO", integrations: "INTEGRACIONES", trends: "TENDENCIAS",
       profile: "PERFIL",
+      "content analytics": "ANÁLISIS DE CONTENIDO",
+      "publish center": "CENTRO DE PUBLICACIÓN",
     },
     subtitles: {
       home: "Tu centro de comando de contenido IA", dashboard: "Sigue tu rendimiento de contenido",
@@ -370,6 +380,8 @@ const translations = {
       publish: "Publica en todas las plataformas", team: "Operaciones de contenido colaborativas",
       integrations: "Conecta tus redes sociales", trends: "Temas virales en tiempo real de 8 fuentes",
       profile: "Gestiona la configuración de tu cuenta",
+      "content analytics": "Mide y optimiza el rendimiento de tu contenido",
+      "publish center": "Publica tu contenido en todas las plataformas",
     },
     profile: {
       currentPlan: "PLAN ACTUAL",
@@ -455,6 +467,8 @@ const translations = {
       analyze: "ANALYSIEREN", planner: "PLANUNGSTOOL", history: "VERLAUF",
       publish: "VERÖFFENTLICHEN", team: "TEAM-MODUS", integrations: "INTEGRATIONEN", trends: "TRENDS",
       profile: "PROFIL",
+      "content analytics": "CONTENT-ANALYSE",
+      "publish center": "VERÖFFENTLICHUNGSZENTRUM",
     },
     subtitles: {
       home: "Ihr KI-Inhaltssteuerzentrum", dashboard: "Verfolgen Sie Ihre Content-Performance",
@@ -465,6 +479,8 @@ const translations = {
       publish: "Auf allen Plattformen veröffentlichen", team: "Kollaborative Content-Operationen",
       integrations: "Verbinden Sie Ihre sozialen Plattformen", trends: "Echtzeit-Viralthemen aus 8 Quellen",
       profile: "Verwalten Sie Ihre Kontoeinstellungen",
+      "content analytics": "Messen und optimieren Sie Ihre Content-Performance",
+      "publish center": "Veröffentlichen Sie Inhalte auf allen Plattformen",
     },
     profile: {
       currentPlan: "AKTUELLER PLAN",
@@ -550,6 +566,8 @@ const translations = {
       analyze: "ANALIZZA", planner: "PIANIFICATORE", history: "CRONOLOGIA",
       publish: "PUBBLICA", team: "MODALITÀ TEAM", integrations: "INTEGRAZIONI", trends: "TENDENZE",
       profile: "PROFILO",
+      "content analytics": "ANALISI DEI CONTENUTI",
+      "publish center": "CENTRO DI PUBBLICAZIONE",
     },
     subtitles: {
       home: "Il tuo centro di comando per i contenuti IA", dashboard: "Monitora le prestazioni dei tuoi contenuti",
@@ -560,6 +578,8 @@ const translations = {
       publish: "Pubblica su tutte le piattaforme", team: "Operazioni di contenuto collaborative",
       integrations: "Connetti le tue piattaforme social", trends: "Argomenti virali in tempo reale da 8 fonti",
       profile: "Gestisci le impostazioni del tuo account",
+      "content analytics": "Misura e ottimizza le prestazioni dei tuoi contenuti",
+      "publish center": "Pubblica i tuoi contenuti su tutte le piattaforme",
     },
     profile: {
       currentPlan: "PIANO ATTUALE",
@@ -645,6 +665,8 @@ const translations = {
       analyze: "ANALISAR", planner: "PLANEJADOR", history: "HISTÓRICO",
       publish: "PUBLICAR", team: "MODO EQUIPE", integrations: "INTEGRAÇÕES", trends: "TENDÊNCIAS",
       profile: "PERFIL",
+      "content analytics": "ANÁLISE DE CONTEÚDO",
+      "publish center": "CENTRO DE PUBLICAÇÃO",
     },
     subtitles: {
       home: "Seu centro de comando de conteúdo IA", dashboard: "Acompanhe o desempenho do seu conteúdo",
@@ -655,6 +677,8 @@ const translations = {
       publish: "Publique em todas as plataformas", team: "Operações de conteúdo colaborativas",
       integrations: "Conecte suas plataformas sociais", trends: "Tópicos virais em tempo real de 8 fontes",
       profile: "Gerencie as configurações da sua conta",
+      "content analytics": "Meça e otimize o desempenho do seu conteúdo",
+      "publish center": "Publique seu conteúdo em todas as plataformas",
     },
     profile: {
       currentPlan: "PLANO ATUAL",
