@@ -145,8 +145,6 @@ const growthData = [
   };
 
   // ─── Profile state ──────────────────────────────────────────────────────────
-  const [userPlan, setUserPlan] = useState(null);       // null = loading, "Free" | "Pro" | "Business"
-  const [userInterval, setUserInterval] = useState(null); // "month" | "year" | null
   const [profileSection, setProfileSection] = useState("account"); // account | password | email | danger
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -217,6 +215,30 @@ const growthData = [
 
   // LinkedIn state
   const [linkedinStatus, setLinkedinStatus] = useState({ connected: false, name: null });
+  const [userPlan, setUserPlan] = useState({ plan: "Free", interval: null });
+
+  useEffect(() => {
+    if (token && token !== "guest") {
+      fetch("https://social-ai-app-production.up.railway.app/stripe/status", {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(r => r.json())
+        .then(data => setUserPlan(data))
+        .catch(() => {});
+    }
+  }, [token]);
+
+  const getPlanColor = (plan) => {
+    if (plan === "Business") return "#a855f7";
+    if (plan === "Pro") return "#ef4444";
+    return "#475569";
+  };
+
+  const getPlanIcon = (plan) => {
+    if (plan === "Business") return "🏢";
+    if (plan === "Pro") return "⚡";
+    return "🆓";
+  };
   const [linkedinPosting, setLinkedinPosting] = useState(false);
 
   useEffect(() => {
@@ -224,15 +246,6 @@ const growthData = [
       fetch("https://social-ai-app-production.up.railway.app/linkedin/status", {
         headers: { Authorization: `Bearer ${token}` }
       }).then(r => r.json()).then(setLinkedinStatus).catch(() => {});
-
-      // ─── Fetch plan réel depuis Stripe ────────────────────────────────────
-      fetch("https://social-ai-app-production.up.railway.app/stripe/status", {
-        headers: { Authorization: `Bearer ${token}` }
-      }).then(r => r.json()).then(data => {
-        setUserPlan(data.plan || "Free");
-        setUserInterval(data.interval || null);
-      }).catch(() => { setUserPlan("Free"); setUserInterval(null); });
-    }
     }
     const params = new URLSearchParams(window.location.search);
     if (params.get("linkedin") === "connected") {
@@ -1417,11 +1430,9 @@ setTimeout(() => {
             <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
 
               {/* Plan badge */}
-              <div style={{ ...styles.card, marginTop:0, padding:16, borderLeft:`3px solid ${userPlan === "Free" ? "#64748b" : userPlan === "Business" ? "#8b5cf6" : "#f59e0b"}`, marginBottom:8 }}>
-                <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px", marginBottom:6 }}>{tr(trendsLang, "profile.currentPlan")}</div>
-                <div style={{ color: userPlan === "Free" ? "#64748b" : userPlan === "Business" ? "#8b5cf6" : "#f59e0b", fontSize:18, fontWeight:900, letterSpacing:"1px" }}>
-                  {userPlan === null ? "…" : userPlan === "Free" ? `🆓 ${tr(trendsLang, "profile.freePlan")}` : userPlan === "Business" ? `💎 ${userPlan}` : `⚡ ${userPlan}`}
-                </div>
+              <div style={{ ...styles.card, marginTop:0, padding:16, borderLeft:`3px solid ${getPlanColor(userPlan.plan)}`, marginBottom:8 }}>
+                <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px", marginBottom:6 }}>CURRENT PLAN</div>
+                <div style={{ color: getPlanColor(userPlan.plan), fontSize:18, fontWeight:900, letterSpacing:"1px" }}>{getPlanIcon(userPlan.plan)} {userPlan.plan.toUpperCase()}{userPlan.interval ? ` · ${userPlan.interval}` : ""}</div>
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginTop:12 }}>
                   <div style={{ textAlign:"center" }}>
                     <div style={{ color:"#ef4444", fontSize:20, fontWeight:800 }}>{projects.length}</div>
@@ -1436,10 +1447,10 @@ setTimeout(() => {
 
               {/* Menu navigation */}
               {[
-                { key:"account", icon:"👤", label: tr(trendsLang, "profile.menuAccount") },
-                { key:"password", icon:"🔐", label: tr(trendsLang, "profile.menuPassword") },
-                { key:"email", icon:"✉️", label: tr(trendsLang, "profile.menuEmail") },
-                { key:"danger", icon:"⚠️", label: tr(trendsLang, "profile.menuDanger") },
+                { key:"account", icon:"👤", label:"Account Info" },
+                { key:"password", icon:"🔐", label:"Change Password" },
+                { key:"email", icon:"✉️", label:"Change Email" },
+                { key:"danger", icon:"⚠️", label:"Danger Zone" },
               ].map(s => (
                 <button
                   key={s.key}
@@ -1464,14 +1475,13 @@ setTimeout(() => {
               {/* Account Info */}
               {profileSection === "account" && (
                 <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
-                  <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>{tr(trendsLang, "profile.accountTitle")}</h2>
+                  <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>Account Information</h2>
                   <div style={{ display:"grid", gap:16 }}>
                     {[
-                      { label: tr(trendsLang, "profile.fieldEmail"), value: token && token !== "guest" ? (() => { try { return JSON.parse(atob(token.split(".")[1])).email; } catch { return "—"; } })() : "—" },
-                      { label: tr(trendsLang, "profile.fieldMember"), value:"May 2026" },
-                      { label: tr(trendsLang, "profile.fieldWorkspace"), value: workspace || "PERSONAL" },
-                      { label: tr(trendsLang, "profile.fieldPlan"), value: userPlan === null ? "…" : userPlan },
-                      ...(userInterval ? [{ label: tr(trendsLang, "profile.fieldInterval"), value: userInterval === "year" ? tr(trendsLang, "profile.intervalYear") : tr(trendsLang, "profile.intervalMonth") }] : []),
+                      { label:"Email", value: token && token !== "guest" ? (() => { try { return JSON.parse(atob(token.split(".")[1])).email; } catch { return "—"; } })() : "—" },
+                      { label:"Member since", value:"May 2026" },
+                      { label:"Workspace", value: workspace || "PERSONAL" },
+                      { label:"Plan", value:`${userPlan.plan}${userPlan.interval ? " · " + userPlan.interval : ""}` },
                     ].map(({ label, value }) => (
                       <div key={label} style={{ padding:"16px 20px", background:"#0f172a", borderRadius:10, border:"1px solid rgba(220,38,38,0.15)", borderLeft:"3px solid rgba(220,38,38,0.4)" }}>
                         <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:6 }}>{label.toUpperCase()}</div>
@@ -1485,7 +1495,7 @@ setTimeout(() => {
               {/* Change Password */}
               {profileSection === "password" && (
                 <div style={{ display:"flex", flexDirection:"column", gap:20, maxWidth:480 }}>
-                  <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>{tr(trendsLang, "profile.passwordTitle")}</h2>
+                  <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>Change Password</h2>
                   <p style={{ color:"#64748b", fontSize:13, margin:0 }}>Your password must be at least 8 characters long.</p>
                   {[
                     { label:"Current Password", value:currentPassword, setter:setCurrentPassword },
@@ -1508,7 +1518,7 @@ setTimeout(() => {
                     onClick={changePassword}
                     disabled={profileLoading}
                   >
-                    {profileLoading ? tr(trendsLang, "profile.updating") : tr(trendsLang, "profile.updatePassword")}
+                    {profileLoading ? "Updating..." : "🔐 UPDATE PASSWORD"}
                   </button>
                 </div>
               )}
@@ -1516,7 +1526,7 @@ setTimeout(() => {
               {/* Change Email */}
               {profileSection === "email" && (
                 <div style={{ display:"flex", flexDirection:"column", gap:20, maxWidth:480 }}>
-                  <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>{tr(trendsLang, "profile.emailTitle")}</h2>
+                  <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>Change Email Address</h2>
                   <p style={{ color:"#64748b", fontSize:13, margin:0 }}>Enter your new email address below.</p>
                   <div>
                     <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>CURRENT EMAIL</div>
@@ -1539,7 +1549,7 @@ setTimeout(() => {
                     onClick={changeEmailAddress}
                     disabled={profileLoading}
                   >
-                    {profileLoading ? tr(trendsLang, "profile.updating") : tr(trendsLang, "profile.updateEmail")}
+                    {profileLoading ? "Updating..." : "✉️ UPDATE EMAIL"}
                   </button>
                 </div>
               )}
