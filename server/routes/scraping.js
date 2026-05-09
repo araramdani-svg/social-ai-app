@@ -270,7 +270,7 @@ async function fetchNews(niche, lang = "en") {
           icon: "📰",
         }));
     }
-    console.warn("NewsAPI:", data.message || data.code || "empty");
+    // NewsAPI vide → GNews prend le relais (normal si quota épuisé)
   } catch (e) {
     console.warn("NewsAPI error:", e.message);
   }
