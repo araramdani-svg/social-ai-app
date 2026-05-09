@@ -359,6 +359,7 @@ const translations = {
       memory: "MEMORIA DE MARCA", scheduler: "PROGRAMADOR", autopost: "AUTOPUBLICACIÓN",
       analyze: "ANALIZAR", planner: "PLANIFICADOR", history: "HISTORIAL",
       publish: "PUBLICAR", team: "MODO EQUIPO", integrations: "INTEGRACIONES", trends: "TENDENCIAS",
+      profile: "PERFIL",
     },
     subtitles: {
       home: "Tu centro de comando de contenido IA", dashboard: "Sigue tu rendimiento de contenido",
@@ -453,6 +454,7 @@ const translations = {
       memory: "MARKENGEDÄCHTNIS", scheduler: "PLANER", autopost: "AUTOVERÖFFENTLICHUNG",
       analyze: "ANALYSIEREN", planner: "PLANUNGSTOOL", history: "VERLAUF",
       publish: "VERÖFFENTLICHEN", team: "TEAM-MODUS", integrations: "INTEGRATIONEN", trends: "TRENDS",
+      profile: "PROFIL",
     },
     subtitles: {
       home: "Ihr KI-Inhaltssteuerzentrum", dashboard: "Verfolgen Sie Ihre Content-Performance",
@@ -547,6 +549,7 @@ const translations = {
       memory: "MEMORIA DEL BRAND", scheduler: "PIANIFICATORE", autopost: "AUTOPUBBLICAZIONE",
       analyze: "ANALIZZA", planner: "PIANIFICATORE", history: "CRONOLOGIA",
       publish: "PUBBLICA", team: "MODALITÀ TEAM", integrations: "INTEGRAZIONI", trends: "TENDENZE",
+      profile: "PROFILO",
     },
     subtitles: {
       home: "Il tuo centro di comando per i contenuti IA", dashboard: "Monitora le prestazioni dei tuoi contenuti",
@@ -641,6 +644,7 @@ const translations = {
       memory: "MEMÓRIA DA MARCA", scheduler: "AGENDADOR", autopost: "AUTOPUBLICAÇÃO",
       analyze: "ANALISAR", planner: "PLANEJADOR", history: "HISTÓRICO",
       publish: "PUBLICAR", team: "MODO EQUIPE", integrations: "INTEGRAÇÕES", trends: "TENDÊNCIAS",
+      profile: "PERFIL",
     },
     subtitles: {
       home: "Seu centro de comando de conteúdo IA", dashboard: "Acompanhe o desempenho do seu conteúdo",
