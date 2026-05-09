@@ -103,6 +103,10 @@ const translations = {
       trendsEmpty: "Select a niche and click REFRESH to load trends",
       nicheAI: "🤖 AI", nicheSaaS: "💼 SaaS", nicheMarketing: "📣 Marketing", nicheFinance: "💰 Finance", nicheLeadership: "🎯 Leadership", nicheTech: "⚡ Tech",
       subFacebook: "Pages & Groups", subInstagram: "Business account", subX: "Requires paid API", subTikTok: "Creator account",
+      phProjectTitle: "PROJECT TITLE", deleteBtn: "DELETE", generateBtn: "GENERATE", aiWriting: "AI WRITING...",
+      roadmap30: "30-DAY ROADMAP",
+      howToUseDesc: "Go to CREATE, generate a post, then click PLAN to auto-generate a 30-day content roadmap based on your topic.",
+      noContentGenerated: "No content generated yet. Go to CREATE to generate a post.",
     },
     // Buttons
     buttons: {
@@ -297,6 +301,10 @@ const translations = {
       trendsEmpty: "Sélectionnez une niche et cliquez sur ACTUALISER",
       nicheAI: "🤖 IA", nicheSaaS: "💼 SaaS", nicheMarketing: "📣 Marketing", nicheFinance: "💰 Finance", nicheLeadership: "🎯 Leadership", nicheTech: "⚡ Tech",
       subFacebook: "Pages & Groupes", subInstagram: "Compte Business", subX: "API payante requise", subTikTok: "Compte Créateur",
+      phProjectTitle: "TITRE DU PROJET", deleteBtn: "SUPPRIMER", generateBtn: "GÉNÉRER", aiWriting: "IA EN COURS...",
+      roadmap30: "FEUILLE DE ROUTE 30 JOURS",
+      howToUseDesc: "Allez dans CRÉER, générez un post, puis cliquez sur PLANIFIER pour créer une feuille de route de contenu sur 30 jours.",
+      noContentGenerated: "Aucun contenu généré. Allez dans CRÉER pour générer un post.",
     },
     buttons: {
       generate: "GÉNÉRER →",
@@ -469,6 +477,10 @@ const translations = {
       trendsEmpty: "Selecciona un nicho y haz clic en ACTUALIZAR",
       nicheAI: "🤖 IA", nicheSaaS: "💼 SaaS", nicheMarketing: "📣 Marketing", nicheFinance: "💰 Finanzas", nicheLeadership: "🎯 Liderazgo", nicheTech: "⚡ Tecnología",
       subFacebook: "Páginas y Grupos", subInstagram: "Cuenta Business", subX: "API de pago requerida", subTikTok: "Cuenta Creador",
+      phProjectTitle: "TÍTULO DEL PROYECTO", deleteBtn: "ELIMINAR", generateBtn: "GENERAR", aiWriting: "IA ESCRIBIENDO...",
+      roadmap30: "HOJA DE RUTA 30 DÍAS",
+      howToUseDesc: "Ve a CREAR, genera un post, luego haz clic en PLANIFICAR para crear una hoja de ruta de contenido de 30 días.",
+      noContentGenerated: "No hay contenido generado. Ve a CREAR para generar un post.",
     },
     buttons: {
       generate: "GENERAR →", save: "GUARDAR", draft: "BORRADOR", copy: "COPIAR",
@@ -588,6 +600,10 @@ const translations = {
       trendsEmpty: "Nische auswählen und AKTUALISIEREN klicken",
       nicheAI: "🤖 KI", nicheSaaS: "💼 SaaS", nicheMarketing: "📣 Marketing", nicheFinance: "💰 Finanzen", nicheLeadership: "🎯 Führung", nicheTech: "⚡ Technologie",
       subFacebook: "Seiten & Gruppen", subInstagram: "Business-Konto", subX: "Kostenpflichtige API erforderlich", subTikTok: "Creator-Konto",
+      phProjectTitle: "PROJEKTTITEL", deleteBtn: "LÖSCHEN", generateBtn: "GENERIEREN", aiWriting: "KI SCHREIBT...",
+      roadmap30: "30-TAGE-ROADMAP",
+      howToUseDesc: "Gehen Sie zu ERSTELLEN, generieren Sie einen Beitrag und klicken Sie auf PLANEN, um eine 30-Tage-Content-Roadmap zu erstellen.",
+      noContentGenerated: "Noch kein Inhalt generiert. Gehen Sie zu ERSTELLEN.",
     },
     buttons: {
       generate: "GENERIEREN →", save: "SPEICHERN", draft: "ENTWURF", copy: "KOPIEREN",
@@ -707,6 +723,10 @@ const translations = {
       trendsEmpty: "Seleziona una nicchia e clicca AGGIORNA",
       nicheAI: "🤖 IA", nicheSaaS: "💼 SaaS", nicheMarketing: "📣 Marketing", nicheFinance: "💰 Finanza", nicheLeadership: "🎯 Leadership", nicheTech: "⚡ Tecnologia",
       subFacebook: "Pagine e Gruppi", subInstagram: "Account Business", subX: "API a pagamento richiesta", subTikTok: "Account Creator",
+      phProjectTitle: "TITOLO PROGETTO", deleteBtn: "ELIMINA", generateBtn: "GENERA", aiWriting: "IA IN SCRITTURA...",
+      roadmap30: "ROADMAP 30 GIORNI",
+      howToUseDesc: "Vai su CREA, genera un post, poi clicca su PIANIFICA per creare una roadmap di contenuti di 30 giorni.",
+      noContentGenerated: "Nessun contenuto generato. Vai su CREA per generare un post.",
     },
     buttons: {
       generate: "GENERA →", save: "SALVA", draft: "BOZZA", copy: "COPIA",
@@ -826,6 +846,10 @@ const translations = {
       trendsEmpty: "Selecione um nicho e clique em ATUALIZAR",
       nicheAI: "🤖 IA", nicheSaaS: "💼 SaaS", nicheMarketing: "📣 Marketing", nicheFinance: "💰 Finanças", nicheLeadership: "🎯 Liderança", nicheTech: "⚡ Tecnologia",
       subFacebook: "Páginas e Grupos", subInstagram: "Conta Business", subX: "API paga necessária", subTikTok: "Conta Criador",
+      phProjectTitle: "TÍTULO DO PROJETO", deleteBtn: "EXCLUIR", generateBtn: "GERAR", aiWriting: "IA ESCREVENDO...",
+      roadmap30: "ROTEIRO 30 DIAS",
+      howToUseDesc: "Vá para CRIAR, gere um post, depois clique em PLANEJAR para criar um roteiro de conteúdo de 30 dias.",
+      noContentGenerated: "Nenhum conteúdo gerado. Vá para CRIAR para gerar um post.",
     },
     buttons: {
       generate: "GERAR →", save: "SALVAR", draft: "RASCUNHO", copy: "COPIAR",
