@@ -241,7 +241,7 @@ const growthData = [
   };
   const loadProjects = async () => {
     const data = await api("auth/projects", {}, "GET");
-    setProjects(Array.isArray(data) ? data : []);
+    setProjects(data || []);
     return data || [];
   };
 
@@ -1205,7 +1205,7 @@ setTimeout(() => {
                       <span>{postMetrics.readTime} min read</span>
                     </div>
                     <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-                      {[[{tr(trendsLang, "buttons.save")},savePost],[{tr(trendsLang, "buttons.draft")},saveDraft],[{tr(trendsLang, "buttons.copy")},copyPost],[{tr(trendsLang, "buttons.export")},exportPost],[{tr(trendsLang, "buttons.analyze")},analyze],[{tr(trendsLang, "buttons.plan")},generatePlanner]].map(([label,fn])=>(
+                      {[[tr(trendsLang, "buttons.save"),savePost],[tr(trendsLang, "buttons.draft"),saveDraft],[tr(trendsLang, "buttons.copy"),copyPost],[tr(trendsLang, "buttons.export"),exportPost],[tr(trendsLang, "buttons.analyze"),analyze],[tr(trendsLang, "buttons.plan"),generatePlanner]].map(([label,fn])=>(
                         <button key={label} style={{ ...styles.button, margin:0, fontSize:12, padding:"10px 14px" }} onClick={fn}>{label}</button>
                       ))}
                     </div>
@@ -1971,7 +1971,7 @@ setTimeout(() => {
                   <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:6 }}>
                     <div style={{ width:8, height:8, borderRadius:"50%", background: linkedinStatus.connected ? "#22c55e" : "#475569" }} />
                     <span style={{ color: linkedinStatus.connected ? "#22c55e" : "#475569", fontSize:11, fontWeight:700 }}>
-                      {linkedinStatus.connected ? {tr(trendsLang, "labels.connected")} : {tr(trendsLang, "labels.disconnected")}}
+                      {linkedinStatus.connected ? tr(trendsLang, "labels.connected") : tr(trendsLang, "labels.disconnected")}
                     </span>
                   </div>
                 </div>
