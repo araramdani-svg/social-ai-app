@@ -648,7 +648,9 @@ setTimeout(() => {
         topic,
         template,
         voice,
-        campaign
+        campaign,
+        project: selectedProject || null,
+        lang: trendsLang,
       });
 
       await new Promise(resolve => setTimeout(resolve, 2800));
@@ -682,28 +684,19 @@ setTimeout(() => {
 
   const rewrite = async (mode) => {
     if (!post) return;
-
     setLoading(true);
-
-    const prompts = {
-      viral: "viral",
-      authority: "authority",
-      story: "story",
-      short: "short",
-      hook: "hook",
-      cta: "cta"
-    };
-
-    const data = await api("generate", {
-      topic: `${prompts[mode]} rewrite:\n${post}`,
-      template,
-      voice,
-      campaign
-    });
-
-    if (data?.text) setPost(data.text);
-
-    setLoading(false);
+    try {
+      const data = await api("generate/rewrite", {
+        text: post,
+        mode,
+        lang: trendsLang,
+      });
+      if (data?.text) setPost(data.text);
+    } catch {
+      showToast("Rewrite failed");
+    } finally {
+      setLoading(false);
+    }
   };
   const deleteAccount = async () => {
     const confirmDelete = window.confirm(
@@ -1746,15 +1739,30 @@ setTimeout(() => {
                       "Strong structure. Improve emotional hook for higher engagement."}
                   </p>
 
+                  {analysis?.suggestion && (
+                    <p style={{ color:"#f59e0b", fontSize:13, marginTop:10, lineHeight:1.6 }}>
+                      💡 {analysis.suggestion}
+                    </p>
+                  )}
+
                   <div style={{
                     display:"flex",
                     gap:8,
                     marginTop:18,
                     flexWrap:"wrap"
                   }}>
-                    <span style={styles.feedbackGood}>{tr(trendsLang, "ui.hookStrong")}</span>
-                    <span style={styles.feedbackWarn}>{tr(trendsLang, "ui.ctaWeak")}</span>
-                    <span style={styles.feedbackGood}>{tr(trendsLang, "ui.readable")}</span>
+                    <span style={analysis?.hookStrength === "STRONG" ? styles.feedbackGood : analysis?.hookStrength === "WEAK" ? styles.feedbackBad : styles.feedbackWarn}>
+                      HOOK {analysis?.hookStrength || "—"}
+                    </span>
+                    <span style={analysis?.ctaStrength === "STRONG" ? styles.feedbackGood : analysis?.ctaStrength === "WEAK" ? styles.feedbackBad : styles.feedbackWarn}>
+                      CTA {analysis?.ctaStrength || "—"}
+                    </span>
+                    <span style={analysis?.estimatedReach === "VIRAL" || analysis?.estimatedReach === "HIGH" ? styles.feedbackGood : styles.feedbackWarn}>
+                      {analysis?.estimatedReach || "—"} REACH
+                    </span>
+                    {analysis?.bestPlatform && (
+                      <span style={styles.feedbackGood}>📍 {analysis.bestPlatform}</span>
+                    )}
                   </div>
                 </div>
 
@@ -2554,5 +2562,13 @@ const styles = {
     fontWeight:700,
     background:"rgba(245,158,11,0.12)",
     color:"#f59e0b"
+  },
+  feedbackBad:{
+    padding:"8px 14px",
+    borderRadius:999,
+    fontSize:11,
+    fontWeight:700,
+    background:"rgba(239,68,68,0.12)",
+    color:"#ef4444"
   },
   };
