@@ -65,7 +65,7 @@ const translations = {
       labelCurrentPw: "Current Password", labelNewPw: "New Password", labelConfirmPw: "Confirm New Password",
       emailTitle: "Change Email Address", emailHint: "Enter your new email address below.",
       labelCurrentEmail: "Current Email", labelNewEmail: "New Email Address",
-      dangerTitle: "Danger Zone", updatePassword: "🔐 UPDATE PASSWORD", updateEmail: "✉️ UPDATE EMAIL", updating: "Updating..."
+      dangerTitle: "Danger Zone", updatePassword: "🔐 UPDATE PASSWORD", updateEmail: "✉️ UPDATE EMAIL", updating: "Updating...",
       menuSubscription: "Subscription",
       upgradePro: "Upgrade to Pro",
       upgradeBusiness: "Upgrade to Business",
@@ -289,7 +289,7 @@ const translations = {
       labelCurrentPw: "Mot de passe actuel", labelNewPw: "Nouveau mot de passe", labelConfirmPw: "Confirmer le nouveau mot de passe",
       emailTitle: "Changer l'adresse email", emailHint: "Entrez votre nouvelle adresse email ci-dessous.",
       labelCurrentEmail: "Email actuel", labelNewEmail: "Nouvelle adresse email",
-      dangerTitle: "Zone de danger", updatePassword: "🔐 METTRE À JOUR LE MOT DE PASSE", updateEmail: "✉️ METTRE À JOUR L'EMAIL", updating: "Mise à jour..."
+      dangerTitle: "Zone de danger", updatePassword: "🔐 METTRE À JOUR LE MOT DE PASSE", updateEmail: "✉️ METTRE À JOUR L'EMAIL", updating: "Mise à jour...",
       menuSubscription: "Abonnement",
       upgradePro: "Passer au Pro",
       upgradeBusiness: "Passer au Business",
@@ -491,7 +491,7 @@ const translations = {
       labelCurrentPw: "Contraseña actual", labelNewPw: "Nueva contraseña", labelConfirmPw: "Confirmar nueva contraseña",
       emailTitle: "Cambiar dirección de email", emailHint: "Introduce tu nueva dirección de email abajo.",
       labelCurrentEmail: "Email actual", labelNewEmail: "Nueva dirección de email",
-      dangerTitle: "Zona de peligro", updatePassword: "🔐 ACTUALIZAR CONTRASEÑA", updateEmail: "✉️ ACTUALIZAR EMAIL", updating: "Actualizando..."
+      dangerTitle: "Zona de peligro", updatePassword: "🔐 ACTUALIZAR CONTRASEÑA", updateEmail: "✉️ ACTUALIZAR EMAIL", updating: "Actualizando...",
       menuSubscription: "Suscripción",
       upgradePro: "Actualizar a Pro",
       upgradeBusiness: "Actualizar a Business",
@@ -640,7 +640,7 @@ const translations = {
       labelCurrentPw: "Aktuelles Passwort", labelNewPw: "Neues Passwort", labelConfirmPw: "Neues Passwort bestätigen",
       emailTitle: "E-Mail-Adresse ändern", emailHint: "Geben Sie unten Ihre neue E-Mail-Adresse ein.",
       labelCurrentEmail: "Aktuelle E-Mail", labelNewEmail: "Neue E-Mail-Adresse",
-      dangerTitle: "Gefahrenzone", updatePassword: "🔐 PASSWORT AKTUALISIEREN", updateEmail: "✉️ E-MAIL AKTUALISIEREN", updating: "Wird aktualisiert..."
+      dangerTitle: "Gefahrenzone", updatePassword: "🔐 PASSWORT AKTUALISIEREN", updateEmail: "✉️ E-MAIL AKTUALISIEREN", updating: "Wird aktualisiert...",
       menuSubscription: "Abonnement",
       upgradePro: "Auf Pro upgraden",
       upgradeBusiness: "Auf Business upgraden",
@@ -789,7 +789,7 @@ const translations = {
       labelCurrentPw: "Password attuale", labelNewPw: "Nuova password", labelConfirmPw: "Conferma nuova password",
       emailTitle: "Cambia indirizzo email", emailHint: "Inserisci il tuo nuovo indirizzo email qui sotto.",
       labelCurrentEmail: "Email attuale", labelNewEmail: "Nuovo indirizzo email",
-      dangerTitle: "Zona pericolosa", updatePassword: "🔐 AGGIORNA PASSWORD", updateEmail: "✉️ AGGIORNA EMAIL", updating: "Aggiornamento..."
+      dangerTitle: "Zona pericolosa", updatePassword: "🔐 AGGIORNA PASSWORD", updateEmail: "✉️ AGGIORNA EMAIL", updating: "Aggiornamento...",
       menuSubscription: "Abbonamento",
       upgradePro: "Passa a Pro",
       upgradeBusiness: "Passa a Business",
@@ -938,7 +938,7 @@ const translations = {
       labelCurrentPw: "Senha atual", labelNewPw: "Nova senha", labelConfirmPw: "Confirmar nova senha",
       emailTitle: "Alterar endereço de email", emailHint: "Insira seu novo endereço de email abaixo.",
       labelCurrentEmail: "Email atual", labelNewEmail: "Novo endereço de email",
-      dangerTitle: "Zona de perigo", updatePassword: "🔐 ATUALIZAR SENHA", updateEmail: "✉️ ATUALIZAR EMAIL", updating: "Atualizando..."
+      dangerTitle: "Zona de perigo", updatePassword: "🔐 ATUALIZAR SENHA", updateEmail: "✉️ ATUALIZAR EMAIL", updating: "Atualizando...",
       menuSubscription: "Assinatura",
       upgradePro: "Atualizar para Pro",
       upgradeBusiness: "Atualizar para Business",
