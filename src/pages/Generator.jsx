@@ -1950,21 +1950,52 @@ setTimeout(() => {
               {/* Colonne gauche */}
               <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
                 <p style={{ color:"#64748b", fontSize:12, letterSpacing:"1px" }}>{tr(trendsLang, "ui.selectPlatform")}</p>
-                <div style={{ display:"flex", gap:10 }}>
-                  {["LINKEDIN","X","THREADS"].map(p=>(
-                    <button key={p} onClick={()=>setAutoPlatform(p)} style={{
+
+                {/* Plateformes avec API directe */}
+                <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+                  {[
+                    { id:"LINKEDIN", label:"LinkedIn", connected: linkedinStatus.connected },
+                  ].map(p=>(
+                    <button key={p.id} onClick={()=>setAutoPlatform(p.id)} style={{
                       ...styles.button, margin:0,
-                      background: autoPlatform===p ? "linear-gradient(135deg,#dc2626,#991b1b)" : "transparent",
-                      border: autoPlatform===p ? "none" : "1px solid rgba(220,38,38,0.3)",
-                      color: autoPlatform===p ? "#fff" : "#ef4444",
-                      boxShadow: autoPlatform===p ? "0 4px 16px rgba(220,38,38,0.35)" : "none"
-                    }}>{p}</button>
+                      background: autoPlatform===p.id ? "linear-gradient(135deg,#dc2626,#991b1b)" : "transparent",
+                      border: autoPlatform===p.id ? "none" : "1px solid rgba(220,38,38,0.3)",
+                      color: autoPlatform===p.id ? "#fff" : "#ef4444",
+                      boxShadow: autoPlatform===p.id ? "0 4px 16px rgba(220,38,38,0.35)" : "none",
+                      opacity: p.connected ? 1 : 0.5,
+                    }}>
+                      {p.label} {p.connected ? "✓" : "🔗"}
+                    </button>
                   ))}
                 </div>
 
-                <button style={{ ...styles.button, margin:0, alignSelf:"flex-start", marginTop:8 }} onClick={autoPublish}>{tr(trendsLang, "ui.queuePost")}</button>
+                <button style={{ ...styles.button, margin:0, alignSelf:"flex-start" }} onClick={autoPublish}>{tr(trendsLang, "ui.queuePost")}</button>
 
-                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginTop:8 }}>
+                {/* Copy & Post — autres plateformes */}
+                <div style={{ ...styles.card, marginTop:0, padding:16 }}>
+                  <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px", marginBottom:10 }}>COPY & POST</div>
+                  <p style={{ color:"#475569", fontSize:12, marginBottom:12, lineHeight:1.5 }}>{tr(trendsLang, "ui.copyPostDesc")}</p>
+                  <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                    {[
+                      { label:"Instagram", icon:"📸", url:"https://www.instagram.com" },
+                      { label:"Facebook", icon:"f", url:"https://www.facebook.com" },
+                      { label:"TikTok", icon:"🎵", url:"https://www.tiktok.com" },
+                      { label:"X (Twitter)", icon:"𝕏", url:"https://twitter.com/compose/tweet" },
+                    ].map(p=>(
+                      <button key={p.label} style={{ ...styles.buttonSecondary, margin:0, display:"flex", alignItems:"center", gap:8, justifyContent:"space-between" }}
+                        onClick={()=>{
+                          if(post) { navigator.clipboard.writeText(post); showToast(tr(trendsLang, "messages.copied")); }
+                          window.open(p.url, "_blank");
+                        }}
+                      >
+                        <span>{p.icon} {p.label}</span>
+                        <span style={{ fontSize:11, color:"#64748b" }}>Copy & Open →</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
                   <div style={{ ...styles.card, marginTop:0, padding:16 }}>
                     <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.queued")}</div>
                     <div style={{ color:"#ef4444", fontSize:28, fontWeight:800, marginTop:8 }}>{autoPosts.length}</div>
@@ -2046,9 +2077,18 @@ setTimeout(() => {
               {/* Colonne gauche */}
               <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
                 <p style={{ color:"#64748b", fontSize:12, letterSpacing:"1px" }}>{tr(trendsLang, "ui.selectPublish")}</p>
-                <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
-                  {["LINKEDIN","X","THREADS"].map(p=>(
-                    <button key={p} style={{ ...styles.button, margin:0 }} onClick={()=>publish(p)}>{p}</button>
+
+                {/* Plateformes avec API directe */}
+                <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+                  {[
+                    { id:"LINKEDIN", label:"LinkedIn", connected: linkedinStatus.connected },
+                  ].map(p=>(
+                    <button key={p.id} style={{
+                      ...styles.button, margin:0,
+                      opacity: p.connected ? 1 : 0.5,
+                    }} onClick={()=>publish(p.id)}>
+                      {p.label} {p.connected ? "✓" : "🔗"}
+                    </button>
                   ))}
                 </div>
 
@@ -2058,7 +2098,32 @@ setTimeout(() => {
                   </div>
                 )}
 
-                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginTop:8 }}>
+                {/* Copy & Post — autres plateformes */}
+                <div style={{ ...styles.card, marginTop:0, padding:16 }}>
+                  <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px", marginBottom:10 }}>COPY & POST</div>
+                  <p style={{ color:"#475569", fontSize:12, marginBottom:12, lineHeight:1.5 }}>{tr(trendsLang, "ui.copyPostDesc")}</p>
+                  <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                    {[
+                      { label:"Instagram", icon:"📸", url:"https://www.instagram.com" },
+                      { label:"Facebook", icon:"f", url:"https://www.facebook.com" },
+                      { label:"TikTok", icon:"🎵", url:"https://www.tiktok.com" },
+                      { label:"X (Twitter)", icon:"𝕏", url:"https://twitter.com/compose/tweet" },
+                      { label:"Threads", icon:"🧵", url:"https://www.threads.net" },
+                    ].map(p=>(
+                      <button key={p.label} style={{ ...styles.buttonSecondary, margin:0, display:"flex", alignItems:"center", gap:8, justifyContent:"space-between" }}
+                        onClick={()=>{
+                          if(post) { navigator.clipboard.writeText(post); showToast(tr(trendsLang, "messages.copied")); }
+                          window.open(p.url, "_blank");
+                        }}
+                      >
+                        <span>{p.icon} {p.label}</span>
+                        <span style={{ fontSize:11, color:"#64748b" }}>Copy & Open →</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
                   <div style={{ ...styles.card, marginTop:0, padding:16 }}>
                     <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.published")}</div>
                     <div style={{ color:"#22c55e", fontSize:28, fontWeight:800, marginTop:8 }}>{publishLog.length}</div>
