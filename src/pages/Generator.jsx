@@ -1265,28 +1265,71 @@ setTimeout(() => {
             {pageHeader("create")}
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, height:"calc(100vh - 160px)" }}>
 
-              {/* Colonne gauche — formulaire */}
-              <div style={{ overflowY:"auto", paddingRight:8, display:"flex", flexDirection:"column", gap:8 }}>
-                {saveStatus && <div style={styles.card}>{saveStatus}</div>}
-                <input style={styles.input} placeholder={tr(trendsLang, "ui.phProjectTitle")} value={projectTitle} onChange={(e) => setProjectTitle(e.target.value)} />
-                <input style={styles.input} placeholder={tr(trendsLang, "ui.phSearchProject")} value={searchProject} onChange={(e) => setSearchProject(e.target.value)} />
-                <select style={{ ...styles.input, maxWidth:"100%", width:"100%", boxSizing:"border-box" }} value={selectedProject} onChange={(e) => selectProject(e.target.value)}>
-                  <option value="">{tr(trendsLang, "ui.selectProject")}</option>
-                  {filteredProjects.map((p) => (
-                    <option key={p.name}>{p.name}</option>
-                  ))}
-                </select>
-                <input style={styles.input} placeholder={tr(trendsLang, "ui.phRenameProject")} value={renameValue} onChange={(e) => setRenameValue(e.target.value)} />
-                <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-                  <button style={{ ...styles.button, margin:0 }} onClick={renameProject}>{tr(trendsLang, "ui.rename")}</button>
-                  <button style={{ ...styles.button, margin:0 }} onClick={createProject}>{tr(trendsLang, "buttons.createProject")}</button>
-                  <button style={{ ...styles.button, margin:0 }} onClick={duplicateProject}>{tr(trendsLang, "ui.duplicate")}</button>
-                  <button style={{ ...styles.buttonDanger, margin:0 }} onClick={() => selectedProject && deleteProject(selectedProject)}>{tr(trendsLang, "buttons.deleteAccount").split(" ")[0].toUpperCase()}</button>
+              {/* Colonne gauche — formulaire épuré */}
+              <div style={{ overflowY:"auto", paddingRight:8, display:"flex", flexDirection:"column", gap:12 }}>
+                {saveStatus && <div style={{ ...styles.card, padding:"10px 14px", fontSize:13, color:"#22c55e" }}>{saveStatus}</div>}
+
+                {/* Bloc Projet */}
+                <div style={{ ...styles.card, marginTop:0, padding:16, display:"flex", flexDirection:"column", gap:10 }}>
+                  <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px", marginBottom:2 }}>PROJECT</div>
+
+                  {/* Recherche + Select fusionnés */}
+                  <input
+                    style={{ ...styles.input, marginBottom:0 }}
+                    placeholder={tr(trendsLang, "ui.phSearchProject")}
+                    value={searchProject}
+                    onChange={(e) => setSearchProject(e.target.value)}
+                  />
+                  <select
+                    style={{ ...styles.input, marginBottom:0, width:"100%", boxSizing:"border-box" }}
+                    value={selectedProject}
+                    onChange={(e) => selectProject(e.target.value)}
+                  >
+                    <option value="">{tr(trendsLang, "ui.selectProject")}</option>
+                    {filteredProjects.map((p) => (
+                      <option key={p.name}>{p.name}</option>
+                    ))}
+                  </select>
+
+                  {/* Actions projet sur une ligne */}
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
+                    <button style={{ ...styles.button, margin:0, fontSize:12, padding:"10px" }} onClick={createProject}>{tr(trendsLang, "buttons.createProject")}</button>
+                    <button style={{ ...styles.button, margin:0, fontSize:12, padding:"10px" }} onClick={duplicateProject}>{tr(trendsLang, "ui.duplicate")}</button>
+                  </div>
+
+                  {/* Renommer — seulement si projet sélectionné */}
+                  {selectedProject && (
+                    <div style={{ display:"flex", gap:6 }}>
+                      <input
+                        style={{ ...styles.input, marginBottom:0, flex:1 }}
+                        placeholder={tr(trendsLang, "ui.phRenameProject")}
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                      />
+                      <button style={{ ...styles.button, margin:0, fontSize:12, padding:"10px 14px" }} onClick={renameProject}>{tr(trendsLang, "ui.rename")}</button>
+                      <button style={{ ...styles.buttonDanger, margin:0, fontSize:12, padding:"10px 14px" }} onClick={() => deleteProject(selectedProject)}>✕</button>
+                    </div>
+                  )}
                 </div>
-                <input style={styles.input} placeholder={tr(trendsLang, "ui.phTopic")} value={topic} onChange={(e) => setTopic(e.target.value)} />
-                <button style={{ ...styles.button, margin:0, alignSelf:"flex-start" }} disabled={loading} onClick={generate}>
-                  {loading ? tr(trendsLang, "ui.aiWriting") : tr(trendsLang, "ui.generateBtn")}
-                </button>
+
+                {/* Bloc Génération */}
+                <div style={{ ...styles.card, marginTop:0, padding:16, display:"flex", flexDirection:"column", gap:10 }}>
+                  <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px", marginBottom:2 }}>GENERATE</div>
+                  <input
+                    style={{ ...styles.input, marginBottom:0 }}
+                    placeholder={tr(trendsLang, "ui.phTopic")}
+                    value={topic}
+                    onChange={(e) => setTopic(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && !loading && generate()}
+                  />
+                  <button
+                    style={{ ...styles.button, margin:0, width:"100%", opacity: loading ? 0.7 : 1 }}
+                    disabled={loading}
+                    onClick={generate}
+                  >
+                    {loading ? tr(trendsLang, "ui.aiWriting") : tr(trendsLang, "ui.generateBtn")}
+                  </button>
+                </div>
               </div>
 
               {/* Colonne droite — résultat */}
@@ -1653,20 +1696,43 @@ setTimeout(() => {
         {tab === "memory" && (
           <>
             {pageHeader("memory")}
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, height:"calc(100vh - 160px)" }}>
+
+            {/* Encart explicatif */}
+            <div style={{ background:"rgba(59,130,246,0.08)", border:"1px solid rgba(59,130,246,0.2)", borderRadius:12, padding:"14px 18px", marginBottom:16, display:"flex", gap:12, alignItems:"flex-start" }}>
+              <span style={{ fontSize:20, flexShrink:0 }}>🧠</span>
+              <div>
+                <div style={{ color:"#3b82f6", fontWeight:700, fontSize:13, marginBottom:4 }}>{tr(trendsLang, "ui.memoryExplainTitle")}</div>
+                <div style={{ color:"#64748b", fontSize:12, lineHeight:1.6 }}>{tr(trendsLang, "ui.memoryExplainDesc")}</div>
+              </div>
+            </div>
+
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, height:"calc(100vh - 220px)" }}>
 
               {/* Colonne gauche — formulaire */}
-              <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                <input style={styles.input} placeholder={tr(trendsLang, "ui.phNiche")} value={memory.niche} onChange={(e)=>setMemory({...memory,niche:e.target.value})} />
-                <input style={styles.input} placeholder={tr(trendsLang, "ui.phAudience")} value={memory.audience} onChange={(e)=>setMemory({...memory,audience:e.target.value})} />
-                <input style={styles.input} placeholder={tr(trendsLang, "ui.phTone")} value={memory.tone} onChange={(e)=>setMemory({...memory,tone:e.target.value})} />
-                <input style={styles.input} placeholder={tr(trendsLang, "ui.phCta")} value={memory.cta} onChange={(e)=>setMemory({...memory,cta:e.target.value})} />
-                <input style={styles.input} placeholder={tr(trendsLang, "ui.phBannedWords")} value={memory.banned_words} onChange={(e)=>setMemory({...memory,banned_words:e.target.value})} />
-                <button style={{ ...styles.button, margin:0, alignSelf:"flex-start" }} onClick={saveBrandMemory}>{tr(trendsLang, "ui.saveMemory")}</button>
+              <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+                {[
+                  { key:"niche",       label: tr(trendsLang, "ui.memNiche"),       ph: tr(trendsLang, "ui.phNiche"),       hint: tr(trendsLang, "ui.memNicheHint") },
+                  { key:"audience",    label: tr(trendsLang, "ui.memAudience"),    ph: tr(trendsLang, "ui.phAudience"),    hint: tr(trendsLang, "ui.memAudienceHint") },
+                  { key:"tone",        label: tr(trendsLang, "ui.memTone"),        ph: tr(trendsLang, "ui.phTone"),        hint: tr(trendsLang, "ui.memToneHint") },
+                  { key:"cta",         label: tr(trendsLang, "ui.memCta"),         ph: tr(trendsLang, "ui.phCta"),         hint: tr(trendsLang, "ui.memCtaHint") },
+                  { key:"banned_words",label: tr(trendsLang, "ui.memBannedWords"), ph: tr(trendsLang, "ui.phBannedWords"), hint: tr(trendsLang, "ui.memBannedHint") },
+                ].map(({ key, label, ph, hint }) => (
+                  <div key={key}>
+                    <div style={{ color:"#94a3b8", fontSize:11, letterSpacing:"1px", marginBottom:4 }}>{label}</div>
+                    <input
+                      style={{ ...styles.input, marginBottom:2 }}
+                      placeholder={ph}
+                      value={memory[key] || ""}
+                      onChange={(e) => setMemory({...memory, [key]: e.target.value})}
+                    />
+                    {hint && <div style={{ color:"#334155", fontSize:11, paddingLeft:4 }}>{hint}</div>}
+                  </div>
+                ))}
+                <button style={{ ...styles.button, margin:0, width:"100%" }} onClick={saveBrandMemory}>{tr(trendsLang, "ui.saveMemory")}</button>
               </div>
 
               {/* Colonne droite — récap brand */}
-              <div style={{ ...styles.card, marginTop:0, display:"flex", flexDirection:"column", gap:16 }}>
+              <div style={{ ...styles.card, marginTop:0, display:"flex", flexDirection:"column", gap:16, overflowY:"auto" }}>
                 <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.brandIntelligence")}</h3>
                 {[
                   [tr(trendsLang, "ui.memNiche"), memory.niche],
@@ -1696,12 +1762,12 @@ setTimeout(() => {
               marginBottom:10
             }}>
               {[
-                [tr(trendsLang,"ui.scoreLabel"), analysis?.score || 87],
-                [tr(trendsLang,"ui.hookLabel"), analysis?.hookScore || 82],
-                [tr(trendsLang,"ui.viralityLabel"), analysis?.viralScore || 79],
-                [tr(trendsLang,"ui.clarityLabel"), analysis?.clarityScore || 91],
-                [tr(trendsLang,"ui.ctaLabel"), analysis?.ctaScore || 76],
-                [tr(trendsLang,"ui.readabilityLabel"), analysis?.readability || 88]
+                [tr(trendsLang,"ui.scoreLabel"), analysis?.score ?? "—"],
+                [tr(trendsLang,"ui.hookLabel"), analysis?.hookScore ?? "—"],
+                [tr(trendsLang,"ui.viralityLabel"), analysis?.viralScore ?? "—"],
+                [tr(trendsLang,"ui.clarityLabel"), analysis?.clarityScore ?? "—"],
+                [tr(trendsLang,"ui.ctaLabel"), analysis?.ctaScore ?? "—"],
+                [tr(trendsLang,"ui.readabilityLabel"), analysis?.readability ?? "—"]
               ].map(([label,value],i)=>(
                 <div
                   key={i}
