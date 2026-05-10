@@ -54,50 +54,34 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
     streak: 0
   });
 const growthData = [
-  { day: "Mon", score: 38 },
-  { day: "Tue", score: 46 },
-  { day: "Wed", score: 55 },
-  { day: "Thu", score: 66 },
-  { day: "Fri", score: 78 },
-  { day: "Sat", score: 86 },
-  { day: "Sun", score: 97 }
+  { day: "D-6", score: 0 },
+  { day: "D-5", score: 0 },
+  { day: "D-4", score: 0 },
+  { day: "D-3", score: 0 },
+  { day: "D-2", score: 0 },
+  { day: "D-1", score: 0 },
+  { day: "Today", score: 0 }
 ];
   const [showOnboarding, setShowOnboarding] = useState(
     !localStorage.getItem("gp_onboarded")
   );
   const platformData = [
-    { name:"LinkedIn", value:48 },
-    { name:"X", value:31 },
-    { name:"Threads", value:21 }
+    { name:"LinkedIn", value: linkedinStatus.connected ? 60 : 0 },
+    { name:"X", value: 0 },
+    { name:"Threads", value: threadsStatus.connected ? 40 : 0 },
   ];
   const timelineData = [
-    {
-      time: "08:30",
-      platform: "LinkedIn",
-      status: "Published"
-    },
-    {
-      time: "11:00",
-      platform: "X",
-      status: "Queued"
-    },
-    {
-      time: "14:45",
-      platform: "Threads",
-      status: "Optimizing"
-    },
-    {
-      time: "18:00",
-      platform: "LinkedIn",
-      status: "Scheduled"
-    }
-  ];
+  const timelineData = scheduledPosts.slice(0, 4).map(p => ({
+    time: p.time || "—",
+    platform: p.platform || "LinkedIn",
+    status: "Scheduled"
+  }));
   const [stats, setStats] = useState({
     posts: 0,
     projects: 0,
     published: 0,
-    avgScore: 87,
-    streak: 1
+    avgScore: 0,
+    streak: 0
   });
 
   const [insights, setInsights] = useState({
@@ -1385,9 +1369,9 @@ setTimeout(() => {
               <div style={{ ...styles.card, marginTop:0, display:"flex", flexDirection:"column", gap:16 }}>
                 <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.platformPerformance")}</h3>
                 {[
-                  { platform:"LinkedIn", score:87, color:"#0077b5" },
-                  { platform:"X (Twitter)", score:72, color:"#1da1f2" },
-                  { platform:"Threads", score:64, color:"#a855f7" },
+                  { platform:"LinkedIn", score: linkedinStatus.connected ? stats.avgScore || 0 : 0, color:"#0077b5" },
+                  { platform:"Threads",  score: threadsStatus.connected ? Math.max(0, (stats.avgScore || 0) - 20) : 0, color:"#a855f7" },
+                  { platform:"X",        score: 0, color:"#1da1f2" },
                 ].map((p,i)=>(
                   <div key={i}>
                     <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
@@ -1486,10 +1470,11 @@ setTimeout(() => {
 
               {/* Menu navigation */}
               {[
-                { key:"account", icon:"👤", label: tr(trendsLang, "profile.menuAccount") },
-                { key:"password", icon:"🔐", label: tr(trendsLang, "profile.menuPassword") },
-                { key:"email", icon:"✉️", label: tr(trendsLang, "profile.menuEmail") },
-                { key:"danger", icon:"⚠️", label: tr(trendsLang, "profile.menuDanger") },
+                { key:"account",      icon:"👤", label: tr(trendsLang, "profile.menuAccount") },
+                { key:"subscription", icon:"💳", label: tr(trendsLang, "profile.menuSubscription") },
+                { key:"password",     icon:"🔐", label: tr(trendsLang, "profile.menuPassword") },
+                { key:"email",        icon:"✉️", label: tr(trendsLang, "profile.menuEmail") },
+                { key:"danger",       icon:"⚠️", label: tr(trendsLang, "profile.menuDanger") },
               ].map(s => (
                 <button
                   key={s.key}
@@ -1590,6 +1575,56 @@ setTimeout(() => {
                   >
                     {profileLoading ? tr(trendsLang, "profile.updating") : tr(trendsLang, "profile.updateEmail")}
                   </button>
+                </div>
+              )}
+
+              {/* Subscription Management */}
+              {profileSection === "subscription" && (
+                <div style={{ display:"flex", flexDirection:"column", gap:20, maxWidth:480 }}>
+                  <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>💳 {tr(trendsLang, "profile.menuSubscription")}</h2>
+
+                  {/* Plan actuel */}
+                  <div style={{ padding:20, border:`1px solid ${userPlan?.plan === "Free" ? "rgba(71,85,105,0.3)" : "rgba(220,38,38,0.3)"}`, borderRadius:12, background:"rgba(255,255,255,0.02)" }}>
+                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>{tr(trendsLang, "profile.currentPlan")}</div>
+                    <div style={{ color: userPlan?.plan === "Free" ? "#64748b" : "#ef4444", fontSize:22, fontWeight:900 }}>
+                      {userPlan?.plan === "Free" ? "🆓 FREE" : userPlan?.plan === "Business" ? "💎 BUSINESS" : "⚡ PRO"}
+                      {userPlan?.interval && <span style={{ fontSize:13, color:"#64748b", fontWeight:400, marginLeft:8 }}>· {userPlan.interval === "year" ? tr(trendsLang, "profile.intervalYear") : tr(trendsLang, "profile.intervalMonth")}</span>}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                    {userPlan?.plan !== "Pro" && (
+                      <button style={{ ...styles.button, margin:0 }} onClick={() => setPage && setPage("pricing")}>
+                        ⚡ {tr(trendsLang, "profile.upgradePro")}
+                      </button>
+                    )}
+                    {userPlan?.plan !== "Business" && (
+                      <button style={{ ...styles.button, margin:0, background:"linear-gradient(135deg,#f97316,#c2410c)" }} onClick={() => setPage && setPage("pricing")}>
+                        💎 {tr(trendsLang, "profile.upgradeBusiness")}
+                      </button>
+                    )}
+                    {userPlan?.plan !== "Free" && (
+                      <button
+                        style={{ ...styles.buttonSecondary, margin:0 }}
+                        onClick={async () => {
+                          if (!window.confirm(tr(trendsLang, "profile.cancelConfirm"))) return;
+                          try {
+                            const res = await fetch("https://social-ai-app-production.up.railway.app/stripe/cancel", {
+                              method: "POST",
+                              headers: { Authorization: `Bearer ${token}` }
+                            });
+                            const data = await res.json();
+                            if (data.success) showToast(tr(trendsLang, "messages.subscriptionCanceled"));
+                          } catch { showToast("Error"); }
+                        }}
+                      >
+                        🚫 {tr(trendsLang, "profile.cancelSubscription")}
+                      </button>
+                    )}
+                  </div>
+
+                  <p style={{ color:"#334155", fontSize:12 }}>{tr(trendsLang, "profile.cancelNote")}</p>
                 </div>
               )}
 
@@ -2209,7 +2244,10 @@ setTimeout(() => {
                     </p>
                   </>
                 ) : (
-                  <button style={{ ...styles.button, margin:0, width:"100%" }} onClick={connectLinkedin}>
+                  <button style={{ ...styles.button, margin:0, width:"100%", touchAction:"manipulation" }}
+                    onClick={connectLinkedin}
+                    onTouchEnd={(e) => { e.preventDefault(); connectLinkedin(); }}
+                  >
                     {tr(trendsLang, "buttons.connectLinkedin")}
                   </button>
                 )}
@@ -2250,7 +2288,10 @@ setTimeout(() => {
                     </div>
                   </>
                 ) : (
-                  <button style={{ ...styles.button, margin:0, width:"100%" }} onClick={connectThreads}>
+                  <button style={{ ...styles.button, margin:0, width:"100%", touchAction:"manipulation" }}
+                    onClick={connectThreads}
+                    onTouchEnd={(e) => { e.preventDefault(); connectThreads(); }}
+                  >
                     {tr(trendsLang, "buttons.connectThreads")}
                   </button>
                 )}

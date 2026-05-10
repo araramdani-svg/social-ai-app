@@ -48,7 +48,10 @@ export default function Auth({ loginSuccess }) {
           style={styles.input}
           placeholder="Email"
           value={email}
+          type="email"
+          autoComplete="email"
           onChange={(e) => setEmail(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && submit()}
         />
 
         <input
@@ -56,7 +59,9 @@ export default function Auth({ loginSuccess }) {
           style={styles.input}
           placeholder="Password"
           value={password}
+          autoComplete={mode === "login" ? "current-password" : "new-password"}
           onChange={(e) => setPassword(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && submit()}
         />
 
         {error && <p style={styles.error}>{error}</p>}
