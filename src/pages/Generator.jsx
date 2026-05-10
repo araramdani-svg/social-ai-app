@@ -170,11 +170,22 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
     finally { setProfileLoading(false); }
   };
 
-  const growthData = [
-    { day: "D-6", score: 0 }, { day: "D-5", score: 0 }, { day: "D-4", score: 0 },
-    { day: "D-3", score: 0 }, { day: "D-2", score: 0 }, { day: "D-1", score: 0 },
-    { day: "Today", score: stats.avgScore || 0 }
-  ];
+  // Performance du contenu — scores réels des 7 derniers posts analysés
+  const growthData = (() => {
+    const scored = history.filter(p => p.score > 0 || p.analysis?.score > 0).slice(-7);
+    if (scored.length === 0) {
+      return [
+        { day: "D-6", score: 0 }, { day: "D-5", score: 0 }, { day: "D-4", score: 0 },
+        { day: "D-3", score: 0 }, { day: "D-2", score: 0 }, { day: "D-1", score: 0 },
+        { day: "Today", score: analysis?.score || 0 }
+      ];
+    }
+    return scored.map((p, i) => ({
+      day: i === scored.length - 1 ? "Today" : `D-${scored.length - 1 - i}`,
+      score: p.score || p.analysis?.score || 0,
+      title: p.title ? p.title.slice(0, 20) : `Post ${i + 1}`
+    }));
+  })();
 
   useEffect(() => {
     if (tab === "trends" && trends.length > 0) {
@@ -375,12 +386,14 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
     "AI optimized LinkedIn post",
     "Audience signals updated",
     "Best publish slot detected",
-    tr(trendsLang, "ui.liveActivity1") || "Content generated",
+    "Content generated successfully",
     "Campaign strategy recalculated",
     "Content resonance boosted",
     "Hook structure refined",
-    tr(trendsLang, "ui.aiRecommendation") || "AI analysis complete",
-    tr(trendsLang, "ui.growthSignals") || "Growth signals updated"
+    "AI analysis complete",
+    "Growth signals updated",
+    "Brand memory applied",
+    "Viral score calculated",
   ];
 
   const pageTransition = {
@@ -419,7 +432,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
     return () => clearInterval(timer);
   }, [stats, projects, tab]);
 
-  useEffect(() => { loadProjects(); }, []);
+  useEffect(() => { loadProjects(); loadHistory(); }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -455,12 +468,28 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   }, [post, topic, projectTitle, selectedProject]);
 
   useEffect(() => {
+    const scoredPosts = history.filter(p => p.score > 0 || p.analysis?.score > 0);
+    const avgScore = scoredPosts.length > 0
+      ? Math.round(scoredPosts.reduce((acc, p) => acc + (p.score || p.analysis?.score || 0), 0) / scoredPosts.length)
+      : (analysis?.score || 0);
+
+    // Streak — nombre de jours consécutifs avec au moins 1 post
+    const days = new Set(history.map(p => p.createdAt ? new Date(p.createdAt).toDateString() : null).filter(Boolean));
+    let streak = 0;
+    const today = new Date();
+    for (let i = 0; i < 365; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      if (days.has(d.toDateString())) streak++;
+      else if (i > 0) break;
+    }
+
     setStats({
       posts: history.length,
       projects: projects.length,
       published: publishLog.length,
-      avgScore: analysis?.score || 0,
-      streak: history.length
+      avgScore,
+      streak: streak || history.length
     });
     setInsights({
       bestProject: projects[0]?.name || "No project",
@@ -985,7 +1014,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
                         [tr(trendsLang, "ui.bestProject"), insights.bestProject, "#ef4444"],
                         [tr(trendsLang, "ui.topPlatform"), insights.topPlatform, "#3b82f6"],
                         [tr(trendsLang, "ui.cadence"), insights.cadence, "#f59e0b"],
-                        [tr(trendsLang, "ui.statAvgScore"), "87", "#22c55e"],
+                        [tr(trendsLang, "ui.statAvgScore"), stats.avgScore || "—", "#22c55e"],
                       ].map(([label,val,color])=>(
                         <div key={label} style={{ ...st.card, marginTop:0, padding:16 }}>
                           <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>{label}</div>
