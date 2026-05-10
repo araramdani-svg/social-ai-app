@@ -570,6 +570,10 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
 
   const generate = async () => {
     if (!topic) return;
+    if (!token || token === "guest") {
+      showToast("Please log in to generate content");
+      return;
+    }
     try {
       setLoading(true);
       setAiStep(0);
@@ -579,7 +583,9 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
       const dataPromise = api("generate", { topic, template, voice, campaign, project: selectedProject || null, lang: trendsLang });
       await new Promise(resolve => setTimeout(resolve, 2800));
       const data = await dataPromise;
+      clearInterval(typingInterval);
       if (data?.text) { setPost(data.text); showToast(tr(trendsLang, "messages.contentGenerated")); }
+      else if (data?.message) showToast(data.message);
     } catch {
       showToast(tr(trendsLang, "messages.generationFailed"));
     } finally {
@@ -935,10 +941,10 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
                   </div>
                 </div>
                 {/* Chart */}
-                <div style={{ ...st.chartCard, marginTop:0, height:200, paddingBottom:24 }}>
+                <div style={{ ...st.chartCard, marginTop:0, height:220, paddingBottom:24 }}>
                   <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px", marginBottom:10 }}>{tr(trendsLang, "ui.contentPerformance")}</h3>
-                  <ResponsiveContainer width="100%" height="72%">
-                    <LineChart data={growthData} margin={{ top:25, right:25, left:10, bottom:20 }}>
+                  <ResponsiveContainer width="100%" height={140}>
+                    <LineChart data={growthData} margin={{ top:10, right:25, left:10, bottom:10 }}>
                       <CartesianGrid stroke="rgba(220,38,38,0.025)" vertical={false} />
                       <XAxis dataKey="day" stroke="#475569" tick={{ fill:"#64748b", fontSize:11 }} axisLine={false} tickLine={false} />
                       <YAxis stroke="#475569" tick={{ fill:"#64748b", fontSize:11 }} axisLine={false} tickLine={false} />
