@@ -2488,7 +2488,7 @@ setTimeout(() => {
       </main>
     </div>
   );
-})}
+}
 
 const styles = {
   page: {
