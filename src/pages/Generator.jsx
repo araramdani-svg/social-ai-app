@@ -372,12 +372,12 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
     "AI optimized LinkedIn post",
     "Audience signals updated",
     "Best publish slot detected",
-    "Viral score improved",
+    tr(trendsLang, "ui.liveActivity1") || "Content generated",
     "Campaign strategy recalculated",
     "Content resonance boosted",
     "Hook structure refined",
-    "Competitor benchmark completed",
-    "Performance forecast generated"
+    tr(trendsLang, "ui.aiRecommendation") || "AI analysis complete",
+    tr(trendsLang, "ui.growthSignals") || "Growth signals updated"
   ];
 
   const pageTransition = {
@@ -492,8 +492,8 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
       posts: history.length,
       projects: projects.length,
       published: publishLog.length,
-      avgScore: analysis?.score || 87,
-      streak: Math.max(history.length, 1)
+      avgScore: analysis?.score || 0,
+      streak: history.length
     });
 
     setInsights({
@@ -1387,10 +1387,10 @@ setTimeout(() => {
                 <div style={{ marginTop:8, borderTop:"1px solid rgba(220,38,38,0.1)", paddingTop:16 }}>
                   <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px", marginBottom:12 }}>{tr(trendsLang, "ui.growthSignals")}</h3>
                   {[
-                    { signal:"Engagement rate", value:"+12%", color:"#22c55e" },
-                    { signal:"Reach", value:"+8%", color:"#22c55e" },
-                    { signal:"Click-through", value:"-3%", color:"#ef4444" },
-                    { signal:"Follower growth", value:"+5%", color:"#22c55e" },
+                    { signal:"Engagement rate", value: stats.posts > 0 ? "+?" : "N/A", color:"#64748b" },
+                    { signal:"Reach", value: stats.published > 0 ? "+?" : "N/A", color:"#64748b" },
+                    { signal:"Click-through", value:"N/A", color:"#64748b" },
+                    { signal:"Follower growth", value:"N/A", color:"#64748b" },
                   ].map((g,i)=>(
                     <div key={i} style={{ display:"flex", justifyContent:"space-between", paddingBottom:10, borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
                       <span style={{ color:"#64748b", fontSize:13 }}>{g.signal}</span>
@@ -2246,7 +2246,6 @@ setTimeout(() => {
                 ) : (
                   <button style={{ ...styles.button, margin:0, width:"100%", touchAction:"manipulation" }}
                     onClick={connectLinkedin}
-                    onTouchEnd={(e) => { e.preventDefault(); connectLinkedin(); }}
                   >
                     {tr(trendsLang, "buttons.connectLinkedin")}
                   </button>
@@ -2290,7 +2289,6 @@ setTimeout(() => {
                 ) : (
                   <button style={{ ...styles.button, margin:0, width:"100%", touchAction:"manipulation" }}
                     onClick={connectThreads}
-                    onTouchEnd={(e) => { e.preventDefault(); connectThreads(); }}
                   >
                     {tr(trendsLang, "buttons.connectThreads")}
                   </button>
