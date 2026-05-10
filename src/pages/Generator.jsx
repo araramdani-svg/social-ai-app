@@ -2488,6 +2488,7 @@ setTimeout(() => {
       </main>
     </div>
   );
+})
 }
 
 const styles = {
