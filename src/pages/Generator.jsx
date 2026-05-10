@@ -2383,11 +2383,12 @@ setTimeout(() => {
                     </p>
                   </>
                 ) : (
-                  <button style={{ ...styles.button, margin:0, width:"100%", touchAction:"manipulation" }}
-                    onClick={connectLinkedin}
+                  <a
+                    href={`https://social-ai-app-production.up.railway.app/linkedin/connect?token=${encodeURIComponent(token)}`}
+                    style={{ ...styles.button, margin:0, width:"100%", display:"block", textAlign:"center", textDecoration:"none", boxSizing:"border-box" }}
                   >
                     {tr(trendsLang, "buttons.connectLinkedin")}
-                  </button>
+                  </a>
                 )}
               </div>
 
@@ -2426,11 +2427,12 @@ setTimeout(() => {
                     </div>
                   </>
                 ) : (
-                  <button style={{ ...styles.button, margin:0, width:"100%", touchAction:"manipulation" }}
-                    onClick={connectThreads}
+                  <a
+                    href={`https://social-ai-app-production.up.railway.app/threads/connect?token=${encodeURIComponent(token)}`}
+                    style={{ ...styles.button, margin:0, width:"100%", display:"block", textAlign:"center", textDecoration:"none", boxSizing:"border-box" }}
                   >
                     {tr(trendsLang, "buttons.connectThreads")}
-                  </button>
+                  </a>
                 )}
               </div>
 
