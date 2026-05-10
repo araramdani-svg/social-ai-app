@@ -170,16 +170,6 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
     { day: "D-3", score: 0 }, { day: "D-2", score: 0 }, { day: "D-1", score: 0 },
     { day: "Today", score: stats.avgScore || 0 }
   ];
-  const platformData = [
-    { name:"LinkedIn", value: linkedinStatus.connected ? (stats.avgScore || 60) : 0 },
-    { name:"X",        value: 0 },
-    { name:"Threads",  value: threadsStatus.connected ? Math.max(0, (stats.avgScore || 50) - 15) : 0 },
-  ];
-  const timelineData = scheduledPosts.slice(0, 4).map(p => ({
-    time: p.time || "—",
-    platform: p.platform || "LinkedIn",
-    status: "Scheduled"
-  }));
 
   // Re-fetch trends quand la langue change
   useEffect(() => {
@@ -223,6 +213,18 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   const [linkedinPosting, setLinkedinPosting] = useState(false);
   const [threadsStatus, setThreadsStatus] = useState({ connected: false, username: null });
   const [threadsPosting, setThreadsPosting] = useState(false);
+
+  // ─── Données dérivées — après tous les states ──────────────────────────────
+  const platformData = [
+    { name:"LinkedIn", value: linkedinStatus.connected ? (stats.avgScore || 60) : 0 },
+    { name:"X",        value: 0 },
+    { name:"Threads",  value: threadsStatus.connected ? Math.max(0, (stats.avgScore || 50) - 15) : 0 },
+  ];
+  const timelineData = scheduledPosts.slice(0, 4).map(p => ({
+    time: p.time || "—",
+    platform: p.platform || "LinkedIn",
+    status: "Scheduled"
+  }));
 
   useEffect(() => {
     if (token && token !== "guest") {
