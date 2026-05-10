@@ -2,8 +2,59 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- PWA -->
+    <!-- ── SEO Core ── -->
+    <title>GrowthPILOT — AI Content Platform for Founders & Creators</title>
+    <meta name="description" content="Generate, schedule and publish authority content on LinkedIn, Threads, X and more. AI-powered brand memory, viral trend detection and real-time analytics." />
+    <meta name="keywords" content="AI content, LinkedIn automation, social media AI, content generator, brand memory, viral trends, founder content, SaaS marketing" />
+    <meta name="author" content="GrowthPILOT" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://aigrowthpilot.app/" />
+
+    <!-- ── Open Graph (Facebook, LinkedIn preview) ── -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://aigrowthpilot.app/" />
+    <meta property="og:site_name" content="GrowthPILOT" />
+    <meta property="og:title" content="GrowthPILOT — AI Content Platform for Founders & Creators" />
+    <meta property="og:description" content="Generate, schedule and publish authority content on LinkedIn, Threads, X and more. AI-powered brand memory, viral trend detection and real-time analytics." />
+    <meta property="og:image" content="https://aigrowthpilot.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="GrowthPILOT — AI Content Platform" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- ── Twitter Card ── -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@growthpilot" />
+    <meta name="twitter:title" content="GrowthPILOT — AI Content Platform for Founders & Creators" />
+    <meta name="twitter:description" content="Generate, schedule and publish authority content on LinkedIn, Threads, X and more. AI-powered brand memory, viral trend detection." />
+    <meta name="twitter:image" content="https://aigrowthpilot.app/og-image.png" />
+
+    <!-- ── Structured Data (JSON-LD) ── -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "GrowthPILOT",
+      "url": "https://aigrowthpilot.app",
+      "description": "AI-powered content platform for founders and creators. Generate, schedule and publish authority content across LinkedIn, Threads, X and more.",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "offers": [
+        { "@type": "Offer", "name": "Free", "price": "0", "priceCurrency": "EUR" },
+        { "@type": "Offer", "name": "Pro", "price": "19", "priceCurrency": "EUR" },
+        { "@type": "Offer", "name": "Business", "price": "49", "priceCurrency": "EUR" }
+      ],
+      "creator": {
+        "@type": "Organization",
+        "name": "GrowthPILOT",
+        "url": "https://aigrowthpilot.app"
+      }
+    }
+    </script>
+
+    <!-- ── PWA ── -->
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#ef4444" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -11,19 +62,14 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="GrowthPILOT" />
     <link rel="apple-touch-icon" href="/logo.png" />
-
-    <!-- SEO -->
-    <meta name="description" content="AI-powered content platform for founders and creators" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
     <link rel="icon" type="image/png" href="/logo.png" />
-    <title>GrowthPILOT</title>
+
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
 
-    <!-- Service Worker PWA -->
+    <!-- ── Service Worker PWA ── -->
     <script>
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {

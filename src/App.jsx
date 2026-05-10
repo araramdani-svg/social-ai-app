@@ -4,11 +4,27 @@ import Generator from "./pages/Generator";
 import Auth from "./pages/Auth";
 import Pricing from "./pages/Pricing";
 
+/* ── Hook breakpoint ── */
+function useWindowWidth() {
+  const [width, setWidth] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 1200
+  );
+  useEffect(() => {
+    const handler = () => setWidth(window.innerWidth);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+  return width;
+}
+
 function App() {
   const [page, setPage] = useState("landing");
   const [token, setToken] = useState(null);
   const [trendsLang, setTrendsLang] = useState("en");
   const [showLangMenu, setShowLangMenu] = useState(false);
+
+  const width = useWindowWidth();
+  const isMobile = width < 768;
 
   const LANGS = [
     { key:"en", flag:"🇬🇧" },
@@ -29,7 +45,6 @@ function App() {
     }
   }, []);
 
-  // Écoute le paramètre URL pour redirection post-paiement ET OAuth callback
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
 
@@ -39,10 +54,8 @@ function App() {
       if (savedToken) { setToken(savedToken); setPage("generator"); }
     }
 
-    // OAuth LinkedIn/Threads — peut venir d'un popup ou redirect direct
     if (params.get("linkedin") === "connected" || params.get("threads") === "connected") {
       window.history.replaceState({}, "", "/");
-      // Signaler à la fenêtre parente si on est dans un popup
       if (window.opener) {
         window.opener.postMessage({ type: "oauth_success", platform: params.get("linkedin") ? "linkedin" : "threads" }, "*");
         window.close();
@@ -50,14 +63,11 @@ function App() {
     }
   }, []);
 
-  // Écouter les messages OAuth depuis le popup
   useEffect(() => {
     const handleMessage = (event) => {
       if (event.data?.type === "oauth_success") {
-        // Rafraîchir le statut de la plateforme connectée
         const savedToken = localStorage.getItem("token");
         if (savedToken) setToken(savedToken);
-        // Déclencher un événement pour que Generator rafraîchisse le statut
         window.dispatchEvent(new CustomEvent("oauthSuccess", { detail: event.data.platform }));
       }
     };
@@ -76,14 +86,51 @@ function App() {
     setPage("generator");
   };
 
+  /* ── Boutons flottants : masqués sur mobile (remplacés par bottom nav dans Generator) ── */
+  const floatingBar = !isMobile ? (
+    <div style={floatingStyle}>
+      <button onClick={() => setPage("landing")} style={iconStyle} title="Landing">🏠</button>
+
+      {/* Language selector */}
+      <div style={{ position:"relative" }}>
+        <button style={iconStyle} onClick={() => setShowLangMenu(!showLangMenu)} title="Language">
+          {LANGS.find(l => l.key === trendsLang)?.flag || "🌍"}
+        </button>
+        {showLangMenu && (
+          <div style={langMenuStyle}>
+            {LANGS.map(l => (
+              <button
+                key={l.key}
+                style={{
+                  width:"100%", padding:"10px 16px",
+                  background: trendsLang === l.key ? "rgba(220,38,38,0.15)" : "transparent",
+                  border:"none",
+                  borderLeft: trendsLang === l.key ? "3px solid #ef4444" : "3px solid transparent",
+                  color: trendsLang === l.key ? "#ef4444" : "#94a3b8",
+                  fontWeight: trendsLang === l.key ? 800 : 600,
+                  fontSize:13, cursor:"pointer", textAlign:"left",
+                  display:"flex", alignItems:"center", gap:8,
+                }}
+                onClick={() => { setTrendsLang(l.key); setShowLangMenu(false); }}
+              >
+                {l.flag} {l.key.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <button onClick={() => setPage("pricing")} style={iconStyle} title="Upgrade">💳</button>
+      <button onClick={() => window.dispatchEvent(new CustomEvent("openProfile"))} style={iconStyle} title="Profile">👤</button>
+      <button onClick={logout} style={iconStyle} title="Logout">↩</button>
+    </div>
+  ) : null;
+
   return (
     <>
       {page === "landing" && (
         <Landing
-          openApp={() => {
-            localStorage.setItem("token", "guest");
-            setPage("generator");
-          }}
+          openApp={() => { localStorage.setItem("token", "guest"); setPage("generator"); }}
           openLogin={() => setPage("auth")}
           openPricing={() => setPage("pricing")}
         />
@@ -103,73 +150,36 @@ function App() {
 
       {page === "generator" && (
         <div>
-          <div
-            style={{
-              position: "fixed",
-              top: 20,
-              right: 20,
-              display: "flex",
-              gap: 12,
-              zIndex: 9999,
-            }}
-          >
-            <button onClick={() => setPage("landing")} style={iconStyle}>
-              🏠
-            </button>
-
-            {/* Language selector */}
-            <div style={{ position:"relative" }}>
-              <button
-                style={iconStyle}
-                onClick={() => setShowLangMenu(!showLangMenu)}
-                title="Language"
-              >
-                {LANGS.find(l => l.key === trendsLang)?.flag || "🌍"}
-              </button>
-              {showLangMenu && (
-                <div style={{ position:"absolute", top:60, right:0, background:"#1a2235", border:"1px solid rgba(220,38,38,0.3)", borderRadius:12, overflow:"hidden", zIndex:99999, minWidth:140, boxShadow:"0 20px 60px rgba(0,0,0,0.5)" }}>
-                  {LANGS.map(l => (
-                    <button
-                      key={l.key}
-                      style={{ width:"100%", padding:"10px 16px", background: trendsLang === l.key ? "rgba(220,38,38,0.15)" : "transparent", border:"none", borderLeft: trendsLang === l.key ? "3px solid #ef4444" : "3px solid transparent", color: trendsLang === l.key ? "#ef4444" : "#94a3b8", fontWeight: trendsLang === l.key ? 800 : 600, fontSize:13, cursor:"pointer", textAlign:"left", display:"flex", alignItems:"center", gap:8 }}
-                      onClick={() => { setTrendsLang(l.key); setShowLangMenu(false); }}
-                    >
-                      {l.flag} {l.key.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <button
-              onClick={() => setPage("pricing")}
-              style={iconStyle}
-              title="Upgrade plan"
-            >
-              💳
-            </button>
-
-            <button
-              onClick={() => {
-                const event = new CustomEvent("openProfile");
-                window.dispatchEvent(event);
-              }}
-              style={iconStyle}
-            >
-              👤
-            </button>
-
-            <button onClick={logout} style={iconStyle}>
-              ↩
-            </button>
-          </div>
-
-          <Generator token={token} trendsLang={trendsLang} setTrendsLang={setTrendsLang} />
+          {floatingBar}
+          <Generator
+            token={token}
+            trendsLang={trendsLang}
+            setTrendsLang={setTrendsLang}
+            setPage={setPage}
+          />
         </div>
       )}
     </>
   );
 }
+
+const floatingStyle = {
+  position: "fixed",
+  top: 20,
+  right: 20,
+  display: "flex",
+  gap: 12,
+  zIndex: 9999,
+};
+
+const langMenuStyle = {
+  position:"absolute", top:60, right:0,
+  background:"#1a2235",
+  border:"1px solid rgba(220,38,38,0.3)",
+  borderRadius:12, overflow:"hidden",
+  zIndex:99999, minWidth:140,
+  boxShadow:"0 20px 60px rgba(0,0,0,0.5)",
+};
 
 const iconStyle = {
   width: 52,
