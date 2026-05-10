@@ -10,7 +10,8 @@ const LINKEDIN_REDIRECT_URI = process.env.LINKEDIN_REDIRECT_URI;
 const FRONTEND_URL = process.env.FRONTEND_URL;
 
 const authenticateToken = (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1];
+  // Supporte token en header ET en query param (pour liens directs mobile)
+  const token = req.headers.authorization?.split(" ")[1] || req.query.token;
   if (!token) return res.status(401).json({ message: "Access denied" });
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) return res.status(403).json({ message: "Invalid token" });
@@ -29,7 +30,14 @@ router.get("/connect", authenticateToken, (req, res) => {
     `&redirect_uri=${encodeURIComponent(LINKEDIN_REDIRECT_URI)}` +
     `&scope=${encodeURIComponent(scope)}` +
     `&state=${state}`;
-  res.json({ url: authUrl });
+
+  // Si token passé en query param (lien direct mobile) → rediriger directement
+  // Sinon → retourner JSON pour le fetch desktop
+  if (req.query.token) {
+    res.redirect(authUrl);
+  } else {
+    res.json({ url: authUrl });
+  }
 });
 
 router.get("/callback", async (req, res) => {

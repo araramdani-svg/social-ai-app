@@ -266,27 +266,10 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
     window.addEventListener("oauthSuccess", handleOAuth);
     return () => window.removeEventListener("oauthSuccess", handleOAuth);
 
-  const connectLinkedin = async () => {
-    try {
-      // Ouvrir immédiatement une fenêtre popup (avant le await pour éviter le blocage navigateur)
-      const popup = window.open("", "_blank", "width=600,height=700,scrollbars=yes");
-      const res = await fetch("https://social-ai-app-production.up.railway.app/linkedin/connect", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.url) {
-        if (popup) {
-          popup.location.href = data.url;
-        } else {
-          // Fallback si popup bloqué
-          window.location.href = data.url;
-        }
-      } else {
-        if (popup) popup.close();
-      }
-    } catch {
-      showToast(tr(trendsLang, "messages.linkedinFailed"));
-    }
+  const connectLinkedin = () => {
+    // Lien direct avec token en query param — fonctionne sur tous les navigateurs y compris mobile
+    const url = `https://social-ai-app-production.up.railway.app/linkedin/connect?token=${encodeURIComponent(token)}`;
+    window.location.href = url;
   };
 
   const disconnectLinkedin = async () => {
@@ -316,25 +299,9 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
     }
   };
 
-  const connectThreads = async () => {
-    try {
-      const popup = window.open("", "_blank", "width=600,height=700,scrollbars=yes");
-      const res = await fetch("https://social-ai-app-production.up.railway.app/threads/connect", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.url) {
-        if (popup) {
-          popup.location.href = data.url;
-        } else {
-          window.location.href = data.url;
-        }
-      } else {
-        if (popup) popup.close();
-      }
-    } catch {
-      showToast(tr(trendsLang, "messages.threadsFailed"));
-    }
+  const connectThreads = () => {
+    const url = `https://social-ai-app-production.up.railway.app/threads/connect?token=${encodeURIComponent(token)}`;
+    window.location.href = url;
   };
 
   const disconnectThreads = async () => {

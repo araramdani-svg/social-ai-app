@@ -11,7 +11,7 @@ const FRONTEND_URL        = process.env.FRONTEND_URL;
 
 // ─── Middleware auth ───────────────────────────────────────────────────────────
 const authenticateToken = (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1];
+  const token = req.headers.authorization?.split(" ")[1] || req.query.token;
   if (!token) return res.status(401).json({ message: "Access denied" });
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) return res.status(403).json({ message: "Invalid token" });
@@ -34,7 +34,11 @@ router.get("/connect", authenticateToken, (req, res) => {
     `&response_type=code` +
     `&state=${state}`;
 
+  if (req.query.token) {
+  res.redirect(authUrl);
+} else {
   res.json({ url: authUrl });
+};
 });
 
 // ─── GET /threads/callback ─────────────────────────────────────────────────────
