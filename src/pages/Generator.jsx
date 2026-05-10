@@ -53,28 +53,9 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
     avgScore: 0,
     streak: 0
   });
-const growthData = [
-  { day: "D-6", score: 0 },
-  { day: "D-5", score: 0 },
-  { day: "D-4", score: 0 },
-  { day: "D-3", score: 0 },
-  { day: "D-2", score: 0 },
-  { day: "D-1", score: 0 },
-  { day: "Today", score: 0 }
-];
   const [showOnboarding, setShowOnboarding] = useState(
     !localStorage.getItem("gp_onboarded")
   );
-  const platformData = [
-    { name:"LinkedIn", value: linkedinStatus.connected ? 60 : 0 },
-    { name:"X", value: 0 },
-    { name:"Threads", value: threadsStatus.connected ? 40 : 0 },
-  ];
-  const timelineData = scheduledPosts.slice(0, 4).map(p => ({
-  time: p.time || "—",
-  platform: p.platform || "LinkedIn",
-  status: "Scheduled"
-}));
   const [stats, setStats] = useState({
     posts: 0,
     projects: 0,
@@ -182,6 +163,23 @@ const growthData = [
     } catch { showProfileMsg("error", "Server error"); }
     finally { setProfileLoading(false); }
   };
+
+  // ─── Données dérivées (pas de state — recalculées à chaque render) ─────────
+  const growthData = [
+    { day: "D-6", score: 0 }, { day: "D-5", score: 0 }, { day: "D-4", score: 0 },
+    { day: "D-3", score: 0 }, { day: "D-2", score: 0 }, { day: "D-1", score: 0 },
+    { day: "Today", score: stats.avgScore || 0 }
+  ];
+  const platformData = [
+    { name:"LinkedIn", value: linkedinStatus.connected ? (stats.avgScore || 60) : 0 },
+    { name:"X",        value: 0 },
+    { name:"Threads",  value: threadsStatus.connected ? Math.max(0, (stats.avgScore || 50) - 15) : 0 },
+  ];
+  const timelineData = scheduledPosts.slice(0, 4).map(p => ({
+    time: p.time || "—",
+    platform: p.platform || "LinkedIn",
+    status: "Scheduled"
+  }));
 
   // Re-fetch trends quand la langue change
   useEffect(() => {
@@ -458,18 +456,19 @@ const growthData = [
 
     return () => clearInterval(interval);
   }, []);
-useEffect(() => {
-  const handler = () => setTab("profile");
-  window.addEventListener("openProfile", handler);
-  return () => {
-    window.removeEventListener("openProfile", handler);
-  };
-}, []);
 
-useEffect(() => {
-  document.body.style.overflow = "hidden";
-  return () => { document.body.style.overflow = ""; };
-}, []);
+  useEffect(() => {
+    const handler = () => setTab("profile");
+    window.addEventListener("openProfile", handler);
+    return () => {
+      window.removeEventListener("openProfile", handler);
+    };
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
   useEffect(() => {
     const key = selectedProject || "default";
 
