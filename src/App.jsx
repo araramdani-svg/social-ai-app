@@ -90,7 +90,7 @@ function App() {
               zIndex: 9999,
             }}
           >
-            <button onClick={() => window.location.reload()} style={iconStyle}>
+            <button onClick={() => setPage("landing")} style={iconStyle}>
               🏠
             </button>
 
