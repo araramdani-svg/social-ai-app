@@ -172,19 +172,23 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
 
   // Performance du contenu — scores réels des 7 derniers posts analysés
   const growthData = (() => {
-    const scored = history.filter(p => p.score > 0 || p.analysis?.score > 0).slice(-7);
-    if (scored.length === 0) {
-      return [
-        { day: "D-6", score: 0 }, { day: "D-5", score: 0 }, { day: "D-4", score: 0 },
-        { day: "D-3", score: 0 }, { day: "D-2", score: 0 }, { day: "D-1", score: 0 },
-        { day: "Today", score: analysis?.score || 0 }
-      ];
+    try {
+      const scored = (history || []).filter(p => (p?.score > 0) || (p?.analysis?.score > 0)).slice(-7);
+      if (scored.length === 0) {
+        return [
+          { day: "D-6", score: 0 }, { day: "D-5", score: 0 }, { day: "D-4", score: 0 },
+          { day: "D-3", score: 0 }, { day: "D-2", score: 0 }, { day: "D-1", score: 0 },
+          { day: "Today", score: analysis?.score || 0 }
+        ];
+      }
+      return scored.map((p, i) => ({
+        day: i === scored.length - 1 ? "Today" : `D-${scored.length - 1 - i}`,
+        score: p?.score || p?.analysis?.score || 0,
+        title: p?.title ? p.title.slice(0, 20) : `Post ${i + 1}`
+      }));
+    } catch {
+      return [{ day: "Today", score: 0 }];
     }
-    return scored.map((p, i) => ({
-      day: i === scored.length - 1 ? "Today" : `D-${scored.length - 1 - i}`,
-      score: p.score || p.analysis?.score || 0,
-      title: p.title ? p.title.slice(0, 20) : `Post ${i + 1}`
-    }));
   })();
 
   useEffect(() => {
@@ -432,7 +436,8 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
     return () => clearInterval(timer);
   }, [stats, projects, tab]);
 
-  useEffect(() => { loadProjects(); loadHistory(); }, []);
+  useEffect(() => { loadProjects(); }, []);
+  useEffect(() => { loadHistory(); }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -468,34 +473,37 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   }, [post, topic, projectTitle, selectedProject]);
 
   useEffect(() => {
-    const scoredPosts = history.filter(p => p.score > 0 || p.analysis?.score > 0);
+    const h = history || [];
+    const p = projects || [];
+    const scoredPosts = h.filter(p => (p?.score > 0) || (p?.analysis?.score > 0));
     const avgScore = scoredPosts.length > 0
-      ? Math.round(scoredPosts.reduce((acc, p) => acc + (p.score || p.analysis?.score || 0), 0) / scoredPosts.length)
+      ? Math.round(scoredPosts.reduce((acc, p) => acc + (p?.score || p?.analysis?.score || 0), 0) / scoredPosts.length)
       : (analysis?.score || 0);
 
-    // Streak — nombre de jours consécutifs avec au moins 1 post
-    const days = new Set(history.map(p => p.createdAt ? new Date(p.createdAt).toDateString() : null).filter(Boolean));
     let streak = 0;
-    const today = new Date();
-    for (let i = 0; i < 365; i++) {
-      const d = new Date(today);
-      d.setDate(today.getDate() - i);
-      if (days.has(d.toDateString())) streak++;
-      else if (i > 0) break;
-    }
+    try {
+      const days = new Set(h.map(p => p?.createdAt ? new Date(p.createdAt).toDateString() : null).filter(Boolean));
+      const today = new Date();
+      for (let i = 0; i < 365; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() - i);
+        if (days.has(d.toDateString())) streak++;
+        else if (i > 0) break;
+      }
+    } catch { streak = h.length; }
 
     setStats({
-      posts: history.length,
-      projects: projects.length,
+      posts: h.length,
+      projects: p.length,
       published: publishLog.length,
       avgScore,
-      streak: streak || history.length
+      streak: streak || h.length
     });
     setInsights({
-      bestProject: projects[0]?.name || "No project",
+      bestProject: p[0]?.name || "No project",
       topPlatform: "LinkedIn",
-      recommendation: history.length < 5 ? "Increase posting frequency" : "Maintain publishing cadence",
-      cadence: history.length > 20 ? "High" : history.length > 8 ? "Medium" : "Low"
+      recommendation: h.length < 5 ? "Increase posting frequency" : "Maintain publishing cadence",
+      cadence: h.length > 20 ? "High" : h.length > 8 ? "Medium" : "Low"
     });
   }, [history, projects, publishLog, analysis]);
 
