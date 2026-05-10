@@ -241,9 +241,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
       window.history.replaceState({}, "", "/");
       fetch("https://social-ai-app-production.up.railway.app/linkedin/status", {
         headers: { Authorization: `Bearer ${token}` }
-      }).then(r => r.json()).then(data => {
-        setLinkedinStatus(data);
-      }).catch(() => {});
+      }).then(r => r.json()).then(setLinkedinStatus).catch(() => {});
     }
     if (params.get("threads") === "connected") {
       window.history.replaceState({}, "", "/");
@@ -251,14 +249,44 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
         headers: { Authorization: `Bearer ${token}` }
       }).then(r => r.json()).then(setThreadsStatus).catch(() => {});
     }
-  }, []);
+
+    // Écouter le retour OAuth depuis popup
+    const handleOAuth = (e) => {
+      if (e.detail === "linkedin") {
+        fetch("https://social-ai-app-production.up.railway.app/linkedin/status", {
+          headers: { Authorization: `Bearer ${token}` }
+        }).then(r => r.json()).then(setLinkedinStatus).catch(() => {});
+      }
+      if (e.detail === "threads") {
+        fetch("https://social-ai-app-production.up.railway.app/threads/status", {
+          headers: { Authorization: `Bearer ${token}` }
+        }).then(r => r.json()).then(setThreadsStatus).catch(() => {});
+      }
+    };
+    window.addEventListener("oauthSuccess", handleOAuth);
+    return () => window.removeEventListener("oauthSuccess", handleOAuth);
 
   const connectLinkedin = async () => {
-    const res = await fetch("https://social-ai-app-production.up.railway.app/linkedin/connect", {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const data = await res.json();
-    if (data.url) window.location.href = data.url;
+    try {
+      // Ouvrir immédiatement une fenêtre popup (avant le await pour éviter le blocage navigateur)
+      const popup = window.open("", "_blank", "width=600,height=700,scrollbars=yes");
+      const res = await fetch("https://social-ai-app-production.up.railway.app/linkedin/connect", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.url) {
+        if (popup) {
+          popup.location.href = data.url;
+        } else {
+          // Fallback si popup bloqué
+          window.location.href = data.url;
+        }
+      } else {
+        if (popup) popup.close();
+      }
+    } catch {
+      showToast(tr(trendsLang, "messages.linkedinFailed"));
+    }
   };
 
   const disconnectLinkedin = async () => {
@@ -289,11 +317,24 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   };
 
   const connectThreads = async () => {
-    const res = await fetch("https://social-ai-app-production.up.railway.app/threads/connect", {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const data = await res.json();
-    if (data.url) window.location.href = data.url;
+    try {
+      const popup = window.open("", "_blank", "width=600,height=700,scrollbars=yes");
+      const res = await fetch("https://social-ai-app-production.up.railway.app/threads/connect", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.url) {
+        if (popup) {
+          popup.location.href = data.url;
+        } else {
+          window.location.href = data.url;
+        }
+      } else {
+        if (popup) popup.close();
+      }
+    } catch {
+      showToast(tr(trendsLang, "messages.threadsFailed"));
+    }
   };
 
   const disconnectThreads = async () => {

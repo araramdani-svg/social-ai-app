@@ -29,17 +29,40 @@ function App() {
     }
   }, []);
 
-  // Écoute le paramètre URL pour redirection post-paiement
+  // Écoute le paramètre URL pour redirection post-paiement ET OAuth callback
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+
     if (params.get("upgrade") === "success") {
       window.history.replaceState({}, "", "/");
       const savedToken = localStorage.getItem("token");
-      if (savedToken) {
-        setToken(savedToken);
-        setPage("generator");
+      if (savedToken) { setToken(savedToken); setPage("generator"); }
+    }
+
+    // OAuth LinkedIn/Threads — peut venir d'un popup ou redirect direct
+    if (params.get("linkedin") === "connected" || params.get("threads") === "connected") {
+      window.history.replaceState({}, "", "/");
+      // Signaler à la fenêtre parente si on est dans un popup
+      if (window.opener) {
+        window.opener.postMessage({ type: "oauth_success", platform: params.get("linkedin") ? "linkedin" : "threads" }, "*");
+        window.close();
       }
     }
+  }, []);
+
+  // Écouter les messages OAuth depuis le popup
+  useEffect(() => {
+    const handleMessage = (event) => {
+      if (event.data?.type === "oauth_success") {
+        // Rafraîchir le statut de la plateforme connectée
+        const savedToken = localStorage.getItem("token");
+        if (savedToken) setToken(savedToken);
+        // Déclencher un événement pour que Generator rafraîchisse le statut
+        window.dispatchEvent(new CustomEvent("oauthSuccess", { detail: event.data.platform }));
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
   }, []);
 
   const logout = () => {
