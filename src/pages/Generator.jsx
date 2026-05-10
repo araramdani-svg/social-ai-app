@@ -70,12 +70,11 @@ const growthData = [
     { name:"X", value: 0 },
     { name:"Threads", value: threadsStatus.connected ? 40 : 0 },
   ];
-  const timelineData = [
   const timelineData = scheduledPosts.slice(0, 4).map(p => ({
-    time: p.time || "—",
-    platform: p.platform || "LinkedIn",
-    status: "Scheduled"
-  }));
+  time: p.time || "—",
+  platform: p.platform || "LinkedIn",
+  status: "Scheduled"
+}));
   const [stats, setStats] = useState({
     posts: 0,
     projects: 0,

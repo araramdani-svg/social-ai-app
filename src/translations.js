@@ -71,7 +71,7 @@ const translations = {
       upgradeBusiness: "Upgrade to Business",
       cancelSubscription: "Cancel Subscription",
       cancelConfirm: "Are you sure? Your subscription will end at the current billing period.",
-      cancelNote: "Your subscription will remain active until the end of the current billing period.",,
+      cancelNote: "Your subscription will remain active until the end of the current billing period.",
     },
     ui: {
       welcomeTitle: "Welcome to GrowthPILOT", welcomeSub: "Your AI content operating system is ready.",
@@ -295,7 +295,7 @@ const translations = {
       upgradeBusiness: "Passer au Business",
       cancelSubscription: "Annuler l'abonnement",
       cancelConfirm: "Êtes-vous sûr ? Votre abonnement se terminera à la fin de la période en cours.",
-      cancelNote: "Votre abonnement restera actif jusqu'à la fin de la période de facturation en cours.",,
+      cancelNote: "Votre abonnement restera actif jusqu'à la fin de la période de facturation en cours.",
     },
     ui: {
       welcomeTitle: "Bienvenue sur GrowthPILOT", welcomeSub: "Votre système d'exploitation de contenu IA est prêt.",
@@ -497,7 +497,7 @@ const translations = {
       upgradeBusiness: "Actualizar a Business",
       cancelSubscription: "Cancelar suscripción",
       cancelConfirm: "¿Estás seguro? Tu suscripción terminará al final del período actual.",
-      cancelNote: "Tu suscripción permanecerá activa hasta el final del período de facturación actual.",,
+      cancelNote: "Tu suscripción permanecerá activa hasta el final del período de facturación actual.",
     },
     ui: {
       welcomeTitle: "Bienvenido a GrowthPILOT", welcomeSub: "Tu sistema operativo de contenido IA está listo.",
@@ -646,7 +646,7 @@ const translations = {
       upgradeBusiness: "Auf Business upgraden",
       cancelSubscription: "Abonnement kündigen",
       cancelConfirm: "Sind Sie sicher? Ihr Abonnement endet am Ende des aktuellen Abrechnungszeitraums.",
-      cancelNote: "Ihr Abonnement bleibt bis zum Ende des aktuellen Abrechnungszeitraums aktiv.",,
+      cancelNote: "Ihr Abonnement bleibt bis zum Ende des aktuellen Abrechnungszeitraums aktiv.",
     },
     ui: {
       welcomeTitle: "Willkommen bei GrowthPILOT", welcomeSub: "Ihr KI-Content-Betriebssystem ist bereit.",
@@ -795,7 +795,7 @@ const translations = {
       upgradeBusiness: "Passa a Business",
       cancelSubscription: "Annulla abbonamento",
       cancelConfirm: "Sei sicuro? Il tuo abbonamento terminerà alla fine del periodo corrente.",
-      cancelNote: "Il tuo abbonamento rimarrà attivo fino alla fine del periodo di fatturazione corrente.",,
+      cancelNote: "Il tuo abbonamento rimarrà attivo fino alla fine del periodo di fatturazione corrente.",
     },
     ui: {
       welcomeTitle: "Benvenuto su GrowthPILOT", welcomeSub: "Il tuo sistema operativo di contenuti IA è pronto.",
@@ -944,7 +944,7 @@ const translations = {
       upgradeBusiness: "Atualizar para Business",
       cancelSubscription: "Cancelar assinatura",
       cancelConfirm: "Tem certeza? Sua assinatura terminará no final do período atual.",
-      cancelNote: "Sua assinatura permanecerá ativa até o final do período de cobrança atual.",,
+      cancelNote: "Sua assinatura permanecerá ativa até o final do período de cobrança atual.",
     },
     ui: {
       welcomeTitle: "Bem-vindo ao GrowthPILOT", welcomeSub: "Seu sistema operacional de conteúdo IA está pronto.",
