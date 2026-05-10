@@ -627,8 +627,12 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   };
 
   const loadHistory = async () => {
-    const data = await api("auth/posts", {}, "GET");
-    setHistory(data || []);
+    try {
+      const data = await api("auth/posts", {}, "GET");
+      setHistory(Array.isArray(data) ? data : []);
+    } catch {
+      setHistory([]);
+    }
   };
 
   const exportPost = () => {
