@@ -2489,7 +2489,7 @@ setTimeout(() => {
     </div>
   );
 }
-)}
+
 const styles = {
   page: {
     display: "flex",
