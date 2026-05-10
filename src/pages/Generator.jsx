@@ -2383,12 +2383,19 @@ setTimeout(() => {
                     </p>
                   </>
                 ) : (
-                  <a
-                    href={`https://social-ai-app-production.up.railway.app/linkedin/connect?token=${encodeURIComponent(token)}`}
-                    style={{ ...styles.button, margin:0, width:"100%", display:"block", textAlign:"center", textDecoration:"none", boxSizing:"border-box" }}
-                  >
-                    {tr(trendsLang, "buttons.connectLinkedin")}
-                  </a>
+                  <>
+                    <a
+                      href={`https://social-ai-app-production.up.railway.app/linkedin/connect?token=${encodeURIComponent(token)}`}
+                      style={{ ...styles.button, margin:0, width:"100%", display:"block", textAlign:"center", textDecoration:"none", boxSizing:"border-box" }}
+                    >
+                      {tr(trendsLang, "buttons.connectLinkedin")}
+                    </a>
+                    {/Firefox/i.test(navigator.userAgent) && (
+                      <p style={{ color:"#f59e0b", fontSize:11, marginTop:8, textAlign:"center" }}>
+                        {tr(trendsLang, "messages.useChrome")}
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -2427,12 +2434,19 @@ setTimeout(() => {
                     </div>
                   </>
                 ) : (
-                  <a
-                    href={`https://social-ai-app-production.up.railway.app/threads/connect?token=${encodeURIComponent(token)}`}
-                    style={{ ...styles.button, margin:0, width:"100%", display:"block", textAlign:"center", textDecoration:"none", boxSizing:"border-box" }}
-                  >
-                    {tr(trendsLang, "buttons.connectThreads")}
-                  </a>
+                  <>
+                    <a
+                      href={`https://social-ai-app-production.up.railway.app/threads/connect?token=${encodeURIComponent(token)}`}
+                      style={{ ...styles.button, margin:0, width:"100%", display:"block", textAlign:"center", textDecoration:"none", boxSizing:"border-box" }}
+                    >
+                      {tr(trendsLang, "buttons.connectThreads")}
+                    </a>
+                    {/Firefox/i.test(navigator.userAgent) && (
+                      <p style={{ color:"#f59e0b", fontSize:11, marginTop:8, textAlign:"center" }}>
+                        {tr(trendsLang, "messages.useChrome")}
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
 
