@@ -469,7 +469,6 @@ const translations = {
       startFree: "COMMENCER GRATUITEMENT →",
       login: "CONNEXION",
       tryFree: "ESSAYER GRATUITEMENT",
-    },
       watchDemo: "VOIR LA DÉMO",
       proof1num: "10k+", proof1label: "Posts générés",
       proof2num: "3x", proof2label: "Publication plus rapide",
