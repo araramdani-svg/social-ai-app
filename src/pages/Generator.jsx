@@ -436,8 +436,12 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
     return () => clearInterval(timer);
   }, [stats, projects, tab]);
 
-  useEffect(() => { loadProjects(); }, []);
-  useEffect(() => { loadHistory(); }, []);
+  useEffect(() => {
+    if (token && token !== "guest") {
+      loadProjects();
+      loadHistory();
+    }
+  }, [token]);
 
   useEffect(() => {
     const interval = setInterval(() => {
