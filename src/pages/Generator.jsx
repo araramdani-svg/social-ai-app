@@ -265,6 +265,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
     };
     window.addEventListener("oauthSuccess", handleOAuth);
     return () => window.removeEventListener("oauthSuccess", handleOAuth);
+  }, []);
 
   const connectLinkedin = () => {
     // Lien direct avec token en query param — fonctionne sur tous les navigateurs y compris mobile
@@ -2478,7 +2479,7 @@ setTimeout(() => {
           </>
         )}
 
-          </motion.div>
+        </motion.div>
         </AnimatePresence>
         {toast && (
           <div style={styles.toast}>
@@ -2488,7 +2489,6 @@ setTimeout(() => {
       </main>
     </div>
   );
-})
 }
 
 const styles = {
