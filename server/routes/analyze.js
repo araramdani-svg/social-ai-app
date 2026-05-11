@@ -1,6 +1,7 @@
 import express from "express";
 import OpenAI from "openai";
 import jwt from "jsonwebtoken";
+import db from "../db.js";
 
 const router = express.Router();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -16,8 +17,66 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+// ─── Limites par plan ─────────────────────────────────────────────────────────
+const PLAN_LIMITS = {
+  Free:     { analyses: 3 },
+  Pro:      { analyses: Infinity },
+  Business: { analyses: Infinity },
+};
+
+// ─── Middleware quota analyses ────────────────────────────────────────────────
+const checkAnalysisQuota = async (req, res, next) => {
+  if (!req.user?.id) return next();
+  try {
+    const result = await db.query(
+      "SELECT plan, email, analyses_count, quota_reset_date FROM users WHERE id=$1",
+      [req.user.id]
+    );
+    const user = result.rows[0];
+    if (!user) return next();
+
+    // Bypass comptes test
+    const TEST_ACCOUNTS = ["test@aigrowthpilot.app"];
+    if (TEST_ACCOUNTS.includes(user.email)) return next();
+
+    // Reset mensuel automatique
+    const today = new Date().toISOString().split("T")[0];
+    const resetDate = user.quota_reset_date?.toISOString?.()?.split("T")[0] || user.quota_reset_date;
+    const resetMonth = resetDate ? resetDate.slice(0, 7) : null;
+    const currentMonth = today.slice(0, 7);
+
+    if (resetMonth !== currentMonth) {
+      await db.query(
+        "UPDATE users SET analyses_count=0, quota_reset_date=$1 WHERE id=$2",
+        [today, req.user.id]
+      );
+      user.analyses_count = 0;
+    }
+
+    const plan = user.plan || "Free";
+    const limit = PLAN_LIMITS[plan]?.analyses ?? 3;
+
+    if (limit !== Infinity && user.analyses_count >= limit) {
+      return res.status(403).json({
+        error: "quota_exceeded",
+        message: `You've reached your ${limit} analyses/month limit on the ${plan} plan.`,
+        current: user.analyses_count,
+        limit,
+        plan,
+        upgrade: "pro",
+      });
+    }
+
+    req.userPlan = plan;
+    next();
+  } catch (err) {
+    console.error("Analysis quota check error:", err.message);
+    next();
+  }
+};
+
 // ─── POST /analyze ─────────────────────────────────────────────────────────────
-router.post("/", authenticateToken, async (req, res) => {
+router.post("/", authenticateToken, checkAnalysisQuota, async (req, res) => {
   const { text } = req.body;
   if (!text || text.trim().length < 10) {
     return res.status(400).json({ error: "Text too short to analyze" });
@@ -93,6 +152,16 @@ Return ONLY the JSON, no explanation, no markdown, no backticks.`;
     };
 
     res.json(normalized);
+
+    // Incrémenter le compteur d'analyses
+    if (req.user?.id) {
+      try {
+        await db.query(
+          "UPDATE users SET analyses_count = analyses_count + 1 WHERE id=$1",
+          [req.user.id]
+        );
+      } catch {}
+    }
 
   } catch (err) {
     console.error("Analyze error:", err.message);

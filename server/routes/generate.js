@@ -17,6 +17,65 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+// ─── Limites par plan ─────────────────────────────────────────────────────────
+const PLAN_LIMITS = {
+  Free:     { generations: 5,   analyses: 3,  projects: 1  },
+  Pro:      { generations: 100, analyses: Infinity, projects: 10 },
+  Business: { generations: Infinity, analyses: Infinity, projects: Infinity },
+};
+
+// ─── Middleware quota générations ─────────────────────────────────────────────
+const checkGenerationQuota = async (req, res, next) => {
+  if (!req.user?.id) return next();
+  try {
+    const result = await db.query(
+      "SELECT plan, generations_count, quota_reset_date FROM users WHERE id=$1",
+      [req.user.id]
+    );
+    const user = result.rows[0];
+    if (!user) return next();
+
+    // Reset mensuel automatique
+    const today = new Date().toISOString().split("T")[0];
+    const resetDate = user.quota_reset_date?.toISOString?.()?.split("T")[0] || user.quota_reset_date;
+    const resetMonth = resetDate ? resetDate.slice(0, 7) : null;
+    const currentMonth = today.slice(0, 7);
+
+    if (resetMonth !== currentMonth) {
+      await db.query(
+        "UPDATE users SET generations_count=0, quota_reset_date=$1 WHERE id=$2",
+        [today, req.user.id]
+      );
+      user.generations_count = 0;
+    }
+
+    const plan = user.plan || "Free";
+    const limit = PLAN_LIMITS[plan]?.generations ?? 5;
+
+    // Comptes test — bypass
+    const testResult = await db.query("SELECT email FROM users WHERE id=$1", [req.user.id]);
+    const TEST_ACCOUNTS = ["test@aigrowthpilot.app"];
+    if (TEST_ACCOUNTS.includes(testResult.rows[0]?.email)) return next();
+
+    if (limit !== Infinity && user.generations_count >= limit) {
+      return res.status(403).json({
+        error: "quota_exceeded",
+        message: `You've reached your ${limit} generations/month limit on the ${plan} plan.`,
+        current: user.generations_count,
+        limit,
+        plan,
+        upgrade: plan === "Free" ? "pro" : "business",
+      });
+    }
+
+    req.userPlan = plan;
+    next();
+  } catch (err) {
+    console.error("Quota check error:", err.message);
+    next(); // En cas d'erreur, on laisse passer
+  }
+};
+
 // ─── Templates prompts ────────────────────────────────────────────────────────
 const TEMPLATE_INSTRUCTIONS = {
   viral: `Write a viral LinkedIn post optimized for maximum engagement and shares.
@@ -50,7 +109,7 @@ Strong hook, valuable insights, clear takeaway. 150-250 words.`,
 };
 
 // ─── POST /generate ────────────────────────────────────────────────────────────
-router.post("/", authenticateToken, async (req, res) => {
+router.post("/", authenticateToken, checkGenerationQuota, async (req, res) => {
   const { topic, template = "default", voice, campaign, project, lang = "en" } = req.body;
 
   if (!topic) return res.status(400).json({ error: "Topic is required" });
@@ -116,7 +175,7 @@ Write the LinkedIn post now.`;
     const text = completion.choices[0]?.message?.content?.trim();
     if (!text) return res.status(500).json({ error: "Generation failed" });
 
-    // Sauvegarder dans l'historique
+    // Sauvegarder dans l'historique + incrémenter quota
     if (req.user?.id) {
       try {
         await db.query(
@@ -124,6 +183,10 @@ Write the LinkedIn post now.`;
            VALUES ($1, $2, $3, $4, $5, NOW())
            ON CONFLICT DO NOTHING`,
           [req.user.id, project || null, topic, template, text]
+        );
+        await db.query(
+          "UPDATE users SET generations_count = generations_count + 1 WHERE id=$1",
+          [req.user.id]
         );
       } catch {}
     }
