@@ -29,7 +29,12 @@ function useWindowWidth() {
 }
 
 export default function Generator({ token: tokenProp, trendsLang: langProp, setTrendsLang: setLangProp, setPage }) {
-  const [tab, setTab] = useState("home");
+  const [tab, setTabState] = useState(() => sessionStorage.getItem("gp_tab") || "home");
+
+  const setTab = (t) => {
+    setTabState(t);
+    sessionStorage.setItem("gp_tab", t);
+  };
   const [drafts, setDrafts] = useState([]);
   const [workspace, setWorkspace] = useState("PERSONAL");
   const [voice, setVoice] = useState("Founder");

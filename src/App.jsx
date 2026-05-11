@@ -18,8 +18,19 @@ function useWindowWidth() {
 }
 
 function App() {
-  const [page, setPage] = useState("landing");
-  const [token, setToken] = useState(null);
+  const [token, setToken] = useState(() => localStorage.getItem("token") || null);
+
+  // Bug 2 — restaurer la dernière page au refresh
+  const [page, setPageState] = useState(() => {
+    const savedToken = localStorage.getItem("token");
+    if (!savedToken) return "landing";
+    return sessionStorage.getItem("gp_page") || "generator";
+  });
+
+  const setPage = (p) => {
+    setPageState(p);
+    sessionStorage.setItem("gp_page", p);
+  };
   const [trendsLang, setTrendsLang] = useState("en");
   const [showLangMenu, setShowLangMenu] = useState(false);
 
@@ -39,9 +50,9 @@ function App() {
     const savedToken = localStorage.getItem("token");
     if (savedToken && savedToken !== "guest") {
       setToken(savedToken);
-      setPage("generator");
+      if (!sessionStorage.getItem("gp_page")) setPage("generator");
     } else if (savedToken === "guest") {
-      setPage("generator");
+      if (!sessionStorage.getItem("gp_page")) setPage("generator");
     }
   }, []);
 
@@ -77,6 +88,7 @@ function App() {
 
   const logout = () => {
     localStorage.removeItem("token");
+    sessionStorage.removeItem("gp_page");
     setToken(null);
     setPage("landing");
   };
@@ -89,7 +101,7 @@ function App() {
   /* ── Boutons flottants : masqués sur mobile (remplacés par bottom nav dans Generator) ── */
   const floatingBar = !isMobile ? (
     <div style={floatingStyle}>
-      <button onClick={() => setPage("landing")} style={iconStyle} title="Landing">🏠</button>
+      <button onClick={() => token ? setPage("generator") : setPage("landing")} style={iconStyle} title="Home">🏠</button>
 
       {/* Language selector */}
       <div style={{ position:"relative" }}>
