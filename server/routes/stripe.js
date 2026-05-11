@@ -103,10 +103,19 @@ router.post("/webhook", express.raw({ type: "application/json" }), async (req, r
 // Retourne le plan actuel de l'user connecté
 router.get("/status", authenticateToken, async (req, res) => {
   const result = await db.query(
-    "SELECT plan, plan_interval FROM users WHERE id=$1",
+    "SELECT email, plan, plan_interval FROM users WHERE id=$1",
     [req.user.id]
   );
   const user = result.rows[0];
+
+  // ── Bypass comptes test — accès Pro permanent ──
+  const TEST_ACCOUNTS = [
+    "test@test.com", // remplace par ton email de test réel
+  ];
+  if (TEST_ACCOUNTS.includes(user?.email)) {
+    return res.json({ plan: "Pro", interval: "month" });
+  }
+
   res.json({
     plan: user?.plan || "Free",
     interval: user?.plan_interval || null,
