@@ -1032,7 +1032,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
                           <span>{postMetrics.readTime} min read</span>
                         </div>
                         <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-                          {[[tr(trendsLang,"buttons.save"),savePost],[tr(trendsLang,"buttons.draft"),saveDraft],[tr(trendsLang,"buttons.copy"),copyPost],[tr(trendsLang,"buttons.export"),exportPost],[tr(trendsLang,"buttons.analyze"),analyze],[tr(trendsLang,"buttons.plan"),generatePlanner]].map(([label,fn])=>(
+                          {[[tr(trendsLang,"buttons.save"),savePost],[tr(trendsLang,"buttons.copy"),copyPost],[tr(trendsLang,"buttons.export"),exportPost],[tr(trendsLang,"buttons.analyze"),analyze],[tr(trendsLang,"buttons.plan"),generatePlanner]].map(([label,fn])=>(
                             <button key={label} style={{ ...st.button, margin:0, fontSize:12, padding:"10px 14px" }} onClick={fn}>{label}</button>
                           ))}
                         </div>
