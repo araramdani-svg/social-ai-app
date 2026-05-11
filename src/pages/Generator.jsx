@@ -573,10 +573,15 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   };
 
   const savePost = async () => {
-    if (!post || !projectTitle) return;
-    await api("auth/save-post", { title: projectTitle, content: post });
-    showToast(tr(trendsLang, "messages.projectSaved"));
-    setTimeout(() => setSaveStatus(""), 2000);
+    if (!post) { showToast("⚠️ No content to save — generate a post first"); return; }
+    const title = projectTitle || selectedProject || topic || "Untitled";
+    try {
+      await api("auth/save-post", { title, content: post });
+      showToast(tr(trendsLang, "messages.projectSaved"));
+      setTimeout(() => setSaveStatus(""), 2000);
+    } catch {
+      showToast("❌ Save failed — please try again");
+    }
   };
 
   const generate = async () => {
