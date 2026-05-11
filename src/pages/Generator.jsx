@@ -1654,12 +1654,26 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
                 {pageHeader("trends")}
                 <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
                   {[
-                    { key:"ai", label: tr(trendsLang, "ui.nicheAI") },
-                    { key:"saas", label: tr(trendsLang, "ui.nicheSaaS") },
-                    { key:"marketing", label: tr(trendsLang, "ui.nicheMarketing") },
-                    { key:"finance", label: tr(trendsLang, "ui.nicheFinance") },
+                    { key:"ai",         label: tr(trendsLang, "ui.nicheAI") },
+                    { key:"saas",       label: tr(trendsLang, "ui.nicheSaaS") },
+                    { key:"marketing",  label: tr(trendsLang, "ui.nicheMarketing") },
+                    { key:"finance",    label: tr(trendsLang, "ui.nicheFinance") },
                     { key:"leadership", label: tr(trendsLang, "ui.nicheLeadership") },
-                    { key:"tech", label: tr(trendsLang, "ui.nicheTech") },
+                    { key:"tech",       label: tr(trendsLang, "ui.nicheTech") },
+                    { key:"health",     label: tr(trendsLang, "ui.nicheHealth") },
+                    { key:"climate",    label: tr(trendsLang, "ui.nicheClimate") },
+                    { key:"gaming",     label: tr(trendsLang, "ui.nicheGaming") },
+                    { key:"realestate", label: tr(trendsLang, "ui.nicheRealEstate") },
+                    { key:"hrtech",     label: tr(trendsLang, "ui.nicheHRTech") },
+                    { key:"creator",    label: tr(trendsLang, "ui.nicheCreator") },
+                    { key:"food",       label: tr(trendsLang, "ui.nicheFood") },
+                    { key:"music",      label: tr(trendsLang, "ui.nicheMusic") },
+                    { key:"travel",     label: tr(trendsLang, "ui.nicheTravel") },
+                    { key:"education",  label: tr(trendsLang, "ui.nicheEducation") },
+                    { key:"cybersec",   label: tr(trendsLang, "ui.nicheCybersec") },
+                    { key:"mobility",   label: tr(trendsLang, "ui.nicheMobility") },
+                    { key:"fashion",    label: tr(trendsLang, "ui.nicheFashion") },
+                    { key:"sport",      label: tr(trendsLang, "ui.nicheSport") },
                   ].map(n => (
                     <button key={n.key} style={{ padding:"8px 14px", borderRadius:20, border: trendsNiche===n.key ? "none" : "1px solid rgba(220,38,38,0.3)", background: trendsNiche===n.key ? "linear-gradient(135deg,#dc2626,#991b1b)" : "transparent", color: trendsNiche===n.key ? "white" : "#64748b", fontWeight:700, fontSize: isMobile ? 11 : 12, cursor:"pointer" }}
                       onClick={() => { setTrendsNiche(n.key); fetchTrends(n.key, trendsLang); }}>
