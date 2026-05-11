@@ -28,7 +28,7 @@ function useWindowWidth() {
   return width;
 }
 
-export default function Generator({ token: tokenProp, trendsLang: langProp, setTrendsLang: setLangProp }) {
+export default function Generator({ token: tokenProp, trendsLang: langProp, setTrendsLang: setLangProp, setPage }) {
   const [tab, setTab] = useState("home");
   const [drafts, setDrafts] = useState([]);
   const [workspace, setWorkspace] = useState("PERSONAL");
@@ -971,6 +971,13 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
                         <option value="">{tr(trendsLang, "ui.selectProject")}</option>
                         {filteredProjects.map((p) => <option key={p.name}>{p.name}</option>)}
                       </select>
+                      <input
+                        style={{ ...st.input, marginBottom:0, borderColor:"rgba(220,38,38,0.4)" }}
+                        placeholder={tr(trendsLang, "ui.phProjectTitle")}
+                        value={projectTitle}
+                        onChange={(e) => setProjectTitle(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && createProject()}
+                      />
                       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
                         <button style={{ ...st.button, margin:0, fontSize:12, padding:"10px" }} onClick={createProject}>{tr(trendsLang, "buttons.createProject")}</button>
                         <button style={{ ...st.button, margin:0, fontSize:12, padding:"10px" }} onClick={duplicateProject}>{tr(trendsLang, "ui.duplicate")}</button>
