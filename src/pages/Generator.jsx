@@ -463,6 +463,12 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   }, []);
 
   useEffect(() => {
+    const handler = (e) => setTab(e.detail || "home");
+    window.addEventListener("navigateTab", handler);
+    return () => window.removeEventListener("navigateTab", handler);
+  }, []);
+
+  useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
   }, []);

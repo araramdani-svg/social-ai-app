@@ -101,7 +101,15 @@ function App() {
   /* ── Boutons flottants : masqués sur mobile (remplacés par bottom nav dans Generator) ── */
   const floatingBar = !isMobile ? (
     <div style={floatingStyle}>
-      <button onClick={() => token ? setPage("generator") : setPage("landing")} style={iconStyle} title="Home">🏠</button>
+      <button onClick={() => {
+        if (token) {
+          sessionStorage.setItem("gp_tab", "home");
+          window.dispatchEvent(new CustomEvent("navigateTab", { detail: "home" }));
+          setPage("generator");
+        } else {
+          setPage("landing");
+        }
+      }} style={iconStyle} title="Home">🏠</button>
 
       {/* Language selector */}
       <div style={{ position:"relative" }}>
