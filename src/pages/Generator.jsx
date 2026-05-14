@@ -21,7 +21,10 @@ import Profile      from "./tabs/Profile.jsx";
 import Carousel     from "./tabs/Carousel.jsx";
 import GhostWrite   from "./tabs/GhostWrite.jsx";
 import AutoRepost   from "./tabs/AutoRepost.jsx";
+import Templates    from "./tabs/Templates.jsx";
+import Calendar     from "./tabs/Calendar.jsx";
 import { st, useWindowWidth } from "./tabs/shared.js";
+import OnboardingWizard from "../components/OnboardingWizard.jsx";
 
 const API = "https://social-ai-app-production.up.railway.app";
 
@@ -59,6 +62,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   const [saveStatus,      setSaveStatus]      = useState("");
   const [currentPostDbId, setCurrentPostDbId] = useState(null);
   const [publishStatus,   setPublishStatus]   = useState("");
+  const [showOnboarding,  setShowOnboarding]  = useState(() => !localStorage.getItem("gp_onboarded") && token && token !== "guest");
   const [template,        setTemplate]        = useState("Authority");
   const [voice,           setVoice]           = useState("Founder");
   const [campaign,        setCampaign]        = useState("Authority Build");
@@ -222,9 +226,11 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   const deleteAccount     = async () => { await api("auth/delete-account",{},"DELETE"); localStorage.removeItem("token"); window.location.reload(); };
   const completeOnboarding= () => { localStorage.setItem("gp_onboarded","true"); setShowOnboarding(false); showToast(tr(trendsLang,"messages.workspaceReady")); };
 
-  const NAV_TABS   = ["home","dashboard","insights","create","memory","carousel","ghostwrite","autorepost","scheduler","autopost","analyze","planner","history","publish","team","integrations","trends"];
+  const NAV_TABS   = ["home","dashboard","insights","create","memory","carousel","ghostwrite","autorepost","templates","calendar","scheduler","autopost","analyze","planner","history","publish","team","integrations","trends"];
   const BOTTOM_NAV = [{ key:"home",icon:"🏠" },{ key:"create",icon:"✍️" },{ key:"trends",icon:"🌍" },{ key:"analyze",icon:"📊" },{ key:"profile",icon:"👤" }];
   const shared     = { trendsLang, isMobile };
+
+  if (showOnboarding) return <OnboardingWizard token={token} onComplete={(mem) => { setShowOnboarding(false); if (mem.project) { setSelectedProject(mem.project); } }} />;
 
   return (
     <div style={st.page}>
@@ -302,6 +308,8 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
             {tab==="memory"       && <Memory       {...shared} memory={memory} setMemory={setMemory} saveBrandMemory={saveBrandMemory} />}
             {tab==="carousel"     && <Carousel     {...shared} post={post} topic={topic} memory={memory} showToast={showToast} />}
             {tab==="ghostwrite"   && <GhostWrite   {...shared} post={post} setPost={setPost} setTab={setTab} memory={memory} showToast={showToast} />}
+            {tab==="templates"    && <Templates    {...shared} post={post} setPost={setPost} setTopic={setTopic} setTab={setTab} showToast={showToast} />}
+            {tab==="calendar"     && <Calendar     {...shared} post={post} setPost={setPost} setTab={setTab} showToast={showToast} />}
             {tab==="autorepost"   && <AutoRepost   {...shared} history={history} setPost={setPost} setTab={setTab} linkedinStatus={linkedinStatus} threadsStatus={threadsStatus} postToLinkedin={postToLinkedin} postToThreads={postToThreads} showToast={showToast} />}
             {tab==="analyze"      && <Analyze      {...shared} analysis={analysis} platformData={platformData} />}
             {tab==="insights"     && <Insights     {...shared} insights={insights} stats={stats} linkedinStatus={linkedinStatus} threadsStatus={threadsStatus} />}

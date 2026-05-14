@@ -19,6 +19,8 @@ const translations = {
       carousel: "CAROUSEL",
       ghostwrite: "GHOST WRITE",
       autorepost: "AUTO-REPOST",
+      templates: "TEMPLATES",
+      calendar: "CALENDAR",
     },
     // Pages headers
     headers: {
@@ -42,6 +44,8 @@ const translations = {
       carousel: "CAROUSEL",
       ghostwrite: "GHOST WRITING",
       autorepost: "AUTO-REPOST",
+      templates: "TEMPLATES",
+      calendar: "CONTENT CALENDAR",
     },
     // Subtitles
     subtitles: {
@@ -65,6 +69,8 @@ const translations = {
       carousel: "Create viral LinkedIn carousels with AI",
       ghostwrite: "Rewrite in the style of top creators",
       autorepost: "Republish your best posts automatically",
+      templates: "50+ proven LinkedIn post templates",
+      calendar: "Plan and schedule your 30-day content",
     },
     profile: {
       currentPlan: "CURRENT PLAN", projects: "PROJECTS", posts: "POSTS",
@@ -290,6 +296,8 @@ const translations = {
       carousel: "CAROUSEL",
       ghostwrite: "GHOST WRITE",
       autorepost: "AUTO-REPOST",
+      templates: "TEMPLATES",
+      calendar: "CALENDRIER",
     },
     headers: {
       home: "ACCUEIL",
@@ -312,6 +320,8 @@ const translations = {
       carousel: "CAROUSEL",
       ghostwrite: "GHOST WRITING",
       autorepost: "AUTO-REPOST",
+      templates: "TEMPLATES",
+      calendar: "CALENDRIER",
     },
     subtitles: {
       home: "Votre centre de commande de contenu IA",
@@ -334,6 +344,8 @@ const translations = {
       carousel: "Creez des carousels LinkedIn viraux avec l'IA",
       ghostwrite: "Reecrivez dans le style des meilleurs createurs",
       autorepost: "Republier automatiquement vos meilleurs posts",
+      templates: "50+ modeles de posts LinkedIn prouves",
+      calendar: "Planifiez votre contenu sur 30 jours",
     },
     profile: {
       currentPlan: "PLAN ACTUEL", projects: "PROJETS", posts: "PUBLICATIONS",
@@ -554,6 +566,8 @@ const translations = {
       carousel: "CAROUSEL",
       ghostwrite: "GHOST WRITE",
       autorepost: "AUTO-REPOST",
+      templates: "PLANTILLAS",
+      calendar: "CALENDARIO",
     },
     headers: {
       home: "INICIO", dashboard: "PANEL", insights: "ANÁLISIS", create: "CREAR",
@@ -566,6 +580,8 @@ const translations = {
       carousel: "CAROUSEL",
       ghostwrite: "GHOST WRITING",
       autorepost: "AUTO-REPOST",
+      templates: "PLANTILLAS",
+      calendar: "CALENDARIO",
     },
     subtitles: {
       home: "Tu centro de comando de contenido IA", dashboard: "Sigue tu rendimiento de contenido",
@@ -581,6 +597,8 @@ const translations = {
       carousel: "Crea carruseles virales de LinkedIn con IA",
       ghostwrite: "Reescribe al estilo de los mejores creadores",
       autorepost: "Republica automaticamente tus mejores posts",
+      templates: "50+ plantillas probadas de posts LinkedIn",
+      calendar: "Planifica tu contenido de 30 dias",
     },
     profile: {
       currentPlan: "PLAN ACTUAL", projects: "PROYECTOS", posts: "PUBLICACIONES",
@@ -744,6 +762,8 @@ const translations = {
       carousel: "CAROUSEL",
       ghostwrite: "GHOST WRITE",
       autorepost: "AUTO-REPOST",
+      templates: "VORLAGEN",
+      calendar: "KALENDER",
     },
     headers: {
       home: "START", dashboard: "DASHBOARD", insights: "ANALYSEN", create: "ERSTELLEN",
@@ -771,6 +791,8 @@ const translations = {
       carousel: "Erstelle virale LinkedIn-Karussells mit KI",
       ghostwrite: "Schreibe im Stil der besten Creator um",
       autorepost: "Veroeffentliche deine besten Beitraege erneut",
+      templates: "50+ bewährte LinkedIn-Post-Vorlagen",
+      calendar: "Plane deinen 30-Tage-Content",
     },
     profile: {
       currentPlan: "AKTUELLER PLAN", projects: "PROJEKTE", posts: "BEITRÄGE",
@@ -934,6 +956,8 @@ const translations = {
       carousel: "CAROUSEL",
       ghostwrite: "GHOST WRITE",
       autorepost: "AUTO-REPOST",
+      templates: "MODELLI",
+      calendar: "CALENDARIO",
     },
     headers: {
       home: "HOME", dashboard: "DASHBOARD", insights: "ANALISI", create: "CREA",
@@ -946,6 +970,8 @@ const translations = {
       carousel: "CAROUSEL",
       ghostwrite: "GHOST WRITING",
       autorepost: "AUTO-REPOST",
+      templates: "MODELLI",
+      calendar: "CALENDARIO",
     },
     subtitles: {
       home: "Il tuo centro di comando per i contenuti IA", dashboard: "Monitora le prestazioni dei tuoi contenuti",
@@ -961,6 +987,8 @@ const translations = {
       carousel: "Crea caroselli virali per LinkedIn con l'IA",
       ghostwrite: "Riscrivi nello stile dei migliori creator",
       autorepost: "Ripubblica automaticamente i tuoi post migliori",
+      templates: "50+ modelli di post LinkedIn provati",
+      calendar: "Pianifica i tuoi contenuti per 30 giorni",
     },
     profile: {
       currentPlan: "PIANO ATTUALE", projects: "PROGETTI", posts: "POST",
@@ -1124,6 +1152,8 @@ const translations = {
       carousel: "CAROUSEL",
       ghostwrite: "GHOST WRITE",
       autorepost: "AUTO-REPOST",
+      templates: "MODELOS",
+      calendar: "CALENDÁRIO",
     },
     headers: {
       home: "INÍCIO", dashboard: "PAINEL", insights: "ANÁLISES", create: "CRIAR",
@@ -1136,6 +1166,8 @@ const translations = {
       carousel: "CAROUSEL",
       ghostwrite: "GHOST WRITING",
       autorepost: "AUTO-REPOST",
+      templates: "MODELOS",
+      calendar: "CALENDÁRIO",
     },
     subtitles: {
       home: "Seu centro de comando de conteúdo IA", dashboard: "Acompanhe o desempenho do seu conteúdo",
@@ -1151,6 +1183,8 @@ const translations = {
       carousel: "Crie carrosseis virais do LinkedIn com IA",
       ghostwrite: "Reescreva no estilo dos melhores criadores",
       autorepost: "Republique automaticamente seus melhores posts",
+      templates: "50+ modelos comprovados de posts LinkedIn",
+      calendar: "Planeje seu conteudo de 30 dias",
     },
     profile: {
       currentPlan: "PLANO ATUAL", projects: "PROJETOS", posts: "POSTS",
