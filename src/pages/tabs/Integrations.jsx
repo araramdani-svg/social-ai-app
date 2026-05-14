@@ -8,8 +8,6 @@ export default function Integrations({
   connectThreads, disconnectThreads, postToThreads,
   showToast
 }) {
-  const isFirefox = /Firefox/i.test(navigator.userAgent);
-
   return (
     <>
       <PageHeader tabKey="integrations" trendsLang={trendsLang} isMobile={isMobile} />
@@ -44,11 +42,15 @@ export default function Integrations({
             </>
           ) : (
             <>
-              <a href={`https://social-ai-app-production.up.railway.app/linkedin/connect?token=${encodeURIComponent(token)}`}
-                style={{ ...st.button, margin:0, width:"100%", display:"block", textAlign:"center", textDecoration:"none", boxSizing:"border-box" }}>
+              <a
+                href={`https://social-ai-app-production.up.railway.app/linkedin/connect?token=${encodeURIComponent(token)}`}
+                style={{ ...st.button, margin:0, width:"100%", display:"block", textAlign:"center", textDecoration:"none", boxSizing:"border-box" }}
+              >
                 {tr(trendsLang, "buttons.connectLinkedin")}
               </a>
-              {isFirefox && <p style={{ color:"#f59e0b", fontSize:11, marginTop:8, textAlign:"center" }}>{tr(trendsLang, "messages.useChrome")}</p>}
+              <p style={{ color:"#475569", fontSize:11, marginTop:8, textAlign:"center" }}>
+                ✓ Works on Safari, Chrome & Firefox
+              </p>
             </>
           )}
         </div>
@@ -82,11 +84,15 @@ export default function Integrations({
             </>
           ) : (
             <>
-              <a href={`https://social-ai-app-production.up.railway.app/threads/connect?token=${encodeURIComponent(token)}`}
-                style={{ ...st.button, margin:0, width:"100%", display:"block", textAlign:"center", textDecoration:"none", boxSizing:"border-box" }}>
+              <a
+                href={`https://social-ai-app-production.up.railway.app/threads/connect?token=${encodeURIComponent(token)}`}
+                style={{ ...st.button, margin:0, width:"100%", display:"block", textAlign:"center", textDecoration:"none", boxSizing:"border-box" }}
+              >
                 {tr(trendsLang, "buttons.connectThreads")}
               </a>
-              {isFirefox && <p style={{ color:"#f59e0b", fontSize:11, marginTop:8, textAlign:"center" }}>{tr(trendsLang, "messages.useChrome")}</p>}
+              <p style={{ color:"#475569", fontSize:11, marginTop:8, textAlign:"center" }}>
+                ✓ Works on Safari, Chrome & Firefox
+              </p>
             </>
           )}
         </div>

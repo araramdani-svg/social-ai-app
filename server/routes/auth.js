@@ -69,13 +69,47 @@ router.post("/login", async (req, res) => {
 // ─── Routes protégées (token requis) ──────────────────────────────────────────
 router.post("/save-post", authenticateToken, async (req, res) => {
   const { title, content } = req.body;
-  await db.query("INSERT INTO posts(title,content) VALUES($1,$2)", [title, content]);
-  res.json({ success: true });
+  try {
+    const result = await db.query(
+      "INSERT INTO posts(user_id,title,content,created_at) VALUES($1,$2,$3,NOW()) RETURNING id",
+      [req.user.id, title, content]
+    );
+    res.json({ success: true, id: result.rows[0].id });
+  } catch (err) {
+    console.error("save-post error:", err.message);
+    res.status(500).json({ success: false, message: "Save failed" });
+  }
 });
 
 router.get("/posts", authenticateToken, async (req, res) => {
-  const result = await db.query("SELECT * FROM posts ORDER BY created_at DESC");
+  const result = await db.query(
+    "SELECT * FROM posts WHERE user_id=$1 ORDER BY created_at DESC",
+    [req.user.id]
+  );
   res.json(result.rows);
+});
+
+router.get("/project/:name", authenticateToken, async (req, res) => {
+  try {
+    const [proj, memory, posts] = await Promise.all([
+      db.query("SELECT * FROM projects WHERE name=$1", [req.params.name]),
+      db.query("SELECT * FROM brand_memory WHERE project_name=$1", [req.params.name]),
+      db.query(
+        "SELECT * FROM posts WHERE user_id=$1 AND project_name=$2 ORDER BY created_at DESC LIMIT 20",
+        [req.user.id, req.params.name]
+      ),
+    ]);
+    res.json({
+      project:  proj.rows[0]  || null,
+      memory:   memory.rows[0]|| {},
+      posts:    posts.rows    || [],
+      drafts:   [],
+      lastPost: posts.rows[0] || null,
+    });
+  } catch (err) {
+    console.error("project fetch error:", err.message);
+    res.status(500).json({ error: "Failed to load project" });
+  }
 });
 
 router.post("/create-project", authenticateToken, async (req, res) => {
