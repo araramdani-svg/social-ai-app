@@ -39,6 +39,9 @@ const translations = {
       profile: "PROFILE",
       "content analytics": "CONTENT ANALYTICS",
       "publish center": "PUBLISH CENTER",
+      carousel: "CAROUSEL",
+      ghostwrite: "GHOST WRITING",
+      autorepost: "AUTO-REPOST",
     },
     // Subtitles
     subtitles: {
@@ -59,6 +62,9 @@ const translations = {
       profile: "Manage your account settings",
       "content analytics": "Measure and optimize your content performance",
       "publish center": "Publish your content across platforms",
+      carousel: "Create viral LinkedIn carousels with AI",
+      ghostwrite: "Rewrite in the style of top creators",
+      autorepost: "Republish your best posts automatically",
     },
     profile: {
       currentPlan: "CURRENT PLAN", projects: "PROJECTS", posts: "POSTS",
@@ -303,6 +309,9 @@ const translations = {
       profile: "PROFIL",
       "content analytics": "ANALYSE DE CONTENU",
       "publish center": "CENTRE DE PUBLICATION",
+      carousel: "CAROUSEL",
+      ghostwrite: "GHOST WRITING",
+      autorepost: "AUTO-REPOST",
     },
     subtitles: {
       home: "Votre centre de commande de contenu IA",
@@ -322,6 +331,9 @@ const translations = {
       profile: "Gérez les paramètres de votre compte",
       "content analytics": "Mesurez et optimisez vos performances de contenu",
       "publish center": "Publiez votre contenu sur toutes les plateformes",
+      carousel: "Creez des carousels LinkedIn viraux avec l'IA",
+      ghostwrite: "Reecrivez dans le style des meilleurs createurs",
+      autorepost: "Republier automatiquement vos meilleurs posts",
     },
     profile: {
       currentPlan: "PLAN ACTUEL", projects: "PROJETS", posts: "PUBLICATIONS",
@@ -551,6 +563,9 @@ const translations = {
       profile: "PERFIL",
       "content analytics": "ANÁLISIS DE CONTENIDO",
       "publish center": "CENTRO DE PUBLICACIÓN",
+      carousel: "CAROUSEL",
+      ghostwrite: "GHOST WRITING",
+      autorepost: "AUTO-REPOST",
     },
     subtitles: {
       home: "Tu centro de comando de contenido IA", dashboard: "Sigue tu rendimiento de contenido",
@@ -563,6 +578,9 @@ const translations = {
       profile: "Gestiona la configuración de tu cuenta",
       "content analytics": "Mide y optimiza el rendimiento de tu contenido",
       "publish center": "Publica tu contenido en todas las plataformas",
+      carousel: "Crea carruseles virales de LinkedIn con IA",
+      ghostwrite: "Reescribe al estilo de los mejores creadores",
+      autorepost: "Republica automaticamente tus mejores posts",
     },
     profile: {
       currentPlan: "PLAN ACTUAL", projects: "PROYECTOS", posts: "PUBLICACIONES",
@@ -735,6 +753,9 @@ const translations = {
       profile: "PROFIL",
       "content analytics": "CONTENT-ANALYSE",
       "publish center": "VERÖFFENTLICHUNGSZENTRUM",
+      carousel: "CAROUSEL",
+      ghostwrite: "GHOST WRITING",
+      autorepost: "AUTO-REPOST",
     },
     subtitles: {
       home: "Ihr KI-Inhaltssteuerzentrum", dashboard: "Verfolgen Sie Ihre Content-Performance",
@@ -747,6 +768,9 @@ const translations = {
       profile: "Verwalten Sie Ihre Kontoeinstellungen",
       "content analytics": "Messen und optimieren Sie Ihre Content-Performance",
       "publish center": "Veröffentlichen Sie Inhalte auf allen Plattformen",
+      carousel: "Erstelle virale LinkedIn-Karussells mit KI",
+      ghostwrite: "Schreibe im Stil der besten Creator um",
+      autorepost: "Veroeffentliche deine besten Beitraege erneut",
     },
     profile: {
       currentPlan: "AKTUELLER PLAN", projects: "PROJEKTE", posts: "BEITRÄGE",
@@ -919,6 +943,9 @@ const translations = {
       profile: "PROFILO",
       "content analytics": "ANALISI DEI CONTENUTI",
       "publish center": "CENTRO DI PUBBLICAZIONE",
+      carousel: "CAROUSEL",
+      ghostwrite: "GHOST WRITING",
+      autorepost: "AUTO-REPOST",
     },
     subtitles: {
       home: "Il tuo centro di comando per i contenuti IA", dashboard: "Monitora le prestazioni dei tuoi contenuti",
@@ -931,6 +958,9 @@ const translations = {
       profile: "Gestisci le impostazioni del tuo account",
       "content analytics": "Misura e ottimizza le prestazioni dei tuoi contenuti",
       "publish center": "Pubblica i tuoi contenuti su tutte le piattaforme",
+      carousel: "Crea caroselli virali per LinkedIn con l'IA",
+      ghostwrite: "Riscrivi nello stile dei migliori creator",
+      autorepost: "Ripubblica automaticamente i tuoi post migliori",
     },
     profile: {
       currentPlan: "PIANO ATTUALE", projects: "PROGETTI", posts: "POST",
@@ -1103,6 +1133,9 @@ const translations = {
       profile: "PERFIL",
       "content analytics": "ANÁLISE DE CONTEÚDO",
       "publish center": "CENTRO DE PUBLICAÇÃO",
+      carousel: "CAROUSEL",
+      ghostwrite: "GHOST WRITING",
+      autorepost: "AUTO-REPOST",
     },
     subtitles: {
       home: "Seu centro de comando de conteúdo IA", dashboard: "Acompanhe o desempenho do seu conteúdo",
@@ -1115,6 +1148,9 @@ const translations = {
       profile: "Gerencie as configurações da sua conta",
       "content analytics": "Meça e otimize o desempenho do seu conteúdo",
       "publish center": "Publique seu conteúdo em todas as plataformas",
+      carousel: "Crie carrosseis virais do LinkedIn com IA",
+      ghostwrite: "Reescreva no estilo dos melhores criadores",
+      autorepost: "Republique automaticamente seus melhores posts",
     },
     profile: {
       currentPlan: "PLANO ATUAL", projects: "PROJETOS", posts: "POSTS",
