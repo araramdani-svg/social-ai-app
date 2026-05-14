@@ -200,27 +200,26 @@ export function useWindowWidth() {
 }
 
 // ── pageHeader partagé ────────────────────────────────────────────────────────
+import { createElement as h } from "react";
 import logo from "../../assets/logo.png";
 import { t as tr } from "../../translations.js";
 
 export function PageHeader({ tabKey, trendsLang, isMobile }) {
   const title = tr(trendsLang, `headers.${tabKey}`);
   const subtitle = tr(trendsLang, `subtitles.${tabKey}`);
-  return (
-    <div style={{ marginBottom: isMobile ? 16 : 20 }}>
-      <div style={{ display:"flex", alignItems:"center", gap: isMobile ? 10 : 16, marginBottom:6 }}>
-        <img src={logo} alt="logo" style={{ width: isMobile ? 28 : 38, height: isMobile ? 28 : 38, objectFit:"contain", filter:"drop-shadow(0 0 10px rgba(220,38,38,.4))" }} />
-        <div style={{ display:"flex", alignItems:"baseline", gap: isMobile ? 8 : 12, flexWrap:"wrap" }}>
-          <h1 style={{ fontSize: isMobile ? 20 : 28, fontWeight:900, letterSpacing: isMobile ? "1px" : "2px", margin:0, color:"#fff" }}>{title}</h1>
-          <span style={{ fontSize:10, fontWeight:700, color:"#ef4444", letterSpacing:"2px", background:"rgba(220,38,38,0.1)", border:"1px solid rgba(220,38,38,0.25)", borderRadius:4, padding:"2px 8px" }}>GROWTHPILOT</span>
-        </div>
-      </div>
-      <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-        <div style={{ width:3, height:14, background:"#ef4444", borderRadius:2 }}/>
-        <p style={{ margin:0, fontSize:13, color:"#64748b", letterSpacing:"0.5px" }}>{subtitle}</p>
-      </div>
-      <div style={{ height:1, background:"linear-gradient(90deg,rgba(220,38,38,0.4),transparent)", marginTop:14 }}/>
-    </div>
+  return h("div", { style: { marginBottom: isMobile ? 16 : 20 } },
+    h("div", { style: { display:"flex", alignItems:"center", gap: isMobile ? 10 : 16, marginBottom:6 } },
+      h("img", { src: logo, alt: "logo", style: { width: isMobile ? 28 : 38, height: isMobile ? 28 : 38, objectFit:"contain", filter:"drop-shadow(0 0 10px rgba(220,38,38,.4))" } }),
+      h("div", { style: { display:"flex", alignItems:"baseline", gap: isMobile ? 8 : 12, flexWrap:"wrap" } },
+        h("h1", { style: { fontSize: isMobile ? 20 : 28, fontWeight:900, letterSpacing: isMobile ? "1px" : "2px", margin:0, color:"#fff" } }, title),
+        h("span", { style: { fontSize:10, fontWeight:700, color:"#ef4444", letterSpacing:"2px", background:"rgba(220,38,38,0.1)", border:"1px solid rgba(220,38,38,0.25)", borderRadius:4, padding:"2px 8px" } }, "GROWTHPILOT")
+      )
+    ),
+    h("div", { style: { display:"flex", alignItems:"center", gap:10 } },
+      h("div", { style: { width:3, height:14, background:"#ef4444", borderRadius:2 } }),
+      h("p", { style: { margin:0, fontSize:13, color:"#64748b", letterSpacing:"0.5px" } }, subtitle)
+    ),
+    h("div", { style: { height:1, background:"linear-gradient(90deg,rgba(220,38,38,0.4),transparent)", marginTop:14 } })
   );
 }
 
