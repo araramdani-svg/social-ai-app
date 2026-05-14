@@ -171,7 +171,7 @@ export default function Calendar({ trendsLang, isMobile, post, setPost, setTab, 
 
       {/* Kanban view */}
       {viewMode === "kanban" && (
-        <div style={{ display:"flex", gap:12, flexWrap: isMobile ? "wrap" : "nowrap", alignItems:"flex-start" }}>
+        <div style={{ display:"flex", gap:12, flexWrap: isMobile ? "wrap" : "nowrap", alignItems:"flex-start", overflowX: isMobile ? "visible" : "auto", paddingBottom:8 }}>
           {COLUMNS.map(col => (
             <div
               key={col.id}
