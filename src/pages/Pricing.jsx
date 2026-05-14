@@ -124,7 +124,7 @@ export default function Pricing({ openLogin, openApp, token }) {
           <span style={styles.brandName}>GrowthPILOT</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <button style={{ ...styles.navBtn, marginRight:"auto" }} onClick={openApp}>← Back</button>
+          {openApp && <button style={{ ...styles.navBtn, marginRight:8 }} onClick={openApp}>← Back</button>}
           <button style={styles.navBtn} onClick={openLogin}>LOGIN</button>
           <button style={styles.navCta} onClick={openApp}>TRY FOR FREE</button>
         </div>

@@ -61,10 +61,10 @@ export default function Insights({ trendsLang, isMobile, insights, stats, linked
           <div style={{ marginTop:8, borderTop:"1px solid rgba(220,38,38,0.1)", paddingTop:16 }}>
             <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px", marginBottom:12 }}>{tr(trendsLang, "ui.growthSignals")}</h3>
             {[
-              { signal:"Engagement rate", value: stats.posts > 0 ? "+?" : "N/A" },
-              { signal:"Reach",           value: stats.published > 0 ? "+?" : "N/A" },
-              { signal:"Click-through",   value: "N/A" },
-              { signal:"Follower growth", value: "N/A" },
+              { signal:tr(trendsLang,"ui.signalEngagement"), value: stats.posts > 0 ? "+?" : "N/A" },
+              { signal:tr(trendsLang,"ui.signalReach"),       value: stats.published > 0 ? "+?" : "N/A" },
+              { signal:tr(trendsLang,"ui.signalCtr"),         value: "N/A" },
+              { signal:tr(trendsLang,"ui.signalFollowers"),   value: "N/A" },
             ].map((g, i) => (
               <div key={i} style={{ display:"flex", justifyContent:"space-between", paddingBottom:10, borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
                 <span style={{ color:"#64748b", fontSize:13 }}>{g.signal}</span>

@@ -21,7 +21,7 @@ export default function Planner({ trendsLang, isMobile, planner, scheduledPosts,
               <div style={{ color:"#22c55e", fontSize:28, fontWeight:800, marginTop:8 }}>{scheduledPosts.length}</div>
             </div>
           </div>
-          <button style={{ ...st.button, margin:0, alignSelf:"flex-start" }} onClick={generatePlanner}>Generate 30-day plan</button>
+          <button style={{ ...st.button, margin:0, alignSelf:"flex-start" }} onClick={generatePlanner}>{tr(trendsLang,"ui.generate30days")}</button>
         </div>
 
         <div style={{ ...st.card, marginTop:0, display:"flex", flexDirection:"column", gap:10, overflowY:"auto", maxHeight: isMobile ? 300 : "calc(100vh - 260px)" }}>
@@ -29,7 +29,7 @@ export default function Planner({ trendsLang, isMobile, planner, scheduledPosts,
           {planner.length === 0 && <p style={{ color:"#334155", fontSize:14 }}>{tr(trendsLang, "ui.noPlanGenerated")}</p>}
           {planner.map((p, i) => (
             <div key={i} style={{ borderBottom:"1px solid rgba(220,38,38,0.1)", paddingBottom:10 }}>
-              <div style={{ color:"#ef4444", fontSize:11, fontWeight:700, marginBottom:4 }}>DAY {i+1}</div>
+              <div style={{ color:"#ef4444", fontSize:11, fontWeight:700, marginBottom:4 }}>{tr(trendsLang,"ui.day")} {i+1}</div>
               <p style={{ color:"#94a3b8", fontSize:13 }}>{p}</p>
             </div>
           ))}

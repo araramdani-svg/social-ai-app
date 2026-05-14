@@ -28,9 +28,9 @@ export default function Team({ trendsLang, isMobile, projects, autoPosts, schedu
           <div style={{ ...st.card, marginTop:0, flex:1, display:"flex", flexDirection:"column", gap:10 }}>
             <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px", marginBottom:4 }}>{tr(trendsLang, "ui.teamMembers")}</h3>
             {[
-              { name:"You",             role:"ADMIN",     status:"online",  color:"#22c55e" },
-              { name:"Content Writer",  role:"EDITOR",    status:"idle",    color:"#f59e0b" },
-              { name:"Social Manager",  role:"PUBLISHER", status:"offline", color:"#475569" },
+              { name:tr(trendsLang,"ui.teamYou"),     role:tr(trendsLang,"ui.roleAdmin"),     status:tr(trendsLang,"ui.statusOnline"),  color:"#22c55e" },
+              { name:tr(trendsLang,"ui.roleWriter"),  role:tr(trendsLang,"ui.roleEditor"),    status:tr(trendsLang,"ui.statusIdle"),    color:"#f59e0b" },
+              { name:tr(trendsLang,"ui.roleManager"), role:tr(trendsLang,"ui.rolePublisher"), status:tr(trendsLang,"ui.statusOffline"), color:"#475569" },
             ].map((m, i) => (
               <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", borderBottom:"1px solid rgba(220,38,38,0.08)", paddingBottom:10 }}>
                 <div style={{ display:"flex", alignItems:"center", gap:10 }}>
@@ -49,11 +49,11 @@ export default function Team({ trendsLang, isMobile, projects, autoPosts, schedu
         <div style={{ ...st.card, marginTop:0, display:"flex", flexDirection:"column", gap:12, overflowY:"auto", maxHeight: isMobile ? 300 : "unset" }}>
           <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.teamActivity")}</h3>
           {[
-            { user:"You",             action:"Generated post",         time:"just now",  color:"#22c55e" },
-            { user:"Content Writer",  action:"Saved draft",            time:"5 min ago", color:"#f59e0b" },
-            { user:"You",             action:"Scheduled LinkedIn post", time:"12 min ago",color:"#22c55e" },
-            { user:"Social Manager",  action:"Published to Threads",   time:"1 hr ago",  color:"#3b82f6" },
-            { user:"Content Writer",  action:"Analyzed post",          time:"2 hr ago",  color:"#f59e0b" },
+            { user:tr(trendsLang,"ui.teamYou"),    action:tr(trendsLang,"ui.actGenerated"),  time:tr(trendsLang,"ui.timeJustNow"),  color:"#22c55e" },
+            { user:tr(trendsLang,"ui.roleWriter"), action:tr(trendsLang,"ui.actSavedDraft"), time:tr(trendsLang,"ui.time5min"),    color:"#f59e0b" },
+            { user:tr(trendsLang,"ui.teamYou"),    action:tr(trendsLang,"ui.actScheduled"),  time:tr(trendsLang,"ui.time12min"),   color:"#22c55e" },
+            { user:tr(trendsLang,"ui.roleManager"),action:tr(trendsLang,"ui.actPublished"),  time:tr(trendsLang,"ui.time1hr"),     color:"#3b82f6" },
+            { user:tr(trendsLang,"ui.roleWriter"), action:tr(trendsLang,"ui.actAnalyzed"),   time:tr(trendsLang,"ui.time2hr"),     color:"#f59e0b" },
           ].map((a, i) => (
             <div key={i} style={{ borderBottom:"1px solid rgba(220,38,38,0.08)", paddingBottom:12 }}>
               <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>

@@ -80,8 +80,8 @@ export default function Trends({
             </div>
             <div style={{ display:"flex", gap:6, flexShrink:0 }}>
               <div style={{ background:"rgba(220,38,38,0.15)", border:"1px solid rgba(220,38,38,0.3)", borderRadius:6, padding:"4px 8px", fontSize:11, fontWeight:800, color:"#ef4444" }}>{t.viralScore}</div>
-              <button style={{ padding:"6px 10px", borderRadius:8, background:"linear-gradient(135deg,#dc2626,#991b1b)", border:"none", color:"white", fontSize:11, fontWeight:700, cursor:"pointer" }} onClick={() => useAsTopic(t.title)}>USE →</button>
-              <a href={t.url} target="_blank" rel="noopener noreferrer" style={{ padding:"6px 10px", borderRadius:8, background:"transparent", border:"1px solid rgba(220,38,38,0.3)", color:"#ef4444", fontSize:11, fontWeight:700, textDecoration:"none" }}>VIEW</a>
+              <button style={{ padding:"6px 10px", borderRadius:8, background:"linear-gradient(135deg,#dc2626,#991b1b)", border:"none", color:"white", fontSize:11, fontWeight:700, cursor:"pointer" }} onClick={() => useAsTopic(t.title)}>{tr(trendsLang,"ui.useAsTopic")}</button>
+              <a href={t.url} target="_blank" rel="noopener noreferrer" style={{ padding:"6px 10px", borderRadius:8, background:"transparent", border:"1px solid rgba(220,38,38,0.3)", color:"#ef4444", fontSize:11, fontWeight:700, textDecoration:"none" }}>{tr(trendsLang,"ui.viewSource")}</a>
             </div>
           </div>
         ))}

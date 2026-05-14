@@ -43,7 +43,7 @@ export default function Dashboard({
           {timelineData.slice(0, 3).map((item, i) => (
             <div key={i} style={{ display:"flex", justifyContent:"space-between", padding:"8px 0", fontSize:13 }}>
               <span style={{ color:"#94a3b8" }}>{item.time}</span>
-              <span style={{ color:"#22c55e", fontSize:11, fontWeight:700 }}>Scheduled</span>
+              <span style={{ color:"#22c55e", fontSize:11, fontWeight:700 }}>{tr(trendsLang,"ui.scheduled")}</span>
             </div>
           ))}
         </div>
