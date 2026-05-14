@@ -62,7 +62,6 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   const [saveStatus,      setSaveStatus]      = useState("");
   const [currentPostDbId, setCurrentPostDbId] = useState(null);
   const [publishStatus,   setPublishStatus]   = useState("");
-  const [showOnboarding,  setShowOnboarding]  = useState(() => !localStorage.getItem("gp_onboarded") && token && token !== "guest");
   const [template,        setTemplate]        = useState("Authority");
   const [voice,           setVoice]           = useState("Founder");
   const [campaign,        setCampaign]        = useState("Authority Build");
