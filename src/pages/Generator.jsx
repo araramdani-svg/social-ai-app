@@ -18,6 +18,9 @@ import Team         from "./tabs/Team.jsx";
 import Trends       from "./tabs/Trends.jsx";
 import Integrations from "./tabs/Integrations.jsx";
 import Profile      from "./tabs/Profile.jsx";
+import Carousel     from "./tabs/Carousel.jsx";
+import GhostWrite   from "./tabs/GhostWrite.jsx";
+import AutoRepost   from "./tabs/AutoRepost.jsx";
 import { st, useWindowWidth } from "./tabs/shared.js";
 
 const API = "https://social-ai-app-production.up.railway.app";
@@ -218,7 +221,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   const deleteAccount     = async () => { await api("auth/delete-account",{},"DELETE"); localStorage.removeItem("token"); window.location.reload(); };
   const completeOnboarding= () => { localStorage.setItem("gp_onboarded","true"); setShowOnboarding(false); showToast(tr(trendsLang,"messages.workspaceReady")); };
 
-  const NAV_TABS   = ["home","dashboard","insights","create","memory","scheduler","autopost","analyze","planner","history","publish","team","integrations","trends"];
+  const NAV_TABS   = ["home","dashboard","insights","create","memory","carousel","ghostwrite","autorepost","scheduler","autopost","analyze","planner","history","publish","team","integrations","trends"];
   const BOTTOM_NAV = [{ key:"home",icon:"🏠" },{ key:"create",icon:"✍️" },{ key:"trends",icon:"🌍" },{ key:"analyze",icon:"📊" },{ key:"profile",icon:"👤" }];
   const shared     = { trendsLang, isMobile };
 
@@ -296,6 +299,9 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
             {tab==="dashboard"    && <Dashboard    {...shared} animatedStats={animatedStats} stats={stats} projects={projects} liveFeed={liveFeed} timelineData={timelineData} growthData={growthData} />}
             {tab==="create"       && <Create       {...shared} post={post} setPost={setPost} topic={topic} setTopic={setTopic} projectTitle={projectTitle} setProjectTitle={setProjectTitle} searchProject={searchProject} setSearchProject={setSearchProject} selectedProject={selectedProject} filteredProjects={filteredProjects} renameValue={renameValue} setRenameValue={setRenameValue} saveStatus={saveStatus} loading={loading} postMetrics={postMetrics} savePost={savePost} copyPost={copyPost} exportPost={exportPost} analyze={analyze} generatePlanner={generatePlanner} generate={generate} rewrite={rewrite} createProject={createProject} duplicateProject={duplicateProject} renameProject={renameProject} deleteProject={deleteProject} selectProject={selectProject} />}
             {tab==="memory"       && <Memory       {...shared} memory={memory} setMemory={setMemory} saveBrandMemory={saveBrandMemory} />}
+            {tab==="carousel"     && <Carousel     {...shared} post={post} topic={topic} memory={memory} showToast={showToast} />}
+            {tab==="ghostwrite"   && <GhostWrite   {...shared} post={post} setPost={setPost} setTab={setTab} memory={memory} showToast={showToast} />}
+            {tab==="autorepost"   && <AutoRepost   {...shared} history={history} setPost={setPost} setTab={setTab} linkedinStatus={linkedinStatus} threadsStatus={threadsStatus} postToLinkedin={postToLinkedin} postToThreads={postToThreads} showToast={showToast} />}
             {tab==="analyze"      && <Analyze      {...shared} analysis={analysis} platformData={platformData} />}
             {tab==="insights"     && <Insights     {...shared} insights={insights} stats={stats} linkedinStatus={linkedinStatus} threadsStatus={threadsStatus} />}
             {tab==="scheduler"    && <Scheduler    {...shared} scheduleDate={scheduleDate} setScheduleDate={setScheduleDate} scheduleTime={scheduleTime} setScheduleTime={setScheduleTime} scheduledPosts={scheduledPosts} publishLog={publishLog} schedulePost={schedulePost} />}
