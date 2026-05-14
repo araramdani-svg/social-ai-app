@@ -47,7 +47,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
 
   /* ── UI ── */
   const [sidebarOpen,    setSidebarOpen]    = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(!localStorage.getItem("gp_onboarded"));
+  const [showOnboarding, setShowOnboarding] = useState(false); // Onboarding triggered after login only
   const [toast,          setToast]          = useState(null);
   const [loading,        setLoading]        = useState(false);
   const [aiStep,         setAiStep]         = useState(0);
@@ -147,6 +147,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   useEffect(() => {
     if (token && token !== "guest") {
       loadProjects(); loadHistory();
+      if (!localStorage.getItem("gp_onboarded")) setShowOnboarding(true);
       fetch(`${API}/stripe/status`,   { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setUserPlan).catch(()=>{});
       fetch(`${API}/linkedin/status`, { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setLinkedinStatus).catch(()=>{});
       fetch(`${API}/threads/status`,  { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setThreadsStatus).catch(()=>{});
@@ -229,7 +230,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   const BOTTOM_NAV = [{ key:"home",icon:"🏠" },{ key:"create",icon:"✍️" },{ key:"trends",icon:"🌍" },{ key:"analyze",icon:"📊" },{ key:"profile",icon:"👤" }];
   const shared     = { trendsLang, isMobile };
 
-  if (showOnboarding) return <OnboardingWizard token={token} onComplete={(mem) => { setShowOnboarding(false); if (mem.project) { setSelectedProject(mem.project); } }} />;
+  {showOnboarding && token && token !== 'guest' && <OnboardingWizard token={token} onComplete={(mem) => { setShowOnboarding(false); if (mem.project) { setSelectedProject(mem.project); } }} />}
 
   return (
     <div style={st.page}>
