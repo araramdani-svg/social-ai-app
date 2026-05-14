@@ -16,6 +16,9 @@ const translations = {
       team: "TEAM",
       integrations: "INTEGRATIONS",
       trends: "TRENDS",
+      carousel: "CAROUSEL",
+      ghostwrite: "GHOST WRITE",
+      autorepost: "AUTO-REPOST",
     },
     // Pages headers
     headers: {
@@ -278,6 +281,9 @@ const translations = {
       integrations: "INTÉGRATIONS",
       trends: "TENDANCES",
       profile: "PROFIL",
+      carousel: "CAROUSEL",
+      ghostwrite: "GHOST WRITE",
+      autorepost: "AUTO-REPOST",
     },
     headers: {
       home: "ACCUEIL",
@@ -533,6 +539,9 @@ const translations = {
       integrations: "INTEGRACIONES",
       trends: "TENDENCIAS",
       profile: "PERFIL",
+      carousel: "CAROUSEL",
+      ghostwrite: "GHOST WRITE",
+      autorepost: "AUTO-REPOST",
     },
     headers: {
       home: "INICIO", dashboard: "PANEL", insights: "ANÁLISIS", create: "CREAR",
@@ -714,6 +723,9 @@ const translations = {
       memory: "GEDÄCHTNIS", scheduler: "PLANER", autopost: "AUTOVERÖFFENTLICHEN",
       analyze: "ANALYSIEREN", planner: "PLANUNGSTOOL", history: "VERLAUF",
       publish: "VERÖFFENTLICHEN", team: "TEAM", integrations: "INTEGRATIONEN", trends: "TRENDS",
+      carousel: "CAROUSEL",
+      ghostwrite: "GHOST WRITE",
+      autorepost: "AUTO-REPOST",
     },
     headers: {
       home: "START", dashboard: "DASHBOARD", insights: "ANALYSEN", create: "ERSTELLEN",
@@ -895,6 +907,9 @@ const translations = {
       memory: "MEMORIA", scheduler: "PIANIFICA", autopost: "AUTOPUBBLICA",
       analyze: "ANALIZZA", planner: "PIANIFICATORE", history: "CRONOLOGIA",
       publish: "PUBBLICA", team: "TEAM", integrations: "INTEGRAZIONI", trends: "TENDENZE",
+      carousel: "CAROUSEL",
+      ghostwrite: "GHOST WRITE",
+      autorepost: "AUTO-REPOST",
     },
     headers: {
       home: "HOME", dashboard: "DASHBOARD", insights: "ANALISI", create: "CREA",
@@ -1076,6 +1091,9 @@ const translations = {
       memory: "MEMÓRIA", scheduler: "AGENDAR", autopost: "AUTOPUBLICAR",
       analyze: "ANALISAR", planner: "PLANEJADOR", history: "HISTÓRICO",
       publish: "PUBLICAR", team: "EQUIPE", integrations: "INTEGRAÇÕES", trends: "TENDÊNCIAS",
+      carousel: "CAROUSEL",
+      ghostwrite: "GHOST WRITE",
+      autorepost: "AUTO-REPOST",
     },
     headers: {
       home: "INÍCIO", dashboard: "PAINEL", insights: "ANÁLISES", create: "CRIAR",

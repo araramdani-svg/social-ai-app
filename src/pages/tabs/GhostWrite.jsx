@@ -12,6 +12,7 @@
  *  4. Résultat chargé dans le post actif → peut aller en Create/Publish
  */
 
+import { PageHeader } from "./shared.js";
 import { useState } from "react";
 import { t as tr } from "../../translations.js";
 
@@ -134,12 +135,7 @@ Context: niche=${memory?.niche || "business"}, audience=${memory?.audience || "p
 
   return (
     <div style={s.wrap}>
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "2px", color: "#ef4444", marginBottom: 6 }}>
-          {tr(trendsLang, "ghostwrite.header")}
-        </div>
-        <div style={{ color: "#94a3b8", fontSize: 13 }}>{tr(trendsLang, "ghostwrite.subtitle")}</div>
-      </div>
+      <PageHeader tabKey="ghostwrite" trendsLang={trendsLang} isMobile={isMobile} />
 
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 20 }}>
 

@@ -15,6 +15,7 @@
  *  5. Lance la republication (immédiate ou programmée)
  */
 
+import { PageHeader } from "./shared.js";
 import { useState, useMemo } from "react";
 import { t as tr } from "../../translations.js";
 
@@ -203,12 +204,7 @@ export default function AutoRepost({
 
   return (
     <div style={s.wrap}>
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "2px", color: "#ef4444", marginBottom: 6 }}>
-          {tr(trendsLang, "autorepost.header")}
-        </div>
-        <div style={{ color: "#94a3b8", fontSize: 13 }}>{tr(trendsLang, "autorepost.subtitle")}</div>
-      </div>
+      <PageHeader tabKey="autorepost" trendsLang={trendsLang} isMobile={isMobile} />
 
       {/* ── Top performers ── */}
       {top3.length > 0 && (

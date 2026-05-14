@@ -14,6 +14,7 @@
  */
 
 import { useState, useRef } from "react";
+import { PageHeader } from "./shared.js";
 import { t as tr } from "../../translations.js";
 
 const API = "https://social-ai-app-production.up.railway.app";
@@ -260,12 +261,7 @@ Topic: "${topic}"`;
   /* ─── Render ─────────────────────────────────────────────── */
   return (
     <div style={s.wrap}>
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "2px", color: "#ef4444", marginBottom: 6 }}>
-          {tr(trendsLang, "carousel.header")}
-        </div>
-        <div style={{ color: "#94a3b8", fontSize: 13 }}>{tr(trendsLang, "carousel.subtitle")}</div>
-      </div>
+      <PageHeader tabKey="carousel" trendsLang={trendsLang} isMobile={isMobile} />
 
       {/* ── Config ── */}
       <div style={s.card}>
