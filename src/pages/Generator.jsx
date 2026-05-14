@@ -302,7 +302,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
             {tab==="carousel"     && <Carousel     {...shared} post={post} topic={topic} memory={memory} showToast={showToast} />}
             {tab==="ghostwrite"   && <GhostWrite   {...shared} post={post} setPost={setPost} setTab={setTab} memory={memory} showToast={showToast} />}
             {tab==="autorepost"   && <AutoRepost   {...shared} history={history} setPost={setPost} setTab={setTab} linkedinStatus={linkedinStatus} threadsStatus={threadsStatus} postToLinkedin={postToLinkedin} postToThreads={postToThreads} showToast={showToast} />}
-            {tab==="analyze"      && <Analyze      {...shared} analysis={analysis} platformData={platformData} />}
+            {tab==="analyze"      && <Analyze      {...shared} token={token} analysis={analysis} platformData={platformData} />}
             {tab==="insights"     && <Insights     {...shared} insights={insights} stats={stats} linkedinStatus={linkedinStatus} threadsStatus={threadsStatus} />}
             {tab==="scheduler"    && <Scheduler    {...shared} scheduleDate={scheduleDate} setScheduleDate={setScheduleDate} scheduleTime={scheduleTime} setScheduleTime={setScheduleTime} scheduledPosts={scheduledPosts} publishLog={publishLog} schedulePost={schedulePost} />}
             {tab==="autopost"     && <Autopost     {...shared} post={post} autoPlatform={autoPlatform} setAutoPlatform={setAutoPlatform} autoPosts={autoPosts} publishLog={publishLog} linkedinStatus={linkedinStatus} autoPublish={autoPublish} showToast={showToast} />}
