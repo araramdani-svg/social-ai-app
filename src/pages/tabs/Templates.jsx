@@ -249,7 +249,7 @@ export default function Templates({ trendsLang, isMobile, setPost, setTopic, set
   const useTemplate = (tpl) => {
     setPost(tpl.example + "\n\n[Edit this draft or generate a fresh version →]");
     setTopic(tpl.title);
-    showToast("✓ Template loaded in CREATE");
+    showToast(tr(trendsLang,"templates.loaded"));
     setTab("create");
   };
 
@@ -268,7 +268,7 @@ export default function Templates({ trendsLang, isMobile, setPost, setTopic, set
       <PageHeader tabKey="templates" trendsLang={trendsLang} isMobile={isMobile} />
 
       {/* Search */}
-      <input style={s.input} placeholder="🔍 Search templates..." value={search} onChange={e => setSearch(e.target.value)} />
+      <input style={s.input} placeholder={tr(trendsLang,"templates.search")} value={search} onChange={e => setSearch(e.target.value)} />
 
       {/* Category filter */}
       <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
@@ -279,7 +279,7 @@ export default function Templates({ trendsLang, isMobile, setPost, setTopic, set
         ))}
       </div>
 
-      <div style={{ color:"#475569", fontSize:11, fontWeight:700 }}>{filtered.length} TEMPLATES</div>
+      <div style={{ color:"#475569", fontSize:11, fontWeight:700 }}>{filtered.length} {tr(trendsLang,"templates.templates")}</div>
 
       {/* Grid */}
       <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:10 }}>
@@ -297,22 +297,22 @@ export default function Templates({ trendsLang, isMobile, setPost, setTopic, set
             {selected?.id === tpl.id && (
               <div>
                 {/* Prompt */}
-                <div style={{ color:"#64748b", fontSize:10, fontWeight:700, letterSpacing:"1px", marginBottom:6 }}>PROMPT TEMPLATE</div>
+                <div style={{ color:"#64748b", fontSize:10, fontWeight:700, letterSpacing:"1px", marginBottom:6 }}>{tr(trendsLang,"templates.promptLabel")}</div>
                 <div style={{ ...s.preview, marginBottom:12, fontSize:12, color:"#94a3b8", lineHeight:1.6 }}>
                   {tpl.prompt}
                 </div>
 
                 {/* Example */}
-                <div style={{ color:"#64748b", fontSize:10, fontWeight:700, letterSpacing:"1px", marginBottom:6 }}>EXAMPLE POST</div>
+                <div style={{ color:"#64748b", fontSize:10, fontWeight:700, letterSpacing:"1px", marginBottom:6 }}>{tr(trendsLang,"templates.exampleLabel")}</div>
                 <div style={{ ...s.preview, marginBottom:14, fontSize:12, color:"#e2e8f0", lineHeight:1.7, whiteSpace:"pre-wrap" }}>
                   {tpl.example}
                 </div>
 
                 <div style={{ display:"flex", gap:10 }}>
                   <button style={s.btn} onClick={() => useTemplate(tpl)}>
-                    ✍️ Use This Template
+                    {tr(trendsLang,"templates.useTemplate")}
                   </button>
-                  <button style={s.btnGhost} onClick={() => { setTopic(tpl.title); setTab("create"); showToast("✓ Topic set — generate your own version!"); }}>
+                  <button style={s.btnGhost} onClick={() => { setTopic(tpl.title); setTab("create"); showToast(tr(trendsLang,"templates.topicSet")); }}>
                     Generate Fresh →
                   </button>
                 </div>

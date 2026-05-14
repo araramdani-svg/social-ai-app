@@ -11,11 +11,11 @@ import { useState, useRef } from "react";
 import { t as tr } from "../../translations.js";
 import { PageHeader } from "./shared.js";
 
-const COLUMNS = [
-  { id:"ideas",     label:"💡 Ideas",     color:"#475569",  bg:"rgba(71,85,105,0.1)" },
-  { id:"draft",     label:"✍️ Draft",     color:"#f59e0b",  bg:"rgba(245,158,11,0.08)" },
-  { id:"scheduled", label:"📅 Scheduled", color:"#60a5fa",  bg:"rgba(96,165,250,0.08)" },
-  { id:"published", label:"✅ Published", color:"#22c55e",  bg:"rgba(34,197,94,0.08)" },
+const COLUMNS = (lang) => [
+  { id:"ideas",     label:tr(lang,"calendar.colIdeas"),     color:"#475569",  bg:"rgba(71,85,105,0.1)" },
+  { id:"draft",     label:tr(lang,"calendar.colDraft"),     color:"#f59e0b",  bg:"rgba(245,158,11,0.08)" },
+  { id:"scheduled", label:tr(lang,"calendar.colScheduled"), color:"#60a5fa",  bg:"rgba(96,165,250,0.08)" },
+  { id:"published", label:tr(lang,"calendar.colPublished"), color:"#22c55e",  bg:"rgba(34,197,94,0.08)" },
 ];
 
 const PLATFORMS = ["LinkedIn","Threads","X","Instagram","All"];
@@ -61,7 +61,7 @@ export default function Calendar({ trendsLang, isMobile, post, setPost, setTab, 
     };
     persist([...cards, card]);
     setNewTitle(""); setAddingTo(null);
-    showToast("✓ Card added to calendar");
+    showToast("✓ " + tr(trendsLang,"calendar.addCard"));
   };
 
   /* ── Import active post ── */
@@ -74,7 +74,7 @@ export default function Calendar({ trendsLang, isMobile, post, setPost, setTab, 
       content: post, createdAt: new Date().toISOString(),
     };
     persist([...cards, card]);
-    showToast("✓ Active post imported to calendar");
+    showToast("✓ " + tr(trendsLang,"calendar.importPost"));
   };
 
   /* ── Delete card ── */
@@ -87,7 +87,7 @@ export default function Calendar({ trendsLang, isMobile, post, setPost, setTab, 
   const editCard = (id, field, val) => persist(cards.map(c => c.id === id ? { ...c, [field]: val } : c));
 
   /* ── Use in Create ── */
-  const useCard = (card) => { setPost(card.content || card.title); setTab("create"); showToast("✓ Loaded in Create"); };
+  const useCard = (card) => { setPost(card.content || card.title); setTab("create"); showToast(tr(trendsLang,"calendar.loaded") || "✓ Loaded in Create"); };
 
   /* ── Drag & drop ── */
   const onDragStart = (e, cardId) => { setDragging(cardId); e.dataTransfer.effectAllowed = "move"; };
@@ -118,7 +118,7 @@ export default function Calendar({ trendsLang, isMobile, post, setPost, setTab, 
         return (
           <div key={day} style={{ display:"flex", gap:12, alignItems:"flex-start", padding:"8px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
             <div style={{ minWidth:80, color:"#475569", fontSize:11, fontWeight:700, paddingTop:2 }}>
-              {new Date(day).toLocaleDateString("en", { weekday:"short", month:"short", day:"numeric" })}
+              {new Date(day).toLocaleDateString(trendsLang === "en" ? "en" : trendsLang, { weekday:"short", month:"short", day:"numeric" })}
             </div>
             <div style={{ flex:1, display:"flex", gap:8, flexWrap:"wrap" }}>
               {dayCards.length === 0
@@ -144,17 +144,17 @@ export default function Calendar({ trendsLang, isMobile, post, setPost, setTab, 
       {/* Controls */}
       <div style={{ display:"flex", gap:12, alignItems:"center", flexWrap:"wrap" }}>
         <div style={{ display:"flex", borderBottom:"1px solid rgba(255,255,255,0.07)" }}>
-          <button style={s.tabBtn(viewMode==="kanban")} onClick={() => setViewMode("kanban")}>📋 KANBAN</button>
-          <button style={s.tabBtn(viewMode==="timeline")} onClick={() => setViewMode("timeline")}>📅 TIMELINE</button>
+          <button style={s.tabBtn(viewMode==="kanban")} onClick={() => setViewMode("kanban")}>📋 {tr(trendsLang,"calendar.kanban")}</button>
+          <button style={s.tabBtn(viewMode==="timeline")} onClick={() => setViewMode("timeline")}>📅 {tr(trendsLang,"calendar.timeline")}</button>
         </div>
         <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginLeft:"auto" }}>
-          {PLATFORMS.map(p => <button key={p} style={s.filterBtn(filterPlat===p)} onClick={() => setFilterPlat(p)}>{p}</button>)}
+          {PLATFORMS.map(p => <button key={p} style={s.filterBtn(filterPlat===p)} onClick={() => setFilterPlat(p)}>{p === "All" ? tr(trendsLang,"calendar.all") : p}</button>)}
         </div>
       </div>
 
       {/* Stats */}
       <div style={{ display:"flex", gap:10 }}>
-        {COLUMNS.map(col => (
+        {COLUMNS(trendsLang).map(col => (
           <div key={col.id} style={{ flex:1, background:"rgba(255,255,255,0.02)", border:`1px solid rgba(255,255,255,0.06)`, borderTop:`3px solid ${col.color}`, borderRadius:8, padding:"8px 12px", textAlign:"center" }}>
             <div style={{ color:col.color, fontSize:18, fontWeight:900 }}>{cards.filter(c=>c.col===col.id).length}</div>
             <div style={{ color:"#475569", fontSize:9, fontWeight:700, letterSpacing:"1px" }}>{col.id.toUpperCase()}</div>
@@ -172,7 +172,7 @@ export default function Calendar({ trendsLang, isMobile, post, setPost, setTab, 
       {/* Kanban view */}
       {viewMode === "kanban" && (
         <div style={{ display:"flex", gap:12, flexWrap: isMobile ? "wrap" : "nowrap", alignItems:"flex-start", overflowX: isMobile ? "visible" : "auto", paddingBottom:8 }}>
-          {COLUMNS.map(col => (
+          {COLUMNS(trendsLang).map(col => (
             <div
               key={col.id}
               style={s.col(col, dragOver === col.id)}
@@ -197,16 +197,16 @@ export default function Calendar({ trendsLang, isMobile, post, setPost, setTab, 
                   <div style={{ color:"#e2e8f0", fontSize:12, fontWeight:600, marginBottom:6, lineHeight:1.4 }}>{card.title}</div>
                   <div style={{ display:"flex", gap:6, alignItems:"center", marginBottom:8 }}>
                     <span style={s.platBadge(card.platform)}>{card.platform}</span>
-                    <span style={{ color:"#334155", fontSize:10 }}>{card.date ? new Date(card.date).toLocaleDateString("en",{month:"short",day:"numeric"}) : "No date"}</span>
+                    <span style={{ color:"#334155", fontSize:10 }}>{card.date ? new Date(card.date).toLocaleDateString(trendsLang === "en" ? "en" : trendsLang,{month:"short",day:"numeric"}) : tr(trendsLang,"calendar.noDate")}</span>
                   </div>
                   <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
                     {card.content && (
-                      <button style={s.btnGhost} onClick={() => useCard(card)}>Edit →</button>
+                      <button style={s.btnGhost} onClick={() => useCard(card)}>{tr(trendsLang,"calendar.edit")}</button>
                     )}
                     {/* Move buttons */}
-                    {COLUMNS.filter(c=>c.id!==col.id).map(c => (
+                    {COLUMNS(trendsLang).filter(c=>c.id!==col.id).map(c => (
                       <button key={c.id} style={{ ...s.btnGhost, fontSize:9, padding:"4px 8px" }} onClick={() => moveCard(card.id, c.id)}>
-                        → {c.id}
+                        → {tr(trendsLang,`calendar.col${c.id.charAt(0).toUpperCase()+c.id.slice(1)}`)}
                       </button>
                     ))}
                     <button style={{ ...s.btnGhost, color:"#ef4444", fontSize:9, padding:"4px 8px" }} onClick={() => deleteCard(card.id)}>✕</button>
@@ -217,19 +217,19 @@ export default function Calendar({ trendsLang, isMobile, post, setPost, setTab, 
               {/* Add card form */}
               {addingTo === col.id ? (
                 <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, padding:10, marginTop:8 }}>
-                  <input style={s.input} placeholder="Post title or topic..." value={newTitle} onChange={e=>setNewTitle(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addCard(col.id)} autoFocus />
+                  <input style={s.input} placeholder={tr(trendsLang,"calendar.addTitle")} value={newTitle} onChange={e=>setNewTitle(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addCard(col.id)} autoFocus />
                   <input type="date" style={s.input} value={newDate} onChange={e=>setNewDate(e.target.value)} min={DAYS[0]} max={DAYS[29]} />
                   <select style={s.select} value={newPlat} onChange={e=>setNewPlat(e.target.value)}>
                     {PLATFORMS.filter(p=>p!=="All").map(p=><option key={p}>{p}</option>)}
                   </select>
                   <div style={{ display:"flex", gap:6 }}>
-                    <button style={s.btn} onClick={()=>addCard(col.id)}>Add</button>
-                    {post && <button style={s.btnGhost} onClick={()=>importPost(col.id)}>Import post</button>}
-                    <button style={s.btnGhost} onClick={()=>setAddingTo(null)}>Cancel</button>
+                    <button style={s.btn} onClick={()=>addCard(col.id)}>{tr(trendsLang,"calendar.add")}</button>
+                    {post && <button style={s.btnGhost} onClick={()=>importPost(col.id)}>{tr(trendsLang,"calendar.importPost")}</button>}
+                    <button style={s.btnGhost} onClick={()=>setAddingTo(null)}>{tr(trendsLang,"calendar.cancel")}</button>
                   </div>
                 </div>
               ) : (
-                <button style={s.addBtn} onClick={()=>setAddingTo(col.id)}>+ Add card</button>
+                <button style={s.addBtn} onClick={()=>setAddingTo(col.id)}>{tr(trendsLang,"calendar.addCard")}</button>
               )}
             </div>
           ))}
@@ -240,8 +240,8 @@ export default function Calendar({ trendsLang, isMobile, post, setPost, setTab, 
       {cards.length === 0 && (
         <div style={{ textAlign:"center", padding:"40px 20px", color:"#334155" }}>
           <div style={{ fontSize:40, marginBottom:12 }}>📅</div>
-          <div style={{ color:"#e2e8f0", fontWeight:700, marginBottom:8 }}>Your content calendar is empty</div>
-          <div style={{ fontSize:13 }}>Click "+ Add card" in any column to start planning your content.</div>
+          <div style={{ color:"#e2e8f0", fontWeight:700, marginBottom:8 }}>{tr(trendsLang,"calendar.emptyTitle")}</div>
+          <div style={{ fontSize:13 }}>{tr(trendsLang,"calendar.emptyDesc")}</div>
         </div>
       )}
     </div>
