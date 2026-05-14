@@ -85,16 +85,6 @@ function App() {
     return () => window.removeEventListener("message", handleMessage);
   }, []);
 
-  const [userPlan, setUserPlan] = useState("Free");
-
-  useEffect(() => {
-    if (token && token !== "guest") {
-      fetch("https://social-ai-app-production.up.railway.app/stripe/status", {
-        headers: { Authorization: `Bearer ${token}` }
-      }).then(r => r.json()).then(d => setUserPlan(d?.plan || "Free")).catch(() => {});
-    }
-  }, [token]);
-
   const logout = () => {
     localStorage.removeItem("token");
     sessionStorage.removeItem("gp_page");
@@ -123,7 +113,7 @@ function App() {
       {/* Language selector */}
       <div style={{ position:"relative" }}>
         <button style={iconStyle} onClick={() => setShowLangMenu(!showLangMenu)} title="Language">
-          {LANGS.find(l => l.key === trendsLang)?.flag || "🌍"}
+          🌍
         </button>
         {showLangMenu && (
           <div style={langMenuStyle}>
@@ -150,9 +140,7 @@ function App() {
       </div>
 
       <button onClick={() => setPage("pricing")} style={iconStyle} title="Upgrade">💳</button>
-      <button onClick={() => window.dispatchEvent(new CustomEvent("openProfile"))} style={{ ...iconStyle, fontSize:13, fontWeight:800, background: userPlan==="Business"?"linear-gradient(135deg,#7c3aed,#4f46e5)":userPlan==="Pro"?"linear-gradient(135deg,#dc2626,#991b1b)":"#1e293b" }} title="Profile">
-        {(()=>{ try{ return JSON.parse(atob(token?.split(".")?.[1]||"")).email.slice(0,2).toUpperCase(); }catch{ return "👤"; } })()}
-      </button>
+      <button onClick={() => window.dispatchEvent(new CustomEvent("openProfile"))} style={iconStyle} title="Profile">👤</button>
       <button onClick={logout} style={iconStyle} title="Logout">↩</button>
     </div>
   ) : (
@@ -161,9 +149,7 @@ function App() {
       <div style={{ ...floatingStyle, gap:8 }}>
         <button onClick={() => { sessionStorage.setItem("gp_tab","home"); window.dispatchEvent(new CustomEvent("navigateTab",{detail:"home"})); }} style={{ ...iconStyle, width:40, height:40, fontSize:16, borderRadius:10 }} title="Home">🏠</button>
         <button onClick={() => setPage("pricing")} style={{ ...iconStyle, width:40, height:40, fontSize:16, borderRadius:10 }} title="Upgrade">💳</button>
-        <button onClick={() => { const initials=(()=>{ try{ return JSON.parse(atob(token.split(".")[1])).email.slice(0,2).toUpperCase(); }catch{ return "GB"; } })(); window.dispatchEvent(new CustomEvent("openProfile")); }} style={{ ...iconStyle, width:40, height:40, fontSize:12, fontWeight:800, borderRadius:10 }}>
-          {(()=>{ try{ return JSON.parse(atob(token?.split(".")?.[1]||"")).email.slice(0,2).toUpperCase(); }catch{ return "GP"; } })()}
-        </button>
+        <button onClick={() => window.dispatchEvent(new CustomEvent("openProfile"))} style={{ ...iconStyle, width:40, height:40, fontSize:16, borderRadius:10 }} title="Profile">👤</button>
         <button onClick={logout} style={{ ...iconStyle, width:40, height:40, fontSize:16, borderRadius:10 }} title="Logout">↩</button>
       </div>
     ) : null
