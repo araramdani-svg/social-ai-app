@@ -86,9 +86,12 @@ export default function GhostWrite({ trendsLang, isMobile, token, post: activePr
     setLoading(true);
     setResult("");
     try {
-      const systemPrompt = `You are a master ghostwriter specializing in LinkedIn and social media content.
+      const langMap = { fr:"French", es:"Spanish", de:"German", it:"Italian", pt:"Portuguese" };
+    const langName = langMap[trendsLang] || "English";
+    const systemPrompt = `You are a master ghostwriter specializing in LinkedIn and social media content.
 Your task: rewrite the given text in the exact voice, style, and format of ${styleDesc}.
 Mode: ${modeDesc?.label} — ${modeDesc?.desc}.
+IMPORTANT: Write the output in ${langName} language.
 Rules:
 - Keep the core message and facts identical
 - Adopt the vocabulary, sentence rhythm, and formatting patterns of the target style

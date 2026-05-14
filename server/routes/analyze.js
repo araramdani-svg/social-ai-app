@@ -4,6 +4,9 @@ import jwt from "jsonwebtoken";
 import db from "../db.js";
 
 const router = express.Router();
+
+const langName = (lang) => ({ fr:"French", es:"Spanish", de:"German", it:"Italian", pt:"Portuguese" }[lang] || "English");
+
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // ─── Middleware auth ───────────────────────────────────────────────────────────
@@ -77,7 +80,7 @@ const checkAnalysisQuota = async (req, res, next) => {
 
 // ─── POST /analyze ─────────────────────────────────────────────────────────────
 router.post("/", authenticateToken, checkAnalysisQuota, async (req, res) => {
-  const { text } = req.body;
+  const { text, lang = "en" } = req.body;
   if (!text || text.trim().length < 10) {
     return res.status(400).json({ error: "Text too short to analyze" });
   }
@@ -91,9 +94,9 @@ router.post("/", authenticateToken, checkAnalysisQuota, async (req, res) => {
   "ctaScore": <CTA strength 0-100>,
   "viralScore": <viral potential 0-100 — shareability>,
   "readability": <readability score 0-100 — sentence length, structure>,
-  "feedback": "<one sentence overall assessment>",
-  "diagnosis": "<main weakness identified>",
-  "suggestion": "<single most impactful improvement>",
+  "feedback": "<one sentence overall assessment in ${langName(lang)}>",
+  "diagnosis": "<main weakness identified, in ${langName(lang)}>",
+  "suggestion": "<single most impactful improvement, in ${langName(lang)}>",
   "hookStrength": "<STRONG|MEDIUM|WEAK>",
   "ctaStrength": "<STRONG|MEDIUM|WEAK>",
   "estimatedReach": "<LOW|MEDIUM|HIGH|VIRAL>",

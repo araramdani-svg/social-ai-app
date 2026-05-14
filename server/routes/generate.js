@@ -4,6 +4,8 @@ import db from "../db.js";
 import jwt from "jsonwebtoken";
 
 const router = express.Router();
+
+const langName = (lang) => ({ fr:"French", es:"Spanish", de:"German", it:"Italian", pt:"Portuguese" }[lang] || "English");
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // ─── Middleware auth ───────────────────────────────────────────────────────────
@@ -141,7 +143,7 @@ router.post("/", authenticateToken, checkGenerationQuota, async (req, res) => {
           messages: [
             {
               role: "system",
-              content: `Analyze these LinkedIn posts and return ONLY a JSON with field "styleInstructions": a 2-sentence writing style guide to replicate this author's exact voice, rhythm and structure. No other fields.`
+              content: `Analyze these LinkedIn posts and return ONLY a JSON with field "styleInstructions": a 2-sentence writing style guide to replicate this author's exact voice, rhythm and structure. Write the styleInstructions in ${langName(lang)} language. No other fields.`
             },
             {
               role: "user",
@@ -243,6 +245,7 @@ Write the LinkedIn post now.`;
 // ─── POST /generate/voice-style ───────────────────────────────────────────────
 // Analyse les derniers posts de l'user et retourne son profil de style
 router.post("/voice-style", authenticateToken, async (req, res) => {
+  const { lang = "en" } = req.body;
   try {
     const result = await db.query(
       "SELECT content FROM posts WHERE user_id=$1 ORDER BY created_at DESC LIMIT 10",
@@ -258,7 +261,7 @@ router.post("/voice-style", authenticateToken, async (req, res) => {
       messages: [
         {
           role: "system",
-          content: `You are an expert writing style analyst. Analyze the LinkedIn posts provided and extract the author's unique writing style profile. Return ONLY a JSON object with these fields:
+          content: `You are an expert writing style analyst. Analyze the LinkedIn posts provided and extract the author's unique writing style profile. Return ONLY a JSON object with these fields. Write all text values in ${langName(lang)} language.
 {
   "avgSentenceLength": "<short|medium|long>",
   "tone": "<describe in 5 words max>",
@@ -419,7 +422,7 @@ ${styleHint} ${langInstruction}`
 // ─── POST /generate/viral-score ───────────────────────────────────────────────
 // Score de viralité prédit avant publication
 router.post("/viral-score", authenticateToken, async (req, res) => {
-  const { text } = req.body;
+  const { text, lang = "en" } = req.body;
   if (!text || text.length < 20) return res.status(400).json({ error: "Text too short" });
 
   try {
@@ -437,8 +440,8 @@ Return ONLY a JSON object:
   "value": <0-100 actionable value>,
   "readability": <0-100 ease of reading>,
   "prediction": "<LOW|MEDIUM|HIGH|VIRAL>",
-  "tip": "<single most impactful improvement in 1 sentence>",
-  "bestTime": "<best day and time to post for maximum reach>"
+  "tip": "<single most impactful improvement in 1 sentence, in ${langName(lang)} language>",
+  "bestTime": "<best day and time to post for maximum reach, in ${langName(lang)} language>"
 }
 Return ONLY the JSON.`
         },

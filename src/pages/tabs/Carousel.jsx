@@ -166,7 +166,10 @@ export default function Carousel({ trendsLang, isMobile, token, post, topic: top
     setSlides([]);
     setCurrent(0);
     try {
+      const langMap = { fr:"French", es:"Spanish", de:"German", it:"Italian", pt:"Portuguese" };
+      const langName = langMap[trendsLang] || "English";
       const systemPrompt = `You are an expert LinkedIn carousel creator. Generate exactly ${slideCount} slides for a LinkedIn carousel post.
+IMPORTANT: Write ALL content (titles, body text) in ${langName} language.
 Return ONLY a valid JSON array, no markdown, no explanation.
 Each slide: { "emoji": "single emoji", "title": "short punchy title (max 8 words)", "body": "2-4 sentences of value (max 60 words)" }
 Slide 1: Hook — attention-grabbing opener with a bold promise or surprising stat.
@@ -182,7 +185,7 @@ Topic: "${topic}"`;
           model: "claude-sonnet-4-20250514",
           max_tokens: 1000,
           system: systemPrompt,
-          messages: [{ role: "user", content: `Create a ${slideCount}-slide LinkedIn carousel about: ${topic}` }],
+          messages: [{ role: "user", content: `Create a ${slideCount}-slide LinkedIn carousel about: ${topic}. Write in ${langName} language.` }],
         }),
       });
       const data = await res.json();

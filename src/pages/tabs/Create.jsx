@@ -32,7 +32,7 @@ export default function Create({
   /* ── Voice learning — charge au montage ── */
   useEffect(() => {
     if (!token || voiceLoaded) return;
-    fetch(`${API}/generate/voice-style`, { method: "POST", headers })
+    fetch(`${API}/generate/voice-style`, { method: "POST", headers, body: JSON.stringify({ lang: trendsLang }) })
       .then(r => r.json())
       .then(d => { if (d.style) setVoiceStyle(d.style); setVoiceLoaded(true); })
       .catch(() => setVoiceLoaded(true));
@@ -76,7 +76,7 @@ export default function Create({
     try {
       const r = await fetch(`${API}/generate/viral-score`, {
         method: "POST", headers,
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text, lang: trendsLang }),
       });
       const d = await r.json();
       if (d.score) setViralScore(d);
