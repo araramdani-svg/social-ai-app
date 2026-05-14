@@ -18,7 +18,7 @@ import Team         from "./tabs/Team.jsx";
 import Trends       from "./tabs/Trends.jsx";
 import Integrations from "./tabs/Integrations.jsx";
 import Profile      from "./tabs/Profile.jsx";
-import { st, useWindowWidth } from "./tabs/shared.jsx";
+import { st, useWindowWidth } from "./tabs/shared.js";
 
 const API = "https://social-ai-app-production.up.railway.app";
 
