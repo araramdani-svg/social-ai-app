@@ -22,18 +22,18 @@ import { t as tr } from "../../translations.js";
 const PLATFORMS = [
   { id: "linkedin", label: "LinkedIn", emoji: "🔗" },
   { id: "threads",  label: "Threads",  emoji: "🧵" },
-  { id: "copy",     label: "Copier",   emoji: "📋" },
+  { id: "copy",     label: tr(trendsLang,"autorepost.copyLabel") || "Copy",   emoji: "📋" },
 ];
 
 const SORT_OPTIONS = ["score", "date", "length"];
 
-const DELAY_OPTIONS = [
-  { id: "now",    label: "Maintenant" },
-  { id: "1h",     label: "Dans 1h" },
-  { id: "3h",     label: "Dans 3h" },
-  { id: "24h",    label: "Demain" },
-  { id: "48h",    label: "Dans 2j" },
-  { id: "7d",     label: "Dans 7j" },
+const DELAY_OPTIONS = (lang) => [
+  { id: "now",    label: tr(lang, "autorepost.delayNow")    || "Now" },
+  { id: "1h",     label: tr(lang, "autorepost.delay1h")     || "In 1h" },
+  { id: "3h",     label: tr(lang, "autorepost.delay3h")     || "In 3h" },
+  { id: "24h",    label: tr(lang, "autorepost.delay24h")    || "Tomorrow" },
+  { id: "48h",    label: tr(lang, "autorepost.delay48h")    || "In 2d" },
+  { id: "7d",     label: tr(lang, "autorepost.delay7d")     || "In 7d" },
 ];
 
 /* Scoring local si pas de score IA */
@@ -250,7 +250,7 @@ export default function AutoRepost({
               <div style={{ display: "flex", gap: 6 }}>
                 {SORT_OPTIONS.map(opt => (
                   <button key={opt} style={s.sortBtn(sortBy === opt)} onClick={() => setSortBy(opt)}>
-                    {opt.toUpperCase()}
+                    {tr(trendsLang, `autorepost.sort${opt.charAt(0).toUpperCase()+opt.slice(1)}`) || opt.toUpperCase()}
                   </button>
                 ))}
               </div>
@@ -273,7 +273,7 @@ export default function AutoRepost({
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <button style={s.btnGhost} onClick={() => selectTop(3)}>⚡ Top 3</button>
               <button style={s.btnGhost} onClick={() => selectTop(5)}>⚡ Top 5</button>
-              <button style={s.btnGhost} onClick={() => setSelected(new Set())}>Désélectionner</button>
+              <button style={s.btnGhost} onClick={() => setSelected(new Set())}>{tr(trendsLang,"autorepost.deselect")}</button>
               {selected.size > 0 && (
                 <span style={{ color: "#ef4444", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", marginLeft: "auto" }}>
                   {selected.size} sélectionné{selected.size > 1 ? "s" : ""}
@@ -336,7 +336,7 @@ export default function AutoRepost({
                     <span style={{ flex: 1 }}>{pl.label}</span>
                     {pl.id !== "copy" && (
                       <span style={{ fontSize: 10, color: connected ? "#34d399" : "#ef4444" }}>
-                        {connected ? "● connecté" : "○ déconnecté"}
+                        {connected ? tr(trendsLang,"labels.connected") ? `● ${tr(trendsLang,"labels.connected")}` : `● ${tr(trendsLang,"labels.connected") || "connected"}` : "○ déconnecté"}
                       </span>
                     )}
                   </button>
@@ -349,7 +349,7 @@ export default function AutoRepost({
           <div style={s.card}>
             <span style={s.label}>{tr(trendsLang, "autorepost.delayLabel")}</span>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-              {DELAY_OPTIONS.map(d => (
+              {DELAY_OPTIONS(trendsLang).map(d => (
                 <button key={d.id} style={s.delayBtn(delay === d.id)} onClick={() => setDelay(d.id)}>
                   {d.label}
                 </button>

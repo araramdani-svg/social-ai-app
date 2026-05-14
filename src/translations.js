@@ -274,7 +274,10 @@ const translations = {
     },
     carousel: { header: "CAROUSEL GENERATOR", subtitle: "Create viral LinkedIn carousels with AI", configTitle: "Carousel Setup", topicLabel: "TOPIC", topicPlaceholder: "e.g. 5 mistakes founders make in year 1", topicHint: "Be specific, one slide per key point.", slideCount: "NUMBER OF SLIDES", brandLabel: "BRAND NAME", themeLabel: "VISUAL THEME", generateBtn: "GENERATE CAROUSEL", generating: "GENERATING", generated: "Carousel generated", generationFailed: "Generation failed. Try again.", noTopic: "Enter a topic first.", copyAll: "COPY ALL", exportHTML: "EXPORT HTML", regenerate: "REGENERATE", editSlide: "EDIT SLIDE", rawText: "RAW TEXT", emptyTitle: "No carousel yet", emptyDesc: "Enter a topic and click GENERATE.", tipsTitle: "PRO TIPS", tips: ["Slide 1 is the hook.", "Max 60 words per slide.", "Export HTML then print to PDF.", "Post as PDF on LinkedIn.", "Add your logo on every slide."] },
     ghostwrite: { header: "GHOST WRITING", subtitle: "Rewrite in the style of top creators", sourceTitle: "Source Content", importActive: "Import active post", sourcePlaceholder: "Paste your text here...", authorLabel: "TARGET STYLE", customStylePlaceholder: "Describe the target style...", modeLabel: "REWRITE MODE", rewriteBtn: "REWRITE IN THIS STYLE", writing: "WRITING", done: "Rewriting complete", failed: "Rewriting failed.", noSource: "Paste content first.", resultTitle: "Result", emptyResult: "Result will appear here.", sendToCreate: "USE IN CREATE", sentToCreate: "Loaded in Create", retry: "RETRY", historyLabel: "RECENT REWRITES" },
-    autorepost: { header: "AUTO-REPOST", subtitle: "Republish your best posts automatically", topPerformers: "TOP PERFORMERS", searchPlaceholder: "SEARCH POSTS...", platformLabel: "TARGET PLATFORM", delayLabel: "PUBLISH DELAY", selectFirst: "Select at least one post.", repostBtn: "REPOST", queued: "Queued for repost", noHistory: "No saved posts yet.", logLabel: "REPOST LOG", varyText: "Vary the text slightly", varyTextDesc: "Adds a minor tweak so repeated posts feel fresh." },
+    autorepost: { header: "AUTO-REPOST", subtitle: "Republish your best posts automatically", topPerformers: "TOP PERFORMERS", searchPlaceholder: "SEARCH POSTS...", platformLabel: "TARGET PLATFORM", delayLabel: "PUBLISH DELAY", selectFirst: "Select at least one post.", repostBtn: "REPOST", queued: "Queued for repost", noHistory: "No saved posts yet.", logLabel: "REPOST LOG", varyText: "Vary the text slightly", varyTextDesc: "Adds a minor tweak so repeated posts feel fresh." ,
+          deselect: "Deselect all", useBtn: "USE", copyLabel: "Copy",
+      sortScore: "SCORE", sortDate: "DATE", sortLength: "LENGTH",
+      delayNow: "Now", delay1h: "In 1h", delay3h: "In 3h", delay24h: "Tomorrow", delay48h: "In 2d", delay7d: "In 7d",},
     calendar: {
       kanban: "KANBAN", timeline: "TIMELINE",
       all: "All", addCard: "+ Add card",
@@ -297,7 +300,10 @@ const translations = {
       clickToUse: "click to use",
       loaded: "✓ Template loaded in CREATE",
       topicSet: "✓ Topic set — generate your own version!",
-    },
+    ,
+          catAll: "All Templates", catHooks: "Hooks", catStory: "Story",
+      catAuthority: "Authority", catFrameworks: "Frameworks", catViral: "Viral",
+      catContrarian: "Contrarian", catLists: "Lists", catLessons: "Lessons Learned", catCta: "CTA / Offer",},
   },
 
   fr: {
@@ -567,7 +573,10 @@ const translations = {
     },
     carousel: { header: "GENERATEUR CAROUSEL", subtitle: "Creez des carousels LinkedIn viraux avec l'IA", configTitle: "Configuration", topicLabel: "SUJET", topicPlaceholder: "ex: 5 erreurs que font les fondateurs", topicHint: "Soyez precis, une slide par point cle.", slideCount: "NOMBRE DE SLIDES", brandLabel: "NOM DE MARQUE", themeLabel: "THEME VISUEL", generateBtn: "GENERER LE CAROUSEL", generating: "GENERATION EN COURS", generated: "Carousel genere", generationFailed: "Generation echouee. Reessayez.", noTopic: "Entrez un sujet d'abord.", copyAll: "TOUT COPIER", exportHTML: "EXPORTER HTML", regenerate: "REGENERER", editSlide: "MODIFIER SLIDE", rawText: "TEXTE BRUT", emptyTitle: "Aucun carousel encore", emptyDesc: "Entrez un sujet et cliquez GENERER.", tipsTitle: "CONSEILS PRO", tips: ["Slide 1 est l'accroche.", "Max 60 mots par slide.", "Exportez HTML puis imprimez en PDF.", "Publiez en PDF sur LinkedIn.", "Ajoutez votre logo."] },
     ghostwrite: { header: "GHOST WRITING", subtitle: "Reecrivez dans le style des meilleurs createurs", sourceTitle: "Contenu source", importActive: "Importer le post actif", sourcePlaceholder: "Collez votre texte ici...", authorLabel: "STYLE CIBLE", customStylePlaceholder: "Decrivez le style cible...", modeLabel: "MODE DE REECRITURE", rewriteBtn: "REECRIRE DANS CE STYLE", writing: "REDACTION EN COURS", done: "Reecriture terminee", failed: "Reecriture echouee.", noSource: "Collez d'abord du contenu.", resultTitle: "Resultat", emptyResult: "Le resultat apparaitra ici.", sendToCreate: "UTILISER DANS CREER", sentToCreate: "Charge dans Creer", retry: "REESSAYER", historyLabel: "REECRITURES RECENTES" },
-    autorepost: { header: "AUTO-REPOST", subtitle: "Republier automatiquement vos meilleurs posts", topPerformers: "TOP PERFORMERS", searchPlaceholder: "RECHERCHER DES POSTS...", platformLabel: "PLATEFORME CIBLE", delayLabel: "DELAI DE PUBLICATION", selectFirst: "Selectionnez au moins un post.", repostBtn: "REPUBLIER", queued: "Ajoute a la file", noHistory: "Aucun post sauvegarde.", logLabel: "JOURNAL DE REPOST", varyText: "Varier legerement le texte", varyTextDesc: "Modifie legerement l'intro." },
+    autorepost: { header: "AUTO-REPOST", subtitle: "Republier automatiquement vos meilleurs posts", topPerformers: "TOP PERFORMERS", searchPlaceholder: "RECHERCHER DES POSTS...", platformLabel: "PLATEFORME CIBLE", delayLabel: "DELAI DE PUBLICATION", selectFirst: "Selectionnez au moins un post.", repostBtn: "REPUBLIER", queued: "Ajoute a la file", noHistory: "Aucun post sauvegarde.", logLabel: "JOURNAL DE REPOST", varyText: "Varier legerement le texte", varyTextDesc: "Modifie legerement l'intro." ,
+          deselect: "Désélectionner", useBtn: "UTILISER", copyLabel: "Copier",
+      sortScore: "SCORE", sortDate: "DATE", sortLength: "LONGUEUR",
+      delayNow: "Maintenant", delay1h: "Dans 1h", delay3h: "Dans 3h", delay24h: "Demain", delay48h: "Dans 2j", delay7d: "Dans 7j",},
     calendar: {
       kanban: "KANBAN", timeline: "CHRONOLOGIE",
       all: "Tous", addCard: "+ Ajouter",
@@ -590,7 +599,10 @@ const translations = {
       clickToUse: "cliquer pour utiliser",
       loaded: "✓ Modèle chargé dans CRÉER",
       topicSet: "✓ Sujet défini — générez votre propre version !",
-    },
+    ,
+          catAll: "Tous les modèles", catHooks: "Accroches", catStory: "Histoire",
+      catAuthority: "Autorité", catFrameworks: "Frameworks", catViral: "Viral",
+      catContrarian: "Contre-courant", catLists: "Listes", catLessons: "Leçons", catCta: "CTA / Offre",},
   },
 
   es: {
@@ -797,7 +809,10 @@ const translations = {
     },
     carousel: { header: "GENERADOR DE CARRUSEL", subtitle: "Crea carruseles virales de LinkedIn con IA", configTitle: "Configuracion", topicLabel: "TEMA", topicPlaceholder: "ej: 5 errores de fundadores", topicHint: "Se especifico, una diapositiva por punto.", slideCount: "NUMERO DE DIAPOSITIVAS", brandLabel: "NOMBRE DE MARCA", themeLabel: "TEMA VISUAL", generateBtn: "GENERAR CARRUSEL", generating: "GENERANDO", generated: "Carrusel generado", generationFailed: "Generacion fallida. Intentalo de nuevo.", noTopic: "Escribe un tema primero.", copyAll: "COPIAR TODO", exportHTML: "EXPORTAR HTML", regenerate: "REGENERAR", editSlide: "EDITAR DIAPOSITIVA", rawText: "TEXTO PLANO", emptyTitle: "Sin carrusel aun", emptyDesc: "Escribe un tema y haz clic en GENERAR.", tipsTitle: "CONSEJOS PRO", tips: ["Diapositiva 1 es el gancho.", "Max 60 palabras.", "Exporta HTML luego imprime a PDF.", "Publica como PDF en LinkedIn.", "Añade tu logo."] },
     ghostwrite: { header: "GHOST WRITING", subtitle: "Reescribe al estilo de los mejores creadores", sourceTitle: "Contenido fuente", importActive: "Importar post activo", sourcePlaceholder: "Pega tu texto aqui...", authorLabel: "ESTILO OBJETIVO", customStylePlaceholder: "Describe el estilo objetivo...", modeLabel: "MODO DE REESCRITURA", rewriteBtn: "REESCRIBIR EN ESTE ESTILO", writing: "ESCRIBIENDO", done: "Reescritura completada", failed: "Reescritura fallida.", noSource: "Pega primero el contenido.", resultTitle: "Resultado", emptyResult: "El resultado aparecera aqui.", sendToCreate: "USAR EN CREAR", sentToCreate: "Cargado en Crear", retry: "REINTENTAR", historyLabel: "REESCRITURAS RECIENTES" },
-    autorepost: { header: "AUTO-REPOST", subtitle: "Republica automaticamente tus mejores posts", topPerformers: "TOP PERFORMERS", searchPlaceholder: "BUSCAR POSTS...", platformLabel: "PLATAFORMA OBJETIVO", delayLabel: "RETRASO DE PUBLICACION", selectFirst: "Selecciona al menos un post.", repostBtn: "REPUBLICAR", queued: "Añadido a la cola", noHistory: "Aun no hay posts guardados.", logLabel: "REGISTRO DE REPOST", varyText: "Variar ligeramente el texto", varyTextDesc: "Añade un pequeño ajuste." },
+    autorepost: { header: "AUTO-REPOST", subtitle: "Republica automaticamente tus mejores posts", topPerformers: "TOP PERFORMERS", searchPlaceholder: "BUSCAR POSTS...", platformLabel: "PLATAFORMA OBJETIVO", delayLabel: "RETRASO DE PUBLICACION", selectFirst: "Selecciona al menos un post.", repostBtn: "REPUBLICAR", queued: "Añadido a la cola", noHistory: "Aun no hay posts guardados.", logLabel: "REGISTRO DE REPOST", varyText: "Variar ligeramente el texto", varyTextDesc: "Añade un pequeño ajuste." ,
+          deselect: "Deseleccionar", useBtn: "USAR", copyLabel: "Copiar",
+      sortScore: "PUNTUACIÓN", sortDate: "FECHA", sortLength: "LONGITUD",
+      delayNow: "Ahora", delay1h: "En 1h", delay3h: "En 3h", delay24h: "Mañana", delay48h: "En 2d", delay7d: "En 7d",},
     calendar: {
       kanban: "KANBAN", timeline: "CRONOLOGÍA",
       all: "Todos", addCard: "+ Agregar",
@@ -820,7 +835,10 @@ const translations = {
       clickToUse: "clic para usar",
       loaded: "✓ Plantilla cargada en CREAR",
       topicSet: "✓ Tema establecido — ¡genera tu propia versión!",
-    },
+    ,
+          catAll: "Todas las plantillas", catHooks: "Ganchos", catStory: "Historia",
+      catAuthority: "Autoridad", catFrameworks: "Frameworks", catViral: "Viral",
+      catContrarian: "Contracorriente", catLists: "Listas", catLessons: "Lecciones", catCta: "CTA / Oferta",},
   },
 
   de: {
@@ -1015,7 +1033,10 @@ const translations = {
     },
     carousel: { header: "KARUSSELL-GENERATOR", subtitle: "Erstelle virale LinkedIn-Karussells mit KI", configTitle: "Einstellungen", topicLabel: "THEMA", topicPlaceholder: "z.B. 5 Fehler die Gruender machen", topicHint: "Sei praezise, eine Folie pro Kernpunkt.", slideCount: "ANZAHL FOLIEN", brandLabel: "MARKENNAME", themeLabel: "VISUELLES THEMA", generateBtn: "KARUSSELL GENERIEREN", generating: "GENERIERUNG", generated: "Karussell erstellt", generationFailed: "Generierung fehlgeschlagen.", noTopic: "Gib zuerst ein Thema ein.", copyAll: "ALLES KOPIEREN", exportHTML: "HTML EXPORTIEREN", regenerate: "NEU GENERIEREN", editSlide: "FOLIE BEARBEITEN", rawText: "ROHTEXT", emptyTitle: "Noch kein Karussell", emptyDesc: "Gib ein Thema ein und klicke GENERIEREN.", tipsTitle: "PROFI-TIPPS", tips: ["Folie 1 ist der Hook.", "Max 60 Woerter.", "HTML exportieren dann als PDF drucken.", "Als PDF auf LinkedIn posten.", "Logo auf jeder Folie."] },
     ghostwrite: { header: "GHOST WRITING", subtitle: "Schreibe im Stil der besten Creator um", sourceTitle: "Quellinhalt", importActive: "Aktiven Beitrag importieren", sourcePlaceholder: "Fuege deinen Text hier ein...", authorLabel: "ZIELSTIL", customStylePlaceholder: "Beschreibe den Zielstil...", modeLabel: "UMSCHREIB-MODUS", rewriteBtn: "IN DIESEM STIL UMSCHREIBEN", writing: "SCHREIBEN", done: "Umschreiben abgeschlossen", failed: "Umschreiben fehlgeschlagen.", noSource: "Fuege zuerst Inhalt ein.", resultTitle: "Ergebnis", emptyResult: "Das Ergebnis erscheint hier.", sendToCreate: "IN ERSTELLEN VERWENDEN", sentToCreate: "In Erstellen geladen", retry: "ERNEUT VERSUCHEN", historyLabel: "LETZTE UMSCHREIBUNGEN" },
-    autorepost: { header: "AUTO-REPOST", subtitle: "Veroeffentliche deine besten Beitraege erneut", topPerformers: "TOP-PERFORMER", searchPlaceholder: "BEITRAEGE SUCHEN...", platformLabel: "ZIELPLATTFORM", delayLabel: "VERZOEGERUNG", selectFirst: "Waehle mindestens einen Beitrag.", repostBtn: "ERNEUT POSTEN", queued: "Zur Warteschlange hinzugefuegt", noHistory: "Noch keine gespeicherten Beitraege.", logLabel: "REPOST-PROTOKOLL", varyText: "Text leicht variieren", varyTextDesc: "Passt die Intro leicht an." },
+    autorepost: { header: "AUTO-REPOST", subtitle: "Veroeffentliche deine besten Beitraege erneut", topPerformers: "TOP-PERFORMER", searchPlaceholder: "BEITRAEGE SUCHEN...", platformLabel: "ZIELPLATTFORM", delayLabel: "VERZOEGERUNG", selectFirst: "Waehle mindestens einen Beitrag.", repostBtn: "ERNEUT POSTEN", queued: "Zur Warteschlange hinzugefuegt", noHistory: "Noch keine gespeicherten Beitraege.", logLabel: "REPOST-PROTOKOLL", varyText: "Text leicht variieren", varyTextDesc: "Passt die Intro leicht an." ,
+          deselect: "Auswahl aufheben", useBtn: "VERWENDEN", copyLabel: "Kopieren",
+      sortScore: "SCORE", sortDate: "DATUM", sortLength: "LÄNGE",
+      delayNow: "Jetzt", delay1h: "In 1h", delay3h: "In 3h", delay24h: "Morgen", delay48h: "In 2T", delay7d: "In 7T",},
     calendar: {
       kanban: "KANBAN", timeline: "ZEITACHSE",
       all: "Alle", addCard: "+ Hinzufügen",
@@ -1038,7 +1059,10 @@ const translations = {
       clickToUse: "klicken zum Verwenden",
       loaded: "✓ Vorlage in ERSTELLEN geladen",
       topicSet: "✓ Thema gesetzt — generiere deine eigene Version!",
-    },
+    ,
+          catAll: "Alle Vorlagen", catHooks: "Hooks", catStory: "Geschichte",
+      catAuthority: "Autorität", catFrameworks: "Frameworks", catViral: "Viral",
+      catContrarian: "Konträr", catLists: "Listen", catLessons: "Lektionen", catCta: "CTA / Angebot",},
   },
 
   it: {
@@ -1235,7 +1259,10 @@ const translations = {
     },
     carousel: { header: "GENERATORE DI CAROSELLI", subtitle: "Crea caroselli virali per LinkedIn con l'IA", configTitle: "Configurazione", topicLabel: "ARGOMENTO", topicPlaceholder: "es: 5 errori dei fondatori", topicHint: "Sii specifico, una slide per punto.", slideCount: "NUMERO DI SLIDE", brandLabel: "NOME DEL BRAND", themeLabel: "TEMA VISIVO", generateBtn: "GENERA CAROSELLO", generating: "GENERAZIONE", generated: "Carosello generato", generationFailed: "Generazione fallita. Riprova.", noTopic: "Inserisci prima un argomento.", copyAll: "COPIA TUTTO", exportHTML: "ESPORTA HTML", regenerate: "RIGENERA", editSlide: "MODIFICA SLIDE", rawText: "TESTO GREZZO", emptyTitle: "Nessun carosello ancora", emptyDesc: "Inserisci un argomento e clicca GENERA.", tipsTitle: "CONSIGLI PRO", tips: ["Slide 1 e il gancio.", "Max 60 parole.", "Esporta HTML poi stampa in PDF.", "Pubblica come PDF su LinkedIn.", "Aggiungi il logo."] },
     ghostwrite: { header: "GHOST WRITING", subtitle: "Riscrivi nello stile dei migliori creator", sourceTitle: "Contenuto sorgente", importActive: "Importa post attivo", sourcePlaceholder: "Incolla il tuo testo qui...", authorLabel: "STILE TARGET", customStylePlaceholder: "Descrivi lo stile target...", modeLabel: "MODALITA DI RISCRITTURA", rewriteBtn: "RISCRIVI IN QUESTO STILE", writing: "SCRITTURA IN CORSO", done: "Riscrittura completata", failed: "Riscrittura fallita.", noSource: "Incolla prima il contenuto.", resultTitle: "Risultato", emptyResult: "Il risultato apparira qui.", sendToCreate: "USA IN CREA", sentToCreate: "Caricato in Crea", retry: "RIPROVA", historyLabel: "RISCRITTURE RECENTI" },
-    autorepost: { header: "AUTO-REPOST", subtitle: "Ripubblica automaticamente i tuoi post migliori", topPerformers: "TOP PERFORMER", searchPlaceholder: "CERCA POST...", platformLabel: "PIATTAFORMA TARGET", delayLabel: "RITARDO", selectFirst: "Seleziona almeno un post.", repostBtn: "RIPUBBLICA", queued: "Aggiunto alla coda", noHistory: "Nessun post salvato.", logLabel: "LOG REPOST", varyText: "Varia leggermente il testo", varyTextDesc: "Aggiunge una piccola modifica." },
+    autorepost: { header: "AUTO-REPOST", subtitle: "Ripubblica automaticamente i tuoi post migliori", topPerformers: "TOP PERFORMER", searchPlaceholder: "CERCA POST...", platformLabel: "PIATTAFORMA TARGET", delayLabel: "RITARDO", selectFirst: "Seleziona almeno un post.", repostBtn: "RIPUBBLICA", queued: "Aggiunto alla coda", noHistory: "Nessun post salvato.", logLabel: "LOG REPOST", varyText: "Varia leggermente il testo", varyTextDesc: "Aggiunge una piccola modifica." ,
+          deselect: "Deseleziona tutto", useBtn: "USA", copyLabel: "Copia",
+      sortScore: "PUNTEGGIO", sortDate: "DATA", sortLength: "LUNGHEZZA",
+      delayNow: "Ora", delay1h: "Fra 1h", delay3h: "Fra 3h", delay24h: "Domani", delay48h: "Fra 2g", delay7d: "Fra 7g",},
     calendar: {
       kanban: "KANBAN", timeline: "CRONOLOGIA",
       all: "Tutti", addCard: "+ Aggiungi",
@@ -1258,7 +1285,10 @@ const translations = {
       clickToUse: "clicca per usare",
       loaded: "✓ Modello caricato in CREA",
       topicSet: "✓ Argomento impostato — genera la tua versione!",
-    },
+    ,
+          catAll: "Tutti i modelli", catHooks: "Ganci", catStory: "Storia",
+      catAuthority: "Autorità", catFrameworks: "Framework", catViral: "Virale",
+      catContrarian: "Controcorrente", catLists: "Liste", catLessons: "Lezioni", catCta: "CTA / Offerta",},
   },
 
   pt: {
@@ -1455,7 +1485,10 @@ const translations = {
     },
     carousel: { header: "GERADOR DE CARROSSEL", subtitle: "Crie carrosseis virais do LinkedIn com IA", configTitle: "Configuracao", topicLabel: "TOPICO", topicPlaceholder: "ex: 5 erros de fundadores", topicHint: "Seja especifico, um slide por ponto.", slideCount: "NUMERO DE SLIDES", brandLabel: "NOME DA MARCA", themeLabel: "TEMA VISUAL", generateBtn: "GERAR CARROSSEL", generating: "GERANDO", generated: "Carrossel gerado", generationFailed: "Geracao falhou. Tente novamente.", noTopic: "Insira um topico primeiro.", copyAll: "COPIAR TUDO", exportHTML: "EXPORTAR HTML", regenerate: "REGENERAR", editSlide: "EDITAR SLIDE", rawText: "TEXTO BRUTO", emptyTitle: "Nenhum carrossel ainda", emptyDesc: "Insira um topico e clique em GERAR.", tipsTitle: "DICAS PRO", tips: ["Slide 1 e o gancho.", "Max 60 palavras.", "Exporte HTML depois imprima em PDF.", "Publique como PDF no LinkedIn.", "Adicione seu logo."] },
     ghostwrite: { header: "GHOST WRITING", subtitle: "Reescreva no estilo dos melhores criadores", sourceTitle: "Conteudo fonte", importActive: "Importar post ativo", sourcePlaceholder: "Cole seu texto aqui...", authorLabel: "ESTILO ALVO", customStylePlaceholder: "Descreva o estilo alvo...", modeLabel: "MODO DE REESCRITA", rewriteBtn: "REESCREVER NESTE ESTILO", writing: "ESCREVENDO", done: "Reescrita concluida", failed: "Reescrita falhou.", noSource: "Cole primeiro o conteudo.", resultTitle: "Resultado", emptyResult: "O resultado aparecera aqui.", sendToCreate: "USAR EM CRIAR", sentToCreate: "Carregado em Criar", retry: "TENTAR NOVAMENTE", historyLabel: "REESCRITAS RECENTES" },
-    autorepost: { header: "AUTO-REPOST", subtitle: "Republique automaticamente seus melhores posts", topPerformers: "TOP PERFORMERS", searchPlaceholder: "PESQUISAR POSTS...", platformLabel: "PLATAFORMA ALVO", delayLabel: "ATRASO", selectFirst: "Selecione pelo menos um post.", repostBtn: "REPUBLICAR", queued: "Adicionado a fila", noHistory: "Nenhum post salvo.", logLabel: "REGISTRO DE REPOST", varyText: "Variar levemente o texto", varyTextDesc: "Adiciona um pequeno ajuste." },
+    autorepost: { header: "AUTO-REPOST", subtitle: "Republique automaticamente seus melhores posts", topPerformers: "TOP PERFORMERS", searchPlaceholder: "PESQUISAR POSTS...", platformLabel: "PLATAFORMA ALVO", delayLabel: "ATRASO", selectFirst: "Selecione pelo menos um post.", repostBtn: "REPUBLICAR", queued: "Adicionado a fila", noHistory: "Nenhum post salvo.", logLabel: "REGISTRO DE REPOST", varyText: "Variar levemente o texto", varyTextDesc: "Adiciona um pequeno ajuste." ,
+          deselect: "Desselecionar tudo", useBtn: "USAR", copyLabel: "Copiar",
+      sortScore: "PONTUAÇÃO", sortDate: "DATA", sortLength: "TAMANHO",
+      delayNow: "Agora", delay1h: "Em 1h", delay3h: "Em 3h", delay24h: "Amanhã", delay48h: "Em 2d", delay7d: "Em 7d",},
     calendar: {
       kanban: "KANBAN", timeline: "CRONOLOGIA",
       all: "Todos", addCard: "+ Adicionar",
@@ -1478,7 +1511,10 @@ const translations = {
       clickToUse: "clique para usar",
       loaded: "✓ Modelo carregado em CRIAR",
       topicSet: "✓ Tópico definido — gere sua própria versão!",
-    },
+    ,
+          catAll: "Todos os modelos", catHooks: "Ganchos", catStory: "História",
+      catAuthority: "Autoridade", catFrameworks: "Frameworks", catViral: "Viral",
+      catContrarian: "Contracorrente", catLists: "Listas", catLessons: "Lições", catCta: "CTA / Oferta",},
   },
 
 };

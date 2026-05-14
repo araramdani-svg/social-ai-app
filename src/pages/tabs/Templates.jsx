@@ -10,17 +10,17 @@ import { useState } from "react";
 import { t as tr } from "../../translations.js";
 import { PageHeader } from "./shared.js";
 
-const CATEGORIES = [
-  { id:"all",         label:"All Templates",    icon:"✨" },
-  { id:"hook",        label:"Hooks",            icon:"⚡" },
-  { id:"story",       label:"Story",            icon:"📖" },
-  { id:"authority",   label:"Authority",        icon:"🏆" },
-  { id:"framework",   label:"Frameworks",       icon:"📋" },
-  { id:"viral",       label:"Viral",            icon:"🔥" },
-  { id:"contrarian",  label:"Contrarian",       icon:"🎯" },
-  { id:"listicle",    label:"Lists",            icon:"📝" },
-  { id:"lesson",      label:"Lessons Learned",  icon:"💡" },
-  { id:"cta",         label:"CTA / Offer",      icon:"📣" },
+const CATEGORIES = (lang) => [
+  { id:"all",         label:tr(lang,"templates.catAll")        || "All Templates",   icon:"✨" },
+  { id:"hook",        label:tr(lang,"templates.catHooks")      || "Hooks",           icon:"⚡" },
+  { id:"story",       label:tr(lang,"templates.catStory")      || "Story",           icon:"📖" },
+  { id:"authority",   label:tr(lang,"templates.catAuthority")  || "Authority",       icon:"🏆" },
+  { id:"framework",   label:tr(lang,"templates.catFrameworks") || "Frameworks",      icon:"📋" },
+  { id:"viral",       label:tr(lang,"templates.catViral")      || "Viral",           icon:"🔥" },
+  { id:"contrarian",  label:tr(lang,"templates.catContrarian") || "Contrarian",      icon:"🎯" },
+  { id:"listicle",    label:tr(lang,"templates.catLists")      || "Lists",           icon:"📝" },
+  { id:"lesson",      label:tr(lang,"templates.catLessons")    || "Lessons Learned", icon:"💡" },
+  { id:"cta",         label:tr(lang,"templates.catCta")        || "CTA / Offer",     icon:"📣" },
 ];
 
 const TEMPLATES = [
@@ -272,7 +272,7 @@ export default function Templates({ trendsLang, isMobile, setPost, setTopic, set
 
       {/* Category filter */}
       <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-        {CATEGORIES.map(c => (
+        {CATEGORIES(trendsLang).map(c => (
           <button key={c.id} style={s.catBtn(activeCat === c.id)} onClick={() => setActiveCat(c.id)}>
             {c.icon} {c.label}
           </button>
@@ -289,7 +289,7 @@ export default function Templates({ trendsLang, isMobile, setPost, setTopic, set
               <span style={{ fontSize:20, flexShrink:0 }}>{tpl.icon}</span>
               <div style={{ flex:1 }}>
                 <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:2 }}>{tpl.title}</div>
-                <div style={{ color:"#475569", fontSize:11 }}>{tpl.cat.toUpperCase()}</div>
+                <div style={{ color:"#475569", fontSize:11 }}>{tr(trendsLang,`templates.cat${tpl.cat.charAt(0).toUpperCase()+tpl.cat.slice(1)}`) || tpl.cat.toUpperCase()}</div>
               </div>
               <span style={{ color:"#ef4444", fontSize:16 }}>{selected?.id === tpl.id ? "▲" : "▼"}</span>
             </div>

@@ -31,7 +31,12 @@ function App() {
     setPageState(p);
     sessionStorage.setItem("gp_page", p);
   };
-  const [trendsLang, setTrendsLang] = useState("en");
+
+  const setLang = (l) => {
+    setTrendsLang(l);
+    localStorage.setItem("gp_lang", l);
+  };
+  const [trendsLang, setTrendsLang] = useState(() => localStorage.getItem("gp_lang") || "en");
   const [showLangMenu, setShowLangMenu] = useState(false);
 
   const width = useWindowWidth();
@@ -130,7 +135,7 @@ function App() {
                   fontSize:13, cursor:"pointer", textAlign:"left",
                   display:"flex", alignItems:"center", gap:8,
                 }}
-                onClick={() => { setTrendsLang(l.key); setShowLangMenu(false); }}
+                onClick={() => { setLang(l.key); setShowLangMenu(false); }}
               >
                 {l.flag} {l.key.toUpperCase()}
               </button>
@@ -183,7 +188,7 @@ function App() {
           <Generator
             token={token}
             trendsLang={trendsLang}
-            setTrendsLang={setTrendsLang}
+            setTrendsLang={setLang}
             setPage={setPage}
           />
         </div>
