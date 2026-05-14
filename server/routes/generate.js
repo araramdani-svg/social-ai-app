@@ -110,7 +110,7 @@ Strong hook, valuable insights, clear takeaway. 150-250 words.`,
 
 // ─── POST /generate ────────────────────────────────────────────────────────────
 router.post("/", authenticateToken, checkGenerationQuota, async (req, res) => {
-  const { topic, template = "default", voice, campaign, project, lang = "en" } = req.body;
+  const { topic, template = "default", voice, campaign, project, lang = "en", voiceStyle } = req.body;
 
   if (!topic) return res.status(400).json({ error: "Topic is required" });
 
@@ -124,6 +124,37 @@ router.post("/", authenticateToken, checkGenerationQuota, async (req, res) => {
       );
       brandMemory = result.rows[0] || null;
     } catch {}
+  }
+
+  // Voice learning — auto-fetch si pas fourni
+  let voiceProfile = voiceStyle || null;
+  if (!voiceProfile && req.user?.id) {
+    try {
+      const postsResult = await db.query(
+        "SELECT content FROM posts WHERE user_id=$1 ORDER BY created_at DESC LIMIT 8",
+        [req.user.id]
+      );
+      if (postsResult.rows.length >= 3) {
+        const contents = postsResult.rows.map(r => r.content).filter(Boolean);
+        const styleRes = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: `Analyze these LinkedIn posts and return ONLY a JSON with field "styleInstructions": a 2-sentence writing style guide to replicate this author's exact voice, rhythm and structure. No other fields.`
+            },
+            {
+              role: "user",
+              content: contents.map((p, i) => `POST ${i+1}:\n${p}`).join("\n---\n")
+            }
+          ],
+          max_tokens: 150,
+          temperature: 0.2,
+        });
+        const raw = styleRes.choices[0]?.message?.content?.trim().replace(/```json|```/g, "").trim();
+        voiceProfile = JSON.parse(raw);
+      }
+    } catch {} // Voice learning silencieux — ne bloque jamais la génération
   }
 
   const templateInstruction = TEMPLATE_INSTRUCTIONS[template] || TEMPLATE_INSTRUCTIONS.default;
@@ -142,11 +173,16 @@ BRAND CONTEXT:
     ? `Write the post in ${lang === "fr" ? "French" : lang === "es" ? "Spanish" : lang === "de" ? "German" : lang === "it" ? "Italian" : lang === "pt" ? "Portuguese" : "English"}.`
     : "";
 
+  const voiceInstruction = voiceProfile?.styleInstructions
+    ? `\nVOICE LEARNING — ADOPT THIS AUTHOR'S EXACT STYLE:\n${voiceProfile.styleInstructions}`
+    : "";
+
   const systemPrompt = `You are an elite LinkedIn content strategist and copywriter with 10+ years of experience creating viral B2B content. You write posts that get thousands of likes and generate qualified leads.
 
 ${templateInstruction}
 
 ${brandContext}
+${voiceInstruction}
 ${langInstruction}
 
 RULES:
@@ -201,6 +237,224 @@ Write the LinkedIn post now.`;
   } catch (err) {
     console.error("Generate error:", err.message);
     res.status(500).json({ error: "Generation failed", detail: err.message });
+  }
+});
+
+// ─── POST /generate/voice-style ───────────────────────────────────────────────
+// Analyse les derniers posts de l'user et retourne son profil de style
+router.post("/voice-style", authenticateToken, async (req, res) => {
+  try {
+    const result = await db.query(
+      "SELECT content FROM posts WHERE user_id=$1 ORDER BY created_at DESC LIMIT 10",
+      [req.user.id]
+    );
+    const posts = result.rows.map(r => r.content).filter(Boolean);
+    if (posts.length < 2) {
+      return res.json({ style: null, message: "Not enough posts to learn your style yet." });
+    }
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `You are an expert writing style analyst. Analyze the LinkedIn posts provided and extract the author's unique writing style profile. Return ONLY a JSON object with these fields:
+{
+  "avgSentenceLength": "<short|medium|long>",
+  "tone": "<describe in 5 words max>",
+  "structure": "<describe typical post structure in 1 sentence>",
+  "hooks": "<describe how they start posts>",
+  "vocabulary": "<simple|technical|mixed>",
+  "usesNumbers": <true|false>,
+  "usesQuestions": <true|false>,
+  "usesEmoji": <true|false>,
+  "styleInstructions": "<3-4 sentences of precise writing instructions to replicate this style exactly>"
+}
+Return ONLY the JSON, no explanation.`
+        },
+        {
+          role: "user",
+          content: `Analyze these ${posts.length} LinkedIn posts and extract the writing style:\n\n${posts.map((p, i) => `POST ${i+1}:\n${p}`).join("\n\n---\n\n")}`
+        }
+      ],
+      max_tokens: 400,
+      temperature: 0.3,
+    });
+
+    const raw = completion.choices[0]?.message?.content?.trim();
+    const clean = raw.replace(/```json|```/g, "").trim();
+    const style = JSON.parse(clean);
+    res.json({ style, postsAnalyzed: posts.length });
+  } catch (err) {
+    console.error("Voice style error:", err.message);
+    res.status(500).json({ error: "Voice analysis failed" });
+  }
+});
+
+// ─── POST /generate/repurpose ─────────────────────────────────────────────────
+// Transforme une URL (article, YouTube, PDF text) en post LinkedIn
+router.post("/repurpose", authenticateToken, checkGenerationQuota, async (req, res) => {
+  const { url, text: pastedText, lang = "en", voiceStyle } = req.body;
+  if (!url && !pastedText) return res.status(400).json({ error: "URL or text required" });
+
+  let sourceContent = pastedText || "";
+
+  // Si URL fournie, on fetch le contenu
+  if (url && !pastedText) {
+    try {
+      const isYoutube = url.includes("youtube.com") || url.includes("youtu.be");
+      if (isYoutube) {
+        sourceContent = `YouTube video URL: ${url}\nPlease extract the main insights from this video based on its URL and common knowledge about this topic.`;
+      } else {
+        const fetchRes = await fetch(url, {
+          headers: { "User-Agent": "Mozilla/5.0 (compatible; GrowthPILOT/1.0)" },
+          signal: AbortSignal.timeout(8000),
+        });
+        const html = await fetchRes.text();
+        // Extraction basique du texte
+        sourceContent = html
+          .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+          .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+          .replace(/<[^>]+>/g, " ")
+          .replace(/\s+/g, " ")
+          .trim()
+          .slice(0, 3000);
+      }
+    } catch (err) {
+      console.error("URL fetch error:", err.message);
+      sourceContent = `Content from URL: ${url}`;
+    }
+  }
+
+  const langInstruction = lang !== "en"
+    ? `Write the post in ${lang === "fr" ? "French" : lang === "es" ? "Spanish" : lang === "de" ? "German" : lang === "it" ? "Italian" : lang === "pt" ? "Portuguese" : "English"}.`
+    : "";
+
+  const styleInstruction = voiceStyle?.styleInstructions
+    ? `\nWRITING STYLE TO ADOPT:\n${voiceStyle.styleInstructions}`
+    : "";
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `You are an elite LinkedIn content strategist. Transform the provided content into a high-performing LinkedIn post.
+Extract the 3-5 most valuable insights. Write a strong hook. Make it actionable and shareable.
+${styleInstruction}
+${langInstruction}
+RULES: No hashtags. No corporate jargon. Strong first line. End with a question or CTA. 150-250 words.`
+        },
+        {
+          role: "user",
+          content: `Transform this content into a LinkedIn post:\n\nSOURCE: ${url || "Pasted content"}\n\nCONTENT:\n${sourceContent}`
+        }
+      ],
+      max_tokens: 600,
+      temperature: 0.75,
+    });
+
+    const text = completion.choices[0]?.message?.content?.trim();
+    if (!text) return res.status(500).json({ error: "Repurposing failed" });
+
+    // Save + quota
+    if (req.user?.id) {
+      try {
+        await db.query(
+          "INSERT INTO posts (user_id, topic, template, content, created_at) VALUES ($1,$2,$3,$4,NOW())",
+          [req.user.id, url || "repurposed", "repurpose", text]
+        );
+        await db.query("UPDATE users SET generations_count=generations_count+1 WHERE id=$1", [req.user.id]);
+      } catch {}
+    }
+
+    res.json({ text, source: url || "pasted" });
+  } catch (err) {
+    console.error("Repurpose error:", err.message);
+    res.status(500).json({ error: "Repurposing failed" });
+  }
+});
+
+// ─── POST /generate/hooks ─────────────────────────────────────────────────────
+// Génère 5 hooks pour un topic donné
+router.post("/hooks", authenticateToken, async (req, res) => {
+  const { topic, lang = "en", voiceStyle } = req.body;
+  if (!topic) return res.status(400).json({ error: "Topic required" });
+
+  const langInstruction = lang !== "en"
+    ? `Write all hooks in ${lang === "fr" ? "French" : lang === "es" ? "Spanish" : lang === "de" ? "German" : lang === "it" ? "Italian" : lang === "pt" ? "Portuguese" : "English"}.`
+    : "";
+
+  const styleHint = voiceStyle?.tone ? `Match this tone: ${voiceStyle.tone}.` : "";
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `You are a LinkedIn hook specialist. Generate 5 different hooks for the given topic.
+Each hook = 1-2 lines max. Must stop the scroll immediately.
+Use different angles: bold claim, shocking stat, contrarian, personal story opener, provocative question.
+Return ONLY a JSON array of 5 strings. No markdown, no numbering inside strings.
+${styleHint} ${langInstruction}`
+        },
+        { role: "user", content: `Topic: ${topic}\n\nGenerate 5 scroll-stopping hooks.` }
+      ],
+      max_tokens: 300,
+      temperature: 0.9,
+    });
+
+    const raw = completion.choices[0]?.message?.content?.trim();
+    const clean = raw.replace(/```json|```/g, "").trim();
+    const hooks = JSON.parse(clean);
+    res.json({ hooks: Array.isArray(hooks) ? hooks : [] });
+  } catch (err) {
+    console.error("Hooks error:", err.message);
+    res.status(500).json({ error: "Hook generation failed" });
+  }
+});
+
+// ─── POST /generate/viral-score ───────────────────────────────────────────────
+// Score de viralité prédit avant publication
+router.post("/viral-score", authenticateToken, async (req, res) => {
+  const { text } = req.body;
+  if (!text || text.length < 20) return res.status(400).json({ error: "Text too short" });
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `You are a LinkedIn algorithm expert. Predict the viral potential of this post before publication.
+Return ONLY a JSON object:
+{
+  "score": <0-100 overall viral potential>,
+  "hook": <0-100 hook strength>,
+  "emotion": <0-100 emotional impact>,
+  "value": <0-100 actionable value>,
+  "readability": <0-100 ease of reading>,
+  "prediction": "<LOW|MEDIUM|HIGH|VIRAL>",
+  "tip": "<single most impactful improvement in 1 sentence>",
+  "bestTime": "<best day and time to post for maximum reach>"
+}
+Return ONLY the JSON.`
+        },
+        { role: "user", content: `Score this LinkedIn post:\n\n${text}` }
+      ],
+      max_tokens: 250,
+      temperature: 0.2,
+    });
+
+    const raw = completion.choices[0]?.message?.content?.trim();
+    const clean = raw.replace(/```json|```/g, "").trim();
+    const score = JSON.parse(clean);
+    res.json(score);
+  } catch (err) {
+    console.error("Viral score error:", err.message);
+    res.status(500).json({ error: "Scoring failed" });
   }
 });
 
