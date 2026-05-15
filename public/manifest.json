@@ -1,26 +1,24 @@
 {
-  "name": "GrowthPILOT",
+  "name": "GrowthPILOT — AI Content Platform",
   "short_name": "GrowthPILOT",
-  "description": "AI-powered content platform for founders and creators",
+  "description": "Generate, schedule and publish authority content on LinkedIn, X, Threads and Instagram.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#020617",
   "theme_color": "#ef4444",
   "orientation": "portrait-primary",
+  "lang": "en",
+  "scope": "/",
   "icons": [
-    {
-      "src": "/logo.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/logo.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
+    { "src": "/logo.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ],
-  "categories": ["productivity", "business"],
-  "lang": "en"
+  "screenshots": [
+    { "src": "/og-image.png", "sizes": "1200x630", "type": "image/png", "form_factor": "wide" }
+  ],
+  "categories": ["business", "productivity"],
+  "shortcuts": [
+    { "name": "Create Post", "short_name": "Create", "description": "Generate a new LinkedIn post", "url": "/?tab=create", "icons": [{ "src": "/logo.png", "sizes": "96x96" }] },
+    { "name": "Calendar",    "short_name": "Calendar", "description": "Open your content calendar", "url": "/?tab=calendar", "icons": [{ "src": "/logo.png", "sizes": "96x96" }] }
+  ]
 }
