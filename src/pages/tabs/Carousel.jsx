@@ -258,7 +258,7 @@ Topic: "${topic}"`;
     a.download = `carousel-${topic.slice(0, 30).replace(/\s+/g, "-")}.html`;
     a.click();
     URL.revokeObjectURL(url);
-    showToast("✓ HTML exporté — ouvrir + Ctrl+P pour PDF");
+    showToast(tr(trendsLang,"carousel.exportedHTML"));
   };
 
   /* ─── Render ─────────────────────────────────────────────── */
@@ -340,7 +340,7 @@ Topic: "${topic}"`;
           {/* Actions bar */}
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
             <span style={{ color: "#64748b", fontSize: 12, fontWeight: 700, flex: 1 }}>
-              {slides.length} SLIDES GÉNÉRÉES
+              {slides.length} {tr(trendsLang,"carousel.slidesGenerated")}
             </span>
             <button style={s.btnGhost} onClick={copyAll}>📋 {tr(trendsLang, "carousel.copyAll")}</button>
             <button style={s.btnGhost} onClick={exportHTML}>⬇️ {tr(trendsLang, "carousel.exportHTML")}</button>
@@ -371,7 +371,7 @@ Topic: "${topic}"`;
                   <span style={{ color: "#94a3b8", fontSize: 11, fontWeight: 700 }}>
                     ✏️ {tr(trendsLang, "carousel.editSlide")} {current + 1}
                   </span>
-                  <button style={s.btnSmall} onClick={() => copySlide(current)}>📋 Copier</button>
+                  <button style={s.btnSmall} onClick={() => copySlide(current)}>📋 {tr(trendsLang,"carousel.copy")}</button>
                 </div>
                 <span style={s.label}>EMOJI</span>
                 <input
@@ -379,13 +379,13 @@ Topic: "${topic}"`;
                   value={slides[current]?.emoji || ""}
                   onChange={e => updateSlide(current, "emoji", e.target.value)}
                 />
-                <span style={s.label}>TITRE</span>
+                <span style={s.label}>{tr(trendsLang,"carousel.slideTitle")}</span>
                 <input
                   style={{ ...s.input, marginBottom: 10 }}
                   value={slides[current]?.title || ""}
                   onChange={e => updateSlide(current, "title", e.target.value)}
                 />
-                <span style={s.label}>CORPS</span>
+                <span style={s.label}>{tr(trendsLang,"carousel.slideBody")}</span>
                 <textarea
                   style={s.textarea}
                   value={slides[current]?.body || ""}
@@ -396,7 +396,7 @@ Topic: "${topic}"`;
 
             {/* Right — toutes les slides en miniature */}
             <div style={{ display: "flex", flexDirection: "column", gap: 10, overflowY: "auto", maxHeight: isMobile ? "none" : 700 }}>
-              <span style={s.label}>TOUTES LES SLIDES</span>
+              <span style={s.label}>{tr(trendsLang,"carousel.allSlides")}</span>
               {slides.map((slide, i) => (
                 <div
                   key={i}
@@ -415,14 +415,14 @@ Topic: "${topic}"`;
               <span style={{ color: "#e2e8f0", fontWeight: 700, fontSize: 13 }}>
                 {tr(trendsLang, "carousel.rawText")}
               </span>
-              <button style={s.btnGhost} onClick={copyAll}>📋 COPIER TOUT</button>
+              <button style={s.btnGhost} onClick={copyAll}>📋 {tr(trendsLang,"carousel.copyAll")}</button>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {slides.map((sl, i) => (
                 <div key={i} style={{ background: "rgba(255,255,255,0.03)", borderRadius: 8, padding: "12px 14px", borderLeft: `3px solid ${i === current ? "#ef4444" : "rgba(255,255,255,0.08)"}` }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
                     <span style={{ color: "#64748b", fontSize: 10, fontWeight: 700 }}>SLIDE {i + 1} {sl.emoji}</span>
-                    <button style={{ ...s.btnSmall, padding: "3px 8px", fontSize: 10 }} onClick={() => copySlide(i)}>COPIER</button>
+                    <button style={{ ...s.btnSmall, padding: "3px 8px", fontSize: 10 }} onClick={() => copySlide(i)}>{tr(trendsLang,"carousel.copy")}</button>
                   </div>
                   <div style={{ color: "#e2e8f0", fontSize: 13, fontWeight: 700, marginBottom: 4 }}>{sl.title}</div>
                   <div style={{ color: "#94a3b8", fontSize: 12, lineHeight: 1.6 }}>{sl.body}</div>
