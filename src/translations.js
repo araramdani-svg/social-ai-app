@@ -254,8 +254,8 @@ const translations = {
       contentGenerated: "✓ Content generated",
       publishedLinkedin: "✓ Published on LinkedIn!",
       linkedinConnected: "✓ LinkedIn connected!",
-      publishedTwitter: "✓ Published on X!"
-      twitterFailed: "X post failed."
+      publishedTwitter: "✓ Published on X!",
+      twitterFailed: "X post failed.",
       linkedinDisconnected: "LinkedIn disconnected",
     },
     // Landing
@@ -628,8 +628,8 @@ const translations = {
       contentGenerated: "✓ Contenu généré",
       publishedLinkedin: "✓ Publié sur LinkedIn !",
       linkedinConnected: "✓ LinkedIn connecté !",
-      publishedTwitter: "✓ Publié sur X !"
-      twitterFailed: "Échec de la publication sur X."
+      publishedTwitter: "✓ Publié sur X !",
+      twitterFailed: "Échec de la publication sur X.",
       linkedinDisconnected: "LinkedIn déconnecté",
     },
     landing: {
@@ -950,8 +950,8 @@ const translations = {
       projectSaved: "✓ Proyecto guardado", brandMemoryUpdated: "✓ Memoria de marca actualizada",
       contentGenerated: "✓ Contenido generado", publishedLinkedin: "✓ Publicado en LinkedIn!",
       linkedinConnected: "✓ LinkedIn conectado!", linkedinDisconnected: "LinkedIn desconectado",
-      publishedTwitter: "✓ Publicado en X!"
-      twitterFailed: "Publicación en X fallida."
+      publishedTwitter: "✓ Publicado en X!",
+      twitterFailed: "Publicación en X fallida.",
     },
     landing: {
       badge: "⚡ PLATAFORMA DE CONTENIDO IA",
@@ -1247,8 +1247,8 @@ const translations = {
       projectSaved: "✓ Projekt gespeichert", brandMemoryUpdated: "✓ Markengedächtnis aktualisiert",
       contentGenerated: "✓ Inhalt generiert", publishedLinkedin: "✓ Auf LinkedIn veröffentlicht!",
       linkedinConnected: "✓ LinkedIn verbunden!", linkedinDisconnected: "LinkedIn getrennt",
-      publishedTwitter: "✓ Auf X veröffentlicht!"
-      twitterFailed: "X-Veröffentlichung fehlgeschlagen."
+      publishedTwitter: "✓ Auf X veröffentlicht!",
+      twitterFailed: "X-Veröffentlichung fehlgeschlagen.",
     },
     landing: {
       badge: "⚡ KI-CONTENT-PLATTFORM",
@@ -1546,8 +1546,8 @@ const translations = {
       projectSaved: "✓ Progetto salvato", brandMemoryUpdated: "✓ Memoria del brand aggiornata",
       contentGenerated: "✓ Contenuto generato", publishedLinkedin: "✓ Pubblicato su LinkedIn!",
       linkedinConnected: "✓ LinkedIn connesso!", linkedinDisconnected: "LinkedIn disconnesso",
-      publishedTwitter: "✓ Pubblicato su X!"
-      twitterFailed: "Pubblicazione su X fallita."
+      publishedTwitter: "✓ Pubblicato su X!",
+      twitterFailed: "Pubblicazione su X fallita.",
     },
     landing: {
       badge: "⚡ PIATTAFORMA DI CONTENUTI IA",
@@ -1845,8 +1845,8 @@ const translations = {
       projectSaved: "✓ Projeto salvo", brandMemoryUpdated: "✓ Memória da marca atualizada",
       contentGenerated: "✓ Conteúdo gerado", publishedLinkedin: "✓ Publicado no LinkedIn!",
       linkedinConnected: "✓ LinkedIn conectado!", linkedinDisconnected: "LinkedIn desconectado",
-      publishedTwitter: "✓ Publicado no X!"
-      twitterFailed: "Publicação no X falhou."
+      publishedTwitter: "✓ Publicado no X!",
+      twitterFailed: "Publicação no X falhou.",
     },
     landing: {
       badge: "⚡ PLATAFORMA DE CONTEÚDO IA",
