@@ -164,6 +164,7 @@ export default function Index({ openApp, openLogin, openPricing }) {
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled]       = useState(false);
+  const [yearly,  setYearly]          = useState(false);
 
   // Sync avec gp_lang
   const handleSetLang = (l) => {
@@ -383,35 +384,62 @@ export default function Index({ openApp, openLogin, openPricing }) {
         <div style={s.sectionHeader}>
           <h2 style={s.sectionTitle}>{l("pricingTitle")}</h2>
           <p style={s.sectionSubtitle}>{l("pricingSubtitle")}</p>
+
+          {/* Toggle mensuel / annuel */}
+          <div style={{ display:"inline-flex", alignItems:"center", gap:12, marginTop:24 }}>
+            <span style={{ color:!yearly?"#fff":"#475569", fontWeight:700, fontSize:14 }}>Monthly</span>
+            <div style={{ width:48, height:26, background:"rgba(220,38,38,0.3)", border:"1px solid rgba(220,38,38,0.5)", borderRadius:13, cursor:"pointer", position:"relative" }}
+              onClick={() => setYearly(!yearly)}>
+              <div style={{ position:"absolute", top:2, width:20, height:20, background:"#ef4444", borderRadius:"50%", transition:"transform 0.2s", transform: yearly ? "translateX(24px)" : "translateX(2px)", boxShadow:"0 2px 8px rgba(220,38,38,0.5)" }} />
+            </div>
+            <span style={{ color:yearly?"#fff":"#475569", fontWeight:700, fontSize:14 }}>
+              Yearly
+              <span style={{ marginLeft:8, background:"rgba(220,38,38,0.2)", border:"1px solid rgba(220,38,38,0.4)", borderRadius:6, padding:"2px 6px", fontSize:10, color:"#ef4444", fontWeight:800 }}>SAVE 20%</span>
+            </span>
+          </div>
         </div>
-        <div style={s.pricingGrid}>
+
+        <div style={{ ...s.pricingGrid, gridTemplateColumns: isMobile ? "1fr" : isTablet ? "repeat(2,1fr)" : "repeat(4,1fr)", maxWidth:1200 }}>
           {[
-            { name:"Free",     price:"€0",  period:"/mo", color:"#64748b", features:["5 AI generations/mo","1 project","3 analyses"],                                    cta:l("startFree"), action:openApp },
-            { name:"Pro",      price:"€19", period:"/mo", color:"#ef4444", features:["100 AI generations/mo","10 projects","Unlimited analyses","Brand Memory","Export"], cta:"Start Pro →",       action:openPricing, popular:true },
-            { name:"Business", price:"€49", period:"/mo", color:"#f97316", features:["Unlimited everything","Priority support","Team mode","All features"],               cta:"Start Business →",  action:openPricing },
-          ].map((plan, i) => (
-            <article key={i} style={{ ...s.pricingCard, borderColor:plan.color, transform:plan.popular&&!isMobile?"scale(1.04)":"scale(1)", zIndex:plan.popular?2:1 }}
-              itemScope itemType="https://schema.org/Offer">
-              {plan.popular && <div style={{ ...s.popularBadge, background:plan.color }}>MOST POPULAR</div>}
-              <div style={{ color:plan.color, fontWeight:800, fontSize:13, letterSpacing:"1.5px", marginBottom:8 }} itemProp="name">{plan.name}</div>
-              <div style={{ display:"flex", alignItems:"flex-end", gap:4, marginBottom:16 }}>
-                <span style={{ fontSize:isMobile?34:42, fontWeight:900, color:"#fff" }} itemProp="price">{plan.price}</span>
-                <span style={{ color:"#475569", marginBottom:8 }}>{plan.period}</span>
-              </div>
-              <div style={{ borderTop:"1px solid rgba(255,255,255,0.06)", paddingTop:16, marginBottom:20 }}>
-                {plan.features.map((f,j) => (
-                  <div key={j} style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
-                    <span style={{ color:plan.color, fontWeight:800 }} aria-hidden="true">✓</span>
-                    <span style={{ color:"#94a3b8", fontSize:13 }}>{f}</span>
-                  </div>
-                ))}
-              </div>
-              <button style={{ ...s.pricingCta, background:plan.popular?`linear-gradient(135deg,${plan.color},#991b1b)`:"transparent", border:plan.popular?"none":`1px solid ${plan.color}`, color:"#fff" }}
-                onClick={plan.action} aria-label={`${plan.cta} - ${plan.name} plan`}>
-                {plan.cta}
-              </button>
-            </article>
-          ))}
+            { name:"Free",     monthly:0,   yearly:0,   color:"#64748b", features:["5 AI generations/mo","1 project","3 analyses"],                                                    cta:l("startFree"),     action:openApp,     popular:false },
+            { name:"Pro",      monthly:19,  yearly:15,  color:"#ef4444", features:["100 AI generations/mo","10 projects","Unlimited analyses","Brand Memory","Multi-format Repurpose"], cta:"Start Pro →",      action:openPricing, popular:true  },
+            { name:"Business", monthly:49,  yearly:39,  color:"#f97316", features:["Unlimited AI generations","Team Console (5 members)","All Pro features","Priority support"],         cta:"Start Business →", action:openPricing, popular:false },
+            { name:"Agency",   monthly:99,  yearly:79,  color:"#8b5cf6", features:["50 client accounts","20 team members","Agency dashboard","Dedicated support"],                       cta:"Start Agency →",   action:openPricing, popular:false },
+          ].map((plan, i) => {
+            const price = yearly ? plan.yearly : plan.monthly;
+            return (
+              <article key={i} style={{ ...s.pricingCard, borderColor:plan.color, transform:plan.popular&&!isMobile?"scale(1.04)":"scale(1)", zIndex:plan.popular?2:1 }}
+                itemScope itemType="https://schema.org/Offer">
+                {plan.popular && <div style={{ ...s.popularBadge, background:plan.color }}>MOST POPULAR</div>}
+                <div style={{ color:plan.color, fontWeight:800, fontSize:13, letterSpacing:"1.5px", marginBottom:8 }} itemProp="name">{plan.name}</div>
+                <div style={{ display:"flex", alignItems:"flex-end", gap:4, marginBottom:4 }}>
+                  <span style={{ fontSize:isMobile?34:38, fontWeight:900, color:"#fff" }} itemProp="price">€{price}</span>
+                  <span style={{ color:"#475569", marginBottom:8 }}>/mo</span>
+                </div>
+                {yearly && price > 0 && (
+                  <div style={{ fontSize:11, color:"#475569", marginBottom:8 }}>Billed €{price * 12}/year</div>
+                )}
+                <div style={{ borderTop:"1px solid rgba(255,255,255,0.06)", paddingTop:16, marginBottom:20, marginTop:12 }}>
+                  {plan.features.map((f,j) => (
+                    <div key={j} style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
+                      <span style={{ color:plan.color, fontWeight:800 }} aria-hidden="true">✓</span>
+                      <span style={{ color:"#94a3b8", fontSize:13 }}>{f}</span>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  style={{
+                    ...s.pricingCta,
+                    background: plan.popular ? `linear-gradient(135deg,${plan.color},#991b1b)` : plan.name === "Agency" ? "linear-gradient(135deg,#8b5cf6,#7c3aed)" : "transparent",
+                    border: plan.popular || plan.name === "Agency" ? "none" : `1px solid ${plan.color}`,
+                    color:"#fff",
+                  }}
+                  onClick={plan.action} aria-label={`${plan.cta} - ${plan.name} plan`}>
+                  {plan.cta}
+                </button>
+              </article>
+            );
+          })}
         </div>
       </section>
 
