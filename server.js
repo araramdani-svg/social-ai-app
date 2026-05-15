@@ -14,6 +14,7 @@ import linkedinRoutes from "./server/routes/linkedin.js";
 import scrapingRoutes from "./server/routes/scraping.js";
 import threadsRoutes          from "./server/routes/threads.js";
 import linkedinAnalyticsRoutes from "./server/routes/linkedin-analytics.js";
+import teamRoutes              from "./server/routes/team.js";
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.use("/linkedin", linkedinRoutes);
 app.use("/scraping", scrapingRoutes);
 app.use("/threads",           threadsRoutes);
 app.use("/linkedin-analytics", linkedinAnalyticsRoutes);
+app.use("/team",               teamRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

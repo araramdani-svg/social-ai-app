@@ -1,70 +1,432 @@
+import { useState, useEffect, useCallback } from "react";
 import { t as tr } from "../../translations.js";
 import { st, PageHeader } from "./shared.js";
 
-export default function Team({ trendsLang, isMobile, projects, autoPosts, scheduledPosts, workspace }) {
+const API = "https://social-ai-app-production.up.railway.app";
+const MAX_MEMBERS = 5;
+
+const ROLES = [
+  { id:"admin",     label:"Admin",     color:"#ef4444", desc:"Full access — manage team, generate, publish & analyze" },
+  { id:"editor",    label:"Editor",    color:"#f59e0b", desc:"Generate content, analyze posts & access brand memory" },
+  { id:"publisher", label:"Publisher", color:"#60a5fa", desc:"Publish content across all connected platforms" },
+];
+
+const s = {
+  card:     { background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:12, padding:20 },
+  btn:      { background:"linear-gradient(135deg,#ef4444,#dc2626)", border:"none", borderRadius:8, color:"#fff", fontSize:11, fontWeight:700, letterSpacing:"1px", padding:"10px 18px", cursor:"pointer" },
+  btnGhost: { background:"transparent", border:"1px solid rgba(255,255,255,0.12)", borderRadius:8, color:"#94a3b8", fontSize:11, fontWeight:700, padding:"9px 14px", cursor:"pointer" },
+  btnDanger:{ background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:8, color:"#ef4444", fontSize:11, fontWeight:700, padding:"7px 12px", cursor:"pointer" },
+  input:    { width:"100%", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, padding:"10px 14px", color:"#e2e8f0", fontSize:13, outline:"none", boxSizing:"border-box", fontFamily:"inherit" },
+  select:   { background:"rgba(15,23,42,0.8)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:6, padding:"4px 8px", color:"#e2e8f0", fontSize:11, outline:"none" },
+  label:    { fontSize:10, fontWeight:700, letterSpacing:"1.5px", color:"#64748b", marginBottom:6, display:"block" },
+  divider:  { height:1, background:"rgba(255,255,255,0.06)", margin:"14px 0" },
+  tabBtn:   (active) => ({ flex:1, padding:"10px", background:"transparent", border:"none", borderBottom: active ? "2px solid #ef4444" : "2px solid transparent", color: active ? "#ef4444" : "#475569", fontWeight:700, fontSize:11, letterSpacing:"1px", cursor:"pointer" }),
+};
+
+function timeAgo(dateStr) {
+  if (!dateStr) return "—";
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h/24)}d ago`;
+}
+
+/* ── Business Gate ────────────────────────────────────────────────────────── */
+function BusinessGate({ setPage }) {
+  return (
+    <div style={{ ...s.card, textAlign:"center", padding:"60px 32px", border:"1px solid rgba(249,115,22,0.3)", background:"rgba(249,115,22,0.04)" }}>
+      <div style={{ fontSize:48, marginBottom:16 }}>🏢</div>
+      <div style={{ color:"#f97316", fontSize:18, fontWeight:800, marginBottom:8 }}>Business Plan Required</div>
+      <div style={{ color:"#475569", fontSize:14, lineHeight:1.7, maxWidth:380, margin:"0 auto 24px" }}>
+        Team Console is exclusively available on the <strong style={{color:"#f97316"}}>Business plan</strong>. Invite up to {MAX_MEMBERS} members, assign roles, and collaborate in real time.
+      </div>
+      <button style={{ ...s.btn, padding:"14px 28px", fontSize:13 }} onClick={() => setPage && setPage("pricing")}>
+        💎 Upgrade to Business →
+      </button>
+    </div>
+  );
+}
+
+/* ── Invite Modal ─────────────────────────────────────────────────────────── */
+function InviteModal({ token, onClose, onSuccess }) {
+  const [email,   setEmail]   = useState("");
+  const [role,    setRole]    = useState("editor");
+  const [loading, setLoading] = useState(false);
+  const [result,  setResult]  = useState(null);
+  const [copied,  setCopied]  = useState(false);
+
+  const headers = { "Content-Type":"application/json", Authorization:`Bearer ${token}` };
+
+  const submit = async () => {
+    if (!email.trim()) return;
+    setLoading(true);
+    try {
+      const r = await fetch(`${API}/team/invite`, {
+        method:"POST", headers,
+        body: JSON.stringify({ email: email.trim(), role }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.message || d.error);
+      setResult(d);
+      onSuccess?.();
+    } catch (err) {
+      setResult({ error: err.message });
+    }
+    setLoading(false);
+  };
+
+  const copyLink = () => {
+    if (result?.inviteUrl) {
+      navigator.clipboard.writeText(result.inviteUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+      <div style={{ ...s.card, width:"100%", maxWidth:480, background:"#111827", border:"1px solid rgba(220,38,38,0.25)", boxShadow:"0 30px 80px rgba(0,0,0,0.6)" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
+          <div style={{ color:"#e2e8f0", fontWeight:800, fontSize:16 }}>👥 Invite a Member</div>
+          <button style={{ background:"transparent", border:"none", color:"#475569", fontSize:20, cursor:"pointer" }} onClick={onClose}>✕</button>
+        </div>
+
+        {!result ? (
+          <>
+            <span style={s.label}>EMAIL ADDRESS</span>
+            <input style={{ ...s.input, marginBottom:16 }} type="email" placeholder="colleague@company.com" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key==="Enter" && submit()} autoFocus />
+
+            <span style={s.label}>ROLE</span>
+            <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:20 }}>
+              {ROLES.map(r => (
+                <button key={r.id}
+                  style={{ display:"flex", alignItems:"flex-start", gap:12, padding:"12px 14px", background: role===r.id?"rgba(239,68,68,0.08)":"rgba(255,255,255,0.02)", border: role===r.id?"1px solid rgba(239,68,68,0.3)":"1px solid rgba(255,255,255,0.07)", borderRadius:10, cursor:"pointer", textAlign:"left" }}
+                  onClick={() => setRole(r.id)}>
+                  <div style={{ width:8, height:8, borderRadius:"50%", background:r.color, marginTop:4, flexShrink:0 }} />
+                  <div style={{ flex:1 }}>
+                    <div style={{ color: role===r.id?"#ef4444":"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:2 }}>{r.label}</div>
+                    <div style={{ color:"#475569", fontSize:11 }}>{r.desc}</div>
+                  </div>
+                  {role===r.id && <span style={{ color:"#ef4444", fontSize:14 }}>✓</span>}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ display:"flex", gap:10 }}>
+              <button style={{ ...s.btnGhost, flex:1 }} onClick={onClose}>Cancel</button>
+              <button style={{ ...s.btn, flex:2, opacity: loading||!email ? 0.7:1 }} disabled={loading||!email} onClick={submit}>
+                {loading ? "⏳ Sending..." : "📧 Send Invitation →"}
+              </button>
+            </div>
+          </>
+        ) : result.error ? (
+          <div>
+            <div style={{ color:"#ef4444", fontSize:14, marginBottom:16 }}>❌ {result.error}</div>
+            <button style={s.btnGhost} onClick={() => setResult(null)}>← Try again</button>
+          </div>
+        ) : (
+          <div>
+            <div style={{ color:"#22c55e", fontSize:13, fontWeight:700, marginBottom:12 }}>✅ {result.message}</div>
+            {result.inviteUrl && (
+              <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:8, padding:"12px 14px", marginBottom:14 }}>
+                <div style={{ color:"#64748b", fontSize:10, fontWeight:700, letterSpacing:"1px", marginBottom:6 }}>INVITE LINK</div>
+                <div style={{ color:"#94a3b8", fontSize:11, wordBreak:"break-all", marginBottom:10 }}>{result.inviteUrl}</div>
+                <button style={{ ...s.btn, padding:"8px 14px", fontSize:11 }} onClick={copyLink}>
+                  {copied ? "✓ Copied!" : "📋 Copy Link"}
+                </button>
+              </div>
+            )}
+            <button style={s.btnGhost} onClick={onClose}>Close</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ── Main ─────────────────────────────────────────────────────────────────── */
+export default function Team({ trendsLang, isMobile, token, userPlan, projects, autoPosts, scheduledPosts, workspace, setPage }) {
+
+  const [members,    setMembers]    = useState([]);
+  const [activity,   setActivity]   = useState([]);
+  const [loading,    setLoading]    = useState(false);
+  const [showInvite, setShowInvite] = useState(false);
+  const [ownerInfo,  setOwnerInfo]  = useState(null);
+  const [activeTab,  setActiveTab]  = useState("members");
+
+  const isBusiness = userPlan === "Business";
+  const headers = { "Content-Type":"application/json", Authorization:`Bearer ${token}` };
+
+  const fetchData = useCallback(async () => {
+    if (!token || !isBusiness) return;
+    setLoading(true);
+    try {
+      const [mRes, aRes] = await Promise.all([
+        fetch(`${API}/team/members`,  { headers }),
+        fetch(`${API}/team/activity`, { headers }),
+      ]);
+      const mData = await mRes.json();
+      const aData = await aRes.json();
+      setMembers(mData.members || []);
+      setOwnerInfo(mData.owner || null);
+      setActivity(aData.activity || []);
+    } catch {}
+    setLoading(false);
+  }, [token, isBusiness]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const removeMember = async (id) => {
+    if (!window.confirm("Remove this member from your team?")) return;
+    await fetch(`${API}/team/members/${id}`, { method:"DELETE", headers });
+    fetchData();
+  };
+
+  const updateRole = async (id, role) => {
+    await fetch(`${API}/team/members/${id}`, {
+      method:"PATCH", headers,
+      body: JSON.stringify({ role }),
+    });
+    fetchData();
+  };
+
+  const used = members.length;
+  const remaining = MAX_MEMBERS - used;
+
   return (
     <>
       <PageHeader tabKey="team" trendsLang={trendsLang} isMobile={isMobile} />
-      <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:20 }}>
-        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:10 }}>
-            {[
-              [tr(trendsLang, "ui.statProjects"), projects.length,       "#ef4444"],
-              [tr(trendsLang, "ui.queued"),       autoPosts.length,      "#f59e0b"],
-              [tr(trendsLang, "ui.scheduled"),    scheduledPosts.length, "#22c55e"],
-            ].map(([label, val, color]) => (
-              <div key={label} style={{ ...st.card, marginTop:0, padding:14 }}>
-                <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px" }}>{label}</div>
-                <div style={{ color, fontSize:26, fontWeight:800, marginTop:6 }}>{val}</div>
-              </div>
-            ))}
-          </div>
 
-          <div style={{ ...st.card, marginTop:0, padding:16 }}>
-            <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>{tr(trendsLang, "ui.workspace")}</div>
-            <div style={{ color:"#ef4444", fontSize:18, fontWeight:800 }}>{workspace || "PERSONAL"}</div>
+      {/* Stats */}
+      <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap:10, marginBottom:16 }}>
+        {[
+          [tr(trendsLang,"ui.statProjects"), projects.length,        "#ef4444"],
+          [tr(trendsLang,"ui.queued"),       autoPosts?.length||0,   "#f59e0b"],
+          [tr(trendsLang,"ui.scheduled"),    scheduledPosts?.length||0,"#22c55e"],
+          ["MEMBERS",                        isBusiness ? `${used}/${MAX_MEMBERS}` : "—", "#60a5fa"],
+        ].map(([label, val, color]) => (
+          <div key={label} style={{ ...st.card, marginTop:0, padding:14 }}>
+            <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px" }}>{label}</div>
+            <div style={{ color, fontSize:22, fontWeight:800, marginTop:6 }}>{val}</div>
           </div>
+        ))}
+      </div>
 
-          <div style={{ ...st.card, marginTop:0, flex:1, display:"flex", flexDirection:"column", gap:10 }}>
-            <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px", marginBottom:4 }}>{tr(trendsLang, "ui.teamMembers")}</h3>
-            {[
-              { name:tr(trendsLang,"ui.teamYou"),     role:tr(trendsLang,"ui.roleAdmin"),     status:tr(trendsLang,"ui.statusOnline"),  color:"#22c55e" },
-              { name:tr(trendsLang,"ui.roleWriter"),  role:tr(trendsLang,"ui.roleEditor"),    status:tr(trendsLang,"ui.statusIdle"),    color:"#f59e0b" },
-              { name:tr(trendsLang,"ui.roleManager"), role:tr(trendsLang,"ui.rolePublisher"), status:tr(trendsLang,"ui.statusOffline"), color:"#475569" },
-            ].map((m, i) => (
-              <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", borderBottom:"1px solid rgba(220,38,38,0.08)", paddingBottom:10 }}>
-                <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                  <div style={{ width:8, height:8, borderRadius:"50%", background:m.color }} />
+      {/* Gate or Console */}
+      {!isBusiness ? <BusinessGate setPage={setPage} /> : (
+        <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 340px", gap:16 }}>
+
+          {/* ── Left ── */}
+          <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+
+            {/* Tabs */}
+            <div style={{ display:"flex", borderBottom:"1px solid rgba(255,255,255,0.07)" }}>
+              <button style={s.tabBtn(activeTab==="members")}  onClick={() => setActiveTab("members")}>👥 MEMBERS</button>
+              <button style={s.tabBtn(activeTab==="activity")} onClick={() => setActiveTab("activity")}>📊 ACTIVITY</button>
+              <button style={s.tabBtn(activeTab==="perms")}    onClick={() => setActiveTab("perms")}>🔐 ROLES</button>
+            </div>
+
+            {/* Members */}
+            {activeTab === "members" && (
+              <div style={s.card}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
                   <div>
-                    <div style={{ color:"#fff", fontSize:13, fontWeight:600 }}>{m.name}</div>
-                    <div style={{ color:"#64748b", fontSize:11 }}>{m.role}</div>
+                    <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13 }}>Team Members</div>
+                    <div style={{ color:"#475569", fontSize:11, marginTop:2 }}>{used}/{MAX_MEMBERS} slots used</div>
+                  </div>
+                  {remaining > 0 && (
+                    <button style={s.btn} onClick={() => setShowInvite(true)}>+ Invite</button>
+                  )}
+                </div>
+
+                {/* Capacity bar */}
+                <div style={{ height:3, background:"rgba(255,255,255,0.06)", borderRadius:2, marginBottom:16 }}>
+                  <div style={{ width:`${(used/MAX_MEMBERS)*100}%`, height:"100%", background:"linear-gradient(90deg,#ef4444,#f97316)", borderRadius:2, transition:"width 0.4s" }} />
+                </div>
+
+                {/* Owner row */}
+                <div style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 0", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>
+                  <div style={{ width:36, height:36, borderRadius:"50%", background:"linear-gradient(135deg,#dc2626,#991b1b)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:800, color:"#fff", flexShrink:0 }}>
+                    {(ownerInfo?.name || ownerInfo?.email || "ME").slice(0,2).toUpperCase()}
+                  </div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ color:"#e2e8f0", fontSize:13, fontWeight:600 }}>{ownerInfo?.name || ownerInfo?.email || "You"}</div>
+                    <div style={{ color:"#475569", fontSize:11 }}>{ownerInfo?.email}</div>
+                  </div>
+                  <div style={{ background:"rgba(239,68,68,0.12)", border:"1px solid rgba(239,68,68,0.25)", borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:700, color:"#ef4444", letterSpacing:"1px" }}>OWNER</div>
+                </div>
+
+                {/* Loading */}
+                {loading && <div style={{ color:"#475569", textAlign:"center", padding:20 }}>Loading...</div>}
+
+                {/* Empty */}
+                {!loading && members.length === 0 && (
+                  <div style={{ textAlign:"center", padding:"28px 0" }}>
+                    <div style={{ fontSize:28, marginBottom:8 }}>👥</div>
+                    <div style={{ color:"#475569", fontSize:13, marginBottom:16 }}>No members yet.</div>
+                    <button style={s.btn} onClick={() => setShowInvite(true)}>+ Invite your first member</button>
+                  </div>
+                )}
+
+                {/* Member rows */}
+                {members.map(m => {
+                  const roleInfo = ROLES.find(r => r.id === m.role) || ROLES[1];
+                  const statusColor = m.status === "active" ? "#22c55e" : "#f59e0b";
+                  return (
+                    <div key={m.id} style={{ display:"flex", alignItems:"center", gap:12, padding:"14px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+                      <div style={{ width:36, height:36, borderRadius:"50%", background:"rgba(255,255,255,0.06)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800, color:"#94a3b8", flexShrink:0 }}>
+                        {m.member_email?.slice(0,2).toUpperCase()}
+                      </div>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ color:"#e2e8f0", fontSize:13, fontWeight:600, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                          {m.member_name || m.member_email}
+                        </div>
+                        <div style={{ color:"#475569", fontSize:11 }}>{m.member_email}</div>
+                        <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:3 }}>
+                          <div style={{ width:5, height:5, borderRadius:"50%", background:statusColor }} />
+                          <span style={{ color:statusColor, fontSize:10, fontWeight:700 }}>{m.status.toUpperCase()}</span>
+                          <span style={{ color:"#334155", fontSize:10 }}>· {m.status==="pending" ? `Invited ${timeAgo(m.invited_at)}` : `Joined ${timeAgo(m.joined_at)}`}</span>
+                        </div>
+                      </div>
+                      <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6, flexShrink:0 }}>
+                        <select style={{ ...s.select, color:roleInfo.color }} value={m.role} onChange={e => updateRole(m.id, e.target.value)}>
+                          {ROLES.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
+                        </select>
+                        <button style={s.btnDanger} onClick={() => removeMember(m.id)}>Remove</button>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {!loading && members.length > 0 && remaining > 0 && (
+                  <button style={{ ...s.btn, width:"100%", marginTop:12 }} onClick={() => setShowInvite(true)}>
+                    + Invite Another ({remaining} slot{remaining !== 1 ? "s" : ""} left)
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Activity */}
+            {activeTab === "activity" && (
+              <div style={s.card}>
+                <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:14 }}>📊 Team Activity</div>
+                {activity.length === 0 ? (
+                  <div style={{ color:"#475569", textAlign:"center", padding:24, fontSize:13 }}>No activity recorded yet.</div>
+                ) : activity.map((a, i) => (
+                  <div key={i} style={{ display:"flex", gap:12, padding:"10px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+                    <div style={{ width:30, height:30, borderRadius:"50%", background:"rgba(255,255,255,0.04)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:700, color:"#64748b", flexShrink:0 }}>
+                      {(a.linkedin_name || a.email)?.slice(0,2).toUpperCase()}
+                    </div>
+                    <div style={{ flex:1 }}>
+                      <div style={{ color:"#e2e8f0", fontSize:12, fontWeight:600 }}>{a.linkedin_name || a.email}</div>
+                      <div style={{ color:"#64748b", fontSize:12 }}>{a.action.replace(/_/g," ")}</div>
+                    </div>
+                    <div style={{ color:"#334155", fontSize:11, flexShrink:0 }}>{timeAgo(a.created_at)}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Permissions */}
+            {activeTab === "perms" && (
+              <div style={s.card}>
+                <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:4 }}>🔐 Role Permissions</div>
+                <div style={{ color:"#475569", fontSize:12, marginBottom:16 }}>Default permissions per role — customizable per member</div>
+                <div style={{ overflowX:"auto" }}>
+                  <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+                    <thead>
+                      <tr>
+                        <th style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"8px 0", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>PERMISSION</th>
+                        {ROLES.map(r => <th key={r.id} style={{ textAlign:"center", color:r.color, fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"8px 8px", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>{r.label.toUpperCase()}</th>)}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        ["Generate content",     true,  true,  false],
+                        ["Publish posts",        true,  false, true ],
+                        ["Analyze content",      true,  true,  true ],
+                        ["View Brand Memory",    true,  true,  false],
+                        ["Manage team members",  true,  false, false],
+                        ["Access all projects",  true,  true,  true ],
+                        ["View analytics",       true,  true,  true ],
+                      ].map(([label, admin, editor, publisher]) => (
+                        <tr key={label}>
+                          <td style={{ color:"#94a3b8", padding:"10px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>{label}</td>
+                          {[admin, editor, publisher].map((v, i) => (
+                            <td key={i} style={{ textAlign:"center", padding:"10px 8px", borderBottom:"1px solid rgba(255,255,255,0.04)", color: v?"#22c55e":"#334155", fontSize:15 }}>{v ? "✓" : "✗"}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── Right ── */}
+          <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+
+            {/* Workspace card */}
+            <div style={s.card}>
+              <span style={s.label}>WORKSPACE</span>
+              <div style={{ color:"#ef4444", fontSize:18, fontWeight:800 }}>{workspace || "PERSONAL"}</div>
+              <div style={s.divider} />
+              <span style={s.label}>PLAN</span>
+              <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                <span style={{ color:"#f97316", fontSize:14, fontWeight:800 }}>💎 BUSINESS</span>
+                <div style={{ background:"rgba(249,115,22,0.12)", border:"1px solid rgba(249,115,22,0.25)", borderRadius:20, padding:"2px 9px", fontSize:10, fontWeight:700, color:"#f97316" }}>ACTIVE</div>
+              </div>
+              <div style={s.divider} />
+              <span style={s.label}>CAPACITY</span>
+              <div style={{ color:"#e2e8f0", fontSize:13 }}>{used} / {MAX_MEMBERS} members</div>
+              <div style={{ height:4, background:"rgba(255,255,255,0.06)", borderRadius:2, marginTop:8 }}>
+                <div style={{ width:`${(used/MAX_MEMBERS)*100}%`, height:"100%", background: used === MAX_MEMBERS ? "#ef4444" : "linear-gradient(90deg,#22c55e,#16a34a)", borderRadius:2, transition:"width 0.4s" }} />
+              </div>
+            </div>
+
+            {/* Invite CTA */}
+            {remaining > 0 && (
+              <div style={{ ...s.card, background:"rgba(239,68,68,0.04)", border:"1px solid rgba(239,68,68,0.15)", textAlign:"center", padding:24 }}>
+                <div style={{ fontSize:28, marginBottom:10 }}>👋</div>
+                <div style={{ color:"#e2e8f0", fontWeight:700, marginBottom:6 }}>Invite your team</div>
+                <div style={{ color:"#475569", fontSize:12, marginBottom:16, lineHeight:1.6 }}>
+                  {remaining} invitation slot{remaining !== 1 ? "s" : ""} remaining
+                </div>
+                <button style={{ ...s.btn, width:"100%", padding:"12px" }} onClick={() => setShowInvite(true)}>
+                  + Send Invitation
+                </button>
+              </div>
+            )}
+
+            {/* Roles legend */}
+            <div style={s.card}>
+              <span style={s.label}>ROLES</span>
+              {ROLES.map(r => (
+                <div key={r.id} style={{ display:"flex", gap:10, padding:"10px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+                  <div style={{ width:8, height:8, borderRadius:"50%", background:r.color, marginTop:4, flexShrink:0 }} />
+                  <div>
+                    <div style={{ color:r.color, fontSize:12, fontWeight:700 }}>{r.label}</div>
+                    <div style={{ color:"#475569", fontSize:11, marginTop:2 }}>{r.desc}</div>
                   </div>
                 </div>
-                <span style={{ color:m.color, fontSize:11, fontWeight:700 }}>{m.status.toUpperCase()}</span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
+      )}
 
-        <div style={{ ...st.card, marginTop:0, display:"flex", flexDirection:"column", gap:12, overflowY:"auto", maxHeight: isMobile ? 300 : "unset" }}>
-          <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px" }}>{tr(trendsLang, "ui.teamActivity")}</h3>
-          {[
-            { user:tr(trendsLang,"ui.teamYou"),    action:tr(trendsLang,"ui.actGenerated"),  time:tr(trendsLang,"ui.timeJustNow"),  color:"#22c55e" },
-            { user:tr(trendsLang,"ui.roleWriter"), action:tr(trendsLang,"ui.actSavedDraft"), time:tr(trendsLang,"ui.time5min"),    color:"#f59e0b" },
-            { user:tr(trendsLang,"ui.teamYou"),    action:tr(trendsLang,"ui.actScheduled"),  time:tr(trendsLang,"ui.time12min"),   color:"#22c55e" },
-            { user:tr(trendsLang,"ui.roleManager"),action:tr(trendsLang,"ui.actPublished"),  time:tr(trendsLang,"ui.time1hr"),     color:"#3b82f6" },
-            { user:tr(trendsLang,"ui.roleWriter"), action:tr(trendsLang,"ui.actAnalyzed"),   time:tr(trendsLang,"ui.time2hr"),     color:"#f59e0b" },
-          ].map((a, i) => (
-            <div key={i} style={{ borderBottom:"1px solid rgba(220,38,38,0.08)", paddingBottom:12 }}>
-              <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
-                <span style={{ color:a.color, fontSize:12, fontWeight:700 }}>{a.user}</span>
-                <span style={{ color:"#475569", fontSize:11 }}>{a.time}</span>
-              </div>
-              <p style={{ color:"#94a3b8", fontSize:13 }}>{a.action}</p>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Invite modal */}
+      {showInvite && (
+        <InviteModal
+          token={token}
+          onClose={() => setShowInvite(false)}
+          onSuccess={() => { fetchData(); setShowInvite(false); }}
+        />
+      )}
     </>
   );
 }

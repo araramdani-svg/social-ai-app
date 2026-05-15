@@ -1,10 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function Auth({ loginSuccess }) {
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+
+  // Detect invite token
+  const inviteToken = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("invite")
+    : null;
+  const [inviteInfo, setInviteInfo] = useState(null);
+
+  useEffect(() => {
+    if (!inviteToken) return;
+    setMode("register");
+    fetch(`https://social-ai-app-production.up.railway.app/team/invite/${inviteToken}`)
+      .then(r => r.json())
+      .then(d => { if (d.valid) { setInviteInfo(d); setEmail(d.email); } })
+      .catch(() => {});
+  }, [inviteToken]);
 
   const submit = async () => {
     setError("");
@@ -31,7 +46,19 @@ export default function Auth({ loginSuccess }) {
       }
 
       localStorage.setItem("token", data.token);
-      // ✅ On passe le token à App.jsx
+
+      // Accept team invite if coming from invitation link
+      if (inviteToken && mode === "register") {
+        try {
+          await fetch("https://social-ai-app-production.up.railway.app/team/accept", {
+            method: "POST",
+            headers: { "Content-Type":"application/json", Authorization:`Bearer ${data.token}` },
+            body: JSON.stringify({ token: inviteToken }),
+          });
+          window.history.replaceState({}, "", "/");
+        } catch {}
+      }
+
       loginSuccess(data.token);
 
     } catch {
@@ -42,7 +69,16 @@ export default function Auth({ loginSuccess }) {
   return (
     <div style={styles.page}>
       <div style={styles.card}>
-        <h1>{mode === "login" ? "Login" : "Create account"}</h1>
+        {inviteInfo && (
+          <div style={{ background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:10, padding:"12px 16px", marginBottom:20 }}>
+            <div style={{ color:"#ef4444", fontSize:11, fontWeight:700, letterSpacing:"1px", marginBottom:4 }}>👥 TEAM INVITATION</div>
+            <div style={{ color:"#e2e8f0", fontSize:13 }}>
+              <strong>{inviteInfo.ownerName}</strong> invited you as <strong style={{color:"#ef4444"}}>{inviteInfo.role?.toUpperCase()}</strong>
+            </div>
+            <div style={{ color:"#475569", fontSize:11, marginTop:4 }}>Create your account to join the team.</div>
+          </div>
+        )}
+        <h1>{mode === "login" ? "Login" : inviteInfo ? "Join the team" : "Create account"}</h1>
 
         <input
           style={styles.input}
