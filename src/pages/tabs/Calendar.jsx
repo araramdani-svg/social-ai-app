@@ -68,7 +68,7 @@ export default function Calendar({ trendsLang, isMobile, post, setPost, setTab, 
           // 2. Migration : si localStorage a des données et DB est vide → import
           const localCards = getLocalCards();
           if (localCards.length > 0 && dbCards.length === 0) {
-            showToast("⏳ Migration de vos données...");
+            showToast(tr(trendsLang, "calendar.migrating"));
             const importRes = await fetch(`${API}/calendar/import`, {
               method: "POST",
               headers: authHeaders(),
@@ -80,7 +80,7 @@ export default function Calendar({ trendsLang, isMobile, post, setPost, setTab, 
               const data2 = await res2.json();
               dbCards = data2.cards || [];
               localStorage.removeItem("gp_calendar"); // Nettoie l'ancien storage
-              showToast("✅ Données migrées en DB !");
+              showToast(tr(trendsLang, "calendar.migrated"));
             }
           }
 
@@ -90,7 +90,7 @@ export default function Calendar({ trendsLang, isMobile, post, setPost, setTab, 
         console.error("Calendar load error:", err);
         // Fallback localStorage si API indisponible
         setCards(getLocalCards());
-        showToast("⚠️ Mode hors ligne — données locales");
+        showToast(tr(trendsLang, "calendar.offlineMode"));
       } finally {
         setLoading(false);
       }
@@ -115,7 +115,7 @@ export default function Calendar({ trendsLang, isMobile, post, setPost, setTab, 
       }
     } catch (err) {
       console.error(err);
-      showToast("❌ Erreur réseau");
+      showToast(tr(trendsLang, "calendar.errorNetwork"));
     }
   };
 
@@ -145,7 +145,7 @@ export default function Calendar({ trendsLang, isMobile, post, setPost, setTab, 
       await fetch(`${API}/calendar/${id}`, { method: "DELETE", headers: authHeaders() });
     } catch (err) {
       console.error(err);
-      showToast("❌ Erreur suppression");
+      showToast(tr(trendsLang, "calendar.errorDelete"));
     }
   };
 
@@ -236,7 +236,7 @@ export default function Calendar({ trendsLang, isMobile, post, setPost, setTab, 
       <PageHeader tabKey="calendar" trendsLang={trendsLang} isMobile={isMobile} />
       <div style={{ textAlign:"center", padding:"60px 20px", color:"#475569" }}>
         <div style={{ fontSize:28, marginBottom:12 }}>⏳</div>
-        <div style={{ fontSize:13 }}>Chargement du calendrier...</div>
+        <div style={{ fontSize:13 }}>{tr(trendsLang, "calendar.loading")}</div>
       </div>
     </div>
   );
