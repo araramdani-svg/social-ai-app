@@ -22,7 +22,7 @@ import { t as tr } from "../../translations.js";
 const PLATFORMS = [
   { id: "linkedin", label: "LinkedIn", emoji: "🔗" },
   { id: "threads",  label: "Threads",  emoji: "🧵" },
-  { id: "copy",     label: tr(trendsLang,"autorepost.copyLabel") || "Copy",   emoji: "📋" },
+  { id: "copy",     label: "Copy",   emoji: "📋" },
 ];
 
 const SORT_OPTIONS = ["score", "date", "length"];
@@ -333,10 +333,10 @@ export default function AutoRepost({
                 return (
                   <button key={pl.id} style={s.platformBtn(platform === pl.id)} onClick={() => setPlatform(pl.id)}>
                     <span>{pl.emoji}</span>
-                    <span style={{ flex: 1 }}>{pl.label}</span>
+                    <span style={{ flex: 1 }}>{pl.id === "copy" ? (tr(trendsLang,"autorepost.copyLabel") || "Copy") : pl.label}</span>
                     {pl.id !== "copy" && (
                       <span style={{ fontSize: 10, color: connected ? "#34d399" : "#ef4444" }}>
-                        {connected ? tr(trendsLang,"labels.connected") ? `● ${tr(trendsLang,"labels.connected")}` : `● ${tr(trendsLang,"labels.connected") || "connected"}` : "○ déconnecté"}
+                        {connected ? `● ${tr(trendsLang,"labels.connected") || "connected"}` : `○ ${tr(trendsLang,"labels.disconnected") || "disconnected"}`}
                       </span>
                     )}
                   </button>
