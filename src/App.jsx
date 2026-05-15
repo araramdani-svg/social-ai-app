@@ -3,7 +3,7 @@ import Landing   from "./pages/Index";
 import Generator from "./pages/Generator";
 import Auth      from "./pages/Auth";
 import Pricing   from "./pages/Pricing";
-import { Toast } from "./components/shared.js";
+import { Toast } from "./pages/tabs/shared.js";
 
 /* ── Hook breakpoint ── */
 function useWindowWidth() {
