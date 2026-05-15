@@ -501,4 +501,120 @@ router.post("/rewrite", authenticateToken, async (req, res) => {
   }
 });
 
+router.post("/repurpose-multi", authenticateToken, checkGenerationQuota, async (req, res) => {
+  const { post, lang = "en", voiceStyle } = req.body;
+  if (!post || post.trim().length < 30)
+    return res.status(400).json({ error: "Post content required (min 30 chars)" });
+
+  const langName = { fr:"French", es:"Spanish", de:"German", it:"Italian", pt:"Portuguese" }[lang] || "English";
+  const styleInstruction = voiceStyle?.styleInstructions
+    ? `\nWRITING STYLE: ${voiceStyle.styleInstructions}`
+    : "";
+
+  try {
+    // ── Prompt unique → 3 formats en parallèle ────────────────────────────
+    const [threadRes, newsletterRes, carouselRes] = await Promise.all([
+
+      // 1. Thread X (Twitter)
+      openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a top X (Twitter) content creator. Transform the LinkedIn post into a viral thread.
+Format: Return ONLY a JSON array of tweet strings.
+Rules: Tweet 1 = strong hook (≤280 chars). Tweets 2-6 = key insights, one per tweet. Last tweet = CTA + "🧵".
+Each tweet ≤ 280 chars. No numbering inside tweets.
+Language: ${langName}.${styleInstruction}`,
+          },
+          { role: "user", content: `LinkedIn post to transform into X thread:\n\n${post}` },
+        ],
+        max_tokens: 600,
+        temperature: 0.8,
+      }),
+
+      // 2. Newsletter / email
+      openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are an expert newsletter writer. Transform the LinkedIn post into a newsletter section.
+Return ONLY a JSON object with:
+{
+  "subject": "<catchy email subject line>",
+  "preheader": "<preview text, 50-90 chars>",
+  "intro": "<1 paragraph warm intro>",
+  "body": "<2-3 paragraphs — expanded insights with examples>",
+  "cta": "<clear call to action>",
+  "ps": "<optional PS line>"
+}
+Language: ${langName}.${styleInstruction}`,
+          },
+          { role: "user", content: `LinkedIn post to transform into newsletter:\n\n${post}` },
+        ],
+        max_tokens: 700,
+        temperature: 0.75,
+      }),
+
+      // 3. Carousel LinkedIn (slides)
+      openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a LinkedIn carousel specialist. Transform the LinkedIn post into carousel slides.
+Return ONLY a JSON array of slide objects:
+[
+  { "slide": 1, "type": "cover",   "headline": "...", "subheadline": "..." },
+  { "slide": 2, "type": "content", "headline": "...", "body": "..." },
+  ...
+  { "slide": N, "type": "cta",     "headline": "...", "action": "..." }
+]
+Rules: 5-8 slides. Cover + 3-6 content slides + 1 CTA slide.
+Headlines ≤ 8 words. Body ≤ 25 words. Make it scannable.
+Language: ${langName}.${styleInstruction}`,
+          },
+          { role: "user", content: `LinkedIn post to transform into carousel:\n\n${post}` },
+        ],
+        max_tokens: 600,
+        temperature: 0.75,
+      }),
+    ]);
+
+    // ── Parse les 3 résultats ─────────────────────────────────────────────
+    const parseJSON = (completion, fallback) => {
+      try {
+        const raw   = completion.choices[0]?.message?.content?.trim() || "";
+        const clean = raw.replace(/```json|```/g, "").trim();
+        return JSON.parse(clean);
+      } catch { return fallback; }
+    };
+
+    const thread         = parseJSON(threadRes,     []);
+    const newsletter     = parseJSON(newsletterRes, {});
+    const carouselSlides = parseJSON(carouselRes,   []);
+
+    // ── Save + quota (compte comme 1 génération) ──────────────────────────
+    if (req.user?.id) {
+      try {
+        await db.query(
+          "INSERT INTO posts (user_id, topic, template, content, created_at) VALUES ($1,$2,$3,$4,NOW())",
+          [req.user.id, "repurpose-multi", "multi-format", post.slice(0, 300)]
+        );
+        await db.query(
+          "UPDATE users SET generations_count=generations_count+1 WHERE id=$1",
+          [req.user.id]
+        );
+      } catch {}
+    }
+
+    res.json({ thread, newsletter, carouselSlides });
+
+  } catch (err) {
+    console.error("repurpose-multi error:", err.message);
+    res.status(500).json({ error: "Multi-format repurposing failed" });
+  }
+});
+
 export default router;
