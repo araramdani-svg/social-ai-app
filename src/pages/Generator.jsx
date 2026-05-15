@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useAutoSave, useKeyboardShortcuts, CharCounter, SkeletonCard, EmptyState } from "./tabs/shared.js";
 import { t as tr } from "../translations.js";
 import logo from "../assets/logo.png";
 import { motion, AnimatePresence } from "framer-motion";
@@ -41,6 +42,12 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
 
   /* ── Auth / Lang ── */
   const token                        = tokenProp || localStorage.getItem("token");
+
+  // Raccourcis clavier
+  useKeyboardShortcuts([
+    { meta:true, key:"Enter", fn: () => { if (!loading) generate(); } },
+    { meta:true, key:"s",     fn: () => { if (post) savePost(); } },
+  ]);
   const [trendsLangLocal, setTLLocal] = useState("en");
   const trendsLang                   = langProp    || trendsLangLocal;
   const setTrendsLang                = setLangProp || setTLLocal;
@@ -54,6 +61,26 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
 
   /* ── Content ── */
   const [post,            setPost]            = useState("");
+  const [autoSaveLabel, setAutoSaveLabel] = useState("");
+
+  // Auto-save
+  const { restore: restorePost } = useAutoSave(post, "gp_autosave_post", 1500);
+
+  useEffect(() => {
+    const saved = restorePost();
+    if (saved && saved.length > 10 && !post) {
+      setPost(saved);
+      setAutoSaveLabel("✓ Draft restored");
+      setTimeout(() => setAutoSaveLabel(""), 3000);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!post) return;
+    setAutoSaveLabel("Saving...");
+    const t = setTimeout(() => setAutoSaveLabel("✓ Saved"), 1600);
+    return () => clearTimeout(t);
+  }, [post]);
   const [topic,           setTopic]           = useState("");
   const [projectTitle,    setProjectTitle]    = useState("");
   const [selectedProject, setSelectedProject] = useState("");
@@ -132,6 +159,9 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
     chars:    post.length,
     readTime: Math.ceil((post ? post.trim().split(/\s+/).length : 0) / 200),
   };
+
+  // Passer CharCounter et autoSaveLabel à Create via props supplémentaires
+  const charCounterProps = { autoSaveLabel, CharCounter };
 
   const growthData = (() => {
     try {

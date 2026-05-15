@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
-import Landing from "./pages/Index";
+import { useState, useEffect, useCallback } from "react";
+import Landing   from "./pages/Index";
 import Generator from "./pages/Generator";
-import Auth from "./pages/Auth";
-import Pricing from "./pages/Pricing";
+import Auth      from "./pages/Auth";
+import Pricing   from "./pages/Pricing";
+import { Toast } from "./components/shared.js";
 
 /* ── Hook breakpoint ── */
 function useWindowWidth() {
@@ -20,7 +21,6 @@ function useWindowWidth() {
 function App() {
   const [token, setToken] = useState(() => localStorage.getItem("token") || null);
 
-  // Bug 2 — restaurer la dernière page au refresh
   const [page, setPageState] = useState(() => {
     const savedToken = localStorage.getItem("token");
     if (!savedToken || savedToken === "guest") return "landing";
@@ -36,10 +36,31 @@ function App() {
     setTrendsLang(l);
     localStorage.setItem("gp_lang", l);
   };
-  const [trendsLang, setTrendsLang] = useState(() => localStorage.getItem("gp_lang") || "en");
+
+  const [trendsLang,   setTrendsLang]   = useState(() => localStorage.getItem("gp_lang") || "en");
   const [showLangMenu, setShowLangMenu] = useState(false);
 
-  const width = useWindowWidth();
+  // ── Toast system ────────────────────────────────────────────────────────────
+  const [toasts, setToasts] = useState([]);
+
+  const showToast = useCallback((message, type = "info") => {
+    // Détecter le type automatiquement si non fourni
+    let detectedType = type;
+    if (type === "info") {
+      if (message.startsWith("✅") || message.startsWith("✓")) detectedType = "success";
+      else if (message.startsWith("❌"))                        detectedType = "error";
+      else if (message.startsWith("⚠️"))                       detectedType = "warning";
+    }
+
+    const id = Date.now() + Math.random();
+    setToasts(prev => [...prev.slice(-2), { id, message, type: detectedType }]);
+  }, []);
+
+  const removeToast = useCallback((id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  const width    = useWindowWidth();
   const isMobile = width < 768;
 
   const LANGS = [
@@ -57,7 +78,6 @@ function App() {
       setToken(savedToken);
       if (!sessionStorage.getItem("gp_page")) setPage("generator");
     }
-    // guest users always start from landing on reload
   }, []);
 
   useEffect(() => {
@@ -67,14 +87,32 @@ function App() {
       window.history.replaceState({}, "", "/");
       const savedToken = localStorage.getItem("token");
       if (savedToken) { setToken(savedToken); setPage("generator"); }
+      showToast("✅ Subscription activated!", "success");
+    }
+
+    if (params.get("twitter") === "connected") {
+      window.history.replaceState({}, "", "/");
+      showToast("✅ X (Twitter) connected!", "success");
+    }
+
+    if (params.get("instagram") === "connected") {
+      window.history.replaceState({}, "", "/");
+      showToast("✅ Instagram connected!", "success");
     }
 
     if (params.get("linkedin") === "connected" || params.get("threads") === "connected") {
       window.history.replaceState({}, "", "/");
+      const platform = params.get("linkedin") ? "LinkedIn" : "Threads";
+      showToast(`✅ ${platform} connected!`, "success");
       if (window.opener) {
-        window.opener.postMessage({ type: "oauth_success", platform: params.get("linkedin") ? "linkedin" : "threads" }, "*");
+        window.opener.postMessage({ type:"oauth_success", platform: platform.toLowerCase() }, "*");
         window.close();
       }
+    }
+
+    if (params.get("twitter") === "error" || params.get("instagram") === "error") {
+      window.history.replaceState({}, "", "/");
+      showToast("❌ Connection failed. Please try again.", "error");
     }
   }, []);
 
@@ -100,6 +138,7 @@ function App() {
   const handleLoginSuccess = (newToken) => {
     setToken(newToken);
     setPage("generator");
+    showToast("✅ Welcome back!", "success");
   };
 
   /* ── Boutons flottants ── */
@@ -108,7 +147,7 @@ function App() {
       <button onClick={() => {
         if (token && token !== "guest") {
           sessionStorage.setItem("gp_tab", "home");
-          window.dispatchEvent(new CustomEvent("navigateTab", { detail: "home" }));
+          window.dispatchEvent(new CustomEvent("navigateTab", { detail:"home" }));
           setPage("generator");
         } else {
           setPage("landing");
@@ -117,9 +156,7 @@ function App() {
 
       {/* Language selector */}
       <div style={{ position:"relative" }}>
-        <button style={iconStyle} onClick={() => setShowLangMenu(!showLangMenu)} title="Language">
-          🌍
-        </button>
+        <button style={iconStyle} onClick={() => setShowLangMenu(!showLangMenu)} title="Language">🌍</button>
         {showLangMenu && (
           <div style={langMenuStyle}>
             {LANGS.map(l => (
@@ -149,7 +186,6 @@ function App() {
       <button onClick={logout} style={iconStyle} title="Logout">↩</button>
     </div>
   ) : (
-    /* Mobile floating bar — minimal, shown only in generator */
     page === "generator" ? (
       <div style={{ ...floatingStyle, gap:8 }}>
         <button onClick={() => { sessionStorage.setItem("gp_tab","home"); window.dispatchEvent(new CustomEvent("navigateTab",{detail:"home"})); }} style={{ ...iconStyle, width:40, height:40, fontSize:16, borderRadius:10 }} title="Home">🏠</button>
@@ -164,7 +200,7 @@ function App() {
     <>
       {page === "landing" && (
         <Landing
-          openApp={() => { localStorage.setItem("token", "guest"); setPage("generator"); }}
+          openApp={() => { localStorage.setItem("token","guest"); setPage("generator"); }}
           openLogin={() => setPage("auth")}
           openPricing={() => setPage("pricing")}
         />
@@ -175,11 +211,7 @@ function App() {
       )}
 
       {page === "pricing" && (
-        <Pricing
-          token={token}
-          openLogin={() => setPage("auth")}
-          openApp={() => setPage("generator")}
-        />
+        <Pricing token={token} openLogin={() => setPage("auth")} openApp={() => setPage("generator")} />
       )}
 
       {page === "generator" && (
@@ -190,20 +222,24 @@ function App() {
             trendsLang={trendsLang}
             setTrendsLang={setLang}
             setPage={setPage}
+            showToast={showToast}
           />
         </div>
       )}
+
+      {/* ── Toast stack ── */}
+      <div style={{ position:"fixed", bottom:80, right:16, zIndex:99999, display:"flex", flexDirection:"column", gap:8 }}>
+        {toasts.map(t => (
+          <Toast key={t.id} message={t.message} type={t.type} onClose={() => removeToast(t.id)} />
+        ))}
+      </div>
     </>
   );
 }
 
 const floatingStyle = {
-  position: "fixed",
-  top: 20,
-  right: 20,
-  display: "flex",
-  gap: 12,
-  zIndex: 9999,
+  position:"fixed", top:20, right:20,
+  display:"flex", gap:12, zIndex:9999,
 };
 
 const langMenuStyle = {
@@ -216,15 +252,10 @@ const langMenuStyle = {
 };
 
 const iconStyle = {
-  width: 52,
-  height: 52,
-  borderRadius: "14px",
-  border: "none",
-  background: "#1e293b",
-  color: "white",
-  cursor: "pointer",
-  fontSize: "20px",
-  boxShadow: "0 10px 30px rgba(0,0,0,.25)",
+  width:52, height:52, borderRadius:"14px",
+  border:"none", background:"#1e293b",
+  color:"white", cursor:"pointer",
+  fontSize:"20px", boxShadow:"0 10px 30px rgba(0,0,0,.25)",
 };
 
 export default App;
