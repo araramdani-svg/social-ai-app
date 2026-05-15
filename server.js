@@ -16,6 +16,7 @@ import threadsRoutes          from "./server/routes/threads.js";
 import linkedinAnalyticsRoutes from "./server/routes/linkedin-analytics.js";
 import teamRoutes              from "./server/routes/team.js";
 import calendarRouter from "./server/routes/calendar.js";
+import twitterRouter from "./server/routes/twitter.js";
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.use("/threads",           threadsRoutes);
 app.use("/linkedin-analytics", linkedinAnalyticsRoutes);
 app.use("/team",               teamRoutes);
 app.use("/calendar", calendarRouter);
+app.use("/twitter", twitterRouter);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

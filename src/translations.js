@@ -254,6 +254,8 @@ const translations = {
       contentGenerated: "✓ Content generated",
       publishedLinkedin: "✓ Published on LinkedIn!",
       linkedinConnected: "✓ LinkedIn connected!",
+      publishedTwitter: "✓ Published on X!"
+      twitterFailed: "X post failed."
       linkedinDisconnected: "LinkedIn disconnected",
     },
     // Landing
@@ -313,6 +315,14 @@ const translations = {
           deselect: "Deselect all", useBtn: "USE", copyLabel: "Copy",
       sortScore: "SCORE", sortDate: "DATE", sortLength: "LENGTH",
       delayNow: "Now", delay1h: "In 1h", delay3h: "In 3h", delay24h: "Tomorrow", delay48h: "In 2d", delay7d: "In 7d",},
+    integrations: {
+      xDesc: "Publish tweets and threads directly",
+      connectX: "🐦 CONNECT X (TWITTER)",
+      xConnected: "✓ X connected!",
+      xDisconnected: "X disconnected",
+      xNotConnected: "Connect X in Integrations to publish directly",
+      xThreadTip: "Your post will be published as a single tweet (280 chars max). Use the multi-format Repurpose feature to post as a thread.",
+    },
     create: {
       multiFormat: "MULTI-FORMAT REPURPOSE",
       multiFormatDesc: "Post → Thread + Newsletter + Carousel",
@@ -618,6 +628,8 @@ const translations = {
       contentGenerated: "✓ Contenu généré",
       publishedLinkedin: "✓ Publié sur LinkedIn !",
       linkedinConnected: "✓ LinkedIn connecté !",
+      publishedTwitter: "✓ Publié sur X !"
+      twitterFailed: "Échec de la publication sur X."
       linkedinDisconnected: "LinkedIn déconnecté",
     },
     landing: {
@@ -675,6 +687,14 @@ const translations = {
           deselect: "Désélectionner", useBtn: "UTILISER", copyLabel: "Copier",
       sortScore: "SCORE", sortDate: "DATE", sortLength: "LONGUEUR",
       delayNow: "Maintenant", delay1h: "Dans 1h", delay3h: "Dans 3h", delay24h: "Demain", delay48h: "Dans 2j", delay7d: "Dans 7j",},
+    integrations: {
+      xDesc: "Publiez des tweets et threads directement",
+      connectX: "🐦 CONNECTER X (TWITTER)",
+      xConnected: "✓ X connecté !",
+      xDisconnected: "X déconnecté",
+      xNotConnected: "Connectez X dans Intégrations pour publier directement",
+      xThreadTip: "Votre post sera publié en tweet unique (280 car. max). Utilisez la fonction Repurpose multi-format pour publier en thread.",
+    },
     create: {
       multiFormat: "REPURPOSE MULTI-FORMAT",
       multiFormatDesc: "Post → Thread + Newsletter + Carousel",
@@ -930,6 +950,8 @@ const translations = {
       projectSaved: "✓ Proyecto guardado", brandMemoryUpdated: "✓ Memoria de marca actualizada",
       contentGenerated: "✓ Contenido generado", publishedLinkedin: "✓ Publicado en LinkedIn!",
       linkedinConnected: "✓ LinkedIn conectado!", linkedinDisconnected: "LinkedIn desconectado",
+      publishedTwitter: "✓ Publicado en X!"
+      twitterFailed: "Publicación en X fallida."
     },
     landing: {
       badge: "⚡ PLATAFORMA DE CONTENIDO IA",
@@ -974,6 +996,14 @@ const translations = {
           deselect: "Deseleccionar", useBtn: "USAR", copyLabel: "Copiar",
       sortScore: "PUNTUACIÓN", sortDate: "FECHA", sortLength: "LONGITUD",
       delayNow: "Ahora", delay1h: "En 1h", delay3h: "En 3h", delay24h: "Mañana", delay48h: "En 2d", delay7d: "En 7d",},
+    integrations: {
+      xDesc: "Publica tweets y threads directamente",
+      connectX: "🐦 CONECTAR X (TWITTER)",
+      xConnected: "✓ ¡X conectado!",
+      xDisconnected: "X desconectado",
+      xNotConnected: "Conecta X en Integraciones para publicar directamente",
+      xThreadTip: "Tu post se publicará como tweet único (máx. 280 car.). Usa la función Repurpose multi-formato para publicar como thread.",
+    },
     create: {
       multiFormat: "REPURPOSE MULTI-FORMATO",
       multiFormatDesc: "Post → Thread + Newsletter + Carousel",
@@ -1217,6 +1247,8 @@ const translations = {
       projectSaved: "✓ Projekt gespeichert", brandMemoryUpdated: "✓ Markengedächtnis aktualisiert",
       contentGenerated: "✓ Inhalt generiert", publishedLinkedin: "✓ Auf LinkedIn veröffentlicht!",
       linkedinConnected: "✓ LinkedIn verbunden!", linkedinDisconnected: "LinkedIn getrennt",
+      publishedTwitter: "✓ Auf X veröffentlicht!"
+      twitterFailed: "X-Veröffentlichung fehlgeschlagen."
     },
     landing: {
       badge: "⚡ KI-CONTENT-PLATTFORM",
@@ -1261,6 +1293,14 @@ const translations = {
           deselect: "Auswahl aufheben", useBtn: "VERWENDEN", copyLabel: "Kopieren",
       sortScore: "SCORE", sortDate: "DATUM", sortLength: "LÄNGE",
       delayNow: "Jetzt", delay1h: "In 1h", delay3h: "In 3h", delay24h: "Morgen", delay48h: "In 2T", delay7d: "In 7T",},
+    integrations: {
+      xDesc: "Tweets und Threads direkt veröffentlichen",
+      connectX: "🐦 X (TWITTER) VERBINDEN",
+      xConnected: "✓ X verbunden!",
+      xDisconnected: "X getrennt",
+      xNotConnected: "Verbinde X in Integrationen, um direkt zu veröffentlichen",
+      xThreadTip: "Dein Beitrag wird als einzelner Tweet veröffentlicht (max. 280 Zeichen). Nutze die Multi-Format-Repurpose-Funktion für Threads.",
+    },
     create: {
       multiFormat: "MULTI-FORMAT REPURPOSE",
       multiFormatDesc: "Post → Thread + Newsletter + Carousel",
@@ -1506,6 +1546,8 @@ const translations = {
       projectSaved: "✓ Progetto salvato", brandMemoryUpdated: "✓ Memoria del brand aggiornata",
       contentGenerated: "✓ Contenuto generato", publishedLinkedin: "✓ Pubblicato su LinkedIn!",
       linkedinConnected: "✓ LinkedIn connesso!", linkedinDisconnected: "LinkedIn disconnesso",
+      publishedTwitter: "✓ Pubblicato su X!"
+      twitterFailed: "Pubblicazione su X fallita."
     },
     landing: {
       badge: "⚡ PIATTAFORMA DI CONTENUTI IA",
@@ -1550,6 +1592,14 @@ const translations = {
           deselect: "Deseleziona tutto", useBtn: "USA", copyLabel: "Copia",
       sortScore: "PUNTEGGIO", sortDate: "DATA", sortLength: "LUNGHEZZA",
       delayNow: "Ora", delay1h: "Fra 1h", delay3h: "Fra 3h", delay24h: "Domani", delay48h: "Fra 2g", delay7d: "Fra 7g",},
+    integrations: {
+      xDesc: "Pubblica tweet e thread direttamente",
+      connectX: "🐦 COLLEGA X (TWITTER)",
+      xConnected: "✓ X collegato!",
+      xDisconnected: "X disconnesso",
+      xNotConnected: "Collega X in Integrazioni per pubblicare direttamente",
+      xThreadTip: "Il tuo post verrà pubblicato come tweet singolo (max 280 car.). Usa la funzione Repurpose multi-formato per pubblicare come thread.",
+    },
     create: {
       multiFormat: "REPURPOSE MULTI-FORMATO",
       multiFormatDesc: "Post → Thread + Newsletter + Carousel",
@@ -1795,6 +1845,8 @@ const translations = {
       projectSaved: "✓ Projeto salvo", brandMemoryUpdated: "✓ Memória da marca atualizada",
       contentGenerated: "✓ Conteúdo gerado", publishedLinkedin: "✓ Publicado no LinkedIn!",
       linkedinConnected: "✓ LinkedIn conectado!", linkedinDisconnected: "LinkedIn desconectado",
+      publishedTwitter: "✓ Publicado no X!"
+      twitterFailed: "Publicação no X falhou."
     },
     landing: {
       badge: "⚡ PLATAFORMA DE CONTEÚDO IA",
@@ -1839,6 +1891,14 @@ const translations = {
           deselect: "Desselecionar tudo", useBtn: "USAR", copyLabel: "Copiar",
       sortScore: "PONTUAÇÃO", sortDate: "DATA", sortLength: "TAMANHO",
       delayNow: "Agora", delay1h: "Em 1h", delay3h: "Em 3h", delay24h: "Amanhã", delay48h: "Em 2d", delay7d: "Em 7d",},
+    integrations: {
+      xDesc: "Publique tweets e threads diretamente",
+      connectX: "🐦 CONECTAR X (TWITTER)",
+      xConnected: "✓ X conectado!",
+      xDisconnected: "X desconectado",
+      xNotConnected: "Conecte X em Integrações para publicar diretamente",
+      xThreadTip: "Seu post será publicado como tweet único (máx. 280 car.). Use o recurso Repurpose multi-formato para publicar como thread.",
+    },
     create: {
       multiFormat: "REPURPOSE MULTI-FORMATO",
       multiFormatDesc: "Post → Thread + Newsletter + Carousel",

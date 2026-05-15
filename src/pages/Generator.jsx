@@ -91,8 +91,10 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   /* ── Integrations ── */
   const [linkedinStatus,  setLinkedinStatus]  = useState({ connected:false, name:null });
   const [threadsStatus,   setThreadsStatus]   = useState({ connected:false, username:null });
+  const [twitterStatus,   setTwitterStatus]   = useState({ connected:false, username:null });
   const [linkedinPosting, setLinkedinPosting] = useState(false);
   const [threadsPosting,  setThreadsPosting]  = useState(false);
+  const [twitterPosting,  setTwitterPosting]  = useState(false);
   const [userPlan,        setUserPlan]        = useState({ plan:"Free", interval:null });
 
   /* ── Trends ── */
@@ -151,13 +153,16 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
       fetch(`${API}/stripe/status`,   { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setUserPlan).catch(()=>{});
       fetch(`${API}/linkedin/status`, { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setLinkedinStatus).catch(()=>{});
       fetch(`${API}/threads/status`,  { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setThreadsStatus).catch(()=>{});
+      fetch(`${API}/twitter/status`, { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setTwitterStatus).catch(()=>{});
     }
     const params = new URLSearchParams(window.location.search);
     if (params.get("linkedin")==="connected") { window.history.replaceState({},""," /"); fetch(`${API}/linkedin/status`,{ headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setLinkedinStatus).catch(()=>{}); }
+    if (params.get("twitter") ==="connected") { window.history.replaceState({},"", "/"); fetch(`${API}/twitter/status`, { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setTwitterStatus).catch(()=>{}); }
     if (params.get("threads") ==="connected") { window.history.replaceState({},""," /"); fetch(`${API}/threads/status`, { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setThreadsStatus).catch(()=>{}); }
     const handleOAuth = (e) => {
       if (e.detail==="linkedin") fetch(`${API}/linkedin/status`,{ headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setLinkedinStatus).catch(()=>{});
       if (e.detail==="threads")  fetch(`${API}/threads/status`, { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setThreadsStatus).catch(()=>{});
+      if (e.detail==="twitter")  fetch(`${API}/twitter/status`, { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setTwitterStatus).catch(()=>{});
     };
     window.addEventListener("oauthSuccess", handleOAuth);
     return () => window.removeEventListener("oauthSuccess", handleOAuth);
@@ -215,6 +220,9 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   const autoPublish    = () => { if(!post) return; setAutoPosts(p=>[{ platform:autoPlatform,content:post.slice(0,80)+"...",status:"Scheduled",date:new Date().toLocaleString() },...p]); setTimeout(()=>setAutoPosts(p=>p.map((x,i)=>i===0?{ ...x,status:Math.random()>0.2?"Sent":"Failed" }:x)),4000); };
   const fetchTrends    = async (niche,lang) => { const sl=lang||trendsLang; setTrendsLoading(true); try{ const r=await fetch(`${API}/scraping/trends?niche=${niche}&lang=${sl}`,{ headers:{ Authorization:`Bearer ${token}` } }); const d=await r.json(); setTrends(d.trends||[]); setTrendsSources(d.sources||{}); } catch{ showToast(tr(trendsLang,"messages.fetchTrendsFailed")); } finally{ setTrendsLoading(false); } };
   const useAsTopic     = (title) => { setTab("create"); setTopic(title.slice(0,80)); showToast(tr(trendsLang,"messages.topicImported")); };
+  const connectTwitter     = () => { window.location.href=`${API}/twitter/connect?token=${encodeURIComponent(token)}`; };
+  const disconnectTwitter  = async () => { await fetch(`${API}/twitter/disconnect`,{ method:"DELETE",headers:{ Authorization:`Bearer ${token}` } }); setTwitterStatus({ connected:false, username:null }); };
+  const postToTwitter      = async () => { if(!post) return; setTwitterPosting(true); try{ const r=await fetch(`${API}/twitter/post`,{ method:"POST",headers:{ "Content-Type":"application/json",Authorization:`Bearer ${token}` },body:JSON.stringify({ text:post }) }); const d=await r.json(); if(d.success){ showToast(tr(trendsLang,"messages.publishedTwitter")); } else showToast(tr(trendsLang,"messages.twitterFailed")); } catch{ showToast(tr(trendsLang,"messages.twitterFailed")); } finally{ setTwitterPosting(false); } };
   const connectLinkedin    = () => { window.location.href=`${API}/linkedin/connect?token=${encodeURIComponent(token)}`; };
   const disconnectLinkedin = async () => { await fetch(`${API}/linkedin/disconnect`,{ method:"DELETE",headers:{ Authorization:`Bearer ${token}` } }); setLinkedinStatus({ connected:false,name:null }); };
   const postToLinkedin     = async () => { if(!post) return; setLinkedinPosting(true); try{ const r=await fetch(`${API}/linkedin/post`,{ method:"POST",headers:{ "Content-Type":"application/json",Authorization:`Bearer ${token}` },body:JSON.stringify({ text:post, postDbId:currentPostDbId||null }) }); const d=await r.json(); if(d.success){ setCurrentPostDbId(null); showToast(tr(trendsLang,"messages.publishedLinkedin")); } else showToast(tr(trendsLang,"messages.linkedinFailed")); } catch{ showToast(tr(trendsLang,"messages.linkedinFailed")); } finally{ setLinkedinPosting(false); } };
@@ -314,13 +322,13 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
             {tab==="analyze"      && <Analyze      {...shared} analysis={analysis} platformData={platformData} />}
             {tab==="insights"     && <Insights     {...shared} insights={insights} stats={stats} linkedinStatus={linkedinStatus} threadsStatus={threadsStatus} />}
             {tab==="scheduler"    && <Scheduler    {...shared} scheduleDate={scheduleDate} setScheduleDate={setScheduleDate} scheduleTime={scheduleTime} setScheduleTime={setScheduleTime} scheduledPosts={scheduledPosts} publishLog={publishLog} schedulePost={schedulePost} />}
-            {tab==="autopost"     && <Autopost     {...shared} post={post} autoPlatform={autoPlatform} setAutoPlatform={setAutoPlatform} autoPosts={autoPosts} publishLog={publishLog} linkedinStatus={linkedinStatus} autoPublish={autoPublish} showToast={showToast} />}
+            {tab==="autopost"     && <Autopost     {...shared} post={post} autoPlatform={autoPlatform} setAutoPlatform={setAutoPlatform} autoPosts={autoPosts} publishLog={publishLog} linkedinStatus={linkedinStatus} threadsStatus={threadsStatus} twitterStatus={twitterStatus} autoPublish={autoPublish} postToTwitter={postToTwitter} twitterPosting={twitterPosting} showToast={showToast} />}
             {tab==="publish"      && <Publish      {...shared} post={post} publishLog={publishLog} autoPosts={autoPosts} publishStatus={publishStatus} linkedinStatus={linkedinStatus} publish={publish} showToast={showToast} />}
             {tab==="planner"      && <Planner      {...shared} planner={planner} scheduledPosts={scheduledPosts} generatePlanner={generatePlanner} />}
             {tab==="history"      && <History      {...shared} history={history} projects={projects} loadHistory={loadHistory} setPost={setPost} setTab={setTab} />}
             {tab==="team"         && <Team         {...shared} token={token} userPlan={userPlan?.plan || "Free"} setPage={setPage} projects={projects} autoPosts={autoPosts} scheduledPosts={scheduledPosts} workspace={workspace} />}
             {tab==="trends"       && <Trends       {...shared} trends={trends} trendsNiche={trendsNiche} setTrendsNiche={setTrendsNiche} trendsLoading={trendsLoading} trendsSources={trendsSources} fetchTrends={fetchTrends} useAsTopic={useAsTopic} />}
-            {tab==="integrations" && <Integrations {...shared} token={token} post={post} linkedinStatus={linkedinStatus} threadsStatus={threadsStatus} linkedinPosting={linkedinPosting} threadsPosting={threadsPosting} connectLinkedin={connectLinkedin} disconnectLinkedin={disconnectLinkedin} postToLinkedin={postToLinkedin} connectThreads={connectThreads} disconnectThreads={disconnectThreads} postToThreads={postToThreads} showToast={showToast} />}
+            {tab==="integrations" && <Integrations {...shared} token={token} post={post} linkedinStatus={linkedinStatus} threadsStatus={threadsStatus} twitterStatus={twitterStatus} linkedinPosting={linkedinPosting} threadsPosting={threadsPosting} twitterPosting={twitterPosting} connectLinkedin={connectLinkedin} disconnectLinkedin={disconnectLinkedin} postToLinkedin={postToLinkedin} connectThreads={connectThreads} disconnectThreads={disconnectThreads} postToThreads={postToThreads} connectTwitter={connectTwitter} disconnectTwitter={disconnectTwitter} postToTwitter={postToTwitter} showToast={showToast} />}
             {tab==="profile"      && <Profile      {...shared} token={token} profileSection={profileSection} setProfileSection={setProfileSection} profileMsg={profileMsg} setProfileMsg={setProfileMsg} profileLoading={profileLoading} currentPassword={currentPassword} setCurrentPassword={setCurrentPassword} newPassword={newPassword} setNewPassword={setNewPassword} confirmPassword={confirmPassword} setConfirmPassword={setConfirmPassword} newEmail={newEmail} setNewEmail={setNewEmail} userPlan={userPlan} projects={projects} stats={stats} workspace={workspace} changePassword={changePassword} changeEmailAddress={changeEmailAddress} deleteAccount={deleteAccount} setPage={setPage} showToast={showToast} />}
           </motion.div>
         </AnimatePresence>
