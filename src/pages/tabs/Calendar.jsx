@@ -125,7 +125,7 @@ export default function Calendar({ trendsLang, isMobile, post, setPost, setTab, 
                 ? <div style={{ color:"#1e293b", fontSize:11 }}>No posts scheduled</div>
                 : dayCards.map(card => (
                   <div key={card.id} style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:8, padding:"6px 12px", fontSize:12 }}>
-                    <span style={{ color: COLUMNS.find(c=>c.id===card.col)?.color, fontSize:9, fontWeight:700, marginRight:6 }}>{card.col.toUpperCase()}</span>
+                    <span style={{ color: COLUMNS("en").find(c=>c.id===card.col)?.color, fontSize:9, fontWeight:700, marginRight:6 }}>{card.col.toUpperCase()}</span>
                     <span style={{ color:"#e2e8f0" }}>{card.title}</span>
                   </div>
                 ))
@@ -157,7 +157,7 @@ export default function Calendar({ trendsLang, isMobile, post, setPost, setTab, 
         {COLUMNS(trendsLang).map(col => (
           <div key={col.id} style={{ flex:1, background:"rgba(255,255,255,0.02)", border:`1px solid rgba(255,255,255,0.06)`, borderTop:`3px solid ${col.color}`, borderRadius:8, padding:"8px 12px", textAlign:"center" }}>
             <div style={{ color:col.color, fontSize:18, fontWeight:900 }}>{cards.filter(c=>c.col===col.id).length}</div>
-            <div style={{ color:"#475569", fontSize:9, fontWeight:700, letterSpacing:"1px" }}>{col.id.toUpperCase()}</div>
+            <div style={{ color:"#475569", fontSize:9, fontWeight:700, letterSpacing:"1px" }}>{tr(trendsLang, `calendar.col${col.id.charAt(0).toUpperCase()+col.id.slice(1)}`).replace(/^[^\w\u00C0-\u024F]*/, '').toUpperCase()}</div>
           </div>
         ))}
       </div>
