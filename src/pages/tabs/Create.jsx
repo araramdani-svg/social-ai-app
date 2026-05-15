@@ -111,11 +111,11 @@ export default function Create({
             <div style={{ background:"rgba(99,102,241,0.08)", border:"1px solid rgba(99,102,241,0.2)", borderRadius:8, padding:"8px 14px", display:"flex", alignItems:"center", gap:10 }}>
               <span style={{ fontSize:18 }}>🧠</span>
               <div>
-                <div style={{ color:"#818cf8", fontSize:10, fontWeight:700, letterSpacing:"1px" }}>VOICE LEARNING ACTIVE</div>
+                <div style={{ color:"#818cf8", fontSize:10, fontWeight:700, letterSpacing:"1px" }}>{tr(trendsLang,"ui.voiceLearningActive")}</div>
                 <div style={{ color:"#475569", fontSize:11, marginTop:1 }}>
-                  Tone: {voiceStyle.tone} · {voiceStyle.avgSentenceLength} sentences
-                  {voiceStyle.usesNumbers && " · uses numbers"}
-                  {voiceStyle.usesQuestions && " · asks questions"}
+                  {tr(trendsLang,"ui.voiceTone")}: {voiceStyle.tone} · {voiceStyle.avgSentenceLength} {tr(trendsLang,"ui.voiceSentences")}
+                  {voiceStyle.usesNumbers && ` · ${tr(trendsLang,"ui.voiceUsesNumbers")}`}
+                  {voiceStyle.usesQuestions && ` · ${tr(trendsLang,"ui.voiceAsksQuestions")}`}
                 </div>
               </div>
             </div>
@@ -123,7 +123,7 @@ export default function Create({
 
           {/* Project */}
           <div style={{ ...st.card, marginTop:0, padding:16, display:"flex", flexDirection:"column", gap:10 }}>
-            <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px" }}>PROJECT</div>
+            <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px" }}>{tr(trendsLang,"ui.project")}</div>
             <input style={st.input} placeholder={tr(trendsLang, "ui.phSearchProject")} value={searchProject} onChange={e => setSearchProject(e.target.value)} />
             <select style={{ ...st.input, marginBottom:0, width:"100%", boxSizing:"border-box" }} value={selectedProject} onChange={e => selectProject(e.target.value)}>
               <option value="">{tr(trendsLang, "ui.selectProject")}</option>
@@ -152,9 +152,9 @@ export default function Create({
           {/* Panel switcher */}
           <div style={{ ...st.card, marginTop:0, padding:0, overflow:"hidden" }}>
             <div style={{ display:"flex", borderBottom:"1px solid rgba(255,255,255,0.07)" }}>
-              <button style={panelBtn("generate")}  onClick={() => setActivePanel("generate")}>✍️ GENERATE</button>
-              <button style={panelBtn("repurpose")} onClick={() => setActivePanel("repurpose")}>🔗 REPURPOSE</button>
-              <button style={panelBtn("hooks")}     onClick={() => setActivePanel("hooks")}>⚡ HOOKS</button>
+              <button style={panelBtn("generate")}  onClick={() => setActivePanel("generate")}>✍️ {tr(trendsLang,"ui.panelGenerate")}</button>
+              <button style={panelBtn("repurpose")} onClick={() => setActivePanel("repurpose")}>🔗 {tr(trendsLang,"ui.panelRepurpose")}</button>
+              <button style={panelBtn("hooks")}     onClick={() => setActivePanel("hooks")}>⚡ {tr(trendsLang,"ui.panelHooks")}</button>
             </div>
             <div style={{ padding:16 }}>
 
@@ -187,17 +187,17 @@ export default function Create({
               {/* Repurpose */}
               {activePanel === "repurpose" && (
                 <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-                  <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px" }}>PASTE URL (article, YouTube, blog)</div>
+                  <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px" }}>{tr(trendsLang,"ui.pasteUrl")}</div>
                   <input
                     style={{ ...st.input, marginBottom:0 }}
-                    placeholder="https://youtube.com/watch?v=... or article URL"
+                    placeholder={tr(trendsLang,"ui.pasteUrlPlaceholder")}
                     value={repurposeUrl}
                     onChange={e => setRepurposeUrl(e.target.value)}
                   />
-                  <div style={{ color:"#334155", fontSize:11, textAlign:"center" }}>— OR paste text directly —</div>
+                  <div style={{ color:"#334155", fontSize:11, textAlign:"center" }}>— {tr(trendsLang,"ui.orPasteText")} —</div>
                   <textarea
                     style={{ ...st.textarea, minHeight:80, fontSize:12 }}
-                    placeholder="Paste article text, transcript, or any content..."
+                    placeholder={tr(trendsLang,"ui.pasteTextPlaceholder")}
                     value={repurposeText}
                     onChange={e => setRepurposeText(e.target.value)}
                   />
@@ -206,7 +206,7 @@ export default function Create({
                     disabled={repurposing || (!repurposeUrl && !repurposeText)}
                     onClick={repurpose}
                   >
-                    {repurposing ? "⏳ Converting to LinkedIn post..." : "🔗 Repurpose → LinkedIn Post"}
+                    {repurposing ? `⏳ ${tr(trendsLang,"ui.repurposing")}...` : `🔗 ${tr(trendsLang,"ui.repurposeBtn")}`}
                     {voiceStyle && !repurposing && " 🧠"}
                   </button>
                   <div style={{ color:"#334155", fontSize:11 }}>✓ YouTube · ✓ Articles · ✓ Blog posts · ✓ Transcripts</div>
@@ -218,7 +218,7 @@ export default function Create({
                 <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
                   <input
                     style={{ ...st.input, marginBottom:0 }}
-                    placeholder="Topic for your hooks..."
+                    placeholder={tr(trendsLang,"ui.phTopic")}
                     value={topic}
                     onChange={e => setTopic(e.target.value)}
                   />
@@ -227,7 +227,7 @@ export default function Create({
                     disabled={hooksLoading || !topic}
                     onClick={generateHooks}
                   >
-                    {hooksLoading ? "⏳ Generating..." : "⚡ Generate 5 Hooks"}
+                    {hooksLoading ? `⏳ ${tr(trendsLang,"ui.generating")}...` : `⚡ ${tr(trendsLang,"ui.generate5hooksBtn")}`}
                   </button>
                   {hooks.length > 0 && (
                     <div style={{ display:"flex", flexDirection:"column", gap:8, marginTop:4 }}>
@@ -237,7 +237,7 @@ export default function Create({
                           style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:8, padding:"10px 12px", cursor:"pointer" }}
                           onClick={() => { setPost(h + "\n\n"); setActivePanel("generate"); }}
                         >
-                          <div style={{ color:"#ef4444", fontSize:9, fontWeight:700, letterSpacing:"1px", marginBottom:4 }}>HOOK {i+1} — click to use</div>
+                          <div style={{ color:"#ef4444", fontSize:9, fontWeight:700, letterSpacing:"1px", marginBottom:4 }}>HOOK {i+1} — {tr(trendsLang,"ui.clickToUse")}</div>
                           <div style={{ color:"#e2e8f0", fontSize:13, lineHeight:1.5 }}>{h}</div>
                         </div>
                       ))}
@@ -262,9 +262,9 @@ export default function Create({
             {post && (
               <>
                 <div style={{ display:"flex", gap:8, color:"#64748b", fontSize:12 }}>
-                  <span>{postMetrics.words} words</span><span>·</span>
-                  <span>{postMetrics.chars} chars</span><span>·</span>
-                  <span>{postMetrics.readTime} min read</span>
+                  <span>{postMetrics.words} {tr(trendsLang,"ui.words")}</span><span>·</span>
+                  <span>{postMetrics.chars} {tr(trendsLang,"ui.chars")}</span><span>·</span>
+                  <span>{postMetrics.readTime} {tr(trendsLang,"ui.minRead")}</span>
                 </div>
                 <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
                   {[
@@ -297,8 +297,8 @@ export default function Create({
           {(viralScore || scoring) && (
             <div style={{ ...st.card, marginTop:0, padding:16 }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
-                <div style={{ color:"#64748b", fontSize:10, fontWeight:700, letterSpacing:"1.5px" }}>⚡ VIRAL SCORE</div>
-                {scoring && <div style={{ color:"#475569", fontSize:11 }}>Analyzing...</div>}
+                <div style={{ color:"#64748b", fontSize:10, fontWeight:700, letterSpacing:"1.5px" }}>⚡ {tr(trendsLang,"ui.viralScore")}</div>
+                {scoring && <div style={{ color:"#475569", fontSize:11 }}>{tr(trendsLang,"ui.analyzing")}...</div>}
                 {viralScore && (
                   <div style={{ fontSize:10, fontWeight:700, padding:"3px 10px", borderRadius:20,
                     background:`rgba(${viralScore.prediction==="VIRAL"?"52,211,153":viralScore.prediction==="HIGH"?"96,165,250":viralScore.prediction==="MEDIUM"?"251,191,36":"239,68,68"},0.15)`,
@@ -310,7 +310,7 @@ export default function Create({
               {viralScore && (
                 <>
                   <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px 16px", marginBottom:12 }}>
-                    {[["Overall", viralScore.score], ["Hook", viralScore.hook], ["Emotion", viralScore.emotion], ["Value", viralScore.value]].map(([label, val]) => (
+                    {[[tr(trendsLang,"ui.vsOverall"), viralScore.score], [tr(trendsLang,"ui.vsHook"), viralScore.hook], [tr(trendsLang,"ui.vsEmotion"), viralScore.emotion], [tr(trendsLang,"ui.vsValue"), viralScore.value]].map(([label, val]) => (
                       <div key={label}>
                         <div style={{ display:"flex", justifyContent:"space-between", marginBottom:3 }}>
                           <span style={{ color:"#64748b", fontSize:10, fontWeight:700 }}>{label.toUpperCase()}</span>
@@ -329,7 +329,7 @@ export default function Create({
                   )}
                   {viralScore.bestTime && (
                     <div style={{ fontSize:11, color:"#475569" }}>
-                      🕐 Best time to post: <span style={{ color:"#94a3b8", fontWeight:600 }}>{viralScore.bestTime}</span>
+                      🕐 {tr(trendsLang,"ui.bestTimeToPost")}: <span style={{ color:"#94a3b8", fontWeight:600 }}>{viralScore.bestTime}</span>
                     </div>
                   )}
                 </>
