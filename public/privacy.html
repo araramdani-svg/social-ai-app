@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — GrowthPILOT</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800;900&family=DM+Sans:wght@400;500;600&display=swap');
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --red:#ef4444; --bg:#020617; --bg3:#1a2235; --border:rgba(255,255,255,0.07); --muted:#64748b; --dim:#334155; }
+    html { scroll-behavior: smooth; }
+    body { background:var(--bg); color:#e2e8f0; font-family:'DM Sans',sans-serif; font-size:15px; line-height:1.8; min-height:100vh; }
+    body::before { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E"); pointer-events:none; z-index:0; }
+    body::after { content:''; position:fixed; top:-200px; left:50%; transform:translateX(-50%); width:600px; height:400px; background:radial-gradient(ellipse,rgba(220,38,38,0.08) 0%,transparent 70%); pointer-events:none; z-index:0; }
+    nav { position:sticky; top:0; z-index:100; display:flex; align-items:center; justify-content:space-between; padding:16px 48px; background:rgba(2,6,23,0.85); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); gap:16px; flex-wrap:wrap; }
+    .brand { font-family:'Syne',sans-serif; font-size:20px; font-weight:900; font-style:italic; color:transparent; -webkit-text-stroke:1px white; text-shadow:1px 1px 0 var(--red); text-decoration:none; }
+    .nav-right { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    .lang-switcher { display:flex; gap:4px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; padding:4px; }
+    .lang-btn { padding:4px 10px; border:none; border-radius:6px; background:transparent; color:var(--muted); font-family:'DM Mono',monospace; font-size:10px; font-weight:700; letter-spacing:1px; cursor:pointer; transition:all 0.15s; }
+    .lang-btn.active { background:var(--red); color:#fff; }
+    .lang-btn:hover:not(.active) { background:rgba(255,255,255,0.06); color:#e2e8f0; }
+    .nav-back { display:inline-flex; align-items:center; padding:8px 18px; background:transparent; border:1px solid rgba(239,68,68,0.25); border-radius:8px; color:var(--red); font-size:12px; font-weight:600; font-family:'DM Mono',monospace; letter-spacing:1px; text-decoration:none; transition:all 0.2s; }
+    .nav-back:hover { background:rgba(239,68,68,0.08); }
+    .hero { position:relative; z-index:1; text-align:center; padding:80px 24px 60px; border-bottom:1px solid var(--border); }
+    .hero-badge { display:inline-flex; align-items:center; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius:20px; padding:5px 16px; font-size:10px; font-weight:700; font-family:'DM Mono',monospace; color:var(--red); letter-spacing:2px; margin-bottom:24px; }
+    .hero h1 { font-family:'Syne',sans-serif; font-size:clamp(32px,5vw,52px); font-weight:900; line-height:1.1; margin-bottom:16px; color:#fff; }
+    .hero h1 span { color:var(--red); }
+    .hero-meta { display:flex; align-items:center; justify-content:center; gap:20px; flex-wrap:wrap; margin-top:20px; font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); letter-spacing:1px; }
+    .hero-meta strong { color:var(--dim); }
+    .layout { position:relative; z-index:1; display:grid; grid-template-columns:240px 1fr; max-width:1100px; margin:0 auto; padding:0 24px 80px; }
+    .toc { position:sticky; top:80px; height:fit-content; padding:32px 24px 32px 0; border-right:1px solid var(--border); }
+    .toc-title { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:2px; margin-bottom:16px; }
+    .toc a { display:block; font-size:12px; color:var(--dim); text-decoration:none; padding:6px 0 6px 12px; margin-left:-12px; border-left:2px solid transparent; transition:all 0.15s; }
+    .toc a:hover { color:var(--red); border-left-color:var(--red); }
+    .content { padding:48px 0 0 48px; }
+    .section { margin-bottom:56px; padding-bottom:56px; border-bottom:1px solid var(--border); }
+    .section:last-child { border-bottom:none; }
+    .section-num { font-family:'DM Mono',monospace; font-size:10px; color:var(--red); letter-spacing:2px; margin-bottom:8px; }
+    .section h2 { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:#fff; margin-bottom:20px; }
+    .section p { color:#94a3b8; margin-bottom:14px; font-size:14px; line-height:1.8; }
+    .section ul { list-style:none; margin:16px 0; }
+    .section ul li { display:flex; align-items:flex-start; gap:10px; color:#94a3b8; font-size:14px; padding:6px 0; line-height:1.6; }
+    .section ul li::before { content:'—'; color:var(--red); font-family:'DM Mono',monospace; font-size:12px; margin-top:2px; flex-shrink:0; }
+    .highlight-box { background:rgba(239,68,68,0.04); border:1px solid rgba(239,68,68,0.15); border-left:3px solid var(--red); border-radius:8px; padding:16px 20px; margin:20px 0; font-size:13px; color:#94a3b8; line-height:1.7; }
+    .highlight-box strong { color:#e2e8f0; }
+    .contact-card { background:var(--bg3); border:1px solid var(--border); border-radius:12px; padding:24px; margin-top:20px; }
+    .contact-card .label { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:2px; margin-bottom:8px; }
+    .contact-card a { color:var(--red); text-decoration:none; font-weight:600; font-size:14px; }
+    footer { position:relative; z-index:1; text-align:center; padding:32px 24px; border-top:1px solid var(--border); font-family:'DM Mono',monospace; font-size:11px; color:var(--dim); letter-spacing:1px; }
+    footer a { color:var(--muted); text-decoration:none; }
+    @media (max-width:768px) { nav { padding:14px 20px; } .hero { padding:48px 20px 40px; } .layout { grid-template-columns:1fr; padding:0 20px 60px; } .toc { display:none; } .content { padding:32px 0 0; } }
+  </style>
+</head>
+<body>
+<nav>
+  <a href="https://www.aigrowthpilot.app" class="brand">GrowthPILOT</a>
+  <div class="nav-right">
+    <div class="lang-switcher">
+      <button class="lang-btn" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" onclick="setLang('fr')">FR</button>
+      <button class="lang-btn" onclick="setLang('es')">ES</button>
+      <button class="lang-btn" onclick="setLang('de')">DE</button>
+      <button class="lang-btn" onclick="setLang('it')">IT</button>
+      <button class="lang-btn" onclick="setLang('pt')">PT</button>
+    </div>
+    <a href="https://www.aigrowthpilot.app" class="nav-back">← Back</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-badge">🔒 LEGAL</div>
+  <h1 id="hero-title"></h1>
+  <div class="hero-meta">
+    <span id="meta-effective"></span>
+    <span>·</span>
+    <span id="meta-updated"></span>
+    <span>·</span>
+    <span>team@aigrowthpilot.app</span>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="toc">
+    <div class="toc-title" id="toc-title"></div>
+    <div id="toc-links"></div>
+  </aside>
+  <main class="content" id="main-content"></main>
+</div>
+
+<footer>© 2026 GrowthPILOT · <a href="https://www.aigrowthpilot.app">aigrowthpilot.app</a></footer>
+
+<script>
+const T = {
+  en:{hero:'Privacy <span>Policy</span>',eff:'Effective: <strong>May 15, 2026</strong>',upd:'Updated: <strong>May 15, 2026</strong>',toc:'CONTENTS',title:'Privacy Policy — GrowthPILOT',s:[
+    {n:'01',id:'intro',toc:'Introduction',h:'We take your privacy seriously',b:'<p>GrowthPILOT ("we") operates <strong>aigrowthpilot.app</strong>. This policy explains how we collect, use, and protect your data.</p><div class="highlight-box"><strong>Summary:</strong> We collect only what we need. We don\'t sell your data. You can request deletion at any time.</div>'},
+    {n:'02',id:'data',toc:'Data We Collect',h:'What information do we collect?',b:'<ul><li><strong>Account:</strong> email, password (hashed), profile</li><li><strong>Content:</strong> posts, projects, Brand Memory, calendar</li><li><strong>Social tokens:</strong> OAuth tokens for LinkedIn, Threads, X — stored encrypted</li><li><strong>Usage:</strong> AI generation count, features used</li><li><strong>Payments:</strong> handled by Stripe — we never store card details</li><li><strong>Technical:</strong> IP address, browser type, access logs</li></ul>'},
+    {n:'03',id:'use',toc:'How We Use Data',h:'How we use your information',b:'<ul><li>Provide and improve the GrowthPILOT platform</li><li>Generate AI content tailored to your brand voice</li><li>Publish content to connected social platforms on your behalf</li><li>Process payments via Stripe</li><li>Send transactional emails (invitations, receipts)</li><li>Comply with legal obligations</li></ul><div class="highlight-box"><strong>We do not sell your data</strong> to third parties, nor use your content to train AI models without consent.</div>'},
+    {n:'04',id:'third',toc:'Third-Party Services',h:'Third-party services we use',b:'<ul><li><strong>OpenAI</strong> — AI generation (openai.com/privacy)</li><li><strong>Anthropic</strong> — AI generation (anthropic.com/privacy)</li><li><strong>Stripe</strong> — Payments (stripe.com/privacy)</li><li><strong>Resend</strong> — Email delivery (resend.com/privacy)</li><li><strong>Railway</strong> — Cloud infrastructure (railway.app/legal/privacy)</li><li><strong>Vercel</strong> — Frontend hosting (vercel.com/legal/privacy-policy)</li></ul>'},
+    {n:'05',id:'social',toc:'Social Integrations',h:'LinkedIn, Threads, X & Instagram',b:'<ul><li>Tokens used only for actions you explicitly request</li><li>We do not read private messages, contacts, or follower lists</li><li>Disconnect any social account at any time</li><li>Revoking access in a platform immediately invalidates our token</li></ul><div class="highlight-box"><strong>Instagram:</strong> GrowthPILOT uses the Meta Instagram Graph API. By connecting, you also agree to Meta\'s Terms and Data Policy.</div>'},
+    {n:'06',id:'security',toc:'Security',h:'How we protect your data',b:'<ul><li>All data transmitted over HTTPS/TLS</li><li>Passwords hashed with bcrypt — never in plain text</li><li>OAuth tokens encrypted at rest</li><li>JWT tokens with expiration</li><li>Regular database backups</li></ul>'},
+    {n:'07',id:'retention',toc:'Data Retention',h:'How long we keep your data',b:'<ul><li><strong>Account:</strong> while active</li><li><strong>Content:</strong> until deleted or account closed</li><li><strong>Social tokens:</strong> deleted immediately on disconnect</li><li><strong>Payment records:</strong> 7 years (legal requirement)</li><li><strong>Access logs:</strong> 90 days</li></ul><p>Upon deletion, all data is removed within 30 days.</p>'},
+    {n:'08',id:'rights',toc:'Your Rights',h:'Your data rights (GDPR & others)',b:'<ul><li><strong>Access:</strong> copy of your data</li><li><strong>Rectification:</strong> correct inaccurate data</li><li><strong>Erasure:</strong> delete account and data</li><li><strong>Portability:</strong> machine-readable format</li><li><strong>Objection:</strong> object to marketing processing</li></ul><p>Contact <a href="mailto:team@aigrowthpilot.app" style="color:#ef4444">team@aigrowthpilot.app</a> — we respond within 30 days.</p>'},
+    {n:'09',id:'cookies',toc:'Cookies',h:'Cookies and local storage',b:'<p>GrowthPILOT uses browser localStorage (not cookies) for your auth token, language preference, and onboarding status. No third-party tracking or advertising cookies.</p>'},
+    {n:'10',id:'children',toc:"Children's Privacy",h:'Children under 16',b:'<p>GrowthPILOT is not directed at children under 16. We do not knowingly collect data from minors. Contact us immediately if you believe this has occurred.</p>'},
+    {n:'11',id:'changes',toc:'Changes',h:'Updates to this policy',b:'<p>We may update this policy periodically. The "Updated" date will be revised. For significant changes, we will notify you by email or in-app notification.</p>'},
+    {n:'12',id:'contact',toc:'Contact',h:'Get in touch',b:'<div class="contact-card"><div class="label">EMAIL</div><a href="mailto:team@aigrowthpilot.app">team@aigrowthpilot.app</a><div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06)"><div class="label">WEBSITE</div><a href="https://www.aigrowthpilot.app">www.aigrowthpilot.app</a></div></div>'},
+  ]},
+  fr:{hero:'Politique de <span>Confidentialité</span>',eff:'Entrée en vigueur : <strong>15 mai 2026</strong>',upd:'Mise à jour : <strong>15 mai 2026</strong>',toc:'SOMMAIRE',title:'Politique de Confidentialité — GrowthPILOT',s:[
+    {n:'01',id:'intro',toc:'Introduction',h:'Votre vie privée nous tient à cœur',b:'<p>GrowthPILOT ("nous") exploite le site <strong>aigrowthpilot.app</strong>. Cette politique explique comment nous collectons, utilisons et protégeons vos données.</p><div class="highlight-box"><strong>En résumé :</strong> Nous collectons uniquement ce dont nous avons besoin. Nous ne vendons pas vos données. Vous pouvez demander la suppression à tout moment.</div>'},
+    {n:'02',id:'data',toc:'Données collectées',h:'Quelles informations collectons-nous ?',b:'<ul><li><strong>Compte :</strong> e-mail, mot de passe (hashé), profil</li><li><strong>Contenu :</strong> posts, projets, Brand Memory, calendrier</li><li><strong>Tokens sociaux :</strong> OAuth pour LinkedIn, Threads, X — chiffrés</li><li><strong>Usage :</strong> générations IA, fonctionnalités utilisées</li><li><strong>Paiements :</strong> gérés par Stripe — nous ne stockons jamais vos coordonnées bancaires</li><li><strong>Technique :</strong> IP, navigateur, logs d\'accès</li></ul>'},
+    {n:'03',id:'use',toc:'Utilisation',h:'Comment utilisons-nous vos données ?',b:'<ul><li>Fournir et améliorer la plateforme GrowthPILOT</li><li>Générer du contenu IA adapté à votre style</li><li>Publier du contenu sur vos réseaux sociaux connectés</li><li>Traiter les paiements via Stripe</li><li>Envoyer des e-mails transactionnels</li><li>Respecter nos obligations légales</li></ul><div class="highlight-box"><strong>Nous ne vendons pas vos données</strong> à des tiers, et n\'utilisons pas votre contenu pour entraîner des modèles IA sans consentement.</div>'},
+    {n:'04',id:'third',toc:'Services tiers',h:'Services tiers que nous utilisons',b:'<ul><li><strong>OpenAI</strong> — Génération IA</li><li><strong>Anthropic</strong> — Génération IA</li><li><strong>Stripe</strong> — Paiements</li><li><strong>Resend</strong> — E-mails transactionnels</li><li><strong>Railway</strong> — Infrastructure cloud et base de données</li><li><strong>Vercel</strong> — Hébergement frontend</li></ul>'},
+    {n:'05',id:'social',toc:'Intégrations sociales',h:'LinkedIn, Threads, X & Instagram',b:'<ul><li>Tokens utilisés uniquement pour les actions que vous demandez</li><li>Nous ne lisons pas vos messages privés, contacts ou followers</li><li>Déconnectez un réseau social à tout moment</li><li>Révoquer l\'accès invalide immédiatement notre token</li></ul><div class="highlight-box"><strong>Instagram :</strong> GrowthPILOT utilise l\'API Instagram Graph de Meta. En connectant votre compte, vous acceptez également les Conditions de Meta.</div>'},
+    {n:'06',id:'security',toc:'Sécurité',h:'Comment protégeons-nous vos données ?',b:'<ul><li>Données transmises via HTTPS/TLS</li><li>Mots de passe hashés avec bcrypt</li><li>Tokens OAuth chiffrés au repos</li><li>Tokens JWT avec expiration</li><li>Sauvegardes régulières de la base de données</li></ul>'},
+    {n:'07',id:'retention',toc:'Conservation',h:'Durée de conservation de vos données',b:'<ul><li><strong>Compte :</strong> tant qu\'actif</li><li><strong>Contenu :</strong> jusqu\'à suppression ou fermeture du compte</li><li><strong>Tokens sociaux :</strong> supprimés à la déconnexion</li><li><strong>Paiements :</strong> 7 ans (obligation légale)</li><li><strong>Logs :</strong> 90 jours</li></ul><p>À la suppression du compte, toutes les données sont effacées sous 30 jours.</p>'},
+    {n:'08',id:'rights',toc:'Vos droits',h:'Vos droits (RGPD & autres)',b:'<ul><li><strong>Accès :</strong> copie de vos données</li><li><strong>Rectification :</strong> corriger des données inexactes</li><li><strong>Effacement :</strong> supprimer votre compte et vos données</li><li><strong>Portabilité :</strong> format lisible par machine</li><li><strong>Opposition :</strong> traitement à des fins marketing</li></ul><p>Contactez <a href="mailto:team@aigrowthpilot.app" style="color:#ef4444">team@aigrowthpilot.app</a> — réponse sous 30 jours.</p>'},
+    {n:'09',id:'cookies',toc:'Cookies',h:'Cookies et stockage local',b:'<p>GrowthPILOT utilise le localStorage du navigateur (pas de cookies) pour votre token d\'authentification, préférence de langue et statut d\'onboarding. Aucun cookie de suivi publicitaire.</p>'},
+    {n:'10',id:'children',toc:'Mineurs',h:'Enfants de moins de 16 ans',b:'<p>GrowthPILOT n\'est pas destiné aux moins de 16 ans. Nous ne collectons pas sciemment de données sur les mineurs. Contactez-nous immédiatement si vous le pensez.</p>'},
+    {n:'11',id:'changes',toc:'Modifications',h:'Mises à jour de cette politique',b:'<p>Nous pouvons mettre à jour cette politique. La date "Mise à jour" sera révisée. Pour les changements importants, vous serez notifié par e-mail ou in-app.</p>'},
+    {n:'12',id:'contact',toc:'Contact',h:'Nous contacter',b:'<div class="contact-card"><div class="label">E-MAIL</div><a href="mailto:team@aigrowthpilot.app">team@aigrowthpilot.app</a><div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06)"><div class="label">SITE WEB</div><a href="https://www.aigrowthpilot.app">www.aigrowthpilot.app</a></div></div>'},
+  ]},
+  es:{hero:'Política de <span>Privacidad</span>',eff:'Vigente desde: <strong>15 de mayo de 2026</strong>',upd:'Actualizado: <strong>15 de mayo de 2026</strong>',toc:'CONTENIDO',title:'Política de Privacidad — GrowthPILOT',s:[
+    {n:'01',id:'intro',toc:'Introducción',h:'Tu privacidad nos importa',b:'<p>GrowthPILOT ("nosotros") opera <strong>aigrowthpilot.app</strong>. Esta política explica cómo recopilamos, usamos y protegemos tus datos.</p><div class="highlight-box"><strong>Resumen:</strong> Solo recopilamos lo necesario. No vendemos tus datos. Puedes solicitar la eliminación en cualquier momento.</div>'},
+    {n:'02',id:'data',toc:'Datos recopilados',h:'¿Qué información recopilamos?',b:'<ul><li><strong>Cuenta:</strong> correo, contraseña (hash), perfil</li><li><strong>Contenido:</strong> posts, proyectos, Brand Memory, calendario</li><li><strong>Tokens sociales:</strong> OAuth para LinkedIn, Threads, X — cifrados</li><li><strong>Uso:</strong> generaciones IA, funciones utilizadas</li><li><strong>Pagos:</strong> gestionados por Stripe — nunca almacenamos datos bancarios</li><li><strong>Técnicos:</strong> IP, navegador, logs de acceso</li></ul>'},
+    {n:'03',id:'use',toc:'Uso de datos',h:'¿Cómo usamos tu información?',b:'<ul><li>Proporcionar y mejorar GrowthPILOT</li><li>Generar contenido IA adaptado a tu marca</li><li>Publicar en redes sociales conectadas</li><li>Procesar pagos via Stripe</li><li>Enviar correos transaccionales</li><li>Cumplir obligaciones legales</li></ul><div class="highlight-box"><strong>No vendemos tus datos</strong> ni usamos tu contenido para entrenar IA sin consentimiento.</div>'},
+    {n:'04',id:'third',toc:'Servicios terceros',h:'Servicios de terceros',b:'<ul><li><strong>OpenAI</strong> — Generación IA</li><li><strong>Anthropic</strong> — Generación IA</li><li><strong>Stripe</strong> — Pagos</li><li><strong>Resend</strong> — Correos</li><li><strong>Railway</strong> — Infraestructura</li><li><strong>Vercel</strong> — Hosting</li></ul>'},
+    {n:'05',id:'social',toc:'Integraciones sociales',h:'LinkedIn, Threads, X & Instagram',b:'<ul><li>Tokens solo para acciones que solicitas</li><li>No leemos mensajes privados, contactos ni seguidores</li><li>Desconecta cualquier red en cualquier momento</li><li>Revocar acceso invalida nuestro token inmediatamente</li></ul><div class="highlight-box"><strong>Instagram:</strong> Usamos la API Instagram Graph de Meta. Al conectar, también aceptas los Términos de Meta.</div>'},
+    {n:'06',id:'security',toc:'Seguridad',h:'¿Cómo protegemos tus datos?',b:'<ul><li>HTTPS/TLS en todas las transmisiones</li><li>Contraseñas con hash bcrypt</li><li>Tokens OAuth cifrados</li><li>JWT con expiración</li><li>Backups regulares</li></ul>'},
+    {n:'07',id:'retention',toc:'Retención',h:'¿Cuánto tiempo conservamos tus datos?',b:'<ul><li><strong>Cuenta:</strong> mientras esté activa</li><li><strong>Contenido:</strong> hasta eliminarlo o cerrar cuenta</li><li><strong>Tokens:</strong> eliminados al desconectar</li><li><strong>Pagos:</strong> 7 años (legal)</li><li><strong>Logs:</strong> 90 días</li></ul>'},
+    {n:'08',id:'rights',toc:'Tus derechos',h:'Tus derechos (RGPD y otros)',b:'<ul><li><strong>Acceso:</strong> copia de tus datos</li><li><strong>Rectificación:</strong> corregir datos</li><li><strong>Eliminación:</strong> borrar cuenta y datos</li><li><strong>Portabilidad:</strong> formato legible</li><li><strong>Oposición:</strong> marketing</li></ul><p>Contacta <a href="mailto:team@aigrowthpilot.app" style="color:#ef4444">team@aigrowthpilot.app</a> — respondemos en 30 días.</p>'},
+    {n:'09',id:'cookies',toc:'Cookies',h:'Cookies y almacenamiento local',b:'<p>GrowthPILOT usa localStorage (no cookies) para token de auth, idioma y onboarding. Sin cookies de rastreo publicitario.</p>'},
+    {n:'10',id:'children',toc:'Menores',h:'Menores de 16 años',b:'<p>GrowthPILOT no está dirigido a menores de 16 años. No recopilamos datos de menores conscientemente.</p>'},
+    {n:'11',id:'changes',toc:'Cambios',h:'Actualizaciones',b:'<p>Podemos actualizar esta política. Notificaremos cambios importantes por correo o notificación in-app.</p>'},
+    {n:'12',id:'contact',toc:'Contacto',h:'Contáctanos',b:'<div class="contact-card"><div class="label">CORREO</div><a href="mailto:team@aigrowthpilot.app">team@aigrowthpilot.app</a><div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06)"><div class="label">WEB</div><a href="https://www.aigrowthpilot.app">www.aigrowthpilot.app</a></div></div>'},
+  ]},
+  de:{hero:'<span>Datenschutz</span>richtlinie',eff:'Gültig ab: <strong>15. Mai 2026</strong>',upd:'Aktualisiert: <strong>15. Mai 2026</strong>',toc:'INHALT',title:'Datenschutzrichtlinie — GrowthPILOT',s:[
+    {n:'01',id:'intro',toc:'Einleitung',h:'Datenschutz liegt uns am Herzen',b:'<p>GrowthPILOT ("wir") betreibt <strong>aigrowthpilot.app</strong>. Diese Richtlinie erklärt, wie wir Ihre Daten erheben, verwenden und schützen.</p><div class="highlight-box"><strong>Kurzfassung:</strong> Wir erheben nur das Nötigste. Keine Datenweitergabe. Löschung jederzeit möglich.</div>'},
+    {n:'02',id:'data',toc:'Erhobene Daten',h:'Welche Daten erheben wir?',b:'<ul><li><strong>Konto:</strong> E-Mail, Passwort (gehasht), Profil</li><li><strong>Inhalte:</strong> Posts, Projekte, Brand Memory, Kalender</li><li><strong>Social-Tokens:</strong> OAuth für LinkedIn, Threads, X — verschlüsselt</li><li><strong>Nutzung:</strong> KI-Generierungen, Funktionen</li><li><strong>Zahlungen:</strong> über Stripe — keine Bankdaten gespeichert</li><li><strong>Technisch:</strong> IP, Browser, Zugriffsprotokolle</li></ul>'},
+    {n:'03',id:'use',toc:'Datennutzung',h:'Wie nutzen wir Ihre Daten?',b:'<ul><li>GrowthPILOT bereitstellen und verbessern</li><li>KI-Inhalte passend zu Ihrer Markenstimme erstellen</li><li>Inhalte auf verbundenen Plattformen veröffentlichen</li><li>Zahlungen über Stripe verarbeiten</li><li>Transaktions-E-Mails senden</li><li>Gesetzliche Pflichten erfüllen</li></ul><div class="highlight-box"><strong>Wir verkaufen keine Daten</strong> und nutzen Ihre Inhalte nicht ohne Zustimmung für KI-Training.</div>'},
+    {n:'04',id:'third',toc:'Drittanbieter',h:'Drittanbieter-Dienste',b:'<ul><li><strong>OpenAI</strong> — KI-Generierung</li><li><strong>Anthropic</strong> — KI-Generierung</li><li><strong>Stripe</strong> — Zahlungen</li><li><strong>Resend</strong> — E-Mails</li><li><strong>Railway</strong> — Infrastruktur</li><li><strong>Vercel</strong> — Hosting</li></ul>'},
+    {n:'05',id:'social',toc:'Social-Integrationen',h:'LinkedIn, Threads, X & Instagram',b:'<ul><li>Tokens nur für ausdrücklich angeforderte Aktionen</li><li>Keine privaten Nachrichten oder Kontakte gelesen</li><li>Soziale Netzwerke jederzeit trennen</li><li>Zugriffsentzug macht Token sofort ungültig</li></ul><div class="highlight-box"><strong>Instagram:</strong> Wir nutzen die Meta Instagram Graph API. Durch Verbindung stimmen Sie auch Metas Bedingungen zu.</div>'},
+    {n:'06',id:'security',toc:'Datensicherheit',h:'Wie schützen wir Ihre Daten?',b:'<ul><li>HTTPS/TLS-Verschlüsselung</li><li>Passwörter mit bcrypt gehasht</li><li>OAuth-Tokens verschlüsselt</li><li>JWT mit Ablaufzeit</li><li>Regelmäßige Backups</li></ul>'},
+    {n:'07',id:'retention',toc:'Datenspeicherung',h:'Speicherdauer Ihrer Daten',b:'<ul><li><strong>Konto:</strong> solange aktiv</li><li><strong>Inhalte:</strong> bis zur Löschung oder Kontoschließung</li><li><strong>Tokens:</strong> sofort bei Trennung gelöscht</li><li><strong>Zahlungen:</strong> 7 Jahre (gesetzlich)</li><li><strong>Logs:</strong> 90 Tage</li></ul>'},
+    {n:'08',id:'rights',toc:'Ihre Rechte',h:'Ihre Rechte (DSGVO u. a.)',b:'<ul><li><strong>Auskunft:</strong> Kopie Ihrer Daten</li><li><strong>Berichtigung:</strong> Daten korrigieren</li><li><strong>Löschung:</strong> Konto und Daten entfernen</li><li><strong>Portabilität:</strong> maschinenlesbar</li><li><strong>Widerspruch:</strong> Marketing-Verarbeitung</li></ul><p>Kontakt: <a href="mailto:team@aigrowthpilot.app" style="color:#ef4444">team@aigrowthpilot.app</a> — Antwort innerhalb 30 Tagen.</p>'},
+    {n:'09',id:'cookies',toc:'Cookies',h:'Cookies und lokaler Speicher',b:'<p>GrowthPILOT verwendet LocalStorage (keine Cookies) für Auth-Token, Spracheinstellung und Onboarding-Status. Kein Werbe-Tracking.</p>'},
+    {n:'10',id:'children',toc:'Minderjährige',h:'Kinder unter 16 Jahren',b:'<p>GrowthPILOT richtet sich nicht an Kinder unter 16. Wir erheben wissentlich keine Daten von Minderjährigen.</p>'},
+    {n:'11',id:'changes',toc:'Änderungen',h:'Aktualisierungen',b:'<p>Wir können diese Richtlinie aktualisieren. Bei wesentlichen Änderungen informieren wir per E-Mail oder In-App.</p>'},
+    {n:'12',id:'contact',toc:'Kontakt',h:'Kontaktieren Sie uns',b:'<div class="contact-card"><div class="label">E-MAIL</div><a href="mailto:team@aigrowthpilot.app">team@aigrowthpilot.app</a><div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06)"><div class="label">WEBSITE</div><a href="https://www.aigrowthpilot.app">www.aigrowthpilot.app</a></div></div>'},
+  ]},
+  it:{hero:'Informativa sulla <span>Privacy</span>',eff:'In vigore dal: <strong>15 maggio 2026</strong>',upd:'Aggiornato: <strong>15 maggio 2026</strong>',toc:'INDICE',title:'Informativa sulla Privacy — GrowthPILOT',s:[
+    {n:'01',id:'intro',toc:'Introduzione',h:'La tua privacy è importante',b:'<p>GrowthPILOT ("noi") gestisce <strong>aigrowthpilot.app</strong>. Questa informativa spiega come raccogliamo, utilizziamo e proteggiamo i tuoi dati.</p><div class="highlight-box"><strong>In breve:</strong> Raccogliamo solo lo stretto necessario. Non vendiamo dati. Puoi richiedere la cancellazione in qualsiasi momento.</div>'},
+    {n:'02',id:'data',toc:'Dati raccolti',h:'Quali informazioni raccogliamo?',b:'<ul><li><strong>Account:</strong> email, password (hash), profilo</li><li><strong>Contenuti:</strong> post, progetti, Brand Memory, calendario</li><li><strong>Token social:</strong> OAuth per LinkedIn, Threads, X — cifrati</li><li><strong>Utilizzo:</strong> generazioni IA, funzionalità usate</li><li><strong>Pagamenti:</strong> gestiti da Stripe — mai dati bancari</li><li><strong>Tecnici:</strong> IP, browser, log di accesso</li></ul>'},
+    {n:'03',id:'use',toc:'Utilizzo dati',h:'Come utilizziamo i tuoi dati?',b:'<ul><li>Fornire e migliorare GrowthPILOT</li><li>Generare contenuti IA per il tuo brand</li><li>Pubblicare sui social collegati</li><li>Elaborare pagamenti via Stripe</li><li>Inviare email transazionali</li><li>Rispettare obblighi legali</li></ul><div class="highlight-box"><strong>Non vendiamo i tuoi dati</strong> né usiamo i tuoi contenuti per addestrare IA senza consenso.</div>'},
+    {n:'04',id:'third',toc:'Servizi terzi',h:'Servizi di terze parti',b:'<ul><li><strong>OpenAI</strong> — Generazione IA</li><li><strong>Anthropic</strong> — Generazione IA</li><li><strong>Stripe</strong> — Pagamenti</li><li><strong>Resend</strong> — Email</li><li><strong>Railway</strong> — Infrastruttura</li><li><strong>Vercel</strong> — Hosting</li></ul>'},
+    {n:'05',id:'social',toc:'Integrazioni social',h:'LinkedIn, Threads, X & Instagram',b:'<ul><li>Token usati solo per azioni che richiedi</li><li>Non leggiamo messaggi privati, contatti o follower</li><li>Disconnetti qualsiasi social in qualsiasi momento</li><li>Revocare l\'accesso invalida immediatamente il token</li></ul><div class="highlight-box"><strong>Instagram:</strong> Usiamo l\'API Instagram Graph di Meta. Collegando il tuo account, accetti anche i Termini di Meta.</div>'},
+    {n:'06',id:'security',toc:'Sicurezza',h:'Come proteggiamo i tuoi dati?',b:'<ul><li>HTTPS/TLS su tutte le trasmissioni</li><li>Password con hash bcrypt</li><li>Token OAuth cifrati</li><li>JWT con scadenza</li><li>Backup regolari</li></ul>'},
+    {n:'07',id:'retention',toc:'Conservazione',h:'Per quanto tempo conserviamo i dati?',b:'<ul><li><strong>Account:</strong> finché attivo</li><li><strong>Contenuti:</strong> fino all\'eliminazione</li><li><strong>Token:</strong> eliminati alla disconnessione</li><li><strong>Pagamenti:</strong> 7 anni (legge)</li><li><strong>Log:</strong> 90 giorni</li></ul>'},
+    {n:'08',id:'rights',toc:'I tuoi diritti',h:'I tuoi diritti (GDPR e altri)',b:'<ul><li><strong>Accesso:</strong> copia dei dati</li><li><strong>Rettifica:</strong> correggere dati</li><li><strong>Cancellazione:</strong> eliminare account e dati</li><li><strong>Portabilità:</strong> formato leggibile</li><li><strong>Opposizione:</strong> marketing</li></ul><p>Contatta <a href="mailto:team@aigrowthpilot.app" style="color:#ef4444">team@aigrowthpilot.app</a> — rispondiamo entro 30 giorni.</p>'},
+    {n:'09',id:'cookies',toc:'Cookie',h:'Cookie e archiviazione locale',b:'<p>GrowthPILOT usa il localStorage (non cookie) per token di autenticazione, lingua e onboarding. Nessun cookie pubblicitario.</p>'},
+    {n:'10',id:'children',toc:'Minori',h:'Bambini sotto i 16 anni',b:'<p>GrowthPILOT non è rivolto a minori di 16 anni. Non raccogliamo dati di minori consapevolmente.</p>'},
+    {n:'11',id:'changes',toc:'Modifiche',h:'Aggiornamenti a questa informativa',b:'<p>Potremmo aggiornare questa informativa. Per modifiche importanti, ti notificheremo via email o in-app.</p>'},
+    {n:'12',id:'contact',toc:'Contatti',h:'Contattaci',b:'<div class="contact-card"><div class="label">EMAIL</div><a href="mailto:team@aigrowthpilot.app">team@aigrowthpilot.app</a><div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06)"><div class="label">SITO</div><a href="https://www.aigrowthpilot.app">www.aigrowthpilot.app</a></div></div>'},
+  ]},
+  pt:{hero:'Política de <span>Privacidade</span>',eff:'Vigente desde: <strong>15 de maio de 2026</strong>',upd:'Atualizado: <strong>15 de maio de 2026</strong>',toc:'CONTEÚDO',title:'Política de Privacidade — GrowthPILOT',s:[
+    {n:'01',id:'intro',toc:'Introdução',h:'Levamos sua privacidade a sério',b:'<p>GrowthPILOT ("nós") opera <strong>aigrowthpilot.app</strong>. Esta política explica como coletamos, usamos e protegemos seus dados.</p><div class="highlight-box"><strong>Resumo:</strong> Coletamos apenas o necessário. Não vendemos dados. Você pode solicitar exclusão a qualquer momento.</div>'},
+    {n:'02',id:'data',toc:'Dados coletados',h:'Quais informações coletamos?',b:'<ul><li><strong>Conta:</strong> e-mail, senha (hash), perfil</li><li><strong>Conteúdo:</strong> posts, projetos, Brand Memory, calendário</li><li><strong>Tokens sociais:</strong> OAuth para LinkedIn, Threads, X — criptografados</li><li><strong>Uso:</strong> gerações IA, funcionalidades</li><li><strong>Pagamentos:</strong> via Stripe — nunca armazenamos dados bancários</li><li><strong>Técnicos:</strong> IP, navegador, logs</li></ul>'},
+    {n:'03',id:'use',toc:'Uso dos dados',h:'Como usamos suas informações?',b:'<ul><li>Fornecer e melhorar o GrowthPILOT</li><li>Gerar conteúdo IA para sua marca</li><li>Publicar nas redes sociais conectadas</li><li>Processar pagamentos via Stripe</li><li>Enviar e-mails transacionais</li><li>Cumprir obrigações legais</li></ul><div class="highlight-box"><strong>Não vendemos seus dados</strong> nem usamos seu conteúdo para treinar IA sem consentimento.</div>'},
+    {n:'04',id:'third',toc:'Serviços terceiros',h:'Serviços de terceiros',b:'<ul><li><strong>OpenAI</strong> — Geração IA</li><li><strong>Anthropic</strong> — Geração IA</li><li><strong>Stripe</strong> — Pagamentos</li><li><strong>Resend</strong> — E-mails</li><li><strong>Railway</strong> — Infraestrutura</li><li><strong>Vercel</strong> — Hosting</li></ul>'},
+    {n:'05',id:'social',toc:'Integrações sociais',h:'LinkedIn, Threads, X & Instagram',b:'<ul><li>Tokens apenas para ações que você solicita</li><li>Não lemos mensagens privadas, contatos ou seguidores</li><li>Desconecte qualquer rede a qualquer momento</li><li>Revogar acesso invalida nosso token imediatamente</li></ul><div class="highlight-box"><strong>Instagram:</strong> Usamos a API Instagram Graph da Meta. Ao conectar, você também aceita os Termos da Meta.</div>'},
+    {n:'06',id:'security',toc:'Segurança',h:'Como protegemos seus dados?',b:'<ul><li>HTTPS/TLS em todas as transmissões</li><li>Senhas com hash bcrypt</li><li>Tokens OAuth criptografados</li><li>JWT com expiração</li><li>Backups regulares</li></ul>'},
+    {n:'07',id:'retention',toc:'Retenção',h:'Por quanto tempo mantemos seus dados?',b:'<ul><li><strong>Conta:</strong> enquanto ativa</li><li><strong>Conteúdo:</strong> até excluir ou encerrar</li><li><strong>Tokens:</strong> excluídos ao desconectar</li><li><strong>Pagamentos:</strong> 7 anos (legal)</li><li><strong>Logs:</strong> 90 dias</li></ul>'},
+    {n:'08',id:'rights',toc:'Seus direitos',h:'Seus direitos (LGPD, GDPR e outros)',b:'<ul><li><strong>Acesso:</strong> cópia dos dados</li><li><strong>Retificação:</strong> corrigir dados</li><li><strong>Exclusão:</strong> remover conta e dados</li><li><strong>Portabilidade:</strong> formato legível</li><li><strong>Oposição:</strong> marketing</li></ul><p>Contate <a href="mailto:team@aigrowthpilot.app" style="color:#ef4444">team@aigrowthpilot.app</a> — respondemos em 30 dias.</p>'},
+    {n:'09',id:'cookies',toc:'Cookies',h:'Cookies e armazenamento local',b:'<p>GrowthPILOT usa localStorage (não cookies) para token de auth, idioma e onboarding. Sem cookies de rastreamento publicitário.</p>'},
+    {n:'10',id:'children',toc:'Menores',h:'Crianças menores de 16 anos',b:'<p>GrowthPILOT não é direcionado a menores de 16 anos. Não coletamos dados de menores conscientemente.</p>'},
+    {n:'11',id:'changes',toc:'Alterações',h:'Atualizações desta política',b:'<p>Podemos atualizar esta política. Notificaremos mudanças importantes por e-mail ou notificação no app.</p>'},
+    {n:'12',id:'contact',toc:'Contato',h:'Entre em contato',b:'<div class="contact-card"><div class="label">E-MAIL</div><a href="mailto:team@aigrowthpilot.app">team@aigrowthpilot.app</a><div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06)"><div class="label">SITE</div><a href="https://www.aigrowthpilot.app">www.aigrowthpilot.app</a></div></div>'},
+  ]},
+};
+
+function render(lang) {
+  const t = T[lang] || T.en;
+  document.getElementById('hero-title').innerHTML   = t.hero;
+  document.getElementById('meta-effective').innerHTML = t.eff;
+  document.getElementById('meta-updated').innerHTML   = t.upd;
+  document.getElementById('toc-title').textContent    = t.toc;
+  document.title = t.title;
+  document.documentElement.lang = lang;
+  document.getElementById('toc-links').innerHTML = t.s.map(s=>`<a href="#${s.id}">${s.toc}</a>`).join('');
+  document.getElementById('main-content').innerHTML = t.s.map(s=>`
+    <div class="section" id="${s.id}">
+      <div class="section-num">${s.n}</div>
+      <h2>${s.h}</h2>
+      ${s.b}
+    </div>`).join('');
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent === lang.toUpperCase()));
+}
+
+function setLang(lang) {
+  try { localStorage.setItem('gp_lang', lang); } catch {}
+  render(lang);
+}
+
+(function init() {
+  let lang = 'en';
+  try { const s = localStorage.getItem('gp_lang'); if (s && T[s]) lang = s; } catch {}
+  render(lang);
+})();
+</script>
+</body>
+</html>
