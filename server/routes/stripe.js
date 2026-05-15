@@ -12,6 +12,8 @@ const PLANS = {
   pro_yearly:       { priceId: process.env.STRIPE_PRO_YEARLY_PRICE_ID,       name: "Pro",      interval: "year"  },
   business_monthly: { priceId: process.env.STRIPE_BUSINESS_MONTHLY_PRICE_ID, name: "Business", interval: "month" },
   business_yearly:  { priceId: process.env.STRIPE_BUSINESS_YEARLY_PRICE_ID,  name: "Business", interval: "year"  },
+  agency_monthly:   { priceId: process.env.STRIPE_AGENCY_MONTHLY_PRICE_ID,   name: "Agency",   interval: "month" },
+  agency_yearly:    { priceId: process.env.STRIPE_AGENCY_YEARLY_PRICE_ID,    name: "Agency",   interval: "year"  },
 };
 
 // ─── Middleware auth ───────────────────────────────────────────────────────────
