@@ -91,7 +91,7 @@ const corsOptions = {
   credentials: true,
 };
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // preflight explicite sur toutes les routes
+app.options("(.*)", cors(corsOptions)); // preflight explicite sur toutes les routes (Express 5)
 
 // ⚠️ IMPORTANT : le webhook Stripe doit recevoir le raw body AVANT express.json()
 app.use("/stripe/webhook", express.raw({ type: "application/json" }));
