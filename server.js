@@ -18,6 +18,7 @@ import teamRoutes              from "./server/routes/team.js";
 import calendarRouter from "./server/routes/calendar.js";
 import twitterRouter from "./server/routes/twitter.js";
 import agencyRouter from "./server/routes/agency.js";
+import instagramRouter from "./server/routes/instagram.js";
 import facebookRouter from "./server/routes/facebook.js";
 
 const app = express();
@@ -42,6 +43,7 @@ app.use("/team",               teamRoutes);
 app.use("/calendar", calendarRouter);
 app.use("/twitter", twitterRouter);
 app.use("/agency", agencyRouter);
+app.use("/instagram", instagramRouter);
 app.use("/facebook", facebookRouter);
 
 const PORT = process.env.PORT || 5000;
