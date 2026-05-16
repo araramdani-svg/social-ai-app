@@ -1,8 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import logo from "../assets/logo.png";
 import { t as tr } from "../translations.js";
 
-const API = "https://social-ai-app-production.up.railway.app";
+/* ── GIFs produit ── */
+import gifDashboard  from "../assets/gifs/dashboard.gif";
+import gifCreator    from "../assets/gifs/creator.gif";
+import gifAnalytics  from "../assets/gifs/analytics.gif";
+import gifTrends     from "../assets/gifs/trends.gif";
 
 const LANGS = [
   { key:"en", flag:"🇬🇧" },
@@ -13,576 +17,663 @@ const LANGS = [
   { key:"pt", flag:"🇵🇹" },
 ];
 
-/* ── SEO Meta tags injection ─────────────────────────────────────────────────*/
+/* ── Google Fonts inject ── */
+function useGoogleFonts() {
+  useEffect(() => {
+    const id = "gp-fonts";
+    if (document.getElementById(id)) return;
+    const link = document.createElement("link");
+    link.id   = id;
+    link.rel  = "stylesheet";
+    link.href = "https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap";
+    document.head.appendChild(link);
+  }, []);
+}
+
+/* ── SEO ── */
 function useSEO(lang) {
   useEffect(() => {
     const SEO = {
-      en: {
-        title: "GrowthPILOT — AI LinkedIn Content OS | Generate, Schedule & Publish",
-        desc:  "GrowthPILOT is the AI-powered LinkedIn content platform. Generate viral posts, repurpose content in 3 formats, schedule & publish to LinkedIn, X, Threads and Instagram. Free to start.",
-        keywords: "LinkedIn AI writer, LinkedIn content generator, AI social media tool, LinkedIn scheduler, content repurposing, viral LinkedIn posts, SaaS content tool",
-      },
-      fr: {
-        title: "GrowthPILOT — IA pour LinkedIn | Générez, Planifiez & Publiez",
-        desc:  "GrowthPILOT est la plateforme IA pour créer du contenu LinkedIn viral. Générez des posts, repurposez en 3 formats, planifiez et publiez sur LinkedIn, X, Threads et Instagram.",
-        keywords: "IA LinkedIn, générateur contenu LinkedIn, outil réseaux sociaux IA, planificateur LinkedIn, repurposing contenu",
-      },
-      es: {
-        title: "GrowthPILOT — IA para LinkedIn | Genera, Planifica y Publica",
-        desc:  "GrowthPILOT es la plataforma IA para crear contenido viral en LinkedIn. Genera posts, reutiliza en 3 formatos, planifica y publica en LinkedIn, X, Threads e Instagram.",
-        keywords: "IA LinkedIn, generador contenido LinkedIn, herramienta redes sociales IA, planificador LinkedIn",
-      },
-      de: {
-        title: "GrowthPILOT — KI für LinkedIn | Erstellen, Planen & Veröffentlichen",
-        desc:  "GrowthPILOT ist die KI-Plattform für viralen LinkedIn-Content. Erstelle Posts, repurpose in 3 Formate, plane und veröffentliche auf LinkedIn, X, Threads und Instagram.",
-        keywords: "KI LinkedIn, LinkedIn Content Generator, Social Media KI Tool, LinkedIn Scheduler",
-      },
-      it: {
-        title: "GrowthPILOT — IA per LinkedIn | Genera, Pianifica e Pubblica",
-        desc:  "GrowthPILOT è la piattaforma IA per creare contenuti virali su LinkedIn. Genera post, riutilizza in 3 formati, pianifica e pubblica su LinkedIn, X, Threads e Instagram.",
-        keywords: "IA LinkedIn, generatore contenuti LinkedIn, strumento social media IA, pianificatore LinkedIn",
-      },
-      pt: {
-        title: "GrowthPILOT — IA para LinkedIn | Gere, Agende e Publique",
-        desc:  "GrowthPILOT é a plataforma IA para criar conteúdo viral no LinkedIn. Gere posts, reutilize em 3 formatos, agende e publique no LinkedIn, X, Threads e Instagram.",
-        keywords: "IA LinkedIn, gerador conteúdo LinkedIn, ferramenta redes sociais IA, agendador LinkedIn",
-      },
+      en: { title:"GrowthPILOT — The Only Multi-Platform AI Content OS", desc:"Generate, schedule & publish AI content to LinkedIn, X, Threads, Instagram, Facebook & TikTok from one command center. Free to start." },
+      fr: { title:"GrowthPILOT — Le seul OS IA multi-plateformes pour créateurs", desc:"Générez, planifiez et publiez du contenu IA sur LinkedIn, X, Threads, Instagram, Facebook et TikTok depuis un seul outil." },
+      es: { title:"GrowthPILOT — El único OS de contenido IA multi-plataforma", desc:"Genera, programa y publica contenido IA en LinkedIn, X, Threads, Instagram, Facebook y TikTok desde un centro de control." },
+      de: { title:"GrowthPILOT — Das einzige Multi-Plattform KI-Content-OS", desc:"Erstelle, plane und veröffentliche KI-Inhalte auf LinkedIn, X, Threads, Instagram, Facebook und TikTok aus einer Zentrale." },
+      it: { title:"GrowthPILOT — L'unico OS IA multi-piattaforma per i creator", desc:"Genera, pianifica e pubblica contenuti IA su LinkedIn, X, Threads, Instagram, Facebook e TikTok da un'unica piattaforma." },
+      pt: { title:"GrowthPILOT — O único OS de conteúdo IA multi-plataforma", desc:"Gere, agende e publique conteúdo IA no LinkedIn, X, Threads, Instagram, Facebook e TikTok a partir de um centro de controle." },
     };
-
     const s = SEO[lang] || SEO.en;
-
-    // Title
     document.title = s.title;
-
-    // Meta helpers
-    const setMeta = (name, content, prop = false) => {
-      const sel = prop ? `meta[property="${name}"]` : `meta[name="${name}"]`;
-      let el = document.querySelector(sel);
-      if (!el) {
-        el = document.createElement("meta");
-        prop ? el.setAttribute("property", name) : el.setAttribute("name", name);
-        document.head.appendChild(el);
-      }
+    const setMeta = (name, content) => {
+      let el = document.querySelector(`meta[name="${name}"]`);
+      if (!el) { el = document.createElement("meta"); el.setAttribute("name", name); document.head.appendChild(el); }
       el.setAttribute("content", content);
     };
-
-    // Base SEO
-    setMeta("description",        s.desc);
-    setMeta("keywords",           s.keywords);
-    setMeta("robots",             "index, follow");
-    setMeta("author",             "GrowthPILOT");
-    setMeta("viewport",           "width=device-width, initial-scale=1.0");
-
-    // Open Graph
-    setMeta("og:type",            "website",                       true);
-    setMeta("og:url",             "https://www.aigrowthpilot.app", true);
-    setMeta("og:title",           s.title,                         true);
-    setMeta("og:description",     s.desc,                          true);
-    setMeta("og:image",           "https://www.aigrowthpilot.app/og-image.png", true);
-    setMeta("og:image:width",     "1200",                          true);
-    setMeta("og:image:height",    "630",                           true);
-    setMeta("og:site_name",       "GrowthPILOT",                   true);
-    setMeta("og:locale",          lang,                            true);
-
-    // Twitter Card
-    setMeta("twitter:card",        "summary_large_image");
-    setMeta("twitter:site",        "@growthpilot");
-    setMeta("twitter:title",       s.title);
-    setMeta("twitter:description", s.desc);
-    setMeta("twitter:image",       "https://www.aigrowthpilot.app/og-image.png");
-
-    // Canonical
-    let canonical = document.querySelector("link[rel='canonical']");
-    if (!canonical) {
-      canonical = document.createElement("link");
-      canonical.setAttribute("rel", "canonical");
-      document.head.appendChild(canonical);
-    }
-    canonical.setAttribute("href", "https://www.aigrowthpilot.app");
-
-    // hreflang
-    const hreflangs = { en:"en", fr:"fr", es:"es", de:"de", it:"it", pt:"pt" };
-    Object.entries(hreflangs).forEach(([l, hl]) => {
-      let link = document.querySelector(`link[hreflang="${hl}"]`);
-      if (!link) {
-        link = document.createElement("link");
-        link.setAttribute("rel", "alternate");
-        link.setAttribute("hreflang", hl);
-        document.head.appendChild(link);
-      }
-      link.setAttribute("href", `https://www.aigrowthpilot.app?lang=${l}`);
-    });
-
-    // Schema.org JSON-LD
-    const schemaId = "gp-schema-jsonld";
-    let schemaEl = document.getElementById(schemaId);
-    if (!schemaEl) {
-      schemaEl = document.createElement("script");
-      schemaEl.id = schemaId;
-      schemaEl.type = "application/ld+json";
-      document.head.appendChild(schemaEl);
-    }
-    schemaEl.textContent = JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "GrowthPILOT",
-      "url": "https://www.aigrowthpilot.app",
-      "description": s.desc,
-      "applicationCategory": "BusinessApplication",
-      "operatingSystem": "Web, iOS, Android",
-      "offers": [
-        { "@type":"Offer", "price":"0", "priceCurrency":"EUR", "name":"Free Plan" },
-        { "@type":"Offer", "price":"19", "priceCurrency":"EUR", "name":"Pro Plan", "billingIncrement":"1", "priceSpecification": { "@type":"UnitPriceSpecification", "price":"19", "priceCurrency":"EUR", "unitCode":"MON" } },
-        { "@type":"Offer", "price":"49", "priceCurrency":"EUR", "name":"Business Plan" },
-      ],
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "4.9",
-        "reviewCount": "127",
-      },
-      "author": { "@type":"Organization", "name":"GrowthPILOT", "url":"https://www.aigrowthpilot.app" },
-    });
-
+    setMeta("description", s.desc);
+    setMeta("robots", "index, follow");
   }, [lang]);
 }
 
-/* ── Hook breakpoint ── */
-function useWindowWidth() {
-  const [width, setWidth] = useState(
-    typeof window !== "undefined" ? window.innerWidth : 1200
-  );
+/* ── Intersection observer hook ── */
+function useInView(threshold = 0.15) {
+  const ref = useRef(null);
+  const [inView, setInView] = useState(false);
   useEffect(() => {
-    const handler = () => setWidth(window.innerWidth);
-    window.addEventListener("resize", handler);
-    return () => window.removeEventListener("resize", handler);
+    if (!ref.current) return;
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setInView(true); obs.disconnect(); } }, { threshold });
+    obs.observe(ref.current);
+    return () => obs.disconnect();
   }, []);
-  return width;
+  return [ref, inView];
 }
 
+/* ── Typewriter ── */
+function Typewriter({ words, speed = 80, pause = 1800 }) {
+  const [text, setText] = useState("");
+  const [wIdx, setWIdx] = useState(0);
+  const [cIdx, setCIdx] = useState(0);
+  const [deleting, setDeleting] = useState(false);
+  useEffect(() => {
+    const word = words[wIdx];
+    const delay = deleting ? speed / 2 : cIdx === word.length ? pause : speed;
+    const t = setTimeout(() => {
+      if (!deleting && cIdx < word.length) { setText(word.slice(0, cIdx + 1)); setCIdx(c => c + 1); }
+      else if (!deleting && cIdx === word.length) { setDeleting(true); }
+      else if (deleting && cIdx > 0) { setText(word.slice(0, cIdx - 1)); setCIdx(c => c - 1); }
+      else { setDeleting(false); setWIdx(i => (i + 1) % words.length); }
+    }, delay);
+    return () => clearTimeout(t);
+  }, [text, wIdx, cIdx, deleting]);
+  return <span>{text}<span style={{ opacity: Math.sin(Date.now() / 500) > 0 ? 1 : 0, color:"#ef4444" }}>|</span></span>;
+}
+
+/* ── Counter animation ── */
+function Counter({ to, suffix = "", duration = 1500 }) {
+  const [val, setVal] = useState(0);
+  const [ref, inView] = useInView(0.3);
+  useEffect(() => {
+    if (!inView) return;
+    const start = Date.now();
+    const tick = () => {
+      const p = Math.min((Date.now() - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - p, 3);
+      setVal(Math.round(ease * to));
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [inView]);
+  return <span ref={ref}>{val.toLocaleString()}{suffix}</span>;
+}
+
+/* ── CSS injection ── */
+function useStyles() {
+  useEffect(() => {
+    const id = "gp-landing-styles";
+    if (document.getElementById(id)) return;
+    const s = document.createElement("style");
+    s.id = id;
+    s.textContent = `
+      @keyframes fadeUp   { from { opacity:0; transform:translateY(32px); } to { opacity:1; transform:translateY(0); } }
+      @keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
+      @keyframes scanline { 0%,100% { opacity:0.03; } 50% { opacity:0.07; } }
+      @keyframes pulse    { 0%,100% { transform:scale(1); opacity:0.5; } 50% { transform:scale(1.05); opacity:0.8; } }
+      @keyframes glow     { 0%,100% { box-shadow: 0 0 20px rgba(220,38,38,0.2); } 50% { box-shadow: 0 0 40px rgba(220,38,38,0.5), 0 0 80px rgba(220,38,38,0.1); } }
+      @keyframes ticker   { 0% { transform:translateX(0); } 100% { transform:translateX(-50%); } }
+      @keyframes gridMove { 0% { background-position:0 0; } 100% { background-position:40px 40px; } }
+      @keyframes blink    { 0%,100% { opacity:1; } 50% { opacity:0; } }
+
+      .gp-fade-up   { opacity:0; }
+      .gp-fade-up.visible { animation: fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) forwards; }
+      .gp-fade-in   { opacity:0; }
+      .gp-fade-in.visible { animation: fadeIn 0.6s ease forwards; }
+
+      .gp-btn-primary {
+        padding: 16px 32px;
+        background: linear-gradient(135deg,#dc2626,#991b1b);
+        border: none; border-radius: 10px; color: #fff;
+        font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px;
+        cursor: pointer; letter-spacing: 0.5px;
+        box-shadow: 0 4px 24px rgba(220,38,38,0.4);
+        transition: all 0.2s ease; position: relative; overflow: hidden;
+      }
+      .gp-btn-primary::after {
+        content:''; position:absolute; inset:0;
+        background: linear-gradient(135deg,rgba(255,255,255,0.1),transparent);
+        opacity:0; transition: opacity 0.2s;
+      }
+      .gp-btn-primary:hover { transform:translateY(-2px); box-shadow:0 8px 32px rgba(220,38,38,0.55); }
+      .gp-btn-primary:hover::after { opacity:1; }
+
+      .gp-btn-ghost {
+        padding: 16px 32px;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: #94a3b8;
+        font-family: 'Syne', sans-serif; font-weight: 600; font-size: 15px;
+        cursor: pointer; letter-spacing: 0.5px;
+        transition: all 0.2s ease;
+      }
+      .gp-btn-ghost:hover { background:rgba(255,255,255,0.08); border-color:rgba(220,38,38,0.4); color:#fff; }
+
+      .gp-feature-tab { cursor:pointer; transition:all 0.2s ease; }
+      .gp-feature-tab:hover { opacity:1 !important; }
+
+      .gp-pricing-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+      .gp-pricing-card:hover { transform: translateY(-4px); box-shadow: 0 24px 60px rgba(0,0,0,0.4) !important; }
+
+      .gp-compare-row:hover td { background: rgba(220,38,38,0.04) !important; }
+
+      .gp-platform-badge { transition: all 0.2s ease; }
+      .gp-platform-badge:hover { transform:translateY(-3px); border-color:rgba(220,38,38,0.5) !important; }
+
+      @media (max-width:768px) {
+        .gp-hero-grid { grid-template-columns: 1fr !important; }
+        .gp-features-tabs { flex-direction: column !important; }
+        .gp-compare-table { font-size: 12px !important; }
+        .gp-pricing-grid { grid-template-columns: 1fr !important; }
+      }
+    `;
+    document.head.appendChild(s);
+    return () => s.remove();
+  }, []);
+}
+
+/* ══ MAIN COMPONENT ══════════════════════════════════════════════════════════ */
 export default function Index({ openApp, openLogin, openPricing }) {
-  const [lang, setLang]               = useState(() => localStorage.getItem("gp_lang") || "en");
+  const [lang, setLang]             = useState(() => localStorage.getItem("gp_lang") || "en");
   const [showLangMenu, setShowLangMenu] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [scrolled, setScrolled]       = useState(false);
-  const [yearly,  setYearly]          = useState(false);
+  const [scrolled, setScrolled]     = useState(false);
+  const [yearly, setYearly]         = useState(false);
+  const [activeTab, setActiveTab]   = useState(0);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Sync avec gp_lang
-  const handleSetLang = (l) => {
-    setLang(l);
-    localStorage.setItem("gp_lang", l);
-  };
-
-  // Inject SEO
+  useGoogleFonts();
+  useStyles();
   useSEO(lang);
 
-  // Scroll effect sur la nav
+  const handleLang = (l) => { setLang(l); localStorage.setItem("gp_lang", l); setShowLangMenu(false); };
+
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handler);
-    return () => window.removeEventListener("scroll", handler);
+    const fn = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", fn);
+    return () => window.removeEventListener("scroll", fn);
   }, []);
 
-  const width    = useWindowWidth();
-  const isMobile = width < 768;
-  const isTablet = width < 1024;
+  /* ── animated sections ── */
+  const [heroRef,     heroVisible]     = useInView(0.1);
+  const [featRef,     featVisible]     = useInView(0.1);
+  const [compareRef,  compareVisible]  = useInView(0.1);
+  const [pricingRef,  pricingVisible]  = useInView(0.1);
+  const [ctaRef,      ctaVisible]      = useInView(0.2);
 
-  const l = (key) => tr(lang, `landing.${key}`);
-
-  const features = [
-    { icon:"✍️", titleKey:"feature1title", descKey:"feature1desc" },
-    { icon:"🧠", titleKey:"feature2title", descKey:"feature2desc" },
-    { icon:"🌍", titleKey:"feature3title", descKey:"feature3desc" },
-    { icon:"📊", titleKey:"feature4title", descKey:"feature4desc" },
-    { icon:"📅", titleKey:"feature5title", descKey:"feature5desc" },
-    { icon:"🚀", titleKey:"feature6title", descKey:"feature6desc" },
+  const PLATFORMS = [
+    { icon:"in",  label:"LinkedIn",  color:"#0077b5" },
+    { icon:"𝕏",   label:"X",         color:"#fff" },
+    { icon:"🧵",  label:"Threads",   color:"#a855f7" },
+    { icon:"📸",  label:"Instagram", color:"#e1306c" },
+    { icon:"f",   label:"Facebook",  color:"#1877f2" },
+    { icon:"🎵",  label:"TikTok",    color:"#ff0050" },
   ];
 
-  const testimonials = [
-    { nameKey:"t1name", roleKey:"t1role", textKey:"t1text", stars:5 },
-    { nameKey:"t2name", roleKey:"t2role", textKey:"t2text", stars:5 },
-    { nameKey:"t3name", roleKey:"t3role", textKey:"t3text", stars:5 },
+  const FEATURE_TABS = [
+    { label:"AI Creator",    icon:"✍️", gif: gifCreator,   desc:"Generate viral posts, threads & carousels in seconds. Hook generator, rewrite modes, viral score — all in one command." },
+    { label:"Dashboard",     icon:"📊", gif: gifDashboard,  desc:"Track every post, every platform, every metric. Your content command center in real-time." },
+    { label:"Trends Radar",  icon:"🌍", gif: gifTrends,     desc:"12 real-time sources. Surface what's viral before anyone else in your niche and turn it into a post instantly." },
+    { label:"Analytics",     icon:"🔍", gif: gifAnalytics,  desc:"Deep-dive into what works. Score every piece of content and get AI-powered recommendations." },
   ];
 
-  const s = makeStyles(isMobile, isTablet, scrolled);
+  const COMPARE = [
+    { feature:"Multi-platform publishing",     gp:true,  taplio:false, supergrow:false, magicpost:false },
+    { feature:"LinkedIn direct publish",       gp:true,  taplio:true,  supergrow:true,  magicpost:true  },
+    { feature:"X / Twitter publish",           gp:true,  taplio:false, supergrow:false, magicpost:false },
+    { feature:"Threads publish",               gp:true,  taplio:false, supergrow:false, magicpost:false },
+    { feature:"Facebook publish",              gp:true,  taplio:false, supergrow:false, magicpost:false },
+    { feature:"TikTok publish",                gp:true,  taplio:false, supergrow:false, magicpost:false },
+    { feature:"Viral score AI",                gp:true,  taplio:false, supergrow:false, magicpost:false },
+    { feature:"Brand Memory AI",               gp:true,  taplio:false, supergrow:true,  magicpost:false },
+    { feature:"Real-time trend radar",         gp:true,  taplio:false, supergrow:false, magicpost:false },
+    { feature:"Agency mode + client billing",  gp:true,  taplio:false, supergrow:false, magicpost:false },
+    { feature:"Multi-format repurpose",        gp:true,  taplio:true,  supergrow:false, magicpost:false },
+    { feature:"Entry price with AI",           gp:"€19", taplio:"$69", supergrow:"$19", magicpost:"$27" },
+  ];
+
+  const PLANS = [
+    { name:"Free",     price:0,    yearlyPrice:0,   color:"#475569", features:["5 AI generations/mo","1 project","Basic analytics"],                                             cta:"Start free",      action:openApp,     popular:false },
+    { name:"Pro",      price:19,   yearlyPrice:15,  color:"#ef4444", features:["100 AI generations/mo","10 projects","Brand Memory","Multi-format repurpose","Viral score AI"],   cta:"Start Pro →",     action:openPricing, popular:true  },
+    { name:"Business", price:49,   yearlyPrice:39,  color:"#f97316", features:["Unlimited generations","5 team members","All Pro features","Priority support"],                   cta:"Start Business →",action:openPricing, popular:false },
+    { name:"Agency",   price:99,   yearlyPrice:79,  color:"#8b5cf6", features:["50 client accounts","20 team members","Agency dashboard","MRR tracking","PDF invoices"],          cta:"Start Agency →",  action:openPricing, popular:false },
+  ];
+
+  const px = typeof window !== "undefined" && window.innerWidth < 768 ? "20px" : "clamp(24px, 5vw, 80px)";
+
+  /* ── ticker content ── */
+  const TICKER = ["LinkedIn", "X (Twitter)", "Threads", "Instagram", "Facebook", "TikTok", "Viral Score", "Brand Memory", "Trend Radar", "Agency Mode", "30-day Planner", "Multi-format"];
 
   return (
-    <div style={s.page}>
+    <div style={{ minHeight:"100vh", background:"#050a14", color:"#e2e8f0", fontFamily:"'Inter', sans-serif", overflowX:"hidden" }}>
+
+      {/* ── GRID BACKGROUND ── */}
+      <div style={{
+        position:"fixed", inset:0, pointerEvents:"none", zIndex:0,
+        backgroundImage:"linear-gradient(rgba(220,38,38,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(220,38,38,0.04) 1px, transparent 1px)",
+        backgroundSize:"40px 40px",
+        animation:"gridMove 8s linear infinite",
+      }}/>
+      <div style={{ position:"fixed", inset:0, pointerEvents:"none", zIndex:0, background:"radial-gradient(ellipse 80% 60% at 50% 0%, rgba(220,38,38,0.06) 0%, transparent 70%)" }}/>
 
       {/* ── NAV ── */}
-      <nav style={s.nav} role="navigation" aria-label="Main navigation">
-        <div style={s.brand}>
-          <img src={logo} alt="GrowthPILOT logo" style={s.navLogo} width="40" height="40" loading="eager" />
-          <span style={s.brandName}>GrowthPILOT</span>
+      <nav style={{
+        position:"sticky", top:0, zIndex:100,
+        display:"flex", justifyContent:"space-between", alignItems:"center",
+        padding:"0 clamp(20px,4vw,60px)", height:64,
+        background: scrolled ? "rgba(5,10,20,0.97)" : "rgba(5,10,20,0.8)",
+        backdropFilter:"blur(20px)",
+        borderBottom: scrolled ? "1px solid rgba(220,38,38,0.2)" : "1px solid rgba(255,255,255,0.04)",
+        transition:"all 0.3s ease",
+      }}>
+        {/* Logo */}
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <img src={logo} alt="GrowthPILOT" style={{ width:32, height:32, objectFit:"contain" }} />
+          <span style={{ fontFamily:"'Syne', sans-serif", fontWeight:800, fontSize:18, color:"#fff", letterSpacing:"-0.5px" }}>
+            Growth<span style={{ color:"#ef4444" }}>PILOT</span>
+          </span>
         </div>
 
-        {isMobile ? (
-          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-            <div style={{ position:"relative" }}>
-              <button style={s.langBtn} onClick={() => setShowLangMenu(!showLangMenu)} aria-label="Select language">
-                {LANGS.find(lx => lx.key === lang)?.flag}
-              </button>
-              {showLangMenu && (
-                <div style={s.langMenu} role="menu">
-                  {LANGS.map(lx => (
-                    <button key={lx.key} role="menuitem"
-                      style={{ ...s.langItem, background: lang === lx.key ? "rgba(220,38,38,0.15)" : "transparent", color: lang === lx.key ? "#ef4444" : "#94a3b8" }}
-                      onClick={() => { handleSetLang(lx.key); setShowLangMenu(false); }}>
-                      {lx.flag} {lx.key.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <button style={s.burgerBtn} onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle menu">
-              {mobileMenuOpen ? "✕" : "☰"}
+        {/* Right */}
+        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+          {/* Lang */}
+          <div style={{ position:"relative" }}>
+            <button onClick={() => setShowLangMenu(!showLangMenu)}
+              style={{ padding:"6px 10px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:6, color:"#64748b", cursor:"pointer", fontSize:12, fontFamily:"'DM Mono', monospace" }}>
+              {LANGS.find(lx => lx.key === lang)?.flag} {lang.toUpperCase()}
             </button>
+            {showLangMenu && (
+              <div style={{ position:"absolute", top:40, right:0, background:"#0d1626", border:"1px solid rgba(220,38,38,0.2)", borderRadius:10, overflow:"hidden", zIndex:9999, minWidth:120, boxShadow:"0 20px 40px rgba(0,0,0,0.6)" }}>
+                {LANGS.map(lx => (
+                  <button key={lx.key} onClick={() => handleLang(lx.key)}
+                    style={{ width:"100%", padding:"10px 14px", background: lang===lx.key ? "rgba(220,38,38,0.12)" : "transparent", border:"none", color: lang===lx.key ? "#ef4444":"#94a3b8", cursor:"pointer", textAlign:"left", fontSize:13, fontFamily:"'DM Mono', monospace" }}>
+                    {lx.flag} {lx.key.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-        ) : (
-          <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-            <div style={{ position:"relative" }}>
-              <button style={s.langBtn} onClick={() => setShowLangMenu(!showLangMenu)} aria-label="Select language">
-                {LANGS.find(lx => lx.key === lang)?.flag} {lang.toUpperCase()}
-              </button>
-              {showLangMenu && (
-                <div style={s.langMenu} role="menu">
-                  {LANGS.map(lx => (
-                    <button key={lx.key} role="menuitem"
-                      style={{ ...s.langItem, background: lang === lx.key ? "rgba(220,38,38,0.15)" : "transparent", color: lang === lx.key ? "#ef4444" : "#94a3b8" }}
-                      onClick={() => { handleSetLang(lx.key); setShowLangMenu(false); }}>
-                      {lx.flag} {lx.key.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <button style={s.navLogin} onClick={openLogin}>{l("login")}</button>
-            <button style={s.navCta}   onClick={openApp}>{l("tryFree")}</button>
-          </div>
-        )}
+
+          <button onClick={openLogin} className="gp-btn-ghost" style={{ padding:"8px 16px", fontSize:13 }}>Sign in</button>
+          <button onClick={openApp}   className="gp-btn-primary" style={{ padding:"8px 18px", fontSize:13 }}>Try free →</button>
+        </div>
       </nav>
 
-      {/* Menu mobile */}
-      {isMobile && mobileMenuOpen && (
-        <div style={s.mobileMenu} role="menu">
-          <button style={s.mobileMenuItem} onClick={() => { openLogin(); setMobileMenuOpen(false); }}>{l("login")}</button>
-          <button style={{ ...s.mobileMenuItem, ...s.mobileMenuCta }} onClick={() => { openApp(); setMobileMenuOpen(false); }}>{l("tryFree")}</button>
+      {/* ── TICKER ── */}
+      <div style={{ background:"rgba(220,38,38,0.06)", borderBottom:"1px solid rgba(220,38,38,0.15)", overflow:"hidden", padding:"8px 0", position:"relative", zIndex:1 }}>
+        <div style={{ display:"flex", animation:"ticker 20s linear infinite", whiteSpace:"nowrap", width:"max-content" }}>
+          {[...TICKER, ...TICKER].map((item, i) => (
+            <span key={i} style={{ padding:"0 24px", fontFamily:"'DM Mono', monospace", fontSize:11, color:"#ef4444", letterSpacing:"2px", opacity:0.7 }}>
+              {item} <span style={{ opacity:0.3 }}>·</span>
+            </span>
+          ))}
         </div>
-      )}
+      </div>
 
-      {/* ── HERO ── */}
-      <section style={s.hero} aria-label="Hero">
-        <div style={s.heroLeft}>
-          <div style={s.badge} aria-label="Badge">{l("badge")}</div>
-          <h1 style={s.headline}>
-            {l("headline1")}<br/>
-            {l("headline2")}<br/>
-            <span style={s.accent}>{l("headline3")}</span>
+      {/* ══ HERO ══ */}
+      <section ref={heroRef} style={{ padding:"clamp(60px,8vh,120px) clamp(20px,5vw,80px) clamp(40px,6vh,80px)", position:"relative", zIndex:1, maxWidth:1400, margin:"0 auto" }}>
+
+        {/* Status badge */}
+        <div style={{ display:"flex", justifyContent:"center", marginBottom:32 }}>
+          <div className={`gp-fade-in ${heroVisible ? "visible":""}`}
+            style={{ display:"inline-flex", alignItems:"center", gap:8, background:"rgba(34,197,94,0.08)", border:"1px solid rgba(34,197,94,0.2)", borderRadius:20, padding:"6px 14px" }}>
+            <span style={{ width:6, height:6, borderRadius:"50%", background:"#22c55e", boxShadow:"0 0 8px #22c55e", display:"inline-block", animation:"pulse 2s ease infinite" }}/>
+            <span style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:"#22c55e", letterSpacing:"1.5px" }}>LIVE PLATFORM — FREE TO START</span>
+          </div>
+        </div>
+
+        {/* Headline */}
+        <div className={`gp-fade-up ${heroVisible ? "visible":""}`} style={{ textAlign:"center", marginBottom:24 }}>
+          <h1 style={{
+            fontFamily:"'Syne', sans-serif", fontWeight:800,
+            fontSize:"clamp(40px, 6.5vw, 80px)",
+            lineHeight:1.05, margin:0, letterSpacing:"-2px",
+          }}>
+            <span style={{ color:"#fff" }}>The only </span>
+            <span style={{ color:"#ef4444", position:"relative" }}>
+              multi-platform
+              <svg style={{ position:"absolute", bottom:-8, left:0, width:"100%", height:4, overflow:"visible" }} viewBox="0 0 100 4" preserveAspectRatio="none">
+                <path d="M0,2 Q25,0 50,2 Q75,4 100,2" stroke="#ef4444" strokeWidth="0.8" fill="none" opacity="0.6"/>
+              </svg>
+            </span>
+            <br/>
+            <span style={{ color:"#fff" }}>AI content OS</span>
           </h1>
-          <p style={s.desc}>{l("description")}</p>
-          <div style={{ display:"flex", gap:12, marginTop:32, flexWrap:"wrap" }}>
-            <button style={s.ctaLarge}   onClick={openApp}>{l("startFree")}</button>
-            <button style={s.ctaOutline} onClick={openLogin}>{l("login")}</button>
-          </div>
-
-          {/* Social proof */}
-          <div style={s.proof} aria-label="Social proof">
-            {[
-              [l("proof1num"), l("proof1label")],
-              [l("proof2num"), l("proof2label")],
-              [l("proof3num"), l("proof3label")],
-            ].map(([num, label], i) => (
-              <React.Fragment key={i}>
-                {i > 0 && <div style={s.proofDivider} aria-hidden="true"/>}
-                <div style={s.proofItem}>
-                  <span style={s.proofNum}>{num}</span>
-                  <span style={s.proofLabel}>{label}</span>
-                </div>
-              </React.Fragment>
-            ))}
-          </div>
-
-          {/* Intégrations badge */}
-          <div style={{ display:"flex", alignItems:"center", gap:10, marginTop:24, flexWrap:"wrap" }}>
-            <span style={{ color:"#334155", fontSize:11, fontWeight:700, letterSpacing:"1px" }}>WORKS WITH</span>
-            {["in","𝕏","🧵","📸"].map((icon,i) => (
-              <div key={i} style={{ width:30, height:30, borderRadius:6, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.08)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:900, color:"#fff" }}>{icon}</div>
-            ))}
-          </div>
         </div>
 
-        {/* Card droite */}
-        {!isMobile && (
-          <div style={s.heroRight}>
-            <div style={s.card} role="complementary" aria-label="Platform features">
-              <div style={s.cardHeader}>
-                <span style={s.cardBadge}>LIVE PLATFORM</span>
-                <span style={s.cardDot} aria-label="Active"/>
+        {/* Typewriter sub */}
+        <div className={`gp-fade-up ${heroVisible ? "visible":""}`} style={{ textAlign:"center", marginBottom:40, animationDelay:"0.1s" }}>
+          <p style={{ fontSize:"clamp(16px,2vw,20px)", color:"#64748b", margin:0, lineHeight:1.6 }}>
+            One workspace.{" "}
+            <span style={{ fontFamily:"'DM Mono', monospace", color:"#94a3b8" }}>
+              <Typewriter words={["LinkedIn.", "X (Twitter).", "Threads.", "Instagram.", "Facebook.", "TikTok."]} />
+            </span>
+          </p>
+          <p style={{ fontSize:"clamp(14px,1.5vw,17px)", color:"#475569", margin:"8px 0 0", lineHeight:1.6 }}>
+            While competitors lock you to LinkedIn-only, GrowthPILOT publishes everywhere — from one AI command center.
+          </p>
+        </div>
+
+        {/* CTAs */}
+        <div className={`gp-fade-up ${heroVisible ? "visible":""}`} style={{ display:"flex", justifyContent:"center", gap:12, flexWrap:"wrap", marginBottom:64, animationDelay:"0.15s" }}>
+          <button onClick={openApp}   className="gp-btn-primary" style={{ fontSize:16, padding:"16px 36px" }}>Start for free →</button>
+          <button onClick={openLogin} className="gp-btn-ghost"   style={{ fontSize:16, padding:"16px 28px" }}>Sign in</button>
+        </div>
+
+        {/* Platform badges */}
+        <div className={`gp-fade-up ${heroVisible ? "visible":""}`} style={{ display:"flex", justifyContent:"center", gap:10, flexWrap:"wrap", marginBottom:80, animationDelay:"0.2s" }}>
+          {PLATFORMS.map((p, i) => (
+            <div key={i} className="gp-platform-badge" style={{
+              display:"flex", alignItems:"center", gap:8,
+              padding:"8px 14px", background:"rgba(255,255,255,0.03)",
+              border:"1px solid rgba(255,255,255,0.08)", borderRadius:8,
+              fontFamily:"'DM Mono', monospace", fontSize:12, color:"#94a3b8",
+            }}>
+              <span style={{ fontSize:15 }}>{p.icon}</span>
+              <span>{p.label}</span>
+              <span style={{ color:"#22c55e", fontSize:10 }}>✓</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Stats */}
+        <div style={{
+          display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(160px, 1fr))",
+          gap:1, background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.06)",
+          borderRadius:16, overflow:"hidden", maxWidth:800, margin:"0 auto",
+        }}>
+          {[
+            { label:"AI generations", to:50000, suffix:"+" },
+            { label:"Platforms connected", to:6, suffix:"" },
+            { label:"Content types", to:12, suffix:"+" },
+            { label:"Languages", to:6, suffix:"" },
+          ].map((s, i) => (
+            <div key={i} style={{ padding:"28px 24px", textAlign:"center", background:"rgba(5,10,20,0.8)" }}>
+              <div style={{ fontFamily:"'Syne', sans-serif", fontWeight:800, fontSize:"clamp(28px,3vw,36px)", color:"#ef4444", lineHeight:1 }}>
+                <Counter to={s.to} suffix={s.suffix} />
               </div>
-              {[
-                { icon:"✍️", label:"AI Writing Engine",   desc:"Generate authority content in seconds" },
-                { icon:"🧠", label:"Brand Memory",        desc:"Train AI on your brand identity" },
-                { icon:"📅", label:"Scheduler",           desc:"Plan and automate your publishing" },
-                { icon:"📊", label:"Analytics",           desc:"Measure and optimize performance" },
-                { icon:"🚀", label:"Autopost",            desc:"Multi-platform distribution" },
-                { icon:"🌍", label:"Trends",              desc:"Real-time viral topics from 12 sources" },
-              ].map((f,i) => (
-                <div key={i} style={s.feature}>
-                  <span style={s.featureIcon} aria-hidden="true">{f.icon}</span>
-                  <div style={{ flex:1 }}>
-                    <div style={s.featureLabel}>{f.label}</div>
-                    <div style={s.featureDesc}>{f.desc}</div>
-                  </div>
-                  <span style={s.featureArrow} aria-hidden="true">▸</span>
+              <div style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:"#475569", marginTop:6, letterSpacing:"0.5px" }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ══ FEATURE TABS WITH GIFs ══ */}
+      <section ref={featRef} style={{ padding:"clamp(60px,8vh,100px) clamp(20px,5vw,80px)", position:"relative", zIndex:1, maxWidth:1400, margin:"0 auto" }}>
+        <div style={{ textAlign:"center", marginBottom:48 }}>
+          <div style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:"#ef4444", letterSpacing:"3px", marginBottom:12 }}>— PLATFORM OVERVIEW —</div>
+          <h2 style={{ fontFamily:"'Syne', sans-serif", fontWeight:800, fontSize:"clamp(28px,4vw,48px)", margin:0, letterSpacing:"-1px" }}>
+            Everything in one <span style={{ color:"#ef4444" }}>command center</span>
+          </h2>
+        </div>
+
+        {/* Tabs */}
+        <div style={{ display:"flex", gap:4, background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:12, padding:4, marginBottom:32, overflowX:"auto", maxWidth:700, margin:"0 auto 32px" }}>
+          {FEATURE_TABS.map((tab, i) => (
+            <button key={i} className="gp-feature-tab"
+              onClick={() => setActiveTab(i)}
+              style={{
+                flex:1, padding:"10px 16px", background: activeTab===i ? "rgba(220,38,38,0.15)" : "transparent",
+                border: activeTab===i ? "1px solid rgba(220,38,38,0.4)" : "1px solid transparent",
+                borderRadius:8, color: activeTab===i ? "#ef4444" : "#475569",
+                fontFamily:"'DM Mono', monospace", fontSize:12, cursor:"pointer",
+                whiteSpace:"nowrap", letterSpacing:"0.5px",
+                opacity: activeTab===i ? 1 : 0.6,
+              }}>
+              {tab.icon} {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* GIF display */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:32, alignItems:"center", maxWidth:1100, margin:"0 auto" }} className="gp-hero-grid">
+          {/* Left: desc */}
+          <div>
+            <div style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:"#ef4444", letterSpacing:"2px", marginBottom:16 }}>
+              MODULE {String(activeTab + 1).padStart(2,"0")} / {String(FEATURE_TABS.length).padStart(2,"0")}
+            </div>
+            <h3 style={{ fontFamily:"'Syne', sans-serif", fontWeight:800, fontSize:"clamp(24px,3vw,36px)", margin:"0 0 16px", letterSpacing:"-0.5px" }}>
+              {FEATURE_TABS[activeTab].label}
+            </h3>
+            <p style={{ color:"#64748b", fontSize:16, lineHeight:1.8, margin:"0 0 32px" }}>
+              {FEATURE_TABS[activeTab].desc}
+            </p>
+            <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+              {FEATURE_TABS.map((tab, i) => (
+                <div key={i} onClick={() => setActiveTab(i)}
+                  style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 16px", borderRadius:8,
+                    background: activeTab===i ? "rgba(220,38,38,0.08)" : "transparent",
+                    border: activeTab===i ? "1px solid rgba(220,38,38,0.2)" : "1px solid transparent",
+                    cursor:"pointer", transition:"all 0.2s" }}>
+                  <span style={{ fontSize:18 }}>{tab.icon}</span>
+                  <span style={{ fontFamily:"'Syne', sans-serif", fontWeight:600, fontSize:14, color: activeTab===i ? "#fff":"#475569" }}>{tab.label}</span>
+                  {activeTab===i && <span style={{ marginLeft:"auto", color:"#ef4444", fontSize:12 }}>▸</span>}
                 </div>
               ))}
             </div>
           </div>
-        )}
-      </section>
 
-      {/* ── FEATURES ── */}
-      <section style={s.section} aria-label="Features">
-        <div style={s.sectionHeader}>
-          <h2 style={s.sectionTitle}>{l("featuresTitle")}</h2>
-          <p style={s.sectionSubtitle}>{l("featuresSubtitle")}</p>
-        </div>
-        <div style={s.featuresGrid}>
-          {features.map((f, i) => (
-            <article key={i} style={s.featureCard}>
-              <div style={s.featureCardIcon} aria-hidden="true">{f.icon}</div>
-              <h3 style={s.featureCardTitle}>{l(f.titleKey)}</h3>
-              <p style={s.featureCardDesc}>{l(f.descKey)}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {/* ── TESTIMONIALS ── */}
-      <section style={{ ...s.section, background:"rgba(255,255,255,0.01)" }} aria-label="Testimonials">
-        <div style={s.sectionHeader}>
-          <h2 style={s.sectionTitle}>{l("testimonialsTitle")}</h2>
-        </div>
-        <div style={s.testimonialsGrid}>
-          {testimonials.map((t, i) => (
-            <article key={i} style={s.testimonialCard} itemScope itemType="https://schema.org/Review">
-              <div style={{ color:"#ef4444", fontSize:16, marginBottom:12 }} aria-label={`${t.stars} stars`}>{"★".repeat(t.stars)}</div>
-              <p style={s.testimonialText} itemProp="reviewBody">"{l(t.textKey)}"</p>
-              <div style={s.testimonialAuthor} itemProp="author" itemScope itemType="https://schema.org/Person">
-                <div style={s.testimonialAvatar} aria-hidden="true">{l(t.nameKey).charAt(0)}</div>
-                <div>
-                  <div style={s.testimonialName} itemProp="name">{l(t.nameKey)}</div>
-                  <div style={s.testimonialRole}>{l(t.roleKey)}</div>
+          {/* Right: GIF */}
+          <div style={{ position:"relative" }}>
+            {/* Terminal frame */}
+            <div style={{ background:"#0d1626", border:"1px solid rgba(220,38,38,0.2)", borderRadius:16, overflow:"hidden", boxShadow:"0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03)" }}>
+              {/* Terminal bar */}
+              <div style={{ background:"rgba(255,255,255,0.03)", borderBottom:"1px solid rgba(255,255,255,0.06)", padding:"10px 16px", display:"flex", alignItems:"center", gap:8 }}>
+                <div style={{ display:"flex", gap:6 }}>
+                  {["#ef4444","#f59e0b","#22c55e"].map((c,i) => <div key={i} style={{ width:10, height:10, borderRadius:"50%", background:c, opacity:0.6 }}/>)}
+                </div>
+                <span style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:"#334155", marginLeft:8 }}>aigrowthpilot.app / {FEATURE_TABS[activeTab].label.toLowerCase()}</span>
+                <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:4 }}>
+                  <div style={{ width:6, height:6, borderRadius:"50%", background:"#22c55e", animation:"pulse 2s ease infinite" }}/>
+                  <span style={{ fontFamily:"'DM Mono', monospace", fontSize:10, color:"#22c55e", letterSpacing:"1px" }}>LIVE</span>
                 </div>
               </div>
-            </article>
-          ))}
+              {/* GIF */}
+              <img
+                key={activeTab}
+                src={FEATURE_TABS[activeTab].gif}
+                alt={FEATURE_TABS[activeTab].label}
+                style={{ width:"100%", display:"block", aspectRatio:"800/531", objectFit:"cover" }}
+              />
+            </div>
+            {/* Glow */}
+            <div style={{ position:"absolute", inset:-1, borderRadius:16, background:"transparent", boxShadow:"0 0 60px rgba(220,38,38,0.1)", pointerEvents:"none", animation:"glow 3s ease infinite" }}/>
+          </div>
         </div>
       </section>
 
-      {/* ── PRICING TEASER ── */}
-      <section style={s.section} aria-label="Pricing">
-        <div style={s.sectionHeader}>
-          <h2 style={s.sectionTitle}>{l("pricingTitle")}</h2>
-          <p style={s.sectionSubtitle}>{l("pricingSubtitle")}</p>
+      {/* ══ VS COMPETITORS ══ */}
+      <section ref={compareRef} style={{ padding:"clamp(60px,8vh,100px) clamp(20px,5vw,80px)", position:"relative", zIndex:1, background:"rgba(255,255,255,0.01)", borderTop:"1px solid rgba(255,255,255,0.04)", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+        <div style={{ maxWidth:900, margin:"0 auto" }}>
+          <div style={{ textAlign:"center", marginBottom:48 }}>
+            <div style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:"#ef4444", letterSpacing:"3px", marginBottom:12 }}>— HONEST COMPARISON —</div>
+            <h2 style={{ fontFamily:"'Syne', sans-serif", fontWeight:800, fontSize:"clamp(26px,4vw,44px)", margin:0, letterSpacing:"-1px" }}>
+              Why creators are <span style={{ color:"#ef4444" }}>switching</span>
+            </h2>
+            <p style={{ color:"#475569", fontSize:15, margin:"12px 0 0" }}>LinkedIn-only tools are a dead end in 2026.</p>
+          </div>
 
-          {/* Toggle mensuel / annuel */}
-          <div style={{ display:"inline-flex", alignItems:"center", gap:12, marginTop:24 }}>
-            <span style={{ color:!yearly?"#fff":"#475569", fontWeight:700, fontSize:14 }}>Monthly</span>
-            <div style={{ width:48, height:26, background:"rgba(220,38,38,0.3)", border:"1px solid rgba(220,38,38,0.5)", borderRadius:13, cursor:"pointer", position:"relative" }}
-              onClick={() => setYearly(!yearly)}>
-              <div style={{ position:"absolute", top:2, width:20, height:20, background:"#ef4444", borderRadius:"50%", transition:"transform 0.2s", transform: yearly ? "translateX(24px)" : "translateX(2px)", boxShadow:"0 2px 8px rgba(220,38,38,0.5)" }} />
+          <div style={{ overflowX:"auto" }}>
+            <table className="gp-compare-table" style={{ width:"100%", borderCollapse:"collapse", fontFamily:"'DM Mono', monospace", fontSize:13 }}>
+              <thead>
+                <tr>
+                  <th style={{ textAlign:"left", padding:"14px 16px", color:"#475569", fontWeight:500, borderBottom:"1px solid rgba(255,255,255,0.06)", fontSize:11, letterSpacing:"1px" }}>FEATURE</th>
+                  {[
+                    { name:"GrowthPILOT", highlight:true },
+                    { name:"Taplio",      highlight:false },
+                    { name:"Supergrow",   highlight:false },
+                    { name:"MagicPost",   highlight:false },
+                  ].map((col, i) => (
+                    <th key={i} style={{
+                      textAlign:"center", padding:"14px 16px", fontWeight:700, fontSize:12,
+                      borderBottom:"1px solid rgba(255,255,255,0.06)", letterSpacing:"0.5px",
+                      color: col.highlight ? "#ef4444" : "#475569",
+                      background: col.highlight ? "rgba(220,38,38,0.05)" : "transparent",
+                      borderLeft: col.highlight ? "1px solid rgba(220,38,38,0.2)" : "1px solid rgba(255,255,255,0.04)",
+                      borderRight: col.highlight ? "1px solid rgba(220,38,38,0.2)" : "1px solid rgba(255,255,255,0.04)",
+                    }}>{col.name}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {COMPARE.map((row, i) => (
+                  <tr key={i} className="gp-compare-row" style={{ borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+                    <td style={{ padding:"12px 16px", color:"#94a3b8", fontSize:12 }}>{row.feature}</td>
+                    {[row.gp, row.taplio, row.supergrow, row.magicpost].map((val, j) => (
+                      <td key={j} style={{
+                        textAlign:"center", padding:"12px 16px",
+                        background: j===0 ? "rgba(220,38,38,0.04)" : "transparent",
+                        borderLeft: j===0 ? "1px solid rgba(220,38,38,0.15)" : "1px solid rgba(255,255,255,0.03)",
+                        borderRight: j===0 ? "1px solid rgba(220,38,38,0.15)" : "1px solid rgba(255,255,255,0.03)",
+                      }}>
+                        {typeof val === "boolean"
+                          ? <span style={{ color: val ? "#22c55e":"#ef4444", fontSize:16 }}>{val ? "✓":"✕"}</span>
+                          : <span style={{ color: j===0 ? "#ef4444":"#475569", fontWeight:700, fontSize:13 }}>{val}</span>
+                        }
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div style={{ textAlign:"center", marginTop:40 }}>
+            <button onClick={openApp} className="gp-btn-primary" style={{ fontSize:15, padding:"14px 32px" }}>
+              Switch to GrowthPILOT — free →
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ══ PRICING ══ */}
+      <section ref={pricingRef} style={{ padding:"clamp(60px,8vh,100px) clamp(20px,5vw,80px)", position:"relative", zIndex:1, maxWidth:1400, margin:"0 auto" }}>
+        <div style={{ textAlign:"center", marginBottom:48 }}>
+          <div style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:"#ef4444", letterSpacing:"3px", marginBottom:12 }}>— PRICING —</div>
+          <h2 style={{ fontFamily:"'Syne', sans-serif", fontWeight:800, fontSize:"clamp(26px,4vw,44px)", margin:0, letterSpacing:"-1px" }}>
+            Simple, <span style={{ color:"#ef4444" }}>honest</span> pricing
+          </h2>
+          <p style={{ color:"#475569", fontSize:15, margin:"12px 0 0" }}>No hidden credits. No bait-and-switch entry price.</p>
+
+          {/* Toggle */}
+          <div style={{ display:"inline-flex", alignItems:"center", gap:12, marginTop:28, background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:10, padding:"6px 16px" }}>
+            <span style={{ fontFamily:"'DM Mono', monospace", fontSize:12, color: !yearly?"#fff":"#475569" }}>Monthly</span>
+            <div onClick={() => setYearly(!yearly)} style={{ width:44, height:24, background:"rgba(220,38,38,0.3)", border:"1px solid rgba(220,38,38,0.5)", borderRadius:12, cursor:"pointer", position:"relative" }}>
+              <div style={{ position:"absolute", top:2, width:18, height:18, background:"#ef4444", borderRadius:"50%", transition:"transform 0.2s", transform: yearly?"translateX(22px)":"translateX(2px)" }}/>
             </div>
-            <span style={{ color:yearly?"#fff":"#475569", fontWeight:700, fontSize:14 }}>
-              Yearly
-              <span style={{ marginLeft:8, background:"rgba(220,38,38,0.2)", border:"1px solid rgba(220,38,38,0.4)", borderRadius:6, padding:"2px 6px", fontSize:10, color:"#ef4444", fontWeight:800 }}>SAVE 20%</span>
+            <span style={{ fontFamily:"'DM Mono', monospace", fontSize:12, color: yearly?"#fff":"#475569" }}>
+              Yearly <span style={{ background:"rgba(220,38,38,0.2)", border:"1px solid rgba(220,38,38,0.4)", borderRadius:4, padding:"1px 6px", fontSize:10, color:"#ef4444", fontWeight:700, marginLeft:4 }}>-20%</span>
             </span>
           </div>
         </div>
 
-        <div style={{ ...s.pricingGrid, gridTemplateColumns: isMobile ? "1fr" : isTablet ? "repeat(2,1fr)" : "repeat(4,1fr)", maxWidth:1200 }}>
-          {[
-            { name:"Free",     monthly:0,   yearly:0,   color:"#64748b", features:["5 AI generations/mo","1 project","3 analyses"],                                                    cta:l("startFree"),     action:openApp,     popular:false },
-            { name:"Pro",      monthly:19,  yearly:15,  color:"#ef4444", features:["100 AI generations/mo","10 projects","Unlimited analyses","Brand Memory","Multi-format Repurpose"], cta:"Start Pro →",      action:openPricing, popular:true  },
-            { name:"Business", monthly:49,  yearly:39,  color:"#f97316", features:["Unlimited AI generations","Team Console (5 members)","All Pro features","Priority support"],         cta:"Start Business →", action:openPricing, popular:false },
-            { name:"Agency",   monthly:99,  yearly:79,  color:"#8b5cf6", features:["50 client accounts","20 team members","Agency dashboard","Dedicated support"],                       cta:"Start Agency →",   action:openPricing, popular:false },
-          ].map((plan, i) => {
-            const price = yearly ? plan.yearly : plan.monthly;
+        <div className="gp-pricing-grid" style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, maxWidth:1100, margin:"0 auto", alignItems:"start" }}>
+          {PLANS.map((plan, i) => {
+            const price = yearly ? plan.yearlyPrice : plan.price;
             return (
-              <article key={i} style={{ ...s.pricingCard, borderColor:plan.color, transform:plan.popular&&!isMobile?"scale(1.04)":"scale(1)", zIndex:plan.popular?2:1 }}
-                itemScope itemType="https://schema.org/Offer">
-                {plan.popular && <div style={{ ...s.popularBadge, background:plan.color }}>MOST POPULAR</div>}
-                <div style={{ color:plan.color, fontWeight:800, fontSize:13, letterSpacing:"1.5px", marginBottom:8 }} itemProp="name">{plan.name}</div>
-                <div style={{ display:"flex", alignItems:"flex-end", gap:4, marginBottom:4 }}>
-                  <span style={{ fontSize:isMobile?34:38, fontWeight:900, color:"#fff" }} itemProp="price">€{price}</span>
-                  <span style={{ color:"#475569", marginBottom:8 }}>/mo</span>
-                </div>
-                {yearly && price > 0 && (
-                  <div style={{ fontSize:11, color:"#475569", marginBottom:8 }}>Billed €{price * 12}/year</div>
+              <div key={i} className="gp-pricing-card" style={{
+                background:"#0d1626",
+                border:`1px solid ${plan.popular ? plan.color : "rgba(255,255,255,0.07)"}`,
+                borderRadius:16, padding:"28px 20px", position:"relative",
+                boxShadow: plan.popular ? `0 0 40px ${plan.color}22` : "none",
+              }}>
+                {plan.popular && (
+                  <div style={{ position:"absolute", top:-12, left:"50%", transform:"translateX(-50%)", background:plan.color, padding:"4px 14px", borderRadius:20, fontSize:10, fontWeight:800, color:"#fff", fontFamily:"'DM Mono', monospace", letterSpacing:"1px", whiteSpace:"nowrap" }}>
+                    MOST POPULAR
+                  </div>
                 )}
-                <div style={{ borderTop:"1px solid rgba(255,255,255,0.06)", paddingTop:16, marginBottom:20, marginTop:12 }}>
-                  {plan.features.map((f,j) => (
-                    <div key={j} style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
-                      <span style={{ color:plan.color, fontWeight:800 }} aria-hidden="true">✓</span>
-                      <span style={{ color:"#94a3b8", fontSize:13 }}>{f}</span>
+                <div style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:plan.color, letterSpacing:"2px", marginBottom:12 }}>{plan.name.toUpperCase()}</div>
+                <div style={{ display:"flex", alignItems:"baseline", gap:4, marginBottom:20 }}>
+                  <span style={{ fontFamily:"'Syne', sans-serif", fontWeight:800, fontSize:36, color:"#fff" }}>€{price}</span>
+                  <span style={{ color:"#334155", fontSize:13 }}>/mo</span>
+                </div>
+                <div style={{ borderTop:"1px solid rgba(255,255,255,0.06)", paddingTop:20, marginBottom:24, display:"flex", flexDirection:"column", gap:10 }}>
+                  {plan.features.map((f, j) => (
+                    <div key={j} style={{ display:"flex", alignItems:"flex-start", gap:10 }}>
+                      <span style={{ color:plan.color, fontSize:12, marginTop:2, flexShrink:0 }}>✓</span>
+                      <span style={{ color:"#94a3b8", fontSize:13, lineHeight:1.4 }}>{f}</span>
                     </div>
                   ))}
                 </div>
-                <button
-                  style={{
-                    ...s.pricingCta,
-                    background: plan.popular ? `linear-gradient(135deg,${plan.color},#991b1b)` : plan.name === "Agency" ? "linear-gradient(135deg,#8b5cf6,#7c3aed)" : "transparent",
-                    border: plan.popular || plan.name === "Agency" ? "none" : `1px solid ${plan.color}`,
-                    color:"#fff",
-                  }}
-                  onClick={plan.action} aria-label={`${plan.cta} - ${plan.name} plan`}>
+                <button onClick={plan.action} className={plan.popular ? "gp-btn-primary" : "gp-btn-ghost"}
+                  style={{ width:"100%", padding:"12px", fontSize:14,
+                    ...(plan.popular ? { background:`linear-gradient(135deg,${plan.color},#991b1b)` } : {}) }}>
                   {plan.cta}
                 </button>
-              </article>
+              </div>
             );
           })}
         </div>
+
+        <p style={{ textAlign:"center", color:"#334155", fontSize:13, marginTop:24, fontFamily:"'DM Mono', monospace" }}>
+          No credit card required · Cancel anytime · 30-day money back guarantee
+        </p>
       </section>
 
-      {/* ── FAQ ── (nouveau — bon pour le SEO) */}
-      <section style={{ ...s.section, maxWidth:720, margin:"0 auto" }} aria-label="FAQ" itemScope itemType="https://schema.org/FAQPage">
-        <div style={s.sectionHeader}>
-          <h2 style={s.sectionTitle}>FAQ</h2>
+      {/* ══ FAQ ══ */}
+      <section style={{ padding:"clamp(48px,6vh,80px) clamp(20px,5vw,80px)", position:"relative", zIndex:1, maxWidth:720, margin:"0 auto" }}>
+        <div style={{ textAlign:"center", marginBottom:40 }}>
+          <div style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:"#ef4444", letterSpacing:"3px", marginBottom:12 }}>— FAQ —</div>
+          <h2 style={{ fontFamily:"'Syne', sans-serif", fontWeight:800, fontSize:"clamp(24px,3vw,36px)", margin:0, letterSpacing:"-0.5px" }}>Common questions</h2>
         </div>
         {[
-          { q:"What is GrowthPILOT?", a:"GrowthPILOT is an AI-powered content operating system for LinkedIn creators, founders and agencies. It helps you generate, schedule and publish content across LinkedIn, X, Threads and Instagram." },
-          { q:"Is GrowthPILOT free?", a:"Yes, GrowthPILOT has a free plan that includes 5 AI generations per month. No credit card required." },
-          { q:"Which platforms does GrowthPILOT support?", a:"GrowthPILOT supports LinkedIn, X (Twitter), Threads and Instagram Business for direct publishing." },
-          { q:"Can I use GrowthPILOT for my agency?", a:"Yes! The Agency plan supports up to 50 client accounts and 20 team members, with a dedicated agency dashboard." },
+          { q:"What makes GrowthPILOT different from Taplio or Supergrow?", a:"GrowthPILOT is the only tool that publishes directly to 6 platforms: LinkedIn, X, Threads, Instagram, Facebook and TikTok. Every competitor is LinkedIn-only. We also include a viral score AI, real-time trend radar, and Agency mode — all at a lower real price." },
+          { q:"Is there a free plan?", a:"Yes. The free plan includes 5 AI generations per month, 1 project, and basic analytics. No credit card required to start." },
+          { q:"Can I use GrowthPILOT for my agency?", a:"The Agency plan supports 50 client accounts, 20 team members, a dedicated agency dashboard, MRR tracking and PDF invoice export. Built specifically for content agencies." },
+          { q:"Does the AI learn my writing style?", a:"Yes. Brand Memory lets you define your niche, tone, audience, CTA and banned words. The Voice Learning feature analyzes your past posts to match your exact writing style automatically." },
+          { q:"Which languages are supported?", a:"The platform is available in English, French, Spanish, German, Italian and Portuguese. Content can be generated in all 6 languages." },
         ].map((item, i) => (
-          <div key={i} style={{ marginBottom:16, background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:10, padding:"16px 20px" }}
-            itemScope itemProp="mainEntity" itemType="https://schema.org/Question">
-            <h3 style={{ color:"#e2e8f0", fontSize:15, fontWeight:700, margin:"0 0 8px" }} itemProp="name">{item.q}</h3>
-            <div itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
-              <p style={{ color:"#64748b", fontSize:13, lineHeight:1.7, margin:0 }} itemProp="text">{item.a}</p>
-            </div>
-          </div>
+          <details key={i} style={{ marginBottom:8, background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:10, overflow:"hidden" }}>
+            <summary style={{ padding:"16px 20px", cursor:"pointer", fontFamily:"'Syne', sans-serif", fontWeight:600, fontSize:15, color:"#e2e8f0", listStyle:"none", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+              {item.q}
+              <span style={{ color:"#ef4444", flexShrink:0, marginLeft:12 }}>+</span>
+            </summary>
+            <p style={{ padding:"0 20px 16px", color:"#64748b", fontSize:14, lineHeight:1.7, margin:0 }}>{item.a}</p>
+          </details>
         ))}
       </section>
 
-      {/* ── CTA FINAL ── */}
-      <section style={s.ctaSection} aria-label="Call to action">
-        <div style={s.ctaGlow} aria-hidden="true"/>
-        <h2 style={s.ctaTitle}>{l("ctaTitle")}</h2>
-        <p style={s.ctaSubtitle}>{l("ctaSubtitle")}</p>
-        <button style={s.ctaFinal} onClick={openApp}>{l("ctaBtn")}</button>
-        <div style={{ marginTop:16, color:"#334155", fontSize:13 }}>
-          {l("ctaLogin")} <button style={{ background:"none", border:"none", color:"#ef4444", cursor:"pointer", fontWeight:700 }} onClick={openLogin}>{l("login")}</button>
+      {/* ══ CTA FINAL ══ */}
+      <section ref={ctaRef} style={{ padding:"clamp(80px,10vh,120px) clamp(20px,5vw,80px)", textAlign:"center", position:"relative", zIndex:1, overflow:"hidden" }}>
+        {/* Glow bg */}
+        <div style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)", width:600, height:600, background:"radial-gradient(circle, rgba(220,38,38,0.12) 0%, transparent 70%)", pointerEvents:"none" }}/>
+
+        <div className={`gp-fade-up ${ctaVisible ? "visible":""}`}>
+          <div style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:"#ef4444", letterSpacing:"3px", marginBottom:24 }}>— GET STARTED —</div>
+          <h2 style={{ fontFamily:"'Syne', sans-serif", fontWeight:800, fontSize:"clamp(32px,5vw,64px)", margin:"0 0 16px", letterSpacing:"-2px", lineHeight:1.05 }}>
+            Stop posting on<br/><span style={{ color:"#ef4444" }}>one platform.</span>
+          </h2>
+          <p style={{ color:"#475569", fontSize:"clamp(15px,2vw,18px)", margin:"0 0 48px", lineHeight:1.6 }}>
+            Your audience is everywhere. Your content should be too.
+          </p>
+          <button onClick={openApp} className="gp-btn-primary" style={{ fontSize:18, padding:"20px 52px", letterSpacing:"0.5px", animation:"glow 3s ease infinite" }}>
+            Launch your command center — free →
+          </button>
+          <p style={{ color:"#334155", fontSize:13, marginTop:16, fontFamily:"'DM Mono', monospace" }}>
+            No credit card · Ready in 2 minutes
+          </p>
         </div>
       </section>
 
-      {/* ── FOOTER ── */}
-      <footer style={s.footer} role="contentinfo">
-        <div style={s.brand}>
-          <img src={logo} alt="GrowthPILOT" style={{ width:32, height:32, objectFit:"contain" }} width="32" height="32" loading="lazy" />
-          <span style={{ ...s.brandName, fontSize:16 }}>GrowthPILOT</span>
+      {/* ══ FOOTER ══ */}
+      <footer style={{ padding:"32px clamp(20px,5vw,80px)", borderTop:"1px solid rgba(255,255,255,0.05)", display:"flex", flexWrap:"wrap", justifyContent:"space-between", alignItems:"center", gap:16, position:"relative", zIndex:1 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <img src={logo} alt="GrowthPILOT" style={{ width:28, height:28, objectFit:"contain" }} />
+          <span style={{ fontFamily:"'Syne', sans-serif", fontWeight:800, fontSize:16, color:"#fff" }}>
+            Growth<span style={{ color:"#ef4444" }}>PILOT</span>
+          </span>
+          <span style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:"#334155", marginLeft:8 }}>© 2026</span>
         </div>
-        <p style={s.footerTagline}>{l("footerTagline")}</p>
-        <div style={{ display:"flex", gap:16, marginTop:4 }}>
-          <a href="/privacy" style={{ color:"#334155", fontSize:12, textDecoration:"none" }}>Privacy Policy</a>
-          <span style={{ color:"#1e293b" }}>·</span>
-          <a href="mailto:team@aigrowthpilot.app" style={{ color:"#334155", fontSize:12, textDecoration:"none" }}>Contact</a>
+        <div style={{ display:"flex", gap:20, alignItems:"center" }}>
+          <a href="/termsofservice" style={{ fontFamily:"'DM Mono', monospace", color:"#334155", fontSize:12, textDecoration:"none" }}>Terms</a>
+          <a href="/privacy"        style={{ fontFamily:"'DM Mono', monospace", color:"#334155", fontSize:12, textDecoration:"none" }}>Privacy</a>
+          <a href="mailto:team@aigrowthpilot.app" style={{ fontFamily:"'DM Mono', monospace", color:"#334155", fontSize:12, textDecoration:"none" }}>Contact</a>
         </div>
-        <p style={s.footerRights}>{l("footerRights")}</p>
       </footer>
 
     </div>
   );
-}
-
-/* ══ makeStyles ══════════════════════════════════════════════════════════════ */
-function makeStyles(isMobile, isTablet, scrolled) {
-  const px        = isMobile ? 20 : isTablet ? 32 : 48;
-  const sectionPy = isMobile ? 48 : 80;
-
-  return {
-    page: {
-      minHeight:"100vh",
-      background:"linear-gradient(135deg,#020617 0%,#0f172a 50%,#1a0a0a 100%)",
-      color:"white", fontFamily:"Arial, sans-serif", overflowX:"hidden",
-    },
-    nav: {
-      display:"flex", justifyContent:"space-between", alignItems:"center",
-      padding: isMobile ? "14px 20px" : "20px 48px",
-      position:"sticky", top:0, zIndex:100,
-      background: scrolled ? "rgba(2,6,23,0.98)" : "rgba(2,6,23,0.95)",
-      backdropFilter:"blur(12px)",
-      borderBottom: scrolled ? "1px solid rgba(220,38,38,0.2)" : "1px solid rgba(220,38,38,0.1)",
-      transition:"all 0.3s ease",
-      boxShadow: scrolled ? "0 4px 20px rgba(0,0,0,0.3)" : "none",
-    },
-    brand:     { display:"flex", alignItems:"center", gap: isMobile ? 8:12 },
-    navLogo:   { width: isMobile ? 32:40, height: isMobile ? 32:40, objectFit:"contain" },
-    brandName: { fontSize: isMobile ? 16:20, fontWeight:900, fontStyle:"italic", color:"#000", WebkitTextStroke:"1px white", textShadow:"1px 1px 0 #ef4444" },
-    langBtn:   { padding: isMobile ? "8px 10px":"8px 14px", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, color:"#94a3b8", cursor:"pointer", fontSize:12, fontWeight:700 },
-    langMenu:  { position:"absolute", top:44, right:0, background:"#1a2235", border:"1px solid rgba(220,38,38,0.3)", borderRadius:12, overflow:"hidden", zIndex:99999, minWidth:130, boxShadow:"0 20px 60px rgba(0,0,0,0.5)" },
-    langItem:  { width:"100%", padding:"10px 16px", border:"none", cursor:"pointer", textAlign:"left", fontSize:13, fontWeight:600 },
-    navLogin:  { padding:"10px 20px", background:"transparent", border:"1px solid rgba(220,38,38,0.3)", borderRadius:8, color:"#ef4444", cursor:"pointer", fontWeight:600, fontSize:13 },
-    navCta:    { padding:"10px 20px", background:"linear-gradient(135deg,#dc2626,#991b1b)", border:"none", borderRadius:8, color:"white", fontWeight:700, cursor:"pointer", fontSize:13, boxShadow:"0 4px 16px rgba(220,38,38,0.35)" },
-    burgerBtn: { padding:"8px 12px", background:"transparent", border:"1px solid rgba(220,38,38,0.3)", borderRadius:8, color:"#ef4444", cursor:"pointer", fontSize:18, fontWeight:700 },
-    mobileMenu:    { background:"rgba(2,6,23,0.98)", borderBottom:"1px solid rgba(220,38,38,0.2)", padding:"16px 20px", display:"flex", flexDirection:"column", gap:8, position:"sticky", top: isMobile ? 60:80, zIndex:99 },
-    mobileMenuItem:{ width:"100%", padding:"14px 20px", background:"transparent", border:"1px solid rgba(220,38,38,0.25)", borderRadius:10, color:"#ef4444", cursor:"pointer", fontWeight:700, fontSize:15, textAlign:"center" },
-    mobileMenuCta: { background:"linear-gradient(135deg,#dc2626,#991b1b)", border:"none", color:"white", boxShadow:"0 4px 16px rgba(220,38,38,0.4)" },
-    hero: {
-      display: isMobile ? "flex":"grid", flexDirection: isMobile ? "column":undefined,
-      gridTemplateColumns: isTablet ? "1fr":"1.2fr 1fr",
-      gap: isMobile ? 32:48, alignItems:"center",
-      padding:`${isMobile ? 48:80}px ${px}px`,
-      minHeight: isMobile ? "auto":"calc(100vh - 80px)",
-    },
-    heroLeft:  { display:"flex", flexDirection:"column" },
-    heroRight: { display:"flex", alignItems:"center", justifyContent:"center" },
-    badge:     { display:"inline-flex", alignItems:"center", background:"rgba(220,38,38,0.1)", border:"1px solid rgba(220,38,38,0.3)", borderRadius:20, padding:"6px 16px", fontSize:11, fontWeight:700, color:"#ef4444", letterSpacing:"1.5px", marginBottom:24, width:"fit-content" },
-    headline:  { fontSize: isMobile ? 34: isTablet ? 42:52, fontWeight:900, lineHeight:1.1, margin:"0 0 20px" },
-    accent:    { color:"#ef4444" },
-    desc:      { fontSize: isMobile ? 15:17, color:"#64748b", lineHeight:1.7, maxWidth: isMobile ? "100%":480, marginTop:8 },
-    ctaLarge:  { padding: isMobile ? "16px 28px":"18px 36px", background:"linear-gradient(135deg,#dc2626,#991b1b)", border:"none", borderRadius:12, color:"white", fontWeight:800, fontSize: isMobile ? 15:16, cursor:"pointer", letterSpacing:"1px", boxShadow:"0 8px 32px rgba(220,38,38,0.4)", flex: isMobile ? 1:"unset" },
-    ctaOutline:{ padding: isMobile ? "16px 28px":"18px 36px", background:"transparent", border:"1px solid rgba(220,38,38,0.4)", borderRadius:12, color:"#ef4444", fontWeight:700, fontSize: isMobile ? 15:16, cursor:"pointer", flex: isMobile ? 1:"unset" },
-    proof:     { display:"flex", alignItems:"center", gap: isMobile ? 16:24, marginTop:40, paddingTop:32, borderTop:"1px solid rgba(255,255,255,0.06)", flexWrap: isMobile ? "wrap":"nowrap" },
-    proofItem: { display:"flex", flexDirection:"column", gap:4 },
-    proofNum:  { fontSize: isMobile ? 22:28, fontWeight:900, color:"#ef4444" },
-    proofLabel:{ fontSize:12, color:"#475569" },
-    proofDivider:{ width:1, height:36, background:"rgba(255,255,255,0.08)", flexShrink:0 },
-    card:      { background:"linear-gradient(145deg,#1a2235,#111827)", border:"1px solid rgba(220,38,38,0.2)", borderLeft:"3px solid #ef4444", borderRadius:16, padding:"24px 20px", width:"100%", boxShadow:"0 20px 60px rgba(220,38,38,0.1)" },
-    cardHeader:{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 },
-    cardBadge: { color:"#ef4444", fontSize:11, fontWeight:700, letterSpacing:"1.5px" },
-    cardDot:   { width:8, height:8, borderRadius:"50%", background:"#22c55e", boxShadow:"0 0 8px #22c55e" },
-    feature:   { display:"flex", alignItems:"center", gap:12, padding:"10px 0", borderBottom:"1px solid rgba(220,38,38,0.06)" },
-    featureIcon: { fontSize:18, width:32, textAlign:"center" },
-    featureLabel:{ fontSize:13, fontWeight:700, color:"#fff" },
-    featureDesc: { fontSize:11, color:"#475569", marginTop:2 },
-    featureArrow:{ marginLeft:"auto", color:"#ef4444", fontSize:12 },
-    section:   { padding:`${sectionPy}px ${px}px` },
-    sectionHeader:{ textAlign:"center", marginBottom: isMobile ? 32:56 },
-    sectionTitle: { fontSize: isMobile ? 26:36, fontWeight:900, margin:"0 0 16px" },
-    sectionSubtitle:{ fontSize: isMobile ? 14:16, color:"#475569", margin:0 },
-    featuresGrid:{ display:"grid", gridTemplateColumns: isMobile ? "1fr": isTablet ? "repeat(2,1fr)":"repeat(3,1fr)", gap: isMobile ? 16:24, maxWidth:1000, margin:"0 auto" },
-    featureCard: { background:"linear-gradient(145deg,#111827,#0f172a)", border:"1px solid rgba(220,38,38,0.1)", borderRadius:16, padding: isMobile ? 20:28 },
-    featureCardIcon: { fontSize:32, marginBottom:16 },
-    featureCardTitle:{ fontSize: isMobile ? 15:16, fontWeight:800, margin:"0 0 10px", color:"#fff" },
-    featureCardDesc: { fontSize:13, color:"#475569", lineHeight:1.6, margin:0 },
-    testimonialsGrid:{ display:"grid", gridTemplateColumns: isMobile ? "1fr": isTablet ? "repeat(2,1fr)":"repeat(3,1fr)", gap: isMobile ? 16:24, maxWidth:1000, margin:"0 auto" },
-    testimonialCard: { background:"linear-gradient(145deg,#111827,#0f172a)", border:"1px solid rgba(220,38,38,0.1)", borderRadius:16, padding: isMobile ? 20:28 },
-    testimonialText: { color:"#94a3b8", fontSize:14, lineHeight:1.7, margin:"0 0 20px", fontStyle:"italic" },
-    testimonialAuthor:{ display:"flex", alignItems:"center", gap:12 },
-    testimonialAvatar:{ width:40, height:40, borderRadius:"50%", background:"linear-gradient(135deg,#dc2626,#991b1b)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:16, fontWeight:800, color:"#fff", flexShrink:0 },
-    testimonialName:  { fontSize:14, fontWeight:700, color:"#fff" },
-    testimonialRole:  { fontSize:12, color:"#475569" },
-    pricingGrid:{ display:"grid", gridTemplateColumns: isMobile ? "1fr": isTablet ? "repeat(2,1fr)":"repeat(3,1fr)", gap: isMobile ? 16:24, maxWidth:900, margin:"0 auto", alignItems:"center" },
-    pricingCard:{ background:"linear-gradient(145deg,#111827,#0f172a)", border:"1px solid", borderRadius:20, padding: isMobile ? "24px 18px":"28px 24px", position:"relative" },
-    popularBadge:{ position:"absolute", top:-12, left:"50%", transform:"translateX(-50%)", padding:"4px 14px", borderRadius:20, fontSize:10, fontWeight:800, color:"#fff", letterSpacing:"1px", whiteSpace:"nowrap" },
-    pricingCta:{ width:"100%", padding:14, borderRadius:12, fontWeight:800, fontSize:14, cursor:"pointer" },
-    ctaSection:{ padding:`${isMobile ? 64:100}px ${px}px`, textAlign:"center", position:"relative", overflow:"hidden" },
-    ctaGlow:   { position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)", width: isMobile ? 300:600, height: isMobile ? 300:600, background:"radial-gradient(circle,rgba(220,38,38,0.08) 0%,transparent 70%)", pointerEvents:"none" },
-    ctaTitle:  { fontSize: isMobile ? 28:44, fontWeight:900, margin:"0 0 16px", position:"relative" },
-    ctaSubtitle:{ fontSize: isMobile ? 14:16, color:"#475569", margin:"0 0 40px", position:"relative" },
-    ctaFinal:  { padding: isMobile ? "16px 32px":"20px 48px", background:"linear-gradient(135deg,#dc2626,#991b1b)", border:"none", borderRadius:16, color:"white", fontWeight:900, fontSize: isMobile ? 16:18, cursor:"pointer", letterSpacing:"1px", boxShadow:"0 8px 40px rgba(220,38,38,0.5)", position:"relative", width: isMobile ? "100%":"auto" },
-    footer:    { padding:`40px ${px}px`, borderTop:"1px solid rgba(255,255,255,0.05)", textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center", gap:12 },
-    footerTagline:{ color:"#334155", fontSize:13, margin:0 },
-    footerRights: { color:"#1e293b", fontSize:12, margin:0 },
-  };
 }
