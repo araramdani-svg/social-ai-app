@@ -7,7 +7,7 @@ import jwt     from "jsonwebtoken";
 import db      from "../db.js";
 
 const router = express.Router();
-const ADMIN_EMAIL = "admin@growthpilot.com";
+const ADMIN_EMAIL = "admin@growthpilot.admin";
 
 // ─── Auth + Admin middleware ──────────────────────────────────────────────────
 const adminAuth = async (req, res, next) => {
