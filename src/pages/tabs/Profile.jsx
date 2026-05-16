@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { t as tr } from "../../translations.js";
-import { st, PageHeader } from "./shared.js";
+import { st, PageHeader, ConfirmModal } from "./shared.js";
 
 export default function Profile({
   trendsLang, isMobile, token,
@@ -13,6 +14,7 @@ export default function Profile({
   changePassword, changeEmailAddress, deleteAccount,
   setPage, showToast
 }) {
+  const [confirm, setConfirm] = useState(null);
   const getPlanColor = (plan) => plan === "Business" ? "#a855f7" : plan === "Pro" ? "#ef4444" : "#475569";
   const getPlanIcon  = (plan) => plan === "Business" ? "🏢" : plan === "Pro" ? "⚡" : "🆓";
 
@@ -25,14 +27,20 @@ export default function Profile({
   ];
 
   const cancelSubscription = async () => {
-    if (!window.confirm(tr(trendsLang, "profile.cancelConfirm"))) return;
-    try {
-      const res = await fetch("https://social-ai-app-production.up.railway.app/stripe/cancel", {
-        method:"POST", headers:{ Authorization:`Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.success) showToast(tr(trendsLang, "messages.subscriptionCanceled"));
-    } catch { showToast("Error"); }
+    setConfirm({
+      message: tr(trendsLang, "profile.cancelConfirm"),
+      confirmLabel: tr(trendsLang, "profile.cancelSubscription") || "Annuler l'abonnement",
+      onConfirm: async () => {
+        setConfirm(null);
+        try {
+          const res = await fetch("https://social-ai-app-production.up.railway.app/stripe/cancel", {
+            method:"POST", headers:{ Authorization:`Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (data.success) showToast(tr(trendsLang, "messages.subscriptionCanceled"));
+        } catch { showToast("Error"); }
+      }
+    });
   };
 
   const getEmail = () => {
@@ -183,7 +191,11 @@ export default function Profile({
               <div style={{ padding:24, border:"1px solid rgba(220,38,38,0.3)", borderRadius:12, background:"rgba(220,38,38,0.05)" }}>
                 <div style={{ color:"#fff", fontWeight:700, marginBottom:8 }}>{tr(trendsLang, "ui.deleteAccountLabel")}</div>
                 <div style={{ color:"#64748b", fontSize:13, marginBottom:16 }}>{tr(trendsLang, "ui.deleteAccountDesc")}</div>
-                <button style={{ ...st.buttonDanger, margin:0 }} onClick={() => { if(window.confirm("Are you sure? This action is irreversible.")) deleteAccount(); }}>
+                <button style={{ ...st.buttonDanger, margin:0 }} onClick={() => setConfirm({
+                  message: "Are you sure? This action is irreversible. All your data will be permanently deleted.",
+                  confirmLabel: "🗑️ DELETE MY ACCOUNT",
+                  onConfirm: () => { setConfirm(null); deleteAccount(); }
+                })}>
                   🗑️ DELETE MY ACCOUNT
                 </button>
               </div>
@@ -191,6 +203,16 @@ export default function Profile({
           )}
         </div>
       </div>
+
+      {confirm && (
+        <ConfirmModal
+          message={confirm.message}
+          confirmLabel={confirm.confirmLabel}
+          onConfirm={confirm.onConfirm}
+          onCancel={() => setConfirm(null)}
+          danger={true}
+        />
+      )}
     </>
   );
 }
