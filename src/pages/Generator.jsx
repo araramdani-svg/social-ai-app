@@ -349,6 +349,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
         {showOnboarding && token && token !== "guest" && (
           <OnboardingWizard
             token={token}
+            trendsLang={trendsLang}
             onComplete={() => { completeOnboarding(); }}
           />
         )}

@@ -124,7 +124,7 @@ export default function Profile({
                   style={{ ...st.buttonSecondary, margin:0, fontSize:12, padding:"10px 18px", display:"flex", alignItems:"center", gap:8 }}
                   onClick={onShowOnboarding}
                 >
-                  🚀 Revoir l'onboarding
+                  {tr(trendsLang, 'onboarding.reviewOnboarding')}
                 </button>
               </div>
             </div>
