@@ -35,7 +35,7 @@ router.get("/connect", auth, (req, res) => {
     response_type: "code",
     state,
   });
-  const authUrl = `https://api.instagram.com/oauth/authorize?${params.toString()}`;
+  const authUrl = `https://www.instagram.com/oauth/authorize?${params.toString()}`;
   if (req.query.token) { res.redirect(authUrl); } else { res.json({ url: authUrl }); }
 });
 
