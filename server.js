@@ -90,6 +90,7 @@ const corsOptions = {
   origin: ["https://www.aigrowthpilot.app", "http://localhost:5173"],
   credentials: true,
 };
+app.set("trust proxy", 1); // Railway est derrière un proxy
 app.use(cors(corsOptions));
 
 // ⚠️ IMPORTANT : le webhook Stripe doit recevoir le raw body AVANT express.json()
