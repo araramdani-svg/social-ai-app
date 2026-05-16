@@ -185,7 +185,11 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   useEffect(() => {
     if (token && token !== "guest") {
       loadProjects(); loadHistory();
-      if (!localStorage.getItem("gp_onboarded")) setShowOnboarding(true);
+      // Vérifier onboarding_done en DB (multi-device)
+      fetch(`${API}/auth/me`, { headers:{ Authorization:`Bearer ${token}` } })
+        .then(r => r.json())
+        .then(d => { if (d.onboarding_done === false) setShowOnboarding(true); })
+        .catch(() => {});
       fetch(`${API}/stripe/status`,   { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setUserPlan).catch(()=>{});
       fetch(`${API}/linkedin/status`, { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setLinkedinStatus).catch(()=>{});
       fetch(`${API}/threads/status`,  { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setThreadsStatus).catch(()=>{});
@@ -294,7 +298,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   const changePassword    = async () => { if(!newPassword||!confirmPassword) return showProfileMsg("error","Please fill all fields"); if(newPassword!==confirmPassword) return showProfileMsg("error","Passwords do not match"); if(newPassword.length<8) return showProfileMsg("error","Password must be at least 8 characters"); setProfileLoading(true); try{ const r=await fetch(`${API}/auth/change-password`,{ method:"POST",headers:{ "Content-Type":"application/json",Authorization:`Bearer ${token}` },body:JSON.stringify({ currentPassword,newPassword }) }); const d=await r.json(); if(r.ok){ showProfileMsg("success","✓ Password updated successfully"); setCurrentPassword(""); setNewPassword(""); setConfirmPassword(""); } else showProfileMsg("error",d.message||"Failed to update password"); } catch{ showProfileMsg("error","Server error"); } finally{ setProfileLoading(false); } };
   const changeEmailAddress= async () => { if(!newEmail||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) return showProfileMsg("error","Invalid email address"); setProfileLoading(true); try{ const r=await fetch(`${API}/auth/change-email`,{ method:"POST",headers:{ "Content-Type":"application/json",Authorization:`Bearer ${token}` },body:JSON.stringify({ newEmail }) }); const d=await r.json(); if(r.ok){ showProfileMsg("success","✓ Email updated successfully"); setNewEmail(""); } else showProfileMsg("error",d.message||"Failed to update email"); } catch{ showProfileMsg("error","Server error"); } finally{ setProfileLoading(false); } };
   const deleteAccount     = async () => { await api("auth/delete-account",{},"DELETE"); localStorage.removeItem("token"); window.location.reload(); };
-  const completeOnboarding= () => { localStorage.setItem("gp_onboarded","true"); setShowOnboarding(false); showToast(tr(trendsLang,"messages.workspaceReady")); };
+  const completeOnboarding= () => { setShowOnboarding(false); showToast(tr(trendsLang,"messages.workspaceReady")); };
 
   const NAV_TABS   = ["home","dashboard","insights","create","memory","carousel","ghostwrite","autorepost","templates","calendar","scheduler","autopost","analyze","planner","history","publish","team","integrations","trends"];
   const BOTTOM_NAV = [{ key:"home",icon:"🏠" },{ key:"create",icon:"✍️" },{ key:"trends",icon:"🌍" },{ key:"analyze",icon:"📊" },{ key:"profile",icon:"👤" }];
@@ -341,17 +345,12 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
       {/* Main */}
       <main style={{ ...st.main, paddingBottom: isMobile ? 72 : 18 }}>
 
-        {/* Onboarding */}
-        {showOnboarding && (
-          <div style={st.onboardingOverlay}>
-            <div style={{ ...st.onboardingCard, width:isMobile?"calc(100% - 40px)":700, padding:isMobile?32:60 }}>
-              <img src={logo} alt="logo" style={{ width:isMobile?60:90,marginBottom:20 }} />
-              <h1 style={{ fontSize:isMobile?22:28 }}>{tr(trendsLang,"ui.welcomeTitle")}</h1>
-              <p style={{ color:"#94a3b8" }}>{tr(trendsLang,"ui.welcomeSub")}</p>
-              <div style={st.onboardingSteps}><div>1. Define your niche</div><div>2. Create your first project</div><div>3. Generate strategic content</div></div>
-              <button style={st.button} onClick={completeOnboarding}>{tr(trendsLang,"ui.startBuilding")}</button>
-            </div>
-          </div>
+        {/* Onboarding wizard */}
+        {showOnboarding && token && token !== "guest" && (
+          <OnboardingWizard
+            token={token}
+            onComplete={() => { completeOnboarding(); }}
+          />
         )}
 
         {/* Loader */}
@@ -391,7 +390,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
             {tab==="team"         && <Team         {...shared} token={token} userPlan={userPlan?.plan || "Free"} setPage={setPage} projects={projects} autoPosts={autoPosts} scheduledPosts={scheduledPosts} workspace={workspace} />}
             {tab==="trends"       && <Trends       {...shared} trends={trends} trendsNiche={trendsNiche} setTrendsNiche={setTrendsNiche} trendsLoading={trendsLoading} trendsSources={trendsSources} fetchTrends={fetchTrends} useAsTopic={useAsTopic} />}
             {tab==="integrations" && <Integrations {...shared} token={token} post={post} linkedinStatus={linkedinStatus} threadsStatus={threadsStatus} twitterStatus={twitterStatus} instagramStatus={instagramStatus} facebookStatus={facebookStatus} tiktokStatus={tiktokStatus} linkedinPosting={linkedinPosting} threadsPosting={threadsPosting} twitterPosting={twitterPosting} instagramPosting={instagramPosting} facebookPosting={facebookPosting} tiktokPosting={tiktokPosting} connectLinkedin={connectLinkedin} disconnectLinkedin={disconnectLinkedin} postToLinkedin={postToLinkedin} connectThreads={connectThreads} disconnectThreads={disconnectThreads} postToThreads={postToThreads} connectTwitter={connectTwitter} disconnectTwitter={disconnectTwitter} postToTwitter={postToTwitter} connectInstagram={connectInstagram} disconnectInstagram={disconnectInstagram} postToInstagram={postToInstagram} connectFacebook={connectFacebook} disconnectFacebook={disconnectFacebook} postToFacebook={postToFacebook} connectTiktok={connectTiktok} disconnectTiktok={disconnectTiktok} postToTiktok={postToTiktok} showToast={showToast} />}
-            {tab==="profile"      && <Profile      {...shared} token={token} profileSection={profileSection} setProfileSection={setProfileSection} profileMsg={profileMsg} setProfileMsg={setProfileMsg} profileLoading={profileLoading} currentPassword={currentPassword} setCurrentPassword={setCurrentPassword} newPassword={newPassword} setNewPassword={setNewPassword} confirmPassword={confirmPassword} setConfirmPassword={setConfirmPassword} newEmail={newEmail} setNewEmail={setNewEmail} userPlan={userPlan} projects={projects} stats={stats} workspace={workspace} changePassword={changePassword} changeEmailAddress={changeEmailAddress} deleteAccount={deleteAccount} setPage={setPage} showToast={showToast} />}
+            {tab==="profile"      && <Profile      {...shared} token={token} profileSection={profileSection} setProfileSection={setProfileSection} profileMsg={profileMsg} setProfileMsg={setProfileMsg} profileLoading={profileLoading} currentPassword={currentPassword} setCurrentPassword={setCurrentPassword} newPassword={newPassword} setNewPassword={setNewPassword} confirmPassword={confirmPassword} setConfirmPassword={setConfirmPassword} newEmail={newEmail} setNewEmail={setNewEmail} userPlan={userPlan} projects={projects} stats={stats} workspace={workspace} changePassword={changePassword} changeEmailAddress={changeEmailAddress} deleteAccount={deleteAccount} setPage={setPage} showToast={showToast} onShowOnboarding={() => setShowOnboarding(true)} />}
           </motion.div>
         </AnimatePresence>
 

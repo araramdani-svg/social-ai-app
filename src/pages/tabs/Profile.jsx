@@ -4,6 +4,7 @@ import { st, PageHeader, ConfirmModal } from "./shared.js";
 
 export default function Profile({
   trendsLang, isMobile, token,
+  onShowOnboarding,
   profileSection, setProfileSection,
   profileMsg, setProfileMsg, profileLoading,
   currentPassword, setCurrentPassword,
@@ -117,6 +118,14 @@ export default function Profile({
                     <div style={{ color:"#fff", fontSize:14, fontWeight:600 }}>{value}</div>
                   </div>
                 ))}
+              </div>
+              <div style={{ marginTop:16 }}>
+                <button
+                  style={{ ...st.buttonSecondary, margin:0, fontSize:12, padding:"10px 18px", display:"flex", alignItems:"center", gap:8 }}
+                  onClick={onShowOnboarding}
+                >
+                  🚀 Revoir l'onboarding
+                </button>
               </div>
             </div>
           )}

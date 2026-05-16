@@ -198,4 +198,31 @@ router.post("/change-email", authenticateToken, async (req, res) => {
   }
 });
 
+
+// ─── GET /auth/me ─────────────────────────────────────────────────────────────
+router.get("/me", authenticateToken, async (req, res) => {
+  try {
+    const result = await db.query(
+      "SELECT id, email, plan, onboarding_done FROM users WHERE id=$1",
+      [req.user.id]
+    );
+    if (!result.rows.length) return res.status(404).json({ message: "User not found" });
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("Auth me error:", err.message);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// ─── POST /auth/onboarding-done ───────────────────────────────────────────────
+router.post("/onboarding-done", authenticateToken, async (req, res) => {
+  try {
+    await db.query("UPDATE users SET onboarding_done=true WHERE id=$1", [req.user.id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Onboarding done error:", err.message);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 export default router;
