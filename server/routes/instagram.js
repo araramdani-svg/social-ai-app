@@ -31,11 +31,11 @@ router.get("/connect", auth, (req, res) => {
   const params = new URLSearchParams({
     client_id:     IG_APP_ID,
     redirect_uri:  IG_REDIRECT_URI,
-    scope:         "instagram_business_basic,instagram_content_publish,instagram_manage_comments",
+    scope:         "instagram_basic,instagram_content_publishing,pages_show_list,pages_read_engagement,business_management",
     response_type: "code",
     state,
   });
-  const authUrl = `https://api.instagram.com/oauth/authorize?${params.toString()}`;
+  const authUrl = `https://www.facebook.com/dialog/oauth?${params.toString()}`;
   if (req.query.token) { res.redirect(authUrl); } else { res.json({ url: authUrl }); }
 });
 
@@ -49,33 +49,42 @@ router.get("/oauth/callback", async (req, res) => {
   catch { return res.redirect(`${FRONTEND_URL}?instagram=error`); }
 
   try {
-    // Échange code → short-lived token
-    const tokenRes = await fetch("https://api.instagram.com/oauth/access_token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        client_id: IG_APP_ID, client_secret: IG_APP_SECRET,
-        grant_type: "authorization_code", redirect_uri: IG_REDIRECT_URI, code,
-      }).toString(),
-    });
+    // Échange code → user access token via Facebook
+    const tokenRes = await fetch(
+      `https://graph.facebook.com/v19.0/oauth/access_token?` +
+      new URLSearchParams({ client_id: IG_APP_ID, client_secret: IG_APP_SECRET, redirect_uri: IG_REDIRECT_URI, code }).toString()
+    );
     const tokenData = await tokenRes.json();
     if (!tokenData.access_token) return res.redirect(`${FRONTEND_URL}?instagram=error`);
 
-    const shortToken = tokenData.access_token;
-    const igUserId   = tokenData.user_id;
+    const userToken = tokenData.access_token;
 
-    // Échange short-lived → long-lived (60 jours)
-    const longRes  = await fetch(`https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${IG_APP_SECRET}&access_token=${shortToken}`);
+    // Long-lived token (60 jours)
+    const longRes = await fetch(
+      `https://graph.facebook.com/v19.0/oauth/access_token?` +
+      new URLSearchParams({ grant_type: "fb_exchange_token", client_id: IG_APP_ID, client_secret: IG_APP_SECRET, fb_exchange_token: userToken }).toString()
+    );
     const longData = await longRes.json();
-    const accessToken = longData.access_token || shortToken;
+    const accessToken = longData.access_token || userToken;
+
+    // Récupérer le compte Instagram Business lié à la Page Facebook
+    const pagesRes  = await fetch(`https://graph.facebook.com/v19.0/me/accounts?access_token=${accessToken}`);
+    const pagesData = await pagesRes.json();
+    const page      = pagesData.data?.[0];
+    if (!page) return res.redirect(`${FRONTEND_URL}?instagram=error`);
+
+    const igRes  = await fetch(`https://graph.facebook.com/v19.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`);
+    const igData = await igRes.json();
+    const igUserId = igData.instagram_business_account?.id;
+    if (!igUserId) return res.redirect(`${FRONTEND_URL}?instagram=error`);
 
     // Profil Instagram
-    const profileRes  = await fetch(`https://graph.instagram.com/v19.0/${igUserId}?fields=id,username,name&access_token=${accessToken}`);
-    const profile     = await profileRes.json();
+    const profileRes = await fetch(`https://graph.facebook.com/v19.0/${igUserId}?fields=id,username,name&access_token=${page.access_token}`);
+    const profile    = await profileRes.json();
 
     await db.query(
       "UPDATE users SET instagram_access_token=$1, instagram_user_id=$2, instagram_username=$3 WHERE id=$4",
-      [accessToken, igUserId, profile.username || profile.name || null, userId]
+      [page.access_token, igUserId, profile.username || profile.name || null, userId]
     );
 
     res.redirect(`${FRONTEND_URL}?instagram=connected`);
