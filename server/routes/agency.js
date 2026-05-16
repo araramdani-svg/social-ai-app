@@ -58,15 +58,15 @@ router.get("/clients", auth, requireAgency, async (req, res) => {
 
 // ─── POST /agency/clients ─────────────────────────────────────────────────────
 router.post("/clients", auth, requireAgency, async (req, res) => {
-  const { name, email, brand, niche, notes, color } = req.body;
+  const { name, email, brand, niche, notes, color, monthly_rate } = req.body;
   if (!name?.trim()) return res.status(400).json({ error: "Client name required" });
 
   try {
     const result = await db.query(
-      `INSERT INTO agency_clients (agency_id, name, email, brand, niche, notes, color)
-       VALUES ($1,$2,$3,$4,$5,$6,$7)
+      `INSERT INTO agency_clients (agency_id, name, email, brand, niche, notes, color, monthly_rate)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
        RETURNING *`,
-      [req.user.id, name.trim(), email||null, brand||null, niche||null, notes||null, color||"#ef4444"]
+      [req.user.id, name.trim(), email||null, brand||null, niche||null, notes||null, color||"#ef4444", monthly_rate||0]
     );
     res.status(201).json({ client: result.rows[0] });
   } catch (err) {
@@ -77,7 +77,7 @@ router.post("/clients", auth, requireAgency, async (req, res) => {
 
 // ─── PATCH /agency/clients/:id ────────────────────────────────────────────────
 router.patch("/clients/:id", auth, requireAgency, async (req, res) => {
-  const { name, email, brand, niche, notes, color } = req.body;
+  const { name, email, brand, niche, notes, color, monthly_rate } = req.body;
   const fields = [];
   const values = [];
   let i = 1;
@@ -87,7 +87,8 @@ router.patch("/clients/:id", auth, requireAgency, async (req, res) => {
   if (brand !== undefined) { fields.push(`brand=$${i++}`); values.push(brand); }
   if (niche !== undefined) { fields.push(`niche=$${i++}`); values.push(niche); }
   if (notes !== undefined) { fields.push(`notes=$${i++}`); values.push(notes); }
-  if (color !== undefined) { fields.push(`color=$${i++}`); values.push(color); }
+  if (color         !== undefined) { fields.push(`color=$${i++}`);         values.push(color); }
+  if (monthly_rate  !== undefined) { fields.push(`monthly_rate=$${i++}`);  values.push(parseFloat(monthly_rate)||0); }
 
   if (!fields.length) return res.status(400).json({ error: "Nothing to update" });
 
@@ -151,11 +152,17 @@ router.get("/dashboard", auth, requireAgency, async (req, res) => {
       [req.user.id]
     );
 
+    const mrrResult = await db.query(
+      "SELECT COALESCE(SUM(monthly_rate),0)::float AS mrr FROM agency_clients WHERE agency_id=$1",
+      [req.user.id]
+    );
+
     res.json({
       totalClients:    clientsResult.rows[0].total,
       totalPosts:      postsResult.rows[0].total,
       totalEngagement: postsResult.rows[0].total_engagement,
       topClients:      recentResult.rows,
+      mrr:             mrrResult.rows[0].mrr,
     });
   } catch (err) {
     console.error("GET /agency/dashboard:", err.message);
