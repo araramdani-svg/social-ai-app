@@ -10,7 +10,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { t as tr } from "../../translations.js";
-import { PageHeader } from "./shared.js";
+import { PageHeader, ConfirmModal } from "./shared.js";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -44,8 +44,9 @@ export default function Calendar({ trendsLang, isMobile, post, setPost, setTab, 
   const [newPlat,    setNewPlat]   = useState("LinkedIn");
   const [dragging,   setDragging]  = useState(null);
   const [dragOver,   setDragOver]  = useState(null);
-  const [filterPlat, setFilterPlat]= useState("All");
-  const [viewMode,   setViewMode]  = useState("kanban");
+  const [filterPlat,     setFilterPlat]    = useState("All");
+  const [viewMode,       setViewMode]      = useState("kanban");
+  const [confirmDelete,  setConfirmDelete] = useState(null); // id de la carte à supprimer
   const token = localStorage.getItem("gp_token");
 
   const authHeaders = useCallback(() => ({
@@ -320,7 +321,7 @@ export default function Calendar({ trendsLang, isMobile, post, setPost, setTab, 
                         → {tr(trendsLang,`calendar.col${c.id.charAt(0).toUpperCase()+c.id.slice(1)}`)}
                       </button>
                     ))}
-                    <button style={{ ...s.btnGhost, color:"#ef4444", fontSize:9, padding:"4px 8px" }} onClick={() => deleteCard(card.id)}>✕</button>
+                    <button style={{ ...s.btnGhost, color:"#ef4444", fontSize:9, padding:"4px 8px" }} onClick={() => setConfirmDelete(card.id)}>✕</button>
                   </div>
                 </div>
               ))}
@@ -361,6 +362,18 @@ export default function Calendar({ trendsLang, isMobile, post, setPost, setTab, 
           <div style={{ color:"#e2e8f0", fontWeight:700, marginBottom:8 }}>{tr(trendsLang,"calendar.emptyTitle")}</div>
           <div style={{ fontSize:13 }}>{tr(trendsLang,"calendar.emptyDesc")}</div>
         </div>
+      )}
+
+      {/* Confirm suppression carte */}
+      {confirmDelete !== null && (
+        <ConfirmModal
+          message={tr(trendsLang, "calendar.confirmDelete") || "Supprimer cette carte du calendrier ?"}
+          confirmLabel={tr(trendsLang, "ui.delete") || "Supprimer"}
+          cancelLabel={tr(trendsLang, "ui.cancel") || "Annuler"}
+          danger={true}
+          onConfirm={() => { deleteCard(confirmDelete); setConfirmDelete(null); }}
+          onCancel={() => setConfirmDelete(null)}
+        />
       )}
     </div>
   );
