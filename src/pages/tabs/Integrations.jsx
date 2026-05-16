@@ -5,13 +5,16 @@ const API = "https://social-ai-app-production.up.railway.app";
 
 export default function Integrations({
   trendsLang, isMobile, token, post,
-  linkedinStatus,   threadsStatus,   twitterStatus,   instagramStatus,   facebookStatus,
-  linkedinPosting,  threadsPosting,  twitterPosting,  instagramPosting,  facebookPosting,
+  linkedinStatus,   threadsStatus,   twitterStatus,   instagramStatus,
+  linkedinPosting,  threadsPosting,  twitterPosting,  instagramPosting,
   connectLinkedin,  disconnectLinkedin,  postToLinkedin,
   connectThreads,   disconnectThreads,   postToThreads,
   connectTwitter,   disconnectTwitter,   postToTwitter,
   connectInstagram, disconnectInstagram, postToInstagram,
   connectFacebook,  disconnectFacebook,  postToFacebook,
+  facebookStatus,   facebookPosting,
+  connectTiktok,    disconnectTiktok,    postToTiktok,
+  tiktokStatus,     tiktokPosting,
   showToast
 }) {
 
@@ -147,8 +150,17 @@ export default function Integrations({
           badge="NEW"
         />
 
-        {/* TikTok — Coming soon */}
-        <ComingSoonCard icon="🎵" iconBg="#ff0050" name="TikTok" desc={tr(trendsLang,"ui.subTikTok")} />
+        {/* TikTok */}
+        <IntegrationCard
+          icon="🎵" iconBg="#ff0050"
+          name="TikTok" desc={tr(trendsLang,"ui.subTikTok")}
+          status={tiktokStatus} posting={tiktokPosting}
+          connectHref={`${API}/tiktok/connect?token=${encodeURIComponent(token)}`}
+          connectLabel="Connect TikTok"
+          connectedAs={`@${tiktokStatus?.username}`}
+          onPost={postToTiktok} onDisconnect={disconnectTiktok}
+          badge="NEW"
+        />
       </div>
     </>
   );
