@@ -215,7 +215,7 @@ export default function Admin({ token, logout }) {
                     </td>
                     <td style={{ padding:"12px 16px", color:"#94a3b8" }}>{u.post_count || 0}</td>
                     <td style={{ padding:"12px 16px", color:"#64748b", whiteSpace:"nowrap" }}>
-                      {new Date(u.created_at).toLocaleDateString("fr-FR")}
+                      —
                     </td>
                     <td style={{ padding:"12px 16px" }}>
                       {u.stripe_subscription_id

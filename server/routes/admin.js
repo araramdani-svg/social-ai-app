@@ -7,7 +7,7 @@ import jwt     from "jsonwebtoken";
 import db      from "../db.js";
 
 const router = express.Router();
-const ADMIN_EMAIL = "admin@growthpilot.com";
+const ADMIN_EMAIL = "admin@growthpilot.admin";
 
 // ─── Auth + Admin middleware ──────────────────────────────────────────────────
 const adminAuth = async (req, res, next) => {
@@ -71,11 +71,11 @@ router.get("/users", adminAuth, async (req, res) => {
     const [usersRes, countRes] = await Promise.all([
       db.query(
         `SELECT u.id, u.email, u.plan, u.generations_count, u.quota_reset_date,
-                u.linkedin_name, u.created_at, u.stripe_customer_id, u.stripe_subscription_id,
+                u.linkedin_name, u.stripe_customer_id, u.stripe_subscription_id,
                 (SELECT COUNT(*)::int FROM posts p WHERE p.user_id = u.id) AS post_count
          FROM users u
          WHERE ${where}
-         ORDER BY u.created_at DESC
+         ORDER BY u.id DESC
          LIMIT $${i} OFFSET $${i+1}`,
         [...values, limit, offset]
       ),
