@@ -60,6 +60,7 @@ router.post("/login", async (req, res) => {
   const result = await db.query("SELECT * FROM users WHERE email=$1", [email]);
   const user = result.rows[0];
   if (!user) return res.status(400).json({ message: "User not found" });
+  if (user.banned) return res.status(403).json({ message: "Account suspended. Contact support." });
   const valid = await bcrypt.compare(password, user.password);
   if (!valid) return res.status(400).json({ message: "Invalid password" });
   const token = jwt.sign({ id: user.id, email }, JWT_SECRET, { expiresIn: "7d" });

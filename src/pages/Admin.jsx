@@ -10,8 +10,16 @@ const API = "https://social-ai-app-production.up.railway.app";
 const PLANS = ["Free", "Pro", "Business", "Agency"];
 const PLAN_COLORS = { Free:"#64748b", Pro:"#3b82f6", Business:"#f59e0b", Agency:"#8b5cf6" };
 
+const ACTION_LABELS = {
+  edit_user:    { label:"✏️ Édition",      color:"#3b82f6" },
+  ban_user:     { label:"🚫 Banni",        color:"#ef4444" },
+  unban_user:   { label:"✅ Débanni",      color:"#22c55e" },
+  reset_quota:  { label:"↺ Reset quota",  color:"#f59e0b" },
+  delete_user:  { label:"🗑️ Suppression", color:"#ef4444" },
+};
+
 const s = {
-  page:    { minHeight:"100vh", background:"#0a0f1e", color:"#e2e8f0", fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif", padding:"0" },
+  page:    { minHeight:"100vh", background:"#0a0f1e", color:"#e2e8f0", fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" },
   header:  { background:"#0f172a", borderBottom:"1px solid rgba(220,38,38,0.3)", padding:"16px 32px", display:"flex", alignItems:"center", justifyContent:"space-between" },
   content: { padding:"32px", maxWidth:1400, margin:"0 auto" },
   card:    { background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:12, padding:20 },
@@ -20,6 +28,7 @@ const s = {
   btnSm:   { border:"none", borderRadius:6, fontSize:10, fontWeight:700, padding:"5px 10px", cursor:"pointer" },
   label:   { fontSize:10, fontWeight:700, letterSpacing:"1.5px", color:"#64748b", marginBottom:4, display:"block" },
   badge:   (plan) => ({ background:`${PLAN_COLORS[plan] || "#64748b"}20`, border:`1px solid ${PLAN_COLORS[plan] || "#64748b"}40`, borderRadius:20, padding:"2px 8px", fontSize:10, fontWeight:700, color:PLAN_COLORS[plan] || "#64748b" }),
+  tabBtn:  (active) => ({ padding:"10px 20px", background:"transparent", border:"none", borderBottom: active ? "2px solid #ef4444" : "2px solid transparent", color: active ? "#ef4444" : "#475569", fontWeight:700, fontSize:11, letterSpacing:"1px", cursor:"pointer" }),
 };
 
 function StatCard({ label, value, color, sub }) {
@@ -33,8 +42,8 @@ function StatCard({ label, value, color, sub }) {
 }
 
 function EditUserModal({ user, token, onClose, onSave }) {
-  const [plan,  setPlan]  = useState(user.plan || "Free");
-  const [quota, setQuota] = useState(user.generations_count || 0);
+  const [plan,   setPlan]   = useState(user.plan || "Free");
+  const [quota,  setQuota]  = useState(user.generations_count || 0);
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
@@ -57,6 +66,16 @@ function EditUserModal({ user, token, onClose, onSave }) {
     setQuota(0);
   };
 
+  const toggleBan = async () => {
+    await fetch(`${API}/admin/users/${user.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+      body: JSON.stringify({ banned: !user.banned }),
+    });
+    onSave();
+    onClose();
+  };
+
   return (
     <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.8)", zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
       <div style={{ ...s.card, width:"100%", maxWidth:440, background:"#111827", border:"1px solid rgba(220,38,38,0.25)", boxShadow:"0 30px 80px rgba(0,0,0,0.6)" }}>
@@ -67,7 +86,8 @@ function EditUserModal({ user, token, onClose, onSave }) {
 
         <div style={{ color:"#64748b", fontSize:12, marginBottom:20, background:"rgba(255,255,255,0.03)", padding:"10px 14px", borderRadius:8 }}>
           <div style={{ color:"#e2e8f0", fontWeight:700 }}>{user.email}</div>
-          <div style={{ marginTop:4 }}>ID #{user.id} · Joined {new Date(user.created_at).toLocaleDateString("fr-FR")}</div>
+          <div style={{ marginTop:4 }}>ID #{user.id}</div>
+          {user.banned && <div style={{ color:"#ef4444", fontWeight:700, marginTop:6 }}>🚫 Compte suspendu</div>}
         </div>
 
         <span style={s.label}>PLAN</span>
@@ -85,6 +105,10 @@ function EditUserModal({ user, token, onClose, onSave }) {
 
         <div style={{ display:"flex", gap:10 }}>
           <button style={{ flex:1, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, color:"#94a3b8", fontSize:11, fontWeight:700, padding:"10px", cursor:"pointer" }} onClick={onClose}>Annuler</button>
+          <button
+            style={{ ...s.btnSm, padding:"10px 14px", background: user.banned ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)", border: user.banned ? "1px solid rgba(34,197,94,0.4)" : "1px solid rgba(239,68,68,0.4)", color: user.banned ? "#22c55e" : "#ef4444", fontSize:11, borderRadius:8 }}
+            onClick={toggleBan}
+          >{user.banned ? "✅ Débannir" : "🚫 Bannir"}</button>
           <button style={{ ...s.btn, flex:2, opacity:saving?0.7:1 }} onClick={save} disabled={saving}>{saving?"Saving...":"💾 Enregistrer"}</button>
         </div>
       </div>
@@ -92,7 +116,122 @@ function EditUserModal({ user, token, onClose, onSave }) {
   );
 }
 
+// ─── Onglet Historique ────────────────────────────────────────────────────────
+function LogsTab({ token }) {
+  const [logs,  setLogs]  = useState([]);
+  const [pages, setPages] = useState(1);
+  const [page,  setPage]  = useState(1);
+  const [loading, setLoading] = useState(false);
+
+  const fetchLogs = useCallback(async (p = 1) => {
+    setLoading(true);
+    const r = await fetch(`${API}/admin/logs?page=${p}`, { headers:{ Authorization:`Bearer ${token}` } });
+    const d = await r.json();
+    setLogs(d.logs || []);
+    setPages(d.pages || 1);
+    setPage(p);
+    setLoading(false);
+  }, [token]);
+
+  useEffect(() => { fetchLogs(); }, []);
+
+  return (
+    <div>
+      <div style={{ ...s.card, padding:0, overflow:"hidden" }}>
+        <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+          <thead>
+            <tr style={{ background:"rgba(255,255,255,0.03)" }}>
+              {["DATE","ACTION","CIBLE","DÉTAILS"].map(h => (
+                <th key={h} style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"14px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {loading && <tr><td colSpan={4} style={{ textAlign:"center", padding:40, color:"#475569" }}>Chargement...</td></tr>}
+            {!loading && logs.length === 0 && <tr><td colSpan={4} style={{ textAlign:"center", padding:40, color:"#475569" }}>Aucune action enregistrée</td></tr>}
+            {logs.map(log => {
+              const cfg = ACTION_LABELS[log.action] || { label: log.action, color:"#94a3b8" };
+              return (
+                <tr key={log.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+                  <td style={{ padding:"12px 16px", color:"#475569", whiteSpace:"nowrap" }}>
+                    {new Date(log.created_at).toLocaleString("fr-FR")}
+                  </td>
+                  <td style={{ padding:"12px 16px" }}>
+                    <span style={{ background:`${cfg.color}15`, border:`1px solid ${cfg.color}40`, borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:700, color:cfg.color }}>{cfg.label}</span>
+                  </td>
+                  <td style={{ padding:"12px 16px", color:"#94a3b8" }}>{log.target_email || `#${log.target_user_id}` || "—"}</td>
+                  <td style={{ padding:"12px 16px", color:"#64748b", fontSize:11 }}>
+                    {log.details ? JSON.stringify(JSON.parse(log.details), null, 0).slice(0, 80) : "—"}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        {pages > 1 && (
+          <div style={{ display:"flex", justifyContent:"center", gap:8, padding:16, borderTop:"1px solid rgba(255,255,255,0.06)" }}>
+            {Array.from({ length: pages }, (_, i) => i + 1).map(p => (
+              <button key={p} style={{ ...s.btnSm, background:page===p?"rgba(220,38,38,0.15)":"rgba(255,255,255,0.04)", border:`1px solid ${page===p?"rgba(220,38,38,0.4)":"rgba(255,255,255,0.1)"}`, color:page===p?"#ef4444":"#64748b", width:32, height:32 }} onClick={()=>fetchLogs(p)}>{p}</button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Onglet Visites ───────────────────────────────────────────────────────────
+const PAGE_LABELS = { landing:"🏠 Landing", generator:"⚡ App", pricing:"💳 Pricing", auth:"🔑 Auth", other:"📄 Autre" };
+
+function AnalyticsTab({ token }) {
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    fetch(`${API}/admin/analytics`, { headers:{ Authorization:`Bearer ${token}` } })
+      .then(r => r.json()).then(setData).catch(console.error);
+  }, [token]);
+
+  if (!data) return <div style={{ textAlign:"center", padding:60, color:"#475569" }}>Chargement...</div>;
+
+  const maxViews = Math.max(...(data.last7.map(d => d.views)), 1);
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
+      {/* Total */}
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))", gap:12 }}>
+        <StatCard label="VUES TOTALES" value={data.total} color="#60a5fa" />
+        {data.byPage.map(p => (
+          <StatCard key={p.page} label={PAGE_LABELS[p.page] || p.page} value={p.views} color="#94a3b8" />
+        ))}
+      </div>
+
+      {/* Courbe 7 jours */}
+      <div style={{ ...s.card }}>
+        <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px", marginBottom:16 }}>VUES — 7 DERNIERS JOURS</div>
+        {data.last7.length === 0
+          ? <div style={{ color:"#334155", textAlign:"center", padding:"20px 0" }}>Pas encore de données</div>
+          : (
+            <div style={{ display:"flex", gap:8, alignItems:"flex-end", height:100 }}>
+              {data.last7.map(d => (
+                <div key={d.day} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
+                  <div style={{ fontSize:10, color:"#60a5fa", fontWeight:700 }}>{d.views}</div>
+                  <div style={{ width:"100%", background:"rgba(96,165,250,0.15)", border:"1px solid rgba(96,165,250,0.3)", borderRadius:4, height: `${Math.round((d.views / maxViews) * 80)}px`, minHeight:4, transition:"height 0.3s" }} />
+                  <div style={{ fontSize:9, color:"#334155", whiteSpace:"nowrap" }}>
+                    {new Date(d.day).toLocaleDateString("fr-FR", { weekday:"short", day:"numeric" })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        }
+      </div>
+    </div>
+  );
+}
+
+// ─── Composant principal ──────────────────────────────────────────────────────
 export default function Admin({ token, logout }) {
+  const [tab,       setTab]       = useState("users");
   const [stats,     setStats]     = useState(null);
   const [users,     setUsers]     = useState([]);
   const [total,     setTotal]     = useState(0);
@@ -138,6 +277,20 @@ export default function Admin({ token, logout }) {
     }});
   };
 
+  const toggleBan = (u) => {
+    const action = u.banned ? "débannir" : "bannir";
+    setConfirm({ message: `Voulez-vous ${action} ${u.email} ?`, onConfirm: async () => {
+      await fetch(`${API}/admin/users/${u.id}`, {
+        method: "PATCH",
+        headers: { ...headers, "Content-Type":"application/json" },
+        body: JSON.stringify({ banned: !u.banned }),
+      });
+      fetchUsers(page);
+      fetchStats();
+      setConfirm(null);
+    }});
+  };
+
   const resetQuota = async (id) => {
     await fetch(`${API}/admin/users/${id}/reset-quota`, { method:"POST", headers });
     fetchUsers(page);
@@ -158,11 +311,12 @@ export default function Admin({ token, logout }) {
 
         {/* Stats globales */}
         {stats && (
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))", gap:12, marginBottom:32 }}>
-            <StatCard label="UTILISATEURS TOTAL" value={stats.totalUsers} color="#e2e8f0" />
-            <StatCard label="ACTIFS 30J"          value={stats.activeUsers} color="#22c55e" />
-            <StatCard label="POSTS TOTAL"          value={stats.totalPosts} color="#ef4444" />
-            <StatCard label="MRR ESTIMÉ"           value={`€${stats.mrr}`} color="#f59e0b" />
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:12, marginBottom:32 }}>
+            <StatCard label="UTILISATEURS"  value={stats.totalUsers}  color="#e2e8f0" />
+            <StatCard label="ACTIFS 30J"    value={stats.activeUsers} color="#22c55e" />
+            <StatCard label="BANNIS"        value={stats.bannedUsers || 0} color="#ef4444" />
+            <StatCard label="POSTS TOTAL"   value={stats.totalPosts}  color="#94a3b8" />
+            <StatCard label="MRR ESTIMÉ"    value={`€${stats.mrr}`}   color="#f59e0b" />
             <StatCard label="FREE"     value={stats.plans?.Free     || 0} color="#64748b" />
             <StatCard label="PRO"      value={stats.plans?.Pro      || 0} color="#3b82f6" />
             <StatCard label="BUSINESS" value={stats.plans?.Business || 0} color="#f59e0b" />
@@ -170,85 +324,99 @@ export default function Admin({ token, logout }) {
           </div>
         )}
 
-        {/* Filters */}
-        <div style={{ display:"flex", gap:12, marginBottom:20, flexWrap:"wrap", alignItems:"center" }}>
-          <input
-            style={{ ...s.input, width:260 }}
-            placeholder="🔍 Rechercher email ou nom..."
-            value={search}
-            onChange={e=>setSearch(e.target.value)}
-          />
-          <div style={{ display:"flex", gap:8 }}>
-            {["", ...PLANS].map(p => (
-              <button key={p||"all"} style={{ ...s.btnSm, background:planFilter===p?"rgba(220,38,38,0.15)":"rgba(255,255,255,0.04)", border:`1px solid ${planFilter===p?"rgba(220,38,38,0.4)":"rgba(255,255,255,0.1)"}`, color:planFilter===p?"#ef4444":"#64748b", padding:"7px 12px", fontSize:11 }} onClick={()=>setPlanFilter(p)}>{p||"Tous"}</button>
-            ))}
-          </div>
-          <div style={{ marginLeft:"auto", color:"#475569", fontSize:12 }}>{total} utilisateurs</div>
+        {/* Tabs */}
+        <div style={{ display:"flex", borderBottom:"1px solid rgba(255,255,255,0.07)", marginBottom:24 }}>
+          <button style={s.tabBtn(tab==="users")}     onClick={()=>setTab("users")}>👥 Utilisateurs</button>
+          <button style={s.tabBtn(tab==="logs")}      onClick={()=>setTab("logs")}>📋 Historique</button>
+          <button style={s.tabBtn(tab==="analytics")} onClick={()=>setTab("analytics")}>📊 Visites</button>
         </div>
 
-        {/* Table */}
-        <div style={{ ...s.card, padding:0, overflow:"hidden" }}>
-          <div style={{ overflowX:"auto" }}>
-            <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
-              <thead>
-                <tr style={{ background:"rgba(255,255,255,0.03)" }}>
-                  {["ID","EMAIL","PLAN","GÉNÉRATIONS","POSTS","INSCRIPTION","STRIPE","ACTIONS"].map(h => (
-                    <th key={h} style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"14px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)", whiteSpace:"nowrap" }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {loading && (
-                  <tr><td colSpan={8} style={{ textAlign:"center", padding:40, color:"#475569" }}>Chargement...</td></tr>
-                )}
-                {!loading && users.length === 0 && (
-                  <tr><td colSpan={8} style={{ textAlign:"center", padding:40, color:"#475569" }}>Aucun utilisateur trouvé</td></tr>
-                )}
-                {users.map(u => (
-                  <tr key={u.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
-                    <td style={{ padding:"12px 16px", color:"#475569" }}>#{u.id}</td>
-                    <td style={{ padding:"12px 16px" }}>
-                      <div style={{ color:"#e2e8f0", fontWeight:600 }}>{u.email}</div>
-                      {u.linkedin_name && <div style={{ color:"#64748b", fontSize:11 }}>{u.linkedin_name}</div>}
-                    </td>
-                    <td style={{ padding:"12px 16px" }}>
-                      <span style={s.badge(u.plan)}>{u.plan}</span>
-                    </td>
-                    <td style={{ padding:"12px 16px", color:"#94a3b8" }}>
-                      {u.generations_count || 0}
-                    </td>
-                    <td style={{ padding:"12px 16px", color:"#94a3b8" }}>{u.post_count || 0}</td>
-                    <td style={{ padding:"12px 16px", color:"#64748b", whiteSpace:"nowrap" }}>
-                      —
-                    </td>
-                    <td style={{ padding:"12px 16px" }}>
-                      {u.stripe_subscription_id
-                        ? <span style={{ color:"#22c55e", fontSize:11 }}>✓ Actif</span>
-                        : <span style={{ color:"#334155", fontSize:11 }}>—</span>
-                      }
-                    </td>
-                    <td style={{ padding:"12px 16px" }}>
-                      <div style={{ display:"flex", gap:6 }}>
-                        <button style={{ ...s.btnSm, background:"rgba(59,130,246,0.1)", border:"1px solid rgba(59,130,246,0.3)", color:"#60a5fa" }} onClick={()=>setEditUser(u)}>✏️ Edit</button>
-                        <button style={{ ...s.btnSm, background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.3)", color:"#22c55e" }} onClick={()=>resetQuota(u.id)}>↺ Quota</button>
-                        <button style={{ ...s.btnSm, background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", color:"#ef4444" }} onClick={()=>deleteUser(u.id, u.email)}>✕</button>
-                      </div>
-                    </td>
-                  </tr>
+        {/* ── Onglet Users ── */}
+        {tab === "users" && (
+          <>
+            <div style={{ display:"flex", gap:12, marginBottom:20, flexWrap:"wrap", alignItems:"center" }}>
+              <input
+                style={{ ...s.input, width:260 }}
+                placeholder="🔍 Rechercher email ou nom..."
+                value={search}
+                onChange={e=>setSearch(e.target.value)}
+              />
+              <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+                {["", ...PLANS].map(p => (
+                  <button key={p||"all"} style={{ ...s.btnSm, background:planFilter===p?"rgba(220,38,38,0.15)":"rgba(255,255,255,0.04)", border:`1px solid ${planFilter===p?"rgba(220,38,38,0.4)":"rgba(255,255,255,0.1)"}`, color:planFilter===p?"#ef4444":"#64748b", padding:"7px 12px", fontSize:11 }} onClick={()=>setPlanFilter(p)}>{p||"Tous"}</button>
                 ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          {pages > 1 && (
-            <div style={{ display:"flex", justifyContent:"center", gap:8, padding:16, borderTop:"1px solid rgba(255,255,255,0.06)" }}>
-              {Array.from({ length: pages }, (_, i) => i + 1).map(p => (
-                <button key={p} style={{ ...s.btnSm, background:page===p?"rgba(220,38,38,0.15)":"rgba(255,255,255,0.04)", border:`1px solid ${page===p?"rgba(220,38,38,0.4)":"rgba(255,255,255,0.1)"}`, color:page===p?"#ef4444":"#64748b", width:32, height:32 }} onClick={()=>fetchUsers(p)}>{p}</button>
-              ))}
+              </div>
+              <div style={{ marginLeft:"auto", color:"#475569", fontSize:12 }}>{total} utilisateurs</div>
             </div>
-          )}
-        </div>
+
+            <div style={{ ...s.card, padding:0, overflow:"hidden" }}>
+              <div style={{ overflowX:"auto" }}>
+                <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+                  <thead>
+                    <tr style={{ background:"rgba(255,255,255,0.03)" }}>
+                      {["ID","EMAIL","PLAN","GÉNÉRATIONS","POSTS","STRIPE","STATUT","ACTIONS"].map(h => (
+                        <th key={h} style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"14px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)", whiteSpace:"nowrap" }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loading && <tr><td colSpan={8} style={{ textAlign:"center", padding:40, color:"#475569" }}>Chargement...</td></tr>}
+                    {!loading && users.length === 0 && <tr><td colSpan={8} style={{ textAlign:"center", padding:40, color:"#475569" }}>Aucun utilisateur trouvé</td></tr>}
+                    {users.map(u => (
+                      <tr key={u.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)", background: u.banned ? "rgba(239,68,68,0.03)" : "transparent" }}>
+                        <td style={{ padding:"12px 16px", color:"#475569" }}>#{u.id}</td>
+                        <td style={{ padding:"12px 16px" }}>
+                          <div style={{ color: u.banned ? "#ef4444" : "#e2e8f0", fontWeight:600 }}>{u.email}</div>
+                          {u.linkedin_name && <div style={{ color:"#64748b", fontSize:11 }}>{u.linkedin_name}</div>}
+                          {u.banned && <div style={{ color:"#ef4444", fontSize:10, fontWeight:700 }}>🚫 SUSPENDU</div>}
+                        </td>
+                        <td style={{ padding:"12px 16px" }}>
+                          <span style={s.badge(u.plan)}>{u.plan}</span>
+                        </td>
+                        <td style={{ padding:"12px 16px", color:"#94a3b8" }}>{u.generations_count || 0}</td>
+                        <td style={{ padding:"12px 16px", color:"#94a3b8" }}>{u.post_count || 0}</td>
+                        <td style={{ padding:"12px 16px" }}>
+                          {u.stripe_subscription_id
+                            ? <span style={{ color:"#22c55e", fontSize:11 }}>✓ Actif</span>
+                            : <span style={{ color:"#334155", fontSize:11 }}>—</span>}
+                        </td>
+                        <td style={{ padding:"12px 16px" }}>
+                          {u.banned
+                            ? <span style={{ background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:20, padding:"2px 8px", fontSize:10, fontWeight:700, color:"#ef4444" }}>🚫 Banni</span>
+                            : <span style={{ background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.3)", borderRadius:20, padding:"2px 8px", fontSize:10, fontWeight:700, color:"#22c55e" }}>✓ Actif</span>}
+                        </td>
+                        <td style={{ padding:"12px 16px" }}>
+                          <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+                            <button style={{ ...s.btnSm, background:"rgba(59,130,246,0.1)", border:"1px solid rgba(59,130,246,0.3)", color:"#60a5fa" }} onClick={()=>setEditUser(u)}>✏️</button>
+                            <button style={{ ...s.btnSm, background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.3)", color:"#22c55e" }} onClick={()=>resetQuota(u.id)}>↺</button>
+                            <button
+                              style={{ ...s.btnSm, background: u.banned ? "rgba(34,197,94,0.1)" : "rgba(245,158,11,0.1)", border: u.banned ? "1px solid rgba(34,197,94,0.3)" : "1px solid rgba(245,158,11,0.3)", color: u.banned ? "#22c55e" : "#f59e0b" }}
+                              onClick={()=>toggleBan(u)}
+                            >{u.banned ? "✅" : "🚫"}</button>
+                            <button style={{ ...s.btnSm, background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", color:"#ef4444" }} onClick={()=>deleteUser(u.id, u.email)}>🗑️</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {pages > 1 && (
+                <div style={{ display:"flex", justifyContent:"center", gap:8, padding:16, borderTop:"1px solid rgba(255,255,255,0.06)" }}>
+                  {Array.from({ length: pages }, (_, i) => i + 1).map(p => (
+                    <button key={p} style={{ ...s.btnSm, background:page===p?"rgba(220,38,38,0.15)":"rgba(255,255,255,0.04)", border:`1px solid ${page===p?"rgba(220,38,38,0.4)":"rgba(255,255,255,0.1)"}`, color:page===p?"#ef4444":"#64748b", width:32, height:32 }} onClick={()=>fetchUsers(p)}>{p}</button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* ── Onglet Historique ── */}
+        {tab === "logs" && <LogsTab token={token} />}
+
+        {/* ── Onglet Visites ── */}
+        {tab === "analytics" && <AnalyticsTab token={token} />}
       </div>
 
       {editUser && <EditUserModal user={editUser} token={token} onClose={()=>setEditUser(null)} onSave={()=>{ fetchUsers(page); fetchStats(); }} />}

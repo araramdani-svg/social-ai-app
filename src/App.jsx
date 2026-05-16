@@ -31,6 +31,12 @@ function App() {
   const setPage = (p) => {
     setPageState(p);
     sessionStorage.setItem("gp_page", p);
+    // Tracking visites (silencieux)
+    fetch("https://social-ai-app-production.up.railway.app/analytics/track", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ page: p }),
+    }).catch(() => {});
   };
 
   const setLang = (l) => {

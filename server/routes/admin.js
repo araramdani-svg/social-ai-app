@@ -22,14 +22,26 @@ const adminAuth = async (req, res, next) => {
   } catch { return res.status(403).json({ message: "Invalid token" }); }
 };
 
-// ─── GET /admin/stats ─────────────────────────────────────────────────────────
+// ─── Helper : log action admin ────────────────────────────────────────────────
+const logAction = async (adminId, action, targetId = null, details = null) => {
+  try {
+    await db.query(
+      `INSERT INTO admin_logs (admin_id, action, target_user_id, details, created_at)
+       VALUES ($1, $2, $3, $4, NOW())`,
+      [adminId, action, targetId, details ? JSON.stringify(details) : null]
+    );
+  } catch (err) {
+    console.error("admin log error:", err.message);
+  }
+};
 router.get("/stats", adminAuth, async (req, res) => {
   try {
-    const [usersRes, plansRes, postsRes, activeRes] = await Promise.all([
+    const [usersRes, plansRes, postsRes, activeRes, bannedRes] = await Promise.all([
       db.query("SELECT COUNT(*)::int AS total FROM users WHERE email != $1", [ADMIN_EMAIL]),
       db.query(`SELECT plan, COUNT(*)::int AS count FROM users WHERE email != $1 GROUP BY plan ORDER BY count DESC`, [ADMIN_EMAIL]),
       db.query("SELECT COUNT(*)::int AS total FROM posts"),
       db.query(`SELECT COUNT(DISTINCT user_id)::int AS total FROM posts WHERE created_at > NOW() - INTERVAL '30 days'`),
+      db.query("SELECT COUNT(*)::int AS total FROM users WHERE banned = true AND email != $1", [ADMIN_EMAIL]),
     ]);
 
     const planCounts = {};
@@ -44,6 +56,7 @@ router.get("/stats", adminAuth, async (req, res) => {
       totalUsers:   usersRes.rows[0].total,
       totalPosts:   postsRes.rows[0].total,
       activeUsers:  activeRes.rows[0].total,
+      bannedUsers:  bannedRes.rows[0].total,
       mrr,
       plans: planCounts,
     });
@@ -72,6 +85,7 @@ router.get("/users", adminAuth, async (req, res) => {
       db.query(
         `SELECT u.id, u.email, u.plan, u.generations_count, u.quota_reset_date,
                 u.linkedin_name, u.stripe_customer_id, u.stripe_subscription_id,
+                u.banned,
                 (SELECT COUNT(*)::int FROM posts p WHERE p.user_id = u.id) AS post_count
          FROM users u
          WHERE ${where}
@@ -114,6 +128,7 @@ router.patch("/users/:id", adminAuth, async (req, res) => {
       values
     );
     if (!result.rows.length) return res.status(404).json({ error: "User not found" });
+    await logAction(req.user.id, banned !== undefined ? (banned ? "ban_user" : "unban_user") : "edit_user", req.params.id, { plan, generations_count, banned });
     res.json({ user: result.rows[0] });
   } catch (err) {
     console.error("Admin patch user error:", err.message);
@@ -128,6 +143,7 @@ router.post("/users/:id/reset-quota", adminAuth, async (req, res) => {
       "UPDATE users SET generations_count=0, quota_reset_date=NOW() WHERE id=$1",
       [req.params.id]
     );
+    await logAction(req.user.id, "reset_quota", req.params.id);
     res.json({ success: true });
   } catch (err) {
     console.error("Reset quota error:", err.message);
@@ -142,10 +158,59 @@ router.delete("/users/:id", adminAuth, async (req, res) => {
     await db.query("DELETE FROM team_members WHERE owner_id=$1 OR member_id=$1", [req.params.id]);
     await db.query("DELETE FROM agency_clients WHERE agency_id=$1", [req.params.id]);
     await db.query("DELETE FROM users WHERE id=$1", [req.params.id]);
+    await logAction(req.user.id, "delete_user", req.params.id);
     res.json({ success: true });
   } catch (err) {
     console.error("Admin delete user error:", err.message);
     res.status(500).json({ error: "Failed to delete user" });
+  }
+});
+
+// ─── GET /admin/logs ──────────────────────────────────────────────────────────
+router.get("/logs", adminAuth, async (req, res) => {
+  try {
+    const { page = 1 } = req.query;
+    const limit  = 30;
+    const offset = (page - 1) * limit;
+    const [logsRes, countRes] = await Promise.all([
+      db.query(
+        `SELECT l.*, u.email AS target_email
+         FROM admin_logs l
+         LEFT JOIN users u ON u.id = l.target_user_id
+         ORDER BY l.created_at DESC
+         LIMIT $1 OFFSET $2`,
+        [limit, offset]
+      ),
+      db.query("SELECT COUNT(*)::int AS total FROM admin_logs"),
+    ]);
+    res.json({ logs: logsRes.rows, total: countRes.rows[0].total, pages: Math.ceil(countRes.rows[0].total / limit) });
+  } catch (err) {
+    console.error("Admin logs error:", err.message);
+    res.status(500).json({ error: "Failed to fetch logs" });
+  }
+});
+
+// ─── GET /admin/analytics ─────────────────────────────────────────────────────
+router.get("/analytics", adminAuth, async (req, res) => {
+  try {
+    const [totalRes, byPageRes, last7Res] = await Promise.all([
+      db.query("SELECT COUNT(*)::int AS total FROM page_views"),
+      db.query(`SELECT page, COUNT(*)::int AS views FROM page_views GROUP BY page ORDER BY views DESC`),
+      db.query(
+        `SELECT DATE(created_at) AS day, COUNT(*)::int AS views
+         FROM page_views
+         WHERE created_at > NOW() - INTERVAL '7 days'
+         GROUP BY day ORDER BY day ASC`
+      ),
+    ]);
+    res.json({
+      total:   totalRes.rows[0].total,
+      byPage:  byPageRes.rows,
+      last7:   last7Res.rows,
+    });
+  } catch (err) {
+    console.error("Admin analytics error:", err.message);
+    res.status(500).json({ error: "Failed to fetch analytics" });
   }
 });
 
