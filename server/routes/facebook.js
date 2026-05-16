@@ -29,7 +29,7 @@ router.get("/connect", auth, (req, res) => {
   const params = new URLSearchParams({
     client_id:     FB_APP_ID,
     redirect_uri:  FB_REDIRECT_URI,
-    scope:         "pages_show_list,pages_read_engagement,pages_manage_posts,publish_to_groups",
+    scope:         "pages_show_list,pages_read_engagement,pages_manage_posts",
     response_type: "code",
     state,
   });
