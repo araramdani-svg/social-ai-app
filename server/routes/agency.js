@@ -42,8 +42,7 @@ const requireAgency = async (req, res, next) => {
 router.get("/clients", auth, requireAgency, async (req, res) => {
   try {
     const result = await db.query(
-      `SELECT ac.*,
-        (SELECT COUNT(*) FROM posts p WHERE p.project_name = ac.name) AS post_count
+      `SELECT ac.*, 0 AS post_count
        FROM agency_clients ac
        WHERE ac.agency_id = $1
        ORDER BY ac.created_at DESC`,
@@ -142,12 +141,10 @@ router.get("/dashboard", auth, requireAgency, async (req, res) => {
     );
 
     const recentResult = await db.query(
-      `SELECT ac.name, ac.color, COUNT(p.id)::int AS posts
+      `SELECT ac.name, ac.color, 0 AS posts
        FROM agency_clients ac
-       LEFT JOIN posts p ON p.project_name = ac.name AND p.user_id = $1
        WHERE ac.agency_id = $1
-       GROUP BY ac.id, ac.name, ac.color
-       ORDER BY posts DESC
+       ORDER BY ac.created_at DESC
        LIMIT 5`,
       [req.user.id]
     );
