@@ -31,11 +31,11 @@ router.get("/connect", auth, (req, res) => {
   const params = new URLSearchParams({
     client_id:     IG_APP_ID,
     redirect_uri:  IG_REDIRECT_URI,
-    scope: "pages_show_list,pages_read_engagement,business_management",
+    scope: "instagram_business_basic,instagram_content_publish",
     response_type: "code",
     state,
   });
-  const authUrl = `https://www.facebook.com/dialog/oauth?${params.toString()}`;
+  const authUrl = `https://api.instagram.com/oauth/authorize?${params.toString()}`;
   if (req.query.token) { res.redirect(authUrl); } else { res.json({ url: authUrl }); }
 });
 
