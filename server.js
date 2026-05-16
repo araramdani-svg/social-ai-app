@@ -84,7 +84,14 @@ import analyticsRouter         from "./server/routes/analytics.js";
 
 const app = express();
 
-app.use(cors());
+// ⚠️ CORS doit etre avant tout le reste (rate limiters inclus)
+// sinon les reponses 429 n ont pas le header Access-Control-Allow-Origin
+const corsOptions = {
+  origin: ["https://www.aigrowthpilot.app", "http://localhost:5173"],
+  credentials: true,
+};
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // preflight explicite sur toutes les routes
 
 // ⚠️ IMPORTANT : le webhook Stripe doit recevoir le raw body AVANT express.json()
 app.use("/stripe/webhook", express.raw({ type: "application/json" }));
