@@ -138,7 +138,7 @@ function App() {
 
   const handleLoginSuccess = (newToken, email) => {
     setToken(newToken);
-    if (email === "admin@growthpilot.admin") {
+    if (email === "admin@growthpilot.com") {
       setPage("admin");
     } else {
       setPage("generator");
