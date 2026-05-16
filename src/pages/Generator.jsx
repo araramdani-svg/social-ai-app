@@ -124,6 +124,8 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   const [threadsPosting,  setThreadsPosting]  = useState(false);
   const [twitterPosting,  setTwitterPosting]  = useState(false);
   const [instagramPosting,setInstagramPosting]= useState(false);
+  const [facebookStatus,  setFacebookStatus]  = useState({ connected:false, userName:null, pageName:null });
+  const [facebookPosting, setFacebookPosting] = useState(false);
   const [userPlan,        setUserPlan]        = useState({ plan:"Free", interval:null });
 
   /* ── Trends ── */
@@ -187,11 +189,13 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
       fetch(`${API}/threads/status`,  { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setThreadsStatus).catch(()=>{});
       fetch(`${API}/twitter/status`,    { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setTwitterStatus).catch(()=>{});
       fetch(`${API}/instagram/status`, { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setInstagramStatus).catch(()=>{});
+      fetch(`${API}/facebook/status`,  { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setFacebookStatus).catch(()=>{});
     }
     const params = new URLSearchParams(window.location.search);
     if (params.get("linkedin")==="connected") { window.history.replaceState({},""," /"); fetch(`${API}/linkedin/status`,{ headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setLinkedinStatus).catch(()=>{}); }
     if (params.get("twitter")   ==="connected") { window.history.replaceState({},"", "/"); fetch(`${API}/twitter/status`,    { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setTwitterStatus).catch(()=>{}); }
     if (params.get("instagram") ==="connected") { window.history.replaceState({},"", "/"); fetch(`${API}/instagram/status`, { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setInstagramStatus).catch(()=>{}); }
+    if (params.get("facebook")  ==="connected") { window.history.replaceState({},"", "/"); fetch(`${API}/facebook/status`,  { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setFacebookStatus).catch(()=>{}); }
     if (params.get("threads") ==="connected") { window.history.replaceState({},""," /"); fetch(`${API}/threads/status`, { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setThreadsStatus).catch(()=>{}); }
     const handleOAuth = (e) => {
       if (e.detail==="linkedin") fetch(`${API}/linkedin/status`,{ headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setLinkedinStatus).catch(()=>{});
@@ -254,6 +258,9 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   const autoPublish    = () => { if(!post) return; setAutoPosts(p=>[{ platform:autoPlatform,content:post.slice(0,80)+"...",status:"Scheduled",date:new Date().toLocaleString() },...p]); setTimeout(()=>setAutoPosts(p=>p.map((x,i)=>i===0?{ ...x,status:Math.random()>0.2?"Sent":"Failed" }:x)),4000); };
   const fetchTrends    = async (niche,lang) => { const sl=lang||trendsLang; setTrendsLoading(true); try{ const r=await fetch(`${API}/scraping/trends?niche=${niche}&lang=${sl}`,{ headers:{ Authorization:`Bearer ${token}` } }); const d=await r.json(); setTrends(d.trends||[]); setTrendsSources(d.sources||{}); } catch{ showToast(tr(trendsLang,"messages.fetchTrendsFailed")); } finally{ setTrendsLoading(false); } };
   const useAsTopic     = (title) => { setTab("create"); setTopic(title.slice(0,80)); showToast(tr(trendsLang,"messages.topicImported")); };
+  const connectFacebook    = () => { window.location.href=`${API}/facebook/connect?token=${encodeURIComponent(token)}`; };
+  const disconnectFacebook = async () => { await fetch(`${API}/facebook/disconnect`,{ method:"DELETE",headers:{ Authorization:`Bearer ${token}` } }); setFacebookStatus({ connected:false, userName:null, pageName:null }); };
+  const postToFacebook     = async () => { if(!post) return; setFacebookPosting(true); try{ const r=await fetch(`${API}/facebook/post`,{ method:"POST",headers:{ "Content-Type":"application/json",Authorization:`Bearer ${token}` },body:JSON.stringify({ message:post }) }); const d=await r.json(); if(d.success){ showToast("✓ Published on Facebook!"); } else showToast("❌ Facebook post failed"); } catch{ showToast("❌ Facebook post failed"); } finally{ setFacebookPosting(false); } };
   const connectInstagram    = () => { window.location.href=`${API}/instagram/connect?token=${encodeURIComponent(token)}`; };
   const disconnectInstagram = async () => { await fetch(`${API}/instagram/disconnect`,{ method:"DELETE",headers:{ Authorization:`Bearer ${token}` } }); setInstagramStatus({ connected:false, username:null }); };
   const postToInstagram     = async () => {
@@ -376,7 +383,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
             {tab==="history"      && <History      {...shared} history={history} projects={projects} loadHistory={loadHistory} setPost={setPost} setTab={setTab} />}
             {tab==="team"         && <Team         {...shared} token={token} userPlan={userPlan?.plan || "Free"} setPage={setPage} projects={projects} autoPosts={autoPosts} scheduledPosts={scheduledPosts} workspace={workspace} />}
             {tab==="trends"       && <Trends       {...shared} trends={trends} trendsNiche={trendsNiche} setTrendsNiche={setTrendsNiche} trendsLoading={trendsLoading} trendsSources={trendsSources} fetchTrends={fetchTrends} useAsTopic={useAsTopic} />}
-            {tab==="integrations" && <Integrations {...shared} token={token} post={post} linkedinStatus={linkedinStatus} threadsStatus={threadsStatus} twitterStatus={twitterStatus} instagramStatus={instagramStatus} linkedinPosting={linkedinPosting} threadsPosting={threadsPosting} twitterPosting={twitterPosting} instagramPosting={instagramPosting} connectLinkedin={connectLinkedin} disconnectLinkedin={disconnectLinkedin} postToLinkedin={postToLinkedin} connectThreads={connectThreads} disconnectThreads={disconnectThreads} postToThreads={postToThreads} connectTwitter={connectTwitter} disconnectTwitter={disconnectTwitter} postToTwitter={postToTwitter} connectInstagram={connectInstagram} disconnectInstagram={disconnectInstagram} postToInstagram={postToInstagram} showToast={showToast} />}
+            {tab==="integrations" && <Integrations {...shared} token={token} post={post} linkedinStatus={linkedinStatus} threadsStatus={threadsStatus} twitterStatus={twitterStatus} instagramStatus={instagramStatus} facebookStatus={facebookStatus} linkedinPosting={linkedinPosting} threadsPosting={threadsPosting} twitterPosting={twitterPosting} instagramPosting={instagramPosting} facebookPosting={facebookPosting} connectLinkedin={connectLinkedin} disconnectLinkedin={disconnectLinkedin} postToLinkedin={postToLinkedin} connectThreads={connectThreads} disconnectThreads={disconnectThreads} postToThreads={postToThreads} connectTwitter={connectTwitter} disconnectTwitter={disconnectTwitter} postToTwitter={postToTwitter} connectInstagram={connectInstagram} disconnectInstagram={disconnectInstagram} postToInstagram={postToInstagram} connectFacebook={connectFacebook} disconnectFacebook={disconnectFacebook} postToFacebook={postToFacebook} showToast={showToast} />}
             {tab==="profile"      && <Profile      {...shared} token={token} profileSection={profileSection} setProfileSection={setProfileSection} profileMsg={profileMsg} setProfileMsg={setProfileMsg} profileLoading={profileLoading} currentPassword={currentPassword} setCurrentPassword={setCurrentPassword} newPassword={newPassword} setNewPassword={setNewPassword} confirmPassword={confirmPassword} setConfirmPassword={setConfirmPassword} newEmail={newEmail} setNewEmail={setNewEmail} userPlan={userPlan} projects={projects} stats={stats} workspace={workspace} changePassword={changePassword} changeEmailAddress={changeEmailAddress} deleteAccount={deleteAccount} setPage={setPage} showToast={showToast} />}
           </motion.div>
         </AnimatePresence>
