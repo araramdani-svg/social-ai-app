@@ -21,6 +21,7 @@ import agencyRouter from "./server/routes/agency.js";
 import instagramRouter from "./server/routes/instagram.js";
 import facebookRouter from "./server/routes/facebook.js";
 import tiktokRouter from "./server/routes/tiktok.js";
+import adminRouter from "./server/routes/admin.js";
 
 const app = express();
 
@@ -47,6 +48,7 @@ app.use("/agency", agencyRouter);
 app.use("/instagram", instagramRouter);
 app.use("/facebook", facebookRouter);
 app.use("/tiktok", tiktokRouter);
+app.use("/admin", adminRouter);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

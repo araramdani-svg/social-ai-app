@@ -59,7 +59,7 @@ export default function Auth({ loginSuccess }) {
         } catch {}
       }
 
-      loginSuccess(data.token);
+      loginSuccess(data.token, email);
 
     } catch {
       setError("Server unavailable");

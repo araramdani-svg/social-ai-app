@@ -4,6 +4,7 @@ import Generator from "./pages/Generator";
 import Auth      from "./pages/Auth";
 import Pricing   from "./pages/Pricing";
 import { Toast } from "./pages/tabs/shared.js";
+import Admin    from "./pages/Admin";
 
 /* ── Hook breakpoint ── */
 function useWindowWidth() {
@@ -135,10 +136,14 @@ function App() {
     setPage("landing");
   };
 
-  const handleLoginSuccess = (newToken) => {
+  const handleLoginSuccess = (newToken, email) => {
     setToken(newToken);
-    setPage("generator");
-    showToast("✅ Welcome back!", "success");
+    if (email === "admin@growthpilot.admin") {
+      setPage("admin");
+    } else {
+      setPage("generator");
+      showToast("✅ Welcome back!", "success");
+    }
   };
 
   /* ── Boutons flottants ── */
@@ -212,6 +217,10 @@ function App() {
 
       {page === "pricing" && (
         <Pricing token={token} openLogin={() => setPage("auth")} openApp={() => setPage("generator")} />
+      )}
+
+      {page === "admin" && (
+        <Admin token={token} logout={logout} />
       )}
 
       {page === "generator" && (
