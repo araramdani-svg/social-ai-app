@@ -3,6 +3,7 @@
 // Accessible uniquement avec admin@growthpilot.admin
 
 import { useState, useEffect, useCallback } from "react";
+import { ConfirmModal } from "./tabs/shared.js";
 
 const API = "https://social-ai-app-production.up.railway.app";
 
@@ -101,6 +102,7 @@ export default function Admin({ token, logout }) {
   const [planFilter,setPlanFilter]= useState("");
   const [loading,   setLoading]   = useState(false);
   const [editUser,  setEditUser]  = useState(null);
+  const [confirm,   setConfirm]   = useState(null);
 
   const headers = { Authorization:`Bearer ${token}` };
 
@@ -127,11 +129,13 @@ export default function Admin({ token, logout }) {
   useEffect(() => { fetchStats(); fetchUsers(); }, []);
   useEffect(() => { fetchUsers(1); }, [search, planFilter]);
 
-  const deleteUser = async (id, email) => {
-    if (!window.confirm(`Supprimer définitivement ${email} ?`)) return;
-    await fetch(`${API}/admin/users/${id}`, { method:"DELETE", headers });
-    fetchUsers(page);
-    fetchStats();
+  const deleteUser = (id, email) => {
+    setConfirm({ message: `Supprimer définitivement ${email} ?`, onConfirm: async () => {
+      await fetch(`${API}/admin/users/${id}`, { method:"DELETE", headers });
+      fetchUsers(page);
+      fetchStats();
+      setConfirm(null);
+    }});
   };
 
   const resetQuota = async (id) => {
@@ -248,6 +252,7 @@ export default function Admin({ token, logout }) {
       </div>
 
       {editUser && <EditUserModal user={editUser} token={token} onClose={()=>setEditUser(null)} onSave={()=>{ fetchUsers(page); fetchStats(); }} />}
+      {confirm && <ConfirmModal message={confirm.message} onConfirm={confirm.onConfirm} onCancel={()=>setConfirm(null)} />}
     </div>
   );
 }

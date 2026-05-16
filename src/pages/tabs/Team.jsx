@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { t as tr } from "../../translations.js";
-import { st, PageHeader } from "./shared.js";
+import { st, PageHeader, ConfirmModal } from "./shared.js";
 
 const API = "https://social-ai-app-production.up.railway.app";
 const MAX_MEMBERS_BUSINESS = 5;
@@ -137,7 +137,7 @@ function InviteModal({ token, onClose, onSuccess }) {
 
 /* ── Add Client Modal ─────────────────────────────────────────────────────── */
 function AddClientModal({ token, onClose, onSuccess, editClient }) {
-  const [form,    setForm]    = useState({ name:"", email:"", brand:"", niche:"", notes:"", color:"#ef4444", monthly_rate:0, ...editClient });
+  const [form,    setForm]    = useState({ name:"", email:"", brand:"", niche:"", notes:"", color:"#ef4444", ...editClient });
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState("");
   const headers = { "Content-Type":"application/json", Authorization:`Bearer ${token}` };
@@ -183,9 +183,6 @@ function AddClientModal({ token, onClose, onSuccess, editClient }) {
         <span style={s.label}>NOTES</span>
         <textarea style={{ ...s.textarea, marginBottom:16 }} placeholder="Tone of voice, objectives, constraints..." value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})} />
 
-        <span style={s.label}>TARIF MENSUEL (€)</span>
-        <input style={f()} type="number" min="0" placeholder="0" value={form.monthly_rate||0} onChange={e=>setForm({...form,monthly_rate:parseFloat(e.target.value)||0})} />
-
         <span style={s.label}>COLOR TAG</span>
         <div style={{ display:"flex", gap:8, marginBottom:20 }}>
           {CLIENT_COLORS.map(c => (
@@ -217,78 +214,12 @@ function AgencyDashboard({ token, clients, onAddClient, onEditClient, onDeleteCl
       .catch(()=>{});
   }, [clients]);
 
-  const deleteClient = async (id) => {
-    if (!window.confirm("Remove this client?")) return;
-    await fetch(`${API}/agency/clients/${id}`, { method:"DELETE", headers });
-    onRefresh();
-  };
-
-  const exportClientPDF = (client) => {
-    const date = new Date().toLocaleDateString("fr-FR", { month:"long", year:"numeric" });
-    const html = `<!DOCTYPE html>
-<html><head><meta charset="UTF-8">
-<style>
-  body { font-family: Arial, sans-serif; padding: 40px; color: #1e293b; max-width: 700px; margin: 0 auto; }
-  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 2px solid ${client.color}; }
-  .brand { font-size: 24px; font-weight: 900; color: ${client.color}; }
-  .title { font-size: 14px; color: #64748b; margin-top: 4px; }
-  .invoice-number { text-align: right; color: #64748b; font-size: 13px; }
-  .section { margin-bottom: 30px; }
-  .section-title { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: #94a3b8; margin-bottom: 10px; text-transform: uppercase; }
-  .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
-  .total-row { display: flex; justify-content: space-between; padding: 16px 0; font-size: 18px; font-weight: 900; color: ${client.color}; border-top: 2px solid ${client.color}; margin-top: 10px; }
-  .badge { background: ${client.color}20; color: ${client.color}; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-  .footer { margin-top: 60px; text-align: center; font-size: 11px; color: #94a3b8; }
-</style></head>
-<body>
-  <div class="header">
-    <div>
-      <div class="brand">GrowthPILOT</div>
-      <div class="title">Agence de contenu IA</div>
-    </div>
-    <div class="invoice-number">
-      <div style="font-size:18px;font-weight:900;">FACTURE</div>
-      <div>#${String(client.id).padStart(4,"0")}-${new Date().getFullYear()}</div>
-      <div style="margin-top:4px">${date}</div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">Client</div>
-    <div style="font-size:16px;font-weight:700">${client.name}</div>
-    ${client.brand ? `<div style="color:#64748b">${client.brand}</div>` : ""}
-    ${client.email ? `<div style="color:#64748b;margin-top:4px">${client.email}</div>` : ""}
-    ${client.niche ? `<span class="badge" style="display:inline-block;margin-top:8px">${client.niche}</span>` : ""}
-  </div>
-
-  <div class="section">
-    <div class="section-title">Prestations</div>
-    <div class="row">
-      <span>Gestion de contenu IA — ${date}</span>
-      <span>€${parseFloat(client.monthly_rate||0).toFixed(2)}</span>
-    </div>
-    <div class="row">
-      <span>Posts publiés ce mois</span>
-      <span>${client.post_count||0} posts</span>
-    </div>
-    <div class="total-row">
-      <span>TOTAL</span>
-      <span>€${parseFloat(client.monthly_rate||0).toFixed(2)}</span>
-    </div>
-  </div>
-
-  ${client.notes ? `<div class="section"><div class="section-title">Notes</div><div style="color:#475569;font-size:13px;line-height:1.7">${client.notes}</div></div>` : ""}
-
-  <div class="footer">
-    GrowthPILOT — team@aigrowthpilot.app — www.aigrowthpilot.app<br>
-    Généré automatiquement le ${new Date().toLocaleDateString("fr-FR")}
-  </div>
-</body></html>`;
-
-    const win = window.open("", "_blank");
-    win.document.write(html);
-    win.document.close();
-    setTimeout(() => win.print(), 500);
+  const deleteClient = (id) => {
+    setConfirm({ message: "Remove this client?", onConfirm: async () => {
+      await fetch(`${API}/agency/clients/${id}`, { method:"DELETE", headers });
+      onRefresh();
+      setConfirm(null);
+    }});
   };
 
   return (
@@ -296,12 +227,11 @@ function AgencyDashboard({ token, clients, onAddClient, onEditClient, onDeleteCl
 
       {/* Stats agence */}
       {dashStats && (
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10 }}>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:10 }}>
           {[
-            ["👥 CLIENTS",    dashStats.totalClients,                         "#8b5cf6"],
-            ["📝 POSTS",      dashStats.totalPosts,                           "#ef4444"],
-            ["💬 ENGAGEMENT", dashStats.totalEngagement,                      "#22c55e"],
-            ["💰 MRR",        `€${(dashStats.mrr||0).toFixed(0)}`,          "#f59e0b"],
+            ["👥 CLIENTS",    dashStats.totalClients,    "#8b5cf6"],
+            ["📝 POSTS",      dashStats.totalPosts,      "#ef4444"],
+            ["💬 ENGAGEMENT", dashStats.totalEngagement, "#22c55e"],
           ].map(([label, val, color]) => (
             <div key={label} style={{ ...s.card, textAlign:"center", padding:16 }}>
               <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px", marginBottom:6 }}>{label}</div>
@@ -365,19 +295,9 @@ function AgencyDashboard({ token, clients, onAddClient, onEditClient, onDeleteCl
               {client.email && <span style={{ color:"#475569", fontSize:11 }}>{client.email}</span>}
             </div>
 
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
               <span style={{ color:"#334155", fontSize:11 }}>📝 {client.post_count || 0} posts</span>
               <span style={{ color:"#334155", fontSize:10 }}>Added {timeAgo(client.created_at)}</span>
-            </div>
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-              {client.monthly_rate > 0
-                ? <span style={{ color:"#f59e0b", fontSize:12, fontWeight:700 }}>💰 €{parseFloat(client.monthly_rate).toFixed(0)}/mois</span>
-                : <span style={{ color:"#334155", fontSize:11 }}>Pas de tarif défini</span>
-              }
-              <button style={{ ...s.btnGhost, padding:"4px 8px", fontSize:10 }}
-                onClick={e=>{ e.stopPropagation(); exportClientPDF(client); }}>
-                📄 Export PDF
-              </button>
             </div>
 
             {/* Notes expandable */}
@@ -406,6 +326,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, projects, 
   const [ownerInfo,   setOwnerInfo]   = useState(null);
   const [activeTab,   setActiveTab]   = useState("members");
   const [mainTab,     setMainTab]     = useState("team"); // team | agency
+  const [confirm,     setConfirm]     = useState(null); // { message, onConfirm }
 
   const isBusiness = userPlan === "Business" || userPlan === "Agency";
   const isAgency   = userPlan === "Agency";
@@ -442,10 +363,12 @@ export default function Team({ trendsLang, isMobile, token, userPlan, projects, 
   useEffect(() => { fetchTeamData(); }, [fetchTeamData]);
   useEffect(() => { if (isAgency) fetchClients(); }, [fetchClients]);
 
-  const removeMember = async (id) => {
-    if (!window.confirm("Remove this member from your team?")) return;
-    await fetch(`${API}/team/members/${id}`, { method:"DELETE", headers });
-    fetchTeamData();
+  const removeMember = (id) => {
+    setConfirm({ message: "Remove this member from your team?", onConfirm: async () => {
+      await fetch(`${API}/team/members/${id}`, { method:"DELETE", headers });
+      fetchTeamData();
+      setConfirm(null);
+    }});
   };
 
   const updateRole = async (id, role) => {
@@ -692,6 +615,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, projects, 
       {/* Modals */}
       {showInvite && <InviteModal token={token} onClose={()=>setShowInvite(false)} onSuccess={()=>{ fetchTeamData(); setShowInvite(false); }} />}
       {showClient && <AddClientModal token={token} editClient={editClient} onClose={()=>{ setShowClient(false); setEditClient(null); }} onSuccess={fetchClients} />}
+      {confirm && <ConfirmModal message={confirm.message} onConfirm={confirm.onConfirm} onCancel={()=>setConfirm(null)} />}
     </>
   );
 }

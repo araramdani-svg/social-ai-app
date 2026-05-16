@@ -392,3 +392,30 @@ export function useKeyboardShortcuts(shortcuts = []) {
     return () => window.removeEventListener("keydown", handler);
   }, [shortcuts]);
 }
+
+// ── ConfirmModal ──────────────────────────────────────────────────────────────
+export function ConfirmModal({ message, onConfirm, onCancel, confirmLabel = "Confirmer", cancelLabel = "Annuler", danger = true }) {
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", zIndex:99999, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+      <div style={{ background:"#111827", border:"1px solid rgba(220,38,38,0.25)", borderRadius:16, padding:32, width:"100%", maxWidth:420, boxShadow:"0 30px 80px rgba(0,0,0,0.6)" }}>
+        <div style={{ fontSize:28, textAlign:"center", marginBottom:16 }}>⚠️</div>
+        <div style={{ color:"#e2e8f0", fontSize:15, fontWeight:700, textAlign:"center", marginBottom:8 }}>Confirmation</div>
+        <div style={{ color:"#94a3b8", fontSize:13, textAlign:"center", lineHeight:1.6, marginBottom:28 }}>{message}</div>
+        <div style={{ display:"flex", gap:12 }}>
+          <button
+            style={{ flex:1, padding:"11px 16px", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, color:"#94a3b8", fontSize:13, fontWeight:700, cursor:"pointer" }}
+            onClick={onCancel}
+          >
+            {cancelLabel}
+          </button>
+          <button
+            style={{ flex:1, padding:"11px 16px", background: danger ? "rgba(239,68,68,0.15)" : "rgba(34,197,94,0.15)", border: danger ? "1px solid rgba(239,68,68,0.4)" : "1px solid rgba(34,197,94,0.4)", borderRadius:10, color: danger ? "#ef4444" : "#22c55e", fontSize:13, fontWeight:700, cursor:"pointer" }}
+            onClick={onConfirm}
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
