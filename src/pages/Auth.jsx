@@ -1,10 +1,15 @@
 import { useState, useEffect } from "react";
 
+const API = "https://social-ai-app-production.up.railway.app";
+
 export default function Auth({ loginSuccess, initialMode = "login" }) {
-  const [mode, setMode] = useState(initialMode);
-  const [email, setEmail] = useState("");
+  const [mode, setMode]       = useState(initialMode);
+  const [email, setEmail]     = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError]     = useState("");
+  const [pendingEmail, setPendingEmail] = useState(""); // email en attente de vérification
+  const [resendSent, setResendSent]     = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
 
   // Detect invite token
   const inviteToken = typeof window !== "undefined"
@@ -15,7 +20,7 @@ export default function Auth({ loginSuccess, initialMode = "login" }) {
   useEffect(() => {
     if (!inviteToken) return;
     setMode("register");
-    fetch(`https://social-ai-app-production.up.railway.app/team/invite/${inviteToken}`)
+    fetch(`${API}/team/invite/${inviteToken}`)
       .then(r => r.json())
       .then(d => { if (d.valid) { setInviteInfo(d); setEmail(d.email); } })
       .catch(() => {});
@@ -23,34 +28,37 @@ export default function Auth({ loginSuccess, initialMode = "login" }) {
 
   const submit = async () => {
     setError("");
-
     try {
-      const route =
-        mode === "login"
-          ? "https://social-ai-app-production.up.railway.app/auth/login"
-          : "https://social-ai-app-production.up.railway.app/auth/register";
-
-      const res = await fetch(route, {
+      const route = mode === "login" ? `${API}/auth/login` : `${API}/auth/register`;
+      const res  = await fetch(route, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ email, password })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
-
       const data = await res.json();
 
       if (!res.ok) {
+        // Email non vérifié → afficher l'écran de vérification
+        if (data.code === "email_not_verified") {
+          setPendingEmail(email);
+          return;
+        }
         setError(data.message || "Authentication failed");
         return;
       }
 
+      // Register → afficher écran "vérifiez votre email"
+      if (mode === "register") {
+        setPendingEmail(email);
+        return;
+      }
+
+      // Login OK
       localStorage.setItem("token", data.token);
 
-      // Accept team invite if coming from invitation link
       if (inviteToken && mode === "register") {
         try {
-          await fetch("https://social-ai-app-production.up.railway.app/team/accept", {
+          await fetch(`${API}/team/accept`, {
             method: "POST",
             headers: { "Content-Type":"application/json", Authorization:`Bearer ${data.token}` },
             body: JSON.stringify({ token: inviteToken }),
@@ -60,12 +68,62 @@ export default function Auth({ loginSuccess, initialMode = "login" }) {
       }
 
       loginSuccess(data.token, email);
-
     } catch {
       setError("Server unavailable");
     }
   };
 
+  const resendVerification = async () => {
+    setResendLoading(true);
+    try {
+      await fetch(`${API}/auth/resend-verification`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: pendingEmail }),
+      });
+      setResendSent(true);
+    } catch {}
+    setResendLoading(false);
+  };
+
+  // ── Écran "Vérifiez votre email" ──────────────────────────────────────────
+  if (pendingEmail) {
+    return (
+      <div style={styles.page}>
+        <div style={{ ...styles.card, textAlign:"center" }}>
+          <div style={{ fontSize:52, marginBottom:16 }}>📬</div>
+          <h1 style={{ margin:"0 0 8px", fontSize:22 }}>Check your inbox</h1>
+          <p style={{ color:"#64748b", fontSize:14, lineHeight:1.7, margin:"0 0 8px" }}>
+            We sent a verification link to
+          </p>
+          <div style={{ background:"rgba(220,38,38,0.08)", border:"1px solid rgba(220,38,38,0.2)", borderRadius:8, padding:"10px 16px", marginBottom:24, color:"#ef4444", fontWeight:700, fontSize:14 }}>
+            {pendingEmail}
+          </div>
+          <p style={{ color:"#475569", fontSize:13, lineHeight:1.6, marginBottom:32 }}>
+            Click the link in the email to activate your account. Check your spam folder if you don't see it.
+          </p>
+
+          {resendSent ? (
+            <div style={{ color:"#22c55e", fontSize:13, marginBottom:16 }}>✅ Email resent!</div>
+          ) : (
+            <button
+              style={{ ...styles.button, background:"transparent", border:"1px solid rgba(220,38,38,0.3)", color:"#ef4444", boxShadow:"none", marginBottom:12, opacity: resendLoading ? 0.6 : 1 }}
+              onClick={resendVerification}
+              disabled={resendLoading}
+            >
+              {resendLoading ? "Sending..." : "Resend verification email"}
+            </button>
+          )}
+
+          <button style={styles.switch} onClick={() => { setPendingEmail(""); setMode("login"); }}>
+            ← Back to login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Formulaire login/register ──────────────────────────────────────────────
   return (
     <div style={styles.page}>
       <div style={styles.card}>
@@ -78,6 +136,7 @@ export default function Auth({ loginSuccess, initialMode = "login" }) {
             <div style={{ color:"#475569", fontSize:11, marginTop:4 }}>Create your account to join the team.</div>
           </div>
         )}
+
         <h1>{mode === "login" ? "Login" : inviteInfo ? "Join the team" : "Create account"}</h1>
 
         <input
@@ -86,31 +145,28 @@ export default function Auth({ loginSuccess, initialMode = "login" }) {
           value={email}
           type="email"
           autoComplete="email"
-          onChange={(e) => setEmail(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && submit()}
+          onChange={e => setEmail(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && submit()}
         />
 
         <input
           type="password"
           style={styles.input}
-          placeholder="Password"
+          placeholder={mode === "register" ? "Password (min. 8 characters)" : "Password"}
           value={password}
           autoComplete={mode === "login" ? "current-password" : "new-password"}
-          onChange={(e) => setPassword(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && submit()}
+          onChange={e => setPassword(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && submit()}
         />
 
         {error && <p style={styles.error}>{error}</p>}
 
         <button style={styles.button} onClick={submit}>
-          {mode === "login" ? "LOGIN" : "REGISTER"}
+          {mode === "login" ? "LOGIN" : "CREATE ACCOUNT"}
         </button>
 
-        <button
-          style={styles.switch}
-          onClick={() => setMode(mode === "login" ? "register" : "login")}
-        >
-          {mode === "login" ? "Create account" : "Already have an account"}
+        <button style={styles.switch} onClick={() => { setMode(mode === "login" ? "register" : "login"); setError(""); }}>
+          {mode === "login" ? "Create a free account" : "Already have an account? Sign in"}
         </button>
       </div>
     </div>
@@ -125,9 +181,11 @@ const styles = {
     alignItems: "center",
     background: "linear-gradient(135deg,#020617,#0f172a,#1a0a0a)",
     color: "white",
+    padding: "20px",
   },
   card: {
-    width: "420px",
+    width: "100%",
+    maxWidth: "420px",
     background: "linear-gradient(145deg,#1a2235,#111827)",
     padding: "40px",
     borderRadius: "16px",

@@ -90,6 +90,24 @@ function App() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
 
+    // Vérification email
+    const verifyToken = params.get("verify");
+    if (verifyToken) {
+      window.history.replaceState({}, "", "/");
+      fetch(`https://social-ai-app-production.up.railway.app/auth/verify-email/${verifyToken}`)
+        .then(r => r.json())
+        .then(d => {
+          if (d.success) {
+            showToast("✅ Email verified! You can now log in.", "success");
+            setPage("auth");
+          } else {
+            showToast("❌ Invalid or expired verification link.", "error");
+            setPage("auth");
+          }
+        })
+        .catch(() => { setPage("auth"); });
+    }
+
     if (params.get("upgrade") === "success") {
       window.history.replaceState({}, "", "/");
       const savedToken = localStorage.getItem("token");

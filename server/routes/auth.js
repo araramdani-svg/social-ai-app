@@ -1,6 +1,7 @@
 import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import db from "../db.js";
 
 const router = express.Router();
@@ -11,6 +12,70 @@ if (!JWT_SECRET) {
   console.error("❌ FATAL: JWT_SECRET is not defined in environment variables");
   process.exit(1);
 }
+
+// ─── Domaines email jetables bloqués ──────────────────────────────────────────
+const BLOCKED_DOMAINS = new Set([
+  "mailinator.com","tempmail.com","guerrillamail.com","yopmail.com",
+  "throwam.com","sharklasers.com","guerrillamailblock.com","grr.la",
+  "guerrillamail.info","guerrillamail.biz","guerrillamail.de","guerrillamail.net",
+  "guerrillamail.org","spam4.me","trashmail.com","trashmail.me","trashmail.net",
+  "dispostable.com","mailnull.com","spamgourmet.com","spamgourmet.net",
+  "maildrop.cc","spamfree24.org","tempr.email","discard.email","fakeinbox.com",
+  "mailnesia.com","mailexpire.com","spamcorpse.com","deadaddress.com",
+  "spamevader.net","spamhereplease.com","tempinbox.com","tempemail.net",
+  "throwam.com","throwam.net","throwam.org","filzmail.com","owlpic.com",
+]);
+
+// ─── Envoi email de vérification via Resend ───────────────────────────────────
+const sendVerificationEmail = async (email, token) => {
+  const verifyUrl = `https://www.aigrowthpilot.app?verify=${token}`;
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
+    },
+    body: JSON.stringify({
+      from: "GrowthPILOT <team@aigrowthpilot.app>",
+      to: email,
+      subject: "Verify your GrowthPILOT account",
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <body style="margin:0;padding:0;background:#050a14;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+          <div style="max-width:560px;margin:40px auto;background:#0d1626;border:1px solid rgba(220,38,38,0.2);border-radius:16px;overflow:hidden;">
+            <div style="background:linear-gradient(135deg,#dc2626,#991b1b);padding:32px;text-align:center;">
+              <h1 style="color:#fff;margin:0;font-size:24px;font-weight:900;letter-spacing:-0.5px;">Growth<span style="opacity:0.8">PILOT</span></h1>
+              <p style="color:rgba(255,255,255,0.7);margin:8px 0 0;font-size:14px;">AI Content Command Center</p>
+            </div>
+            <div style="padding:40px 32px;">
+              <h2 style="color:#e2e8f0;font-size:20px;font-weight:800;margin:0 0 12px;">Verify your email</h2>
+              <p style="color:#64748b;font-size:14px;line-height:1.7;margin:0 0 32px;">
+                Click the button below to verify your email address and activate your GrowthPILOT account. This link expires in 24 hours.
+              </p>
+              <a href="${verifyUrl}" style="display:block;background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;text-decoration:none;text-align:center;padding:16px 32px;border-radius:10px;font-weight:800;font-size:15px;letter-spacing:0.5px;">
+                Verify my email →
+              </a>
+              <p style="color:#334155;font-size:12px;margin:24px 0 0;text-align:center;">
+                If you didn't create an account, you can safely ignore this email.
+              </p>
+            </div>
+            <div style="border-top:1px solid rgba(255,255,255,0.05);padding:20px 32px;text-align:center;">
+              <p style="color:#1e293b;font-size:11px;margin:0;">© 2026 GrowthPILOT · <a href="https://www.aigrowthpilot.app" style="color:#334155;">aigrowthpilot.app</a></p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Resend error: ${err}`);
+  }
+};
+
+
 
 // ─── Middleware auth ───────────────────────────────────────────────────────────
 const authenticateToken = (req, res, next) => {
@@ -38,14 +103,30 @@ router.post("/register", async (req, res) => {
   const validationError = validateEmailPassword(email, password);
   if (validationError) return res.status(400).json({ message: validationError });
 
+  // Bloquer les domaines email jetables
+  const domain = email.split("@")[1]?.toLowerCase();
+  if (BLOCKED_DOMAINS.has(domain)) {
+    return res.status(400).json({ message: "Please use a valid email address. Disposable emails are not allowed." });
+  }
+
   const hashed = await bcrypt.hash(password, 10);
+  const verificationToken = crypto.randomBytes(32).toString("hex");
+
   try {
     const result = await db.query(
-      "INSERT INTO users(email,password,plan,generations_count) VALUES($1,$2,'Free',0) RETURNING id",
-      [email, hashed]
+      "INSERT INTO users(email,password,plan,generations_count,email_verified,verification_token) VALUES($1,$2,'Free',0,false,$3) RETURNING id",
+      [email, hashed, verificationToken]
     );
-    const token = jwt.sign({ id: result.rows[0].id, email }, JWT_SECRET, { expiresIn: "7d" });
-    res.json({ token });
+
+    // Envoyer email de vérification
+    try {
+      await sendVerificationEmail(email, verificationToken);
+    } catch (emailErr) {
+      console.error("Email send error:", emailErr.message);
+      // On crée quand même le compte mais on avertit
+    }
+
+    res.json({ success: true, message: "Account created. Please check your email to verify your account." });
   } catch {
     res.status(400).json({ message: "User already exists" });
   }
@@ -61,6 +142,7 @@ router.post("/login", async (req, res) => {
   const user = result.rows[0];
   if (!user) return res.status(400).json({ message: "User not found" });
   if (user.banned) return res.status(403).json({ message: "Account suspended. Contact support." });
+  if (user.email_verified === false) return res.status(403).json({ message: "Please verify your email before logging in. Check your inbox.", code: "email_not_verified" });
   const valid = await bcrypt.compare(password, user.password);
   if (!valid) return res.status(400).json({ message: "Invalid password" });
   const token = jwt.sign({ id: user.id, email }, JWT_SECRET, { expiresIn: "7d" });
@@ -198,6 +280,44 @@ router.post("/change-email", authenticateToken, async (req, res) => {
   }
 });
 
+
+
+// ─── GET /auth/verify-email/:token ───────────────────────────────────────────
+router.get("/verify-email/:token", async (req, res) => {
+  try {
+    const result = await db.query(
+      "UPDATE users SET email_verified=true, verification_token=NULL WHERE verification_token=$1 RETURNING id, email",
+      [req.params.token]
+    );
+    if (!result.rows.length) {
+      return res.status(400).json({ message: "Invalid or expired verification link." });
+    }
+    res.json({ success: true, email: result.rows[0].email });
+  } catch (err) {
+    console.error("Verify email error:", err.message);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// ─── POST /auth/resend-verification ──────────────────────────────────────────
+router.post("/resend-verification", async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ message: "Email required" });
+  try {
+    const result = await db.query("SELECT id, email_verified FROM users WHERE email=$1", [email]);
+    const user = result.rows[0];
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (user.email_verified) return res.status(400).json({ message: "Email already verified" });
+
+    const token = crypto.randomBytes(32).toString("hex");
+    await db.query("UPDATE users SET verification_token=$1 WHERE email=$2", [token, email]);
+    await sendVerificationEmail(email, token);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Resend verification error:", err.message);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 
 // ─── GET /auth/me ─────────────────────────────────────────────────────────────
 router.get("/me", authenticateToken, async (req, res) => {
