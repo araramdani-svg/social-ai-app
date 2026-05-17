@@ -109,6 +109,12 @@ router.post("/register", async (req, res) => {
     return res.status(400).json({ message: "Please use a valid email address. Disposable emails are not allowed." });
   }
 
+  // Nettoyage : supprimer compte non vérifié depuis +24h avec ce même email
+  await db.query(
+    "DELETE FROM users WHERE email=$1 AND email_verified=false AND created_at < NOW() - INTERVAL '24 hours'",
+    [email]
+  );
+
   const hashed = await bcrypt.hash(password, 10);
   const verificationToken = crypto.randomBytes(32).toString("hex");
 
