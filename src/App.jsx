@@ -24,7 +24,7 @@ function App() {
 
   const [page, setPageState] = useState(() => {
     const savedToken = localStorage.getItem("token");
-    if (!savedToken || savedToken === "guest") return "landing";
+    if (!savedToken) return "landing";
     return sessionStorage.getItem("gp_page") || "generator";
   });
 
@@ -81,7 +81,7 @@ function App() {
 
   useEffect(() => {
     const savedToken = localStorage.getItem("token");
-    if (savedToken && savedToken !== "guest") {
+    if (savedToken) {
       setToken(savedToken);
       if (!sessionStorage.getItem("gp_page")) setPage("generator");
     }
@@ -156,7 +156,7 @@ function App() {
   const floatingBar = !isMobile ? (
     <div style={floatingStyle}>
       <button onClick={() => {
-        if (token && token !== "guest") {
+        if (token) {
           sessionStorage.setItem("gp_tab", "home");
           window.dispatchEvent(new CustomEvent("navigateTab", { detail:"home" }));
           setPage("generator");
@@ -211,14 +211,18 @@ function App() {
     <>
       {page === "landing" && (
         <Landing
-          openApp={() => { localStorage.setItem("token","guest"); setPage("generator"); }}
+          openApp={() => setPage("register")}
           openLogin={() => setPage("auth")}
           openPricing={() => setPage("pricing")}
         />
       )}
 
       {page === "auth" && (
-        <Auth loginSuccess={handleLoginSuccess} />
+        <Auth loginSuccess={handleLoginSuccess} initialMode="login" />
+      )}
+
+      {page === "register" && (
+        <Auth loginSuccess={handleLoginSuccess} initialMode="register" />
       )}
 
       {page === "pricing" && (

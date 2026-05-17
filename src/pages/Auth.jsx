@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 
-export default function Auth({ loginSuccess }) {
-  const [mode, setMode] = useState("login");
+export default function Auth({ loginSuccess, initialMode = "login" }) {
+  const [mode, setMode] = useState(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
