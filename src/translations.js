@@ -259,6 +259,13 @@ const translations = {
     },
     // Messages
     messages: {
+      pleaseLogin: "Please log in to generate content",
+      pleaseLoginPublish: "Please log in to start publishing",
+      pleaseLoginTitle: "Login required",
+      pleaseLoginDesc: "Create a free account in seconds to access all features.",
+      createFreeAccount: "Create free account →",
+      alreadyHaveAccount: "Already have an account? Sign in",
+
       generateFirst: "Generate a post first",
       linkedinPending: "⚠️ Publishing requires LinkedIn approval (pending). Connection is active.",
       contentGenerated: "✓ Content generated",
@@ -671,6 +678,13 @@ const translations = {
       streak: "Série",
     },
     messages: {
+      pleaseLogin: "Connectez-vous pour générer du contenu",
+      pleaseLoginPublish: "Connectez-vous pour commencer à publier",
+      pleaseLoginTitle: "Connexion requise",
+      pleaseLoginDesc: "Créez un compte gratuit en quelques secondes pour accéder à toutes les fonctionnalités.",
+      createFreeAccount: "Créer un compte gratuit →",
+      alreadyHaveAccount: "Déjà un compte ? Se connecter",
+
       generateFirst: "Générez d'abord une publication",
       linkedinPending: "⚠️ La publication nécessite l'approbation LinkedIn (en attente). La connexion est active.",
       contentGenerated: "✓ Contenu généré",
@@ -1033,6 +1047,13 @@ const translations = {
       posts: "Publicaciones", projects: "Proyectos", published: "Publicados", avgScore: "Puntuación", streak: "Racha",
     },
     messages: {
+      pleaseLogin: "Inicia sesión para generar contenido",
+      pleaseLoginPublish: "Inicia sesión para empezar a publicar",
+      pleaseLoginTitle: "Inicio de sesión requerido",
+      pleaseLoginDesc: "Crea una cuenta gratuita en segundos para acceder a todas las funciones.",
+      createFreeAccount: "Crear cuenta gratuita →",
+      alreadyHaveAccount: "¿Ya tienes cuenta? Inicia sesión",
+
       generateFirst: "Genera una publicación primero",
       linkedinPending: "⚠️ La publicación requiere aprobación de LinkedIn (pendiente).",
       contentGenerated: "✓ Contenido generado",
@@ -1367,6 +1388,13 @@ const translations = {
       posts: "Beiträge", projects: "Projekte", published: "Veröffentlicht", avgScore: "Ø Score", streak: "Serie",
     },
     messages: {
+      pleaseLogin: "Bitte anmelden, um Inhalte zu generieren",
+      pleaseLoginPublish: "Bitte anmelden, um mit der Veröffentlichung zu beginnen",
+      pleaseLoginTitle: "Anmeldung erforderlich",
+      pleaseLoginDesc: "Erstellen Sie in Sekunden ein kostenloses Konto, um auf alle Funktionen zuzugreifen.",
+      createFreeAccount: "Kostenloses Konto erstellen →",
+      alreadyHaveAccount: "Bereits ein Konto? Anmelden",
+
       generateFirst: "Generieren Sie zuerst einen Beitrag",
       linkedinPending: "⚠️ Veröffentlichung erfordert LinkedIn-Genehmigung (ausstehend).",
       contentGenerated: "✓ Inhalt generiert",
@@ -1703,6 +1731,13 @@ const translations = {
       posts: "Post", projects: "Progetti", published: "Pubblicati", avgScore: "Punteggio", streak: "Serie",
     },
     messages: {
+      pleaseLogin: "Accedi per generare contenuti",
+      pleaseLoginPublish: "Accedi per iniziare a pubblicare",
+      pleaseLoginTitle: "Accesso richiesto",
+      pleaseLoginDesc: "Crea un account gratuito in pochi secondi per accedere a tutte le funzionalità.",
+      createFreeAccount: "Crea account gratuito →",
+      alreadyHaveAccount: "Hai già un account? Accedi",
+
       generateFirst: "Genera prima un post",
       linkedinPending: "⚠️ La pubblicazione richiede l'approvazione di LinkedIn (in attesa).",
       contentGenerated: "✓ Contenuto generato",
@@ -2039,6 +2074,13 @@ const translations = {
       posts: "Posts", projects: "Projetos", published: "Publicados", avgScore: "Pontuação", streak: "Sequência",
     },
     messages: {
+      pleaseLogin: "Faça login para gerar conteúdo",
+      pleaseLoginPublish: "Faça login para começar a publicar",
+      pleaseLoginTitle: "Login necessário",
+      pleaseLoginDesc: "Crie uma conta gratuita em segundos para acessar todos os recursos.",
+      createFreeAccount: "Criar conta gratuita →",
+      alreadyHaveAccount: "Já tem uma conta? Entrar",
+
       generateFirst: "Gere primeiro uma publicação",
       linkedinPending: "⚠️ A publicação requer aprovação do LinkedIn (pendente).",
       contentGenerated: "✓ Conteúdo gerado",

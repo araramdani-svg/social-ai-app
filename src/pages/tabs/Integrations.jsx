@@ -1,10 +1,11 @@
+import { useState } from "react";
 import { t as tr } from "../../translations.js";
 import { st, PageHeader } from "./shared.js";
 
 const API = "https://social-ai-app-production.up.railway.app";
 
 export default function Integrations({
-  trendsLang, isMobile, token, post,
+  trendsLang, isMobile, token, post, openLogin,
   linkedinStatus,   threadsStatus,   twitterStatus,   instagramStatus,
   linkedinPosting,  threadsPosting,  twitterPosting,  instagramPosting,
   connectLinkedin,  disconnectLinkedin,  postToLinkedin,
@@ -17,6 +18,28 @@ export default function Integrations({
   tiktokStatus,     tiktokPosting,
   showToast
 }) {
+
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const isGuest = !token || token === "guest";
+
+  // ── Modal login required ──────────────────────────────────────────────────
+  const LoginRequiredModal = () => (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+      <div style={{ ...st.card, maxWidth:420, width:"100%", background:"#111827", border:"1px solid rgba(220,38,38,0.3)", boxShadow:"0 30px 80px rgba(0,0,0,0.6)", padding:32, textAlign:"center" }}>
+        <div style={{ fontSize:40, marginBottom:16 }}>🔐</div>
+        <div style={{ color:"#e2e8f0", fontWeight:800, fontSize:18, marginBottom:8 }}>{tr(trendsLang, "messages.pleaseLoginTitle")}</div>
+        <div style={{ color:"#64748b", fontSize:14, lineHeight:1.6, marginBottom:24 }}>{tr(trendsLang, "messages.pleaseLoginDesc")}</div>
+        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+          <button style={{ ...st.button, margin:0 }} onClick={() => { setShowLoginModal(false); if(typeof openLogin === "function") openLogin(); }}>
+            {tr(trendsLang, "messages.createFreeAccount")}
+          </button>
+          <button style={{ ...st.buttonSecondary, margin:0 }} onClick={() => setShowLoginModal(false)}>
+            {tr(trendsLang, "messages.alreadyHaveAccount")}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   // ── Helper carte intégration ──────────────────────────────────────────────
   const IntegrationCard = ({
@@ -59,12 +82,21 @@ export default function Integrations({
         </>
       ) : (
         <>
-          <a
-            href={connectHref}
-            style={{ ...st.button, margin:0, width:"100%", display:"block", textAlign:"center", textDecoration:"none", boxSizing:"border-box" }}
-          >
-            {connectLabel}
-          </a>
+          {isGuest ? (
+            <button
+              style={{ ...st.button, margin:0, width:"100%", boxSizing:"border-box" }}
+              onClick={() => setShowLoginModal(true)}
+            >
+              {connectLabel}
+            </button>
+          ) : (
+            <a
+              href={connectHref}
+              style={{ ...st.button, margin:0, width:"100%", display:"block", textAlign:"center", textDecoration:"none", boxSizing:"border-box" }}
+            >
+              {connectLabel}
+            </a>
+          )}
           <p style={{ color:"#475569", fontSize:11, marginTop:8, textAlign:"center" }}>✓ Works on Safari, Chrome & Firefox</p>
         </>
       )}
@@ -90,6 +122,7 @@ export default function Integrations({
 
   return (
     <>
+      {showLoginModal && <LoginRequiredModal />}
       <PageHeader tabKey="integrations" trendsLang={trendsLang} isMobile={isMobile} />
       <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:20, alignContent:"start" }}>
 
