@@ -180,6 +180,7 @@ function useStyles() {
 export default function Index({ openApp, openLogin, openPricing, lang: propLang, setLang: propSetLang }) {
   const [lang, setLangState]        = useState(() => propLang || localStorage.getItem("gp_lang") || "en");
   const setLang = (l) => { setLangState(l); localStorage.setItem("gp_lang", l); if (propSetLang) propSetLang(l); };
+  useEffect(() => { if (propLang && propLang !== lang) setLangState(propLang); }, [propLang]);
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [scrolled, setScrolled]     = useState(false);
   const [yearly, setYearly]         = useState(false);
@@ -190,7 +191,7 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
   useStyles();
   useSEO(lang);
 
-  const handleLang = (l) => { setLang(l); localStorage.setItem("gp_lang", l); setShowLangMenu(false); };
+  const handleLang = (l) => { setLang(l); setShowLangMenu(false); };
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 40);
@@ -349,7 +350,7 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
         <div className={`gp-fade-up ${heroVisible ? "visible":""}`} style={{ textAlign:"center", marginBottom:40, animationDelay:"0.1s" }}>
           <p style={{ fontSize:"clamp(16px,2vw,20px)", color:"#64748b", margin:0, lineHeight:1.6 }}>
             One workspace.{" "}
-            <span style={{ fontFamily:"'DM Mono', monospace", color:"#94a3b8" }}>
+            <span style={{ fontFamily:"'DM Mono', monospace", color:"#94a3b8", whiteSpace:"nowrap", display:"inline-block" }}>
               <Typewriter words={["LinkedIn.", "X (Twitter).", "Threads.", "Instagram.", "Facebook.", "TikTok."]} />
             </span>
           </p>
