@@ -4,8 +4,8 @@ import { st, PageHeader } from "./shared.js";
 export default function Autopost({
   trendsLang, isMobile,
   post, autoPlatform, setAutoPlatform, autoPosts, publishLog,
-  linkedinStatus, threadsStatus, twitterStatus,
-  autoPublish, postToTwitter, twitterPosting,
+  linkedinStatus, threadsStatus, twitterStatus, facebookStatus,
+  autoPublish, postToTwitter, twitterPosting, postToFacebook, facebookPosting,
   showToast
 }) {
   const copyAndOpen = (url) => {
@@ -14,14 +14,17 @@ export default function Autopost({
   };
 
   const DIRECT_PLATFORMS = [
-    { id:"LINKEDIN", label:"LinkedIn", icon:"in", color:"#0077b5", connected: linkedinStatus?.connected },
-    { id:"THREADS",  label:"Threads",  icon:"🧵", color:"#000",    connected: threadsStatus?.connected },
-    { id:"X",        label:"X",        icon:"𝕏",  color:"#000",    connected: twitterStatus?.connected },
+    { id:"LINKEDIN",  label:"LinkedIn",  icon:"in", color:"#0077b5", connected: linkedinStatus?.connected },
+    { id:"THREADS",   label:"Threads",   icon:"🧵", color:"#000",    connected: threadsStatus?.connected },
+    { id:"X",         label:"X",         icon:"𝕏",  color:"#000",    connected: twitterStatus?.connected },
+    { id:"FACEBOOK",  label:"Facebook",  icon:"f",  color:"#1877f2", connected: facebookStatus?.connected },
   ];
 
   const handleAutoPublish = () => {
     if (autoPlatform === "X" && twitterStatus?.connected) {
       postToTwitter();
+    } else if (autoPlatform === "FACEBOOK" && facebookStatus?.connected) {
+      postToFacebook();
     } else {
       autoPublish();
     }
@@ -74,7 +77,7 @@ export default function Autopost({
             onClick={handleAutoPublish}
             disabled={autoPlatform === "X" && !twitterStatus?.connected}
           >
-            {twitterPosting && autoPlatform === "X" ? tr(trendsLang,"buttons.publishing") : tr(trendsLang,"ui.queuePost")}
+            {(twitterPosting && autoPlatform === "X") || (facebookPosting && autoPlatform === "FACEBOOK") ? tr(trendsLang,"buttons.publishing") : tr(trendsLang,"ui.queuePost")}
           </button>
 
           {/* Copy & Open manuel */}

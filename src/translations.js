@@ -104,6 +104,14 @@ const translations = {
       toneStorytelling: "📖 Storytelling", toneStorytellingDesc: "Narrative and personal",
       toneProvocative: "⚡ Provocative", toneProvocativeDesc: "Bold and challenging",
     },
+    analyze: {
+      loading: "Loading...",
+      topPost: "🏆 TOP POST BY ENGAGEMENT",
+      engagementByPost: "ENGAGEMENT BY POST",
+      loadError: "Failed to load analytics. Check your connection.",
+      refreshFailed: "Refresh failed.",
+      defaultFeedback: "Strong structure. Improve emotional hook for higher engagement.",
+    },
     profile: {
       currentPlan: "CURRENT PLAN", projects: "PROJECTS", posts: "POSTS",
       menuAccount: "Account Info", menuPassword: "Change Password", menuEmail: "Change Email", menuDanger: "Danger Zone",
@@ -526,6 +534,14 @@ const translations = {
       toneStorytelling: "📖 Storytelling", toneStorytellingDesc: "Narratif et personnel",
       toneProvocative: "⚡ Provocateur", toneProvocativeDesc: "Audacieux et challengeant",
     },
+    analyze: {
+      loading: "Chargement...",
+      topPost: "🏆 MEILLEUR POST PAR ENGAGEMENT",
+      engagementByPost: "ENGAGEMENT PAR POST",
+      loadError: "Échec du chargement. Vérifiez votre connexion.",
+      refreshFailed: "Actualisation échouée.",
+      defaultFeedback: "Bonne structure. Améliorez l'accroche émotionnelle pour plus d'engagement.",
+    },
     profile: {
       currentPlan: "PLAN ACTUEL", projects: "PROJETS", posts: "PUBLICATIONS",
       menuAccount: "Informations du compte", menuPassword: "Changer le mot de passe", menuEmail: "Changer l'email", menuDanger: "Zone de danger",
@@ -926,6 +942,14 @@ const translations = {
       toneStorytelling: "📖 Storytelling", toneStorytellingDesc: "Narrativo y personal",
       toneProvocative: "⚡ Provocador", toneProvocativeDesc: "Audaz y desafiante",
     },
+    analyze: {
+      loading: "Cargando...",
+      topPost: "🏆 MEJOR POST POR ENGAGEMENT",
+      engagementByPost: "ENGAGEMENT POR POST",
+      loadError: "Error al cargar. Verifica tu conexión.",
+      refreshFailed: "Error al actualizar.",
+      defaultFeedback: "Buena estructura. Mejora el gancho emocional para mayor engagement.",
+    },
     profile: {
       currentPlan: "PLAN ACTUAL", projects: "PROYECTOS", posts: "PUBLICACIONES",
       menuAccount: "Información de cuenta", menuPassword: "Cambiar contraseña", menuEmail: "Cambiar email", menuDanger: "Zona de peligro",
@@ -1266,6 +1290,14 @@ const translations = {
       toneProfessional: "💼 Professionell", toneProfessionalDesc: "Formal und autoritär",
       toneStorytelling: "📖 Storytelling", toneStorytellingDesc: "Narrativ und persönlich",
       toneProvocative: "⚡ Provokativ", toneProvocativeDesc: "Mutig und herausfordernd",
+    },
+    analyze: {
+      loading: "Laden...",
+      topPost: "🏆 BESTER POST NACH ENGAGEMENT",
+      engagementByPost: "ENGAGEMENT PRO POST",
+      loadError: "Ladefehler. Überprüfen Sie Ihre Verbindung.",
+      refreshFailed: "Aktualisierung fehlgeschlagen.",
+      defaultFeedback: "Gute Struktur. Verbessern Sie den emotionalen Hook für mehr Engagement.",
     },
     profile: {
       currentPlan: "AKTUELLER PLAN", projects: "PROJEKTE", posts: "BEITRÄGE",
@@ -1610,6 +1642,14 @@ const translations = {
       toneStorytelling: "📖 Storytelling", toneStorytellingDesc: "Narrativo e personale",
       toneProvocative: "⚡ Provocatorio", toneProvocativeDesc: "Audace e stimolante",
     },
+    analyze: {
+      loading: "Caricamento...",
+      topPost: "🏆 MIGLIOR POST PER ENGAGEMENT",
+      engagementByPost: "ENGAGEMENT PER POST",
+      loadError: "Caricamento fallito. Verifica la connessione.",
+      refreshFailed: "Aggiornamento fallito.",
+      defaultFeedback: "Buona struttura. Migliora l'hook emotivo per più engagement.",
+    },
     profile: {
       currentPlan: "PIANO ATTUALE", projects: "PROGETTI", posts: "POST",
       menuAccount: "Informazioni account", menuPassword: "Cambia password", menuEmail: "Cambia email", menuDanger: "Zona pericolosa",
@@ -1952,6 +1992,14 @@ const translations = {
       toneProfessional: "💼 Profissional", toneProfessionalDesc: "Formal e autoritário",
       toneStorytelling: "📖 Storytelling", toneStorytellingDesc: "Narrativo e pessoal",
       toneProvocative: "⚡ Provocador", toneProvocativeDesc: "Ousado e desafiador",
+    },
+    analyze: {
+      loading: "Carregando...",
+      topPost: "🏆 MELHOR POST POR ENGAGEMENT",
+      engagementByPost: "ENGAGEMENT POR POST",
+      loadError: "Falha ao carregar. Verifique sua conexão.",
+      refreshFailed: "Atualização falhou.",
+      defaultFeedback: "Boa estrutura. Melhore o gancho emocional para mais engagement.",
     },
     profile: {
       currentPlan: "PLANO ATUAL", projects: "PROJETOS", posts: "POSTS",

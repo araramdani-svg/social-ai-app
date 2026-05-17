@@ -177,8 +177,9 @@ function useStyles() {
 }
 
 /* ══ MAIN COMPONENT ══════════════════════════════════════════════════════════ */
-export default function Index({ openApp, openLogin, openPricing }) {
-  const [lang, setLang]             = useState(() => localStorage.getItem("gp_lang") || "en");
+export default function Index({ openApp, openLogin, openPricing, lang: propLang, setLang: propSetLang }) {
+  const [lang, setLangState]        = useState(() => propLang || localStorage.getItem("gp_lang") || "en");
+  const setLang = (l) => { setLangState(l); localStorage.setItem("gp_lang", l); if (propSetLang) propSetLang(l); };
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [scrolled, setScrolled]     = useState(false);
   const [yearly, setYearly]         = useState(false);
@@ -297,8 +298,8 @@ export default function Index({ openApp, openLogin, openPricing }) {
             )}
           </div>
 
-          <button onClick={openLogin} className="gp-btn-ghost" style={{ padding:"8px 16px", fontSize:13 }}>Sign in</button>
-          <button onClick={openApp}   className="gp-btn-primary" style={{ padding:"8px 18px", fontSize:13 }}>Try free →</button>
+          <button onClick={openLogin} className="gp-btn-ghost" style={{ padding:"7px 12px", fontSize:12 }}>Sign in</button>
+          <button onClick={openApp}   className="gp-btn-primary" style={{ padding:"7px 14px", fontSize:12, whiteSpace:"nowrap" }}>Try free →</button>
         </div>
       </nav>
 
@@ -359,8 +360,8 @@ export default function Index({ openApp, openLogin, openPricing }) {
 
         {/* CTAs */}
         <div className={`gp-fade-up ${heroVisible ? "visible":""}`} style={{ display:"flex", justifyContent:"center", gap:12, flexWrap:"wrap", marginBottom:64, animationDelay:"0.15s" }}>
-          <button onClick={openApp}   className="gp-btn-primary" style={{ fontSize:16, padding:"16px 36px" }}>Start for free →</button>
-          <button onClick={openLogin} className="gp-btn-ghost"   style={{ fontSize:16, padding:"16px 28px" }}>Sign in</button>
+          <button onClick={openApp}   className="gp-btn-primary" style={{ fontSize:14, padding:"14px 24px", whiteSpace:"nowrap" }}>Start for free →</button>
+          <button onClick={openLogin} className="gp-btn-ghost"   style={{ fontSize:14, padding:"14px 20px", whiteSpace:"nowrap" }}>Sign in</button>
         </div>
 
         {/* Platform badges */}

@@ -20,9 +20,13 @@ import { useState, useMemo } from "react";
 import { t as tr } from "../../translations.js";
 
 const PLATFORMS = [
-  { id: "linkedin", label: "LinkedIn", emoji: "🔗" },
-  { id: "threads",  label: "Threads",  emoji: "🧵" },
-  { id: "copy",     label: "Copy",   emoji: "📋" },
+  { id: "linkedin",  label: "LinkedIn",  emoji: "🔗" },
+  { id: "threads",   label: "Threads",   emoji: "🧵" },
+  { id: "twitter",   label: "X",         emoji: "𝕏"  },
+  { id: "facebook",  label: "Facebook",  emoji: "f"  },
+  { id: "instagram", label: "Instagram", emoji: "📸" },
+  { id: "tiktok",    label: "TikTok",    emoji: "🎵" },
+  { id: "copy",      label: "Copy",      emoji: "📋" },
 ];
 
 const SORT_OPTIONS = ["score", "date", "length"];
@@ -109,7 +113,9 @@ const s = {
 
 export default function AutoRepost({
   trendsLang, isMobile, token, history = [], setPost, setTab,
-  linkedinStatus, threadsStatus, postToLinkedin, postToThreads, showToast
+  linkedinStatus, threadsStatus, twitterStatus, facebookStatus, instagramStatus, tiktokStatus,
+  postToLinkedin, postToThreads, postToTwitter, postToFacebook, postToInstagram, postToTiktok,
+  showToast
 }) {
 
   const [selected, setSelected]       = useState(new Set());
@@ -164,14 +170,17 @@ export default function AutoRepost({
       if (delay === "now") {
         try {
           if (platform === "linkedin" && linkedinStatus?.connected) {
-            // Injecte le texte et appelle postToLinkedin
-            setPost(variedText);
-            await new Promise(r => setTimeout(r, 200));
-            await postToLinkedin?.();
+            setPost(variedText); await new Promise(r => setTimeout(r, 200)); await postToLinkedin?.();
           } else if (platform === "threads" && threadsStatus?.connected) {
-            setPost(variedText);
-            await new Promise(r => setTimeout(r, 200));
-            await postToThreads?.();
+            setPost(variedText); await new Promise(r => setTimeout(r, 200)); await postToThreads?.();
+          } else if (platform === "twitter" && twitterStatus?.connected) {
+            setPost(variedText); await new Promise(r => setTimeout(r, 200)); await postToTwitter?.();
+          } else if (platform === "facebook" && facebookStatus?.connected) {
+            setPost(variedText); await new Promise(r => setTimeout(r, 200)); await postToFacebook?.();
+          } else if (platform === "instagram" && instagramStatus?.connected) {
+            setPost(variedText); await new Promise(r => setTimeout(r, 200)); await postToInstagram?.();
+          } else if (platform === "tiktok" && tiktokStatus?.connected) {
+            setPost(variedText); await new Promise(r => setTimeout(r, 200)); await postToTiktok?.();
           } else if (platform === "copy") {
             await navigator.clipboard.writeText(variedText);
           }
@@ -329,7 +338,13 @@ export default function AutoRepost({
             <span style={s.label}>{tr(trendsLang, "autorepost.platformLabel")}</span>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {PLATFORMS.map(pl => {
-                const connected = pl.id === "linkedin" ? linkedinStatus?.connected : pl.id === "threads" ? threadsStatus?.connected : true;
+                const connected = 
+                  pl.id === "linkedin"  ? linkedinStatus?.connected  :
+                  pl.id === "threads"   ? threadsStatus?.connected   :
+                  pl.id === "twitter"   ? twitterStatus?.connected   :
+                  pl.id === "facebook"  ? facebookStatus?.connected  :
+                  pl.id === "instagram" ? instagramStatus?.connected :
+                  pl.id === "tiktok"    ? tiktokStatus?.connected    : true;
                 return (
                   <button key={pl.id} style={s.platformBtn(platform === pl.id)} onClick={() => setPlatform(pl.id)}>
                     <span>{pl.emoji}</span>

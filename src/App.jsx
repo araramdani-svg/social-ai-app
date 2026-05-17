@@ -218,6 +218,16 @@ function App() {
     page === "generator" ? (
       <div style={{ ...floatingStyle, gap:8 }}>
         <button onClick={() => { sessionStorage.setItem("gp_tab","home"); window.dispatchEvent(new CustomEvent("navigateTab",{detail:"home"})); }} style={{ ...iconStyle, width:40, height:40, fontSize:16, borderRadius:10 }} title="Home">🏠</button>
+        <div style={{ position:"relative" }}>
+          <button style={{ ...iconStyle, width:40, height:40, fontSize:16, borderRadius:10 }} onClick={() => setShowLangMenu(!showLangMenu)} title="Language">🌍</button>
+          {showLangMenu && (
+            <div style={{ ...langMenuStyle, top:48, right:0 }}>
+              {LANGS.map(l => (
+                <button key={l.key} style={{ width:"100%", padding:"8px 12px", background: trendsLang===l.key ? "rgba(220,38,38,0.15)" : "transparent", border:"none", borderLeft: trendsLang===l.key ? "3px solid #ef4444" : "3px solid transparent", color: trendsLang===l.key ? "#ef4444" : "#94a3b8", fontWeight:700, fontSize:12, cursor:"pointer", textAlign:"left", display:"flex", alignItems:"center", gap:6 }} onClick={() => { setLang(l.key); setShowLangMenu(false); }}>{l.flag} {l.key.toUpperCase()}</button>
+              ))}
+            </div>
+          )}
+        </div>
         <button onClick={() => setPage("pricing")} style={{ ...iconStyle, width:40, height:40, fontSize:16, borderRadius:10 }} title="Upgrade">💳</button>
         <button onClick={() => window.dispatchEvent(new CustomEvent("openProfile"))} style={{ ...iconStyle, width:40, height:40, fontSize:16, borderRadius:10 }} title="Profile">👤</button>
         <button onClick={logout} style={{ ...iconStyle, width:40, height:40, fontSize:16, borderRadius:10 }} title="Logout">↩</button>
@@ -232,6 +242,8 @@ function App() {
           openApp={() => setPage("register")}
           openLogin={() => setPage("auth")}
           openPricing={() => setPage("pricing")}
+          lang={trendsLang}
+          setLang={setLang}
         />
       )}
 

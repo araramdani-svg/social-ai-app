@@ -4,7 +4,9 @@ import { st, PageHeader } from "./shared.js";
 export default function Publish({
   trendsLang, isMobile,
   post, publishLog, autoPosts, publishStatus,
-  linkedinStatus, publish, showToast
+  linkedinStatus, twitterStatus, facebookStatus,
+  publish, postToTwitter, postToFacebook, twitterPosting, facebookPosting,
+  showToast
 }) {
   const copyAndOpen = (url) => {
     if (post) { navigator.clipboard.writeText(post); showToast(tr(trendsLang, "messages.copied")); }
@@ -18,11 +20,15 @@ export default function Publish({
         <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
           <p style={{ color:"#64748b", fontSize:12, letterSpacing:"1px" }}>{tr(trendsLang, "ui.selectPublish")}</p>
           <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-            {[{ id:"LINKEDIN", label:"LinkedIn", connected: linkedinStatus.connected }].map(p => (
-              <button key={p.id} style={{ ...st.button, margin:0, opacity: p.connected ? 1 : 0.5 }} onClick={() => publish(p.id)}>
-                {p.label} {p.connected ? "✓" : "🔗"}
-              </button>
-            ))}
+            <button style={{ ...st.button, margin:0, opacity: linkedinStatus?.connected ? 1 : 0.5 }} onClick={() => publish("LINKEDIN")}>
+              in LinkedIn {linkedinStatus?.connected ? "✓" : "🔗"}
+            </button>
+            <button style={{ ...st.button, margin:0, opacity: twitterStatus?.connected ? 1 : 0.5, background:"linear-gradient(135deg,#000,#1a1a1a)" }} onClick={() => twitterStatus?.connected ? postToTwitter() : null} disabled={twitterPosting}>
+              𝕏 {twitterPosting ? tr(trendsLang,"buttons.publishing") : "X (Twitter)"} {twitterStatus?.connected ? "✓" : "🔗"}
+            </button>
+            <button style={{ ...st.button, margin:0, opacity: facebookStatus?.connected ? 1 : 0.5, background:"linear-gradient(135deg,#1877f2,#0d5cbf)" }} onClick={() => facebookStatus?.connected ? postToFacebook() : null} disabled={facebookPosting}>
+              f {facebookPosting ? tr(trendsLang,"buttons.publishing") : "Facebook"} {facebookStatus?.connected ? "✓" : "🔗"}
+            </button>
           </div>
 
           {publishStatus && (

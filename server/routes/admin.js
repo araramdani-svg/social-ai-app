@@ -190,10 +190,43 @@ router.get("/logs", adminAuth, async (req, res) => {
   }
 });
 
+// ─── GET /admin/analytics/yearly ─────────────────────────────────────────────
+router.get("/analytics/yearly", adminAuth, async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT TO_CHAR(DATE_TRUNC('month', created_at), 'YYYY-MM') AS month,
+              COUNT(*)::int AS views
+       FROM page_views
+       WHERE created_at >= DATE_TRUNC('year', NOW())
+       GROUP BY month ORDER BY month ASC`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Admin analytics yearly error:", err.message);
+    res.status(500).json({ error: "Failed to fetch yearly analytics" });
+  }
+});
+
+// ─── GET /admin/analytics/last30 ─────────────────────────────────────────────
+router.get("/analytics/last30", adminAuth, async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT DATE(created_at) AS day, COUNT(*)::int AS views
+       FROM page_views
+       WHERE created_at > NOW() - INTERVAL '30 days'
+       GROUP BY day ORDER BY day ASC`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Admin analytics last30 error:", err.message);
+    res.status(500).json({ error: "Failed to fetch last30 analytics" });
+  }
+});
+
 // ─── GET /admin/analytics ─────────────────────────────────────────────────────
 router.get("/analytics", adminAuth, async (req, res) => {
   try {
-    const [totalRes, byPageRes, last7Res] = await Promise.all([
+    const [totalRes, byPageRes, last7Res, last30Res] = await Promise.all([
       db.query("SELECT COUNT(*)::int AS total FROM page_views"),
       db.query(`SELECT page, COUNT(*)::int AS views FROM page_views GROUP BY page ORDER BY views DESC`),
       db.query(
@@ -202,11 +235,18 @@ router.get("/analytics", adminAuth, async (req, res) => {
          WHERE created_at > NOW() - INTERVAL '7 days'
          GROUP BY day ORDER BY day ASC`
       ),
+      db.query(
+        `SELECT DATE(created_at) AS day, COUNT(*)::int AS views
+         FROM page_views
+         WHERE created_at > NOW() - INTERVAL '30 days'
+         GROUP BY day ORDER BY day ASC`
+      ),
     ]);
     res.json({
       total:   totalRes.rows[0].total,
       byPage:  byPageRes.rows,
       last7:   last7Res.rows,
+      last30:  last30Res.rows,
     });
   } catch (err) {
     console.error("Admin analytics error:", err.message);

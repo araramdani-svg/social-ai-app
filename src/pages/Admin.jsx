@@ -183,46 +183,99 @@ function LogsTab({ token }) {
 // ─── Onglet Visites ───────────────────────────────────────────────────────────
 const PAGE_LABELS = { landing:"🏠 Landing", generator:"⚡ App", pricing:"💳 Pricing", auth:"🔑 Auth", other:"📄 Autre" };
 
+function BarChart({ data, color = "#60a5fa", labelKey = "day", valueKey = "views", height = 120, formatLabel }) {
+  const max = Math.max(...data.map(d => d[valueKey]), 1);
+  return (
+    <div style={{ display:"flex", gap:6, alignItems:"flex-end", height }}>
+      {data.map((d, i) => (
+        <div key={i} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
+          <div style={{ fontSize:10, color, fontWeight:700 }}>{d[valueKey] || 0}</div>
+          <div style={{ width:"100%", background:`rgba(96,165,250,0.1)`, border:`1px solid rgba(96,165,250,0.2)`, borderRadius:4, height:`${Math.max(Math.round((d[valueKey] / max) * (height - 30)), 4)}px`, background:color + "25", borderColor: color + "40", transition:"height 0.3s" }} />
+          <div style={{ fontSize:9, color:"#334155", whiteSpace:"nowrap", textAlign:"center" }}>
+            {formatLabel ? formatLabel(d[labelKey]) : d[labelKey]}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function AnalyticsTab({ token }) {
-  const [data, setData] = useState(null);
+  const [data,    setData]    = useState(null);
+  const [yearly,  setYearly]  = useState(null);
+  const [period,  setPeriod]  = useState("week"); // today | week | month | all
 
   useEffect(() => {
-    fetch(`${API}/admin/analytics`, { headers:{ Authorization:`Bearer ${token}` } })
-      .then(r => r.json()).then(setData).catch(console.error);
+    Promise.all([
+      fetch(`${API}/admin/analytics`, { headers:{ Authorization:`Bearer ${token}` } }).then(r => r.json()),
+      fetch(`${API}/admin/analytics/yearly`, { headers:{ Authorization:`Bearer ${token}` } }).then(r => r.json()),
+    ]).then(([a, y]) => { setData(a); setYearly(y); }).catch(console.error);
   }, [token]);
 
   if (!data) return <div style={{ textAlign:"center", padding:60, color:"#475569" }}>Chargement...</div>;
 
-  const maxViews = Math.max(...(data.last7.map(d => d.views)), 1);
+  // Filtrer selon la période sélectionnée
+  const getFilteredViews = () => {
+    if (!data.last7) return [];
+    if (period === "today")  return data.last7.filter(d => d.day === new Date().toISOString().split("T")[0]);
+    if (period === "week")   return data.last7;
+    if (period === "month")  return data.last30 || data.last7;
+    return data.last7;
+  };
+
+  const PERIOD_LABELS = { today:"Aujourd'hui", week:"7 jours", month:"30 jours", all:"Total" };
 
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
-      {/* Total */}
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))", gap:12 }}>
-        <StatCard label="VUES TOTALES" value={data.total} color="#60a5fa" />
+
+      {/* Stats cards */}
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))", gap:12 }}>
+        <StatCard label="VUES TOTALES"  value={data.total}  color="#60a5fa" />
         {data.byPage.map(p => (
           <StatCard key={p.page} label={PAGE_LABELS[p.page] || p.page} value={p.views} color="#94a3b8" />
         ))}
       </div>
 
-      {/* Courbe 7 jours */}
+      {/* Sélecteur période */}
+      <div style={{ display:"flex", gap:8 }}>
+        {["today","week","month","all"].map(p => (
+          <button key={p} style={{ ...s.btnSm, background:period===p?"rgba(96,165,250,0.15)":"rgba(255,255,255,0.04)", border:`1px solid ${period===p?"rgba(96,165,250,0.4)":"rgba(255,255,255,0.1)"}`, color:period===p?"#60a5fa":"#64748b", padding:"7px 14px" }} onClick={()=>setPeriod(p)}>
+            {PERIOD_LABELS[p]}
+          </button>
+        ))}
+      </div>
+
+      {/* Courbe semaine par jour */}
       <div style={{ ...s.card }}>
-        <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px", marginBottom:16 }}>VUES — 7 DERNIERS JOURS</div>
-        {data.last7.length === 0
+        <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px", marginBottom:16 }}>
+          VUES — {PERIOD_LABELS[period].toUpperCase()}
+        </div>
+        {getFilteredViews().length === 0
           ? <div style={{ color:"#334155", textAlign:"center", padding:"20px 0" }}>Pas encore de données</div>
-          : (
-            <div style={{ display:"flex", gap:8, alignItems:"flex-end", height:100 }}>
-              {data.last7.map(d => (
-                <div key={d.day} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
-                  <div style={{ fontSize:10, color:"#60a5fa", fontWeight:700 }}>{d.views}</div>
-                  <div style={{ width:"100%", background:"rgba(96,165,250,0.15)", border:"1px solid rgba(96,165,250,0.3)", borderRadius:4, height: `${Math.round((d.views / maxViews) * 80)}px`, minHeight:4, transition:"height 0.3s" }} />
-                  <div style={{ fontSize:9, color:"#334155", whiteSpace:"nowrap" }}>
-                    {new Date(d.day).toLocaleDateString("fr-FR", { weekday:"short", day:"numeric" })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )
+          : <BarChart
+              data={getFilteredViews()}
+              color="#60a5fa"
+              labelKey="day"
+              valueKey="views"
+              height={120}
+              formatLabel={d => new Date(d).toLocaleDateString("fr-FR", { weekday:"short", day:"numeric" })}
+            />
+        }
+      </div>
+
+      {/* Courbe annuelle par mois */}
+      <div style={{ ...s.card }}>
+        <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px", marginBottom:16 }}>VUES — ANNÉE EN COURS (PAR MOIS)</div>
+        {!yearly || yearly.length === 0
+          ? <div style={{ color:"#334155", textAlign:"center", padding:"20px 0" }}>Pas encore de données annuelles</div>
+          : <BarChart
+              data={yearly}
+              color="#f59e0b"
+              labelKey="month"
+              valueKey="views"
+              height={140}
+              formatLabel={d => new Date(d + "-01").toLocaleDateString("fr-FR", { month:"short" })}
+            />
         }
       </div>
     </div>

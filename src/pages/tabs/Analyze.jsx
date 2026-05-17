@@ -31,15 +31,24 @@ function fmt(n) {
   return String(n ?? 0);
 }
 
-function timeAgo(dateStr) {
+function timeAgo(dateStr, lang = "en") {
   if (!dateStr) return "—";
   const diff = Date.now() - new Date(dateStr).getTime();
   const d = Math.floor(diff / 86400000);
-  if (d === 0) return "Today";
-  if (d === 1) return "Yesterday";
-  if (d < 7)  return `${d}d ago`;
-  if (d < 30) return `${Math.floor(d/7)}w ago`;
-  return `${Math.floor(d/30)}mo ago`;
+  const labels = {
+    en: { today:"Today", yesterday:"Yesterday", dAgo:"d ago", wAgo:"w ago", moAgo:"mo ago" },
+    fr: { today:"Aujourd'hui", yesterday:"Hier", dAgo:"j", wAgo:"sem", moAgo:"mois" },
+    es: { today:"Hoy", yesterday:"Ayer", dAgo:"d", wAgo:"sem", moAgo:"mes" },
+    de: { today:"Heute", yesterday:"Gestern", dAgo:"T", wAgo:"W", moAgo:"Mo" },
+    it: { today:"Oggi", yesterday:"Ieri", dAgo:"g", wAgo:"sett", moAgo:"mese" },
+    pt: { today:"Hoje", yesterday:"Ontem", dAgo:"d", wAgo:"sem", moAgo:"mês" },
+  };
+  const l = labels[lang] || labels.en;
+  if (d === 0) return l.today;
+  if (d === 1) return l.yesterday;
+  if (d < 7)  return `${d}${l.dAgo}`;
+  if (d < 30) return `${Math.floor(d/7)}${l.wAgo}`;
+  return `${Math.floor(d/30)}${l.moAgo}`;
 }
 
 // ─── Section LinkedIn Analytics ───────────────────────────────────────────────
@@ -65,7 +74,7 @@ function LinkedInAnalytics({ token, isMobile, trendsLang }) {
       setPosts(postsData.posts   || []);
       setSummary(summaryData);
     } catch (err) {
-      setError("Failed to load analytics. Check your connection.");
+      setError(tr(trendsLang,"analyze.loadError") || "Failed to load analytics.");
     } finally {
       setLoading(false);
     }
@@ -77,7 +86,7 @@ function LinkedInAnalytics({ token, isMobile, trendsLang }) {
       await fetch(`${API}/linkedin-analytics/refresh`, { method: "POST", headers });
       await fetchData();
     } catch {
-      setError("Refresh failed.");
+      setError(tr(trendsLang,"analyze.refreshFailed") || "Refresh failed.");
     } finally {
       setRefreshing(false);
     }
@@ -96,7 +105,7 @@ function LinkedInAnalytics({ token, isMobile, trendsLang }) {
   if (loading) return (
     <div style={{ textAlign: "center", padding: "60px 20px", color: "#64748b" }}>
       <div style={{ fontSize: 32, marginBottom: 12 }}>⏳</div>
-      Loading LinkedIn analytics...
+      {tr(trendsLang,"analyze.loading") || "Loading..."}
     </div>
   );
 
@@ -205,7 +214,7 @@ function LinkedInAnalytics({ token, isMobile, trendsLang }) {
                     display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                     {post.content}
                   </div>
-                  <div style={{ color: "#334155", fontSize: 10 }}>{timeAgo(post.created_at)}</div>
+                  <div style={{ color: "#334155", fontSize: 10 }}>{timeAgo(post.created_at, trendsLang)}</div>
                 </div>
                 <div style={{ display: "flex", gap: isMobile ? 10 : 20, flexShrink: 0 }}>
                   {[
@@ -275,7 +284,7 @@ export default function Analyze({ trendsLang, isMobile, analysis, platformData, 
             <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 0.95fr", gap:12, alignItems:"stretch" }}>
               <div style={{ background:"rgba(255,255,255,0.02)", borderRadius:14, padding:18, border:"1px solid rgba(220,38,38,0.08)" }}>
                 <h4 style={{ color:"#fff", marginBottom:14 }}>{tr(trendsLang, "ui.strategicInsight")}</h4>
-                <p style={{ color:"#94a3b8", lineHeight:1.7, fontSize:14 }}>{analysis?.feedback || "Strong structure. Improve emotional hook for higher engagement."}</p>
+                <p style={{ color:"#94a3b8", lineHeight:1.7, fontSize:14 }}>{analysis?.feedback || tr(trendsLang,"analyze.defaultFeedback") || "Strong structure. Improve emotional hook for higher engagement."}</p>
                 {analysis?.suggestion && <p style={{ color:"#f59e0b", fontSize:13, marginTop:10, lineHeight:1.6 }}>💡 {analysis.suggestion}</p>}
                 <div style={{ display:"flex", gap:8, marginTop:18, flexWrap:"wrap" }}>
                   {[
