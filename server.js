@@ -46,7 +46,7 @@ const authLimiter = rateLimit({
 
 const generateLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 10,
+  max: 30,
   message: { error: "Too many generation requests, slow down." },
   standardHeaders: true,
   legacyHeaders: false,

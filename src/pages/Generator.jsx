@@ -230,7 +230,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => { const key=selectedProject||"default"; setPost(localStorage.getItem(`gp_post_${key}`)||""); setTopic(localStorage.getItem(`gp_topic_${key}`)||""); setProjectTitle(localStorage.getItem(`gp_title_${key}`)||""); }, [selectedProject]);
+  useEffect(() => { const key=selectedProject||"default"; if(key !== "default") { setPost(localStorage.getItem(`gp_post_${key}`)||""); setTopic(localStorage.getItem(`gp_topic_${key}`)||""); setProjectTitle(localStorage.getItem(`gp_title_${key}`)||""); } else { setPost(""); } }, [selectedProject]);
   useEffect(() => { const key=selectedProject||projectTitle||"default"; localStorage.setItem(`gp_post_${key}`,post); localStorage.setItem(`gp_topic_${key}`,topic); localStorage.setItem(`gp_title_${key}`,projectTitle); }, [post,topic,projectTitle,selectedProject]);
 
   useEffect(() => {
