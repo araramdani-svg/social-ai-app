@@ -222,11 +222,13 @@ Write the LinkedIn post now.`;
            ON CONFLICT DO NOTHING`,
           [req.user.id, project || null, topic, template, text]
         );
+      } catch (err) { console.error("Insert post error:", err.message); }
+      try {
         await db.query(
           "UPDATE users SET generations_count = generations_count + 1 WHERE id=$1",
           [req.user.id]
         );
-      } catch {}
+      } catch (err) { console.error("Increment quota error:", err.message); }
     }
 
     res.json({
