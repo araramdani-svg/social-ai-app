@@ -41,7 +41,7 @@ function useSEO(activeLang) {
       it: { title:"GrowthPILOT — L'unico OS IA multi-piattaforma per i creator", desc:"Genera, pianifica e pubblica contenuti IA su LinkedIn, X, Threads, Instagram, Facebook e TikTok da un'unica piattaforma." },
       pt: { title:"GrowthPILOT — O único OS de conteúdo IA multi-plataforma", desc:"Gere, agende e publique conteúdo IA no LinkedIn, X, Threads, Instagram, Facebook e TikTok a partir de um centro de controle." },
     };
-    const s = SEO[lang] || SEO.en;
+    const s = SEO[activeLang] || SEO.en;
     document.title = s.title;
     const setMeta = (name, content) => {
       let el = document.querySelector(`meta[name="${name}"]`);
@@ -50,7 +50,7 @@ function useSEO(activeLang) {
     };
     setMeta("description", s.desc);
     setMeta("robots", "index, follow");
-  }, [lang]);
+  }, [activeLang]);
 }
 
 /* ── Intersection observer hook ── */
