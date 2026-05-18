@@ -619,4 +619,82 @@ Language: ${langName}.${styleInstruction}`,
   }
 });
 
+
+// ─── POST /generate/carousel ──────────────────────────────────────────────────
+router.post("/carousel", authenticateToken, async (req, res) => {
+  const { topic, slideCount = 5, lang = "en", memory } = req.body;
+  if (!topic?.trim()) return res.status(400).json({ error: "Topic is required" });
+
+  const lName = langName(lang);
+  const count = Math.min(Math.max(parseInt(slideCount) || 5, 3), 10);
+
+  const sysPrompt = `You are an expert LinkedIn carousel creator. Generate exactly ${count} slides for a LinkedIn carousel post.
+IMPORTANT: Write ALL content (titles, body text) in ${lName} language.
+Return ONLY a valid JSON array, no markdown, no explanation.
+Each slide: { "emoji": "single emoji", "title": "short punchy title (max 8 words)", "body": "2-4 sentences of value (max 60 words)" }
+Slide 1: Hook — attention-grabbing opener with a bold promise or surprising stat.
+Slides 2 to ${count - 1}: Value — actionable insight, tip, or framework point.
+Slide ${count}: CTA — clear call to action (follow, save, comment).
+Niche context: ${memory?.niche || "business"} | Audience: ${memory?.audience || "professionals"} | Tone: ${memory?.tone || "expert"}.
+Topic: "${topic}"`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 2000,
+        system: sysPrompt,
+        messages: [{ role: "user", content: `Create a ${count}-slide LinkedIn carousel about: ${topic}. Write in ${lName} language.` }],
+      }),
+    });
+    const data = await response.json();
+    if (!response.ok) return res.status(500).json({ error: "AI generation failed" });
+    const raw = data.content?.find(b => b.type === "text")?.text || "[]";
+    const slides = JSON.parse(raw.replace(/```json|```/g, "").trim());
+    if (!Array.isArray(slides) || slides.length === 0) return res.status(500).json({ error: "Invalid AI response" });
+    res.json({ slides });
+  } catch (err) {
+    console.error("Carousel error:", err.message);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// ─── POST /generate/ghostwrite ────────────────────────────────────────────────
+router.post("/ghostwrite", authenticateToken, async (req, res) => {
+  const { source, systemPrompt: sysPrompt, lang = "en" } = req.body;
+  if (!source?.trim())    return res.status(400).json({ error: "Source text is required" });
+  if (!sysPrompt?.trim()) return res.status(400).json({ error: "System prompt is required" });
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1500,
+        system: sysPrompt,
+        messages: [{ role: "user", content: `Rewrite this:\n\n${source}` }],
+      }),
+    });
+    const data = await response.json();
+    if (!response.ok) return res.status(500).json({ error: "AI generation failed" });
+    const text = data.content?.find(b => b.type === "text")?.text?.trim() || "";
+    if (!text) return res.status(500).json({ error: "Empty AI response" });
+    res.json({ text });
+  } catch (err) {
+    console.error("GhostWrite error:", err.message);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 export default router;
