@@ -18,7 +18,6 @@ import { PageHeader } from "./shared.js";
 import { t as tr } from "../../translations.js";
 
 const API = "https://social-ai-app-production.up.railway.app";
-const API = "https://social-ai-app-production.up.railway.app";
 
 /* ─── Thèmes visuels ─────────────────────────────────────────── */
 const THEMES = {
