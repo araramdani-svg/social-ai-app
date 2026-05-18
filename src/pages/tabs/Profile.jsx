@@ -16,6 +16,9 @@ export default function Profile({
   setPage, showToast
 }) {
   const [confirm, setConfirm] = useState(null);
+  // Mot de passe de confirmation pour le changement d'email (state local, pas besoin de remonter)
+  const [emailCurrentPassword, setEmailCurrentPassword] = useState("");
+
   const getPlanColor = (plan) => plan === "Business" ? "#a855f7" : plan === "Pro" ? "#ef4444" : "#475569";
   const getPlanIcon  = (plan) => plan === "Business" ? "🏢" : plan === "Pro" ? "⚡" : "🆓";
 
@@ -47,6 +50,11 @@ export default function Profile({
   const getEmail = () => {
     try { return JSON.parse(atob(token.split(".")[1])).email; }
     catch { return "—"; }
+  };
+
+  // Handler local qui injecte emailCurrentPassword avant d'appeler le parent
+  const handleChangeEmail = () => {
+    changeEmailAddress(emailCurrentPassword);
   };
 
   return (
@@ -87,7 +95,11 @@ export default function Profile({
                   display:"flex", alignItems:"center", gap: isMobile ? 4 : 10,
                   flex: isMobile ? "1 1 auto" : "unset",
                 }}
-                onClick={() => { setProfileSection(s.key); setProfileMsg({ type:"", text:"" }); }}>
+                onClick={() => {
+                  setProfileSection(s.key);
+                  setProfileMsg({ type:"", text:"" });
+                  setEmailCurrentPassword("");
+                }}>
                 <span>{s.icon}</span> {!isMobile && s.label}
               </button>
             ))}
@@ -156,17 +168,60 @@ export default function Profile({
             <div style={{ display:"flex", flexDirection:"column", gap:20, maxWidth:480 }}>
               <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>{tr(trendsLang, "profile.emailTitle")}</h2>
               <p style={{ color:"#64748b", fontSize:13, margin:0 }}>{tr(trendsLang, "profile.emailHint")}</p>
+
+              {/* Email actuel (lecture seule) */}
               <div>
                 <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>{tr(trendsLang, "profile.labelCurrentEmail").toUpperCase()}</div>
                 <div style={{ padding:"14px 18px", background:"#0f172a", borderRadius:10, border:"1px solid rgba(220,38,38,0.15)", color:"#94a3b8", fontSize:14 }}>
                   {token && token !== "guest" ? getEmail() : "—"}
                 </div>
               </div>
+
+              {/* Nouveau email */}
               <div>
                 <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>{tr(trendsLang, "profile.labelNewEmail").toUpperCase()}</div>
-                <input type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder={tr(trendsLang, "profile.labelNewEmail")} style={{ ...st.input, maxWidth:"100%", marginBottom:0 }} />
+                <input
+                  type="email"
+                  value={newEmail}
+                  onChange={e => setNewEmail(e.target.value)}
+                  placeholder={tr(trendsLang, "profile.labelNewEmail")}
+                  style={{ ...st.input, maxWidth:"100%", marginBottom:0 }}
+                />
               </div>
-              <button style={{ ...st.button, margin:0, opacity: profileLoading ? 0.6 : 1 }} onClick={changeEmailAddress} disabled={profileLoading}>
+
+              {/* Mot de passe actuel — confirmation de sécurité */}
+              <div>
+                <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>
+                  {tr(trendsLang, "profile.labelCurrentPw").toUpperCase()}
+                </div>
+                <input
+                  type="password"
+                  value={emailCurrentPassword}
+                  onChange={e => setEmailCurrentPassword(e.target.value)}
+                  placeholder={tr(trendsLang, "profile.labelCurrentPw")}
+                  style={{ ...st.input, maxWidth:"100%", marginBottom:0 }}
+                />
+              </div>
+
+              {/* Bandeau info sécurité */}
+              <div style={{
+                display:"flex", alignItems:"flex-start", gap:10,
+                padding:"12px 16px", borderRadius:8,
+                background:"rgba(234,179,8,0.06)",
+                border:"1px solid rgba(234,179,8,0.2)",
+              }}>
+                <span style={{ fontSize:16, marginTop:1 }}>🔒</span>
+                <p style={{ color:"#a16207", fontSize:12, margin:0, lineHeight:1.6 }}>
+                  {tr(trendsLang, "profile.emailSecurityNote") ||
+                    "A confirmation link will be sent to your new address. Your current email will also receive a security alert. The change only takes effect after confirmation."}
+                </p>
+              </div>
+
+              <button
+                style={{ ...st.button, margin:0, opacity: profileLoading ? 0.6 : 1 }}
+                onClick={handleChangeEmail}
+                disabled={profileLoading || !newEmail || !emailCurrentPassword}
+              >
                 {profileLoading ? tr(trendsLang, "profile.updating") : tr(trendsLang, "profile.updateEmail")}
               </button>
             </div>

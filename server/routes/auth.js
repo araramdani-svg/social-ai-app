@@ -75,7 +75,109 @@ const sendVerificationEmail = async (email, token) => {
   }
 };
 
+// ─── Envoi email de confirmation de changement d'adresse (nouveau email) ──────
+const sendEmailChangeConfirmation = async (newEmail, token, oldEmail) => {
+  const confirmUrl = `https://www.aigrowthpilot.app?confirm_email_change=${token}`;
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
+    },
+    body: JSON.stringify({
+      from: "GrowthPILOT <team@aigrowthpilot.app>",
+      to: newEmail,
+      subject: "Confirm your new email address — GrowthPILOT",
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <body style="margin:0;padding:0;background:#050a14;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+          <div style="max-width:560px;margin:40px auto;background:#0d1626;border:1px solid rgba(220,38,38,0.2);border-radius:16px;overflow:hidden;">
+            <div style="background:linear-gradient(135deg,#dc2626,#991b1b);padding:32px;text-align:center;">
+              <h1 style="color:#fff;margin:0;font-size:24px;font-weight:900;letter-spacing:-0.5px;">Growth<span style="opacity:0.8">PILOT</span></h1>
+              <p style="color:rgba(255,255,255,0.7);margin:8px 0 0;font-size:14px;">AI Content Command Center</p>
+            </div>
+            <div style="padding:40px 32px;">
+              <h2 style="color:#e2e8f0;font-size:20px;font-weight:800;margin:0 0 12px;">Confirm your new email</h2>
+              <p style="color:#64748b;font-size:14px;line-height:1.7;margin:0 0 8px;">
+                A request was made to change the email address on your GrowthPILOT account.
+              </p>
+              <p style="color:#64748b;font-size:14px;line-height:1.7;margin:0 0 32px;">
+                Current address: <strong style="color:#94a3b8;">${oldEmail}</strong><br/>
+                New address: <strong style="color:#94a3b8;">${newEmail}</strong><br/><br/>
+                Click below to confirm. This link expires in <strong style="color:#ef4444;">24 hours</strong>.
+              </p>
+              <a href="${confirmUrl}" style="display:block;background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;text-decoration:none;text-align:center;padding:16px 32px;border-radius:10px;font-weight:800;font-size:15px;letter-spacing:0.5px;">
+                Confirm new email →
+              </a>
+              <p style="color:#334155;font-size:12px;margin:24px 0 0;text-align:center;">
+                If you didn't request this change, you can safely ignore this email. Your account remains secure.
+              </p>
+            </div>
+            <div style="border-top:1px solid rgba(255,255,255,0.05);padding:20px 32px;text-align:center;">
+              <p style="color:#1e293b;font-size:11px;margin:0;">© 2026 GrowthPILOT · <a href="https://www.aigrowthpilot.app" style="color:#334155;">aigrowthpilot.app</a></p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Resend error: ${err}`);
+  }
+};
 
+// ─── Envoi email d'alerte sécurité (ancien email) ─────────────────────────────
+const sendEmailChangeAlert = async (oldEmail, newEmail) => {
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
+    },
+    body: JSON.stringify({
+      from: "GrowthPILOT <team@aigrowthpilot.app>",
+      to: oldEmail,
+      subject: "⚠️ Security alert — Email change requested",
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <body style="margin:0;padding:0;background:#050a14;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+          <div style="max-width:560px;margin:40px auto;background:#0d1626;border:1px solid rgba(220,38,38,0.2);border-radius:16px;overflow:hidden;">
+            <div style="background:linear-gradient(135deg,#dc2626,#991b1b);padding:32px;text-align:center;">
+              <h1 style="color:#fff;margin:0;font-size:24px;font-weight:900;letter-spacing:-0.5px;">Growth<span style="opacity:0.8">PILOT</span></h1>
+              <p style="color:rgba(255,255,255,0.7);margin:8px 0 0;font-size:14px;">AI Content Command Center</p>
+            </div>
+            <div style="padding:40px 32px;">
+              <h2 style="color:#ef4444;font-size:20px;font-weight:800;margin:0 0 12px;">⚠️ Email change requested</h2>
+              <p style="color:#64748b;font-size:14px;line-height:1.7;margin:0 0 16px;">
+                A request was made to change the email address associated with your GrowthPILOT account.
+              </p>
+              <div style="background:rgba(220,38,38,0.05);border:1px solid rgba(220,38,38,0.2);border-radius:10px;padding:20px;margin-bottom:24px;">
+                <div style="color:#94a3b8;font-size:13px;margin-bottom:6px;">Current email: <strong>${oldEmail}</strong></div>
+                <div style="color:#94a3b8;font-size:13px;">Requested new email: <strong>${newEmail}</strong></div>
+              </div>
+              <p style="color:#64748b;font-size:14px;line-height:1.7;margin:0;">
+                A confirmation link was sent to <strong style="color:#94a3b8;">${newEmail}</strong>. The change will only take effect after confirmation.<br/><br/>
+                <strong style="color:#ef4444;">If you did not make this request</strong>, please contact us immediately at <a href="mailto:team@aigrowthpilot.app" style="color:#ef4444;">team@aigrowthpilot.app</a> and change your password.
+              </p>
+            </div>
+            <div style="border-top:1px solid rgba(255,255,255,0.05);padding:20px 32px;text-align:center;">
+              <p style="color:#1e293b;font-size:11px;margin:0;">© 2026 GrowthPILOT · <a href="https://www.aigrowthpilot.app" style="color:#334155;">aigrowthpilot.app</a></p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Resend error: ${err}`);
+  }
+};
 
 // ─── Middleware auth ───────────────────────────────────────────────────────────
 const authenticateToken = (req, res, next) => {
@@ -270,23 +372,120 @@ router.post("/change-password", authenticateToken, async (req, res) => {
   }
 });
 
-// ─── POST /auth/change-email ───────────────────────────────────────────────────
-router.post("/change-email", authenticateToken, async (req, res) => {
-  const { newEmail } = req.body;
+// ─── POST /auth/change-email/request ──────────────────────────────────────────
+// Étape 1 : vérifie le mot de passe, génère un token, envoie les emails
+router.post("/change-email/request", authenticateToken, async (req, res) => {
+  const { newEmail, currentPassword } = req.body;
+
+  // Validation format email
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!newEmail || !emailRegex.test(newEmail)) {
     return res.status(400).json({ message: "Invalid email address" });
   }
+
+  // Bloquer les domaines jetables
+  const domain = newEmail.split("@")[1]?.toLowerCase();
+  if (BLOCKED_DOMAINS.has(domain)) {
+    return res.status(400).json({ message: "Disposable email addresses are not allowed." });
+  }
+
+  if (!currentPassword) {
+    return res.status(400).json({ message: "Current password is required" });
+  }
+
   try {
-    await db.query("UPDATE users SET email=$1 WHERE id=$2", [newEmail, req.user.id]);
-    res.json({ success: true });
+    const result = await db.query("SELECT * FROM users WHERE id=$1", [req.user.id]);
+    const user = result.rows[0];
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Vérifier que le nouvel email est différent de l'actuel
+    if (newEmail.toLowerCase() === user.email.toLowerCase()) {
+      return res.status(400).json({ message: "New email must be different from your current email" });
+    }
+
+    // Vérifier que le nouvel email n'est pas déjà utilisé
+    const existing = await db.query("SELECT id FROM users WHERE email=$1 AND id!=$2", [newEmail, req.user.id]);
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ message: "This email address is already in use" });
+    }
+
+    // Vérifier le mot de passe actuel
+    const valid = await bcrypt.compare(currentPassword, user.password);
+    if (!valid) return res.status(400).json({ message: "Current password is incorrect" });
+
+    // Générer le token de confirmation (expire dans 24h)
+    const changeToken = crypto.randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // +24h
+
+    // Stocker le token et le nouvel email en attente
+    await db.query(
+      "UPDATE users SET pending_email=$1, email_change_token=$2, email_change_expires_at=$3 WHERE id=$4",
+      [newEmail, changeToken, expiresAt, req.user.id]
+    );
+
+    // Envoyer email de confirmation au nouveau email
+    await sendEmailChangeConfirmation(newEmail, changeToken, user.email);
+
+    // Envoyer alerte sécurité à l'ancien email (non bloquant)
+    try {
+      await sendEmailChangeAlert(user.email, newEmail);
+    } catch (alertErr) {
+      console.error("Email change alert error:", alertErr.message);
+    }
+
+    res.json({ success: true, message: "A confirmation link has been sent to your new email address. It expires in 24 hours." });
   } catch (err) {
-    if (err.code === "23505") return res.status(400).json({ message: "Email already in use" });
+    console.error("Change email request error:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
+// ─── GET /auth/change-email/confirm/:token ────────────────────────────────────
+// Étape 2 : valide le token et applique le changement d'email en DB
+router.get("/change-email/confirm/:token", async (req, res) => {
+  const { token } = req.params;
+  try {
+    // Chercher un user avec ce token non expiré
+    const result = await db.query(
+      "SELECT * FROM users WHERE email_change_token=$1 AND email_change_expires_at > NOW()",
+      [token]
+    );
+    const user = result.rows[0];
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired confirmation link." });
+    }
 
+    // Vérifier une dernière fois que le pending_email n'est pas déjà pris
+    const conflict = await db.query(
+      "SELECT id FROM users WHERE email=$1 AND id!=$2",
+      [user.pending_email, user.id]
+    );
+    if (conflict.rows.length > 0) {
+      // Nettoyer et rejeter
+      await db.query(
+        "UPDATE users SET pending_email=NULL, email_change_token=NULL, email_change_expires_at=NULL WHERE id=$1",
+        [user.id]
+      );
+      return res.status(400).json({ message: "This email address is already in use by another account." });
+    }
+
+    // Appliquer le changement
+    await db.query(
+      `UPDATE users
+       SET email=$1,
+           pending_email=NULL,
+           email_change_token=NULL,
+           email_change_expires_at=NULL
+       WHERE id=$2`,
+      [user.pending_email, user.id]
+    );
+
+    res.json({ success: true, message: "Email address updated successfully. Please log in again with your new email." });
+  } catch (err) {
+    console.error("Change email confirm error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 // ─── GET /auth/verify-email/:token ───────────────────────────────────────────
 router.get("/verify-email/:token", async (req, res) => {
