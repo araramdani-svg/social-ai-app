@@ -68,7 +68,7 @@ const analyticsLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-import "./server/config/db.js";
+import db from "./server/config/db.js";
 import authRoutes              from "./server/routes/auth.js";
 import generateRoutes          from "./server/routes/generate.js";
 import analyzeRoutes           from "./server/routes/analyze.js";
@@ -147,3 +147,117 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   logger.info(`Backend running on port ${PORT}`, { env: process.env.NODE_ENV || "development" });
 });
+
+// ─── Cron : rappel calendrier (chaque lundi à 8h UTC) ─────────────────────────
+
+const scheduleCalendarReminder = () => {
+  const now = new Date();
+  const next = new Date(now);
+
+  // Avancer jusqu'au prochain lundi
+  const day = now.getUTCDay(); // 0=dim, 1=lun, ...
+  const daysUntilMonday = day === 1 ? 7 : (8 - day) % 7 || 7;
+  next.setUTCDate(now.getUTCDate() + daysUntilMonday);
+  next.setUTCHours(8, 0, 0, 0);
+
+  const msUntilNext = next.getTime() - now.getTime();
+  logger.info(`📅 Calendar reminder scheduled in ${Math.round(msUntilNext / 3600000)}h (next Monday 8:00 UTC)`);
+
+  setTimeout(async () => {
+    await sendCalendarReminders();
+    // Relancer chaque semaine (7 jours)
+    setInterval(sendCalendarReminders, 7 * 24 * 60 * 60 * 1000);
+  }, msUntilNext);
+};
+
+const sendCalendarReminders = async () => {
+  logger.info("📅 Running weekly calendar reminder job...");
+  try {
+    // Chercher les users ayant des slots "scheduled" sans contenu dans les 7 prochains jours
+    const now = new Date();
+    const in7days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    const result = await db.query(`
+      SELECT DISTINCT u.id, u.email, COUNT(cp.id) AS empty_slots
+      FROM users u
+      JOIN calendar_posts cp ON cp.user_id = u.id
+      WHERE cp.col = 'scheduled'
+        AND (cp.content IS NULL OR TRIM(cp.content) = '')
+        AND cp.scheduled_date >= $1
+        AND cp.scheduled_date <= $2
+        AND u.email_verified = true
+        AND u.banned = false
+      GROUP BY u.id, u.email
+    `, [now.toISOString(), in7days.toISOString()]);
+
+    logger.info(`📅 Calendar reminder: ${result.rows.length} users to notify`);
+
+    for (const user of result.rows) {
+      try {
+        await sendCalendarReminderEmail(user.email, parseInt(user.empty_slots));
+        logger.info(`📧 Calendar reminder sent to ${user.email}`);
+      } catch (err) {
+        logger.error(`❌ Calendar reminder failed for ${user.email}`, { error: err.message });
+      }
+    }
+  } catch (err) {
+    logger.error("❌ Calendar reminder job error", { error: err.message });
+  }
+};
+
+const sendCalendarReminderEmail = async (email, emptySlots) => {
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
+    },
+    body: JSON.stringify({
+      from: "GrowthPILOT <team@aigrowthpilot.app>",
+      to: email,
+      subject: `📅 You have ${emptySlots} empty slot${emptySlots > 1 ? "s" : ""} this week — GrowthPILOT`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <body style="margin:0;padding:0;background:#050a14;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+          <div style="max-width:560px;margin:40px auto;background:#0d1626;border:1px solid rgba(220,38,38,0.2);border-radius:16px;overflow:hidden;">
+            <div style="background:linear-gradient(135deg,#dc2626,#991b1b);padding:32px;text-align:center;">
+              <h1 style="color:#fff;margin:0;font-size:24px;font-weight:900;letter-spacing:-0.5px;">Growth<span style="opacity:0.8">PILOT</span></h1>
+              <p style="color:rgba(255,255,255,0.7);margin:8px 0 0;font-size:14px;">Weekly Content Reminder</p>
+            </div>
+            <div style="padding:40px 32px;">
+              <h2 style="color:#e2e8f0;font-size:20px;font-weight:800;margin:0 0 12px;">📅 Don't leave your calendar empty</h2>
+              <p style="color:#64748b;font-size:14px;line-height:1.7;margin:0 0 24px;">
+                You have <strong style="color:#ef4444;">${emptySlots} scheduled slot${emptySlots > 1 ? "s" : ""}</strong> this week without content. 
+                Your audience is waiting — let's fill them in.
+              </p>
+              <a href="https://www.aigrowthpilot.app" style="display:block;background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;text-decoration:none;text-align:center;padding:16px 32px;border-radius:10px;font-weight:800;font-size:15px;letter-spacing:0.5px;">
+                ✍️ Create content now →
+              </a>
+              <div style="margin-top:24px;padding:16px;background:rgba(220,38,38,0.05);border:1px solid rgba(220,38,38,0.15);border-radius:10px;">
+                <div style="color:#ef4444;font-size:11px;font-weight:700;letter-spacing:1.5px;margin-bottom:8px;">⚡ QUICK TIP</div>
+                <div style="color:#64748b;font-size:13px;line-height:1.6;">
+                  Use the <strong style="color:#94a3b8;">Trends tab</strong> to find this week's viral topics, then generate a post in one click.
+                </div>
+              </div>
+              <p style="color:#334155;font-size:12px;margin:24px 0 0;text-align:center;">
+                To stop receiving these reminders, manage your notification settings in your <a href="https://www.aigrowthpilot.app" style="color:#475569;">profile</a>.
+              </p>
+            </div>
+            <div style="border-top:1px solid rgba(255,255,255,0.05);padding:20px 32px;text-align:center;">
+              <p style="color:#1e293b;font-size:11px;margin:0;">© 2026 GrowthPILOT · <a href="https://www.aigrowthpilot.app" style="color:#334155;">aigrowthpilot.app</a></p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Resend error: ${err}`);
+  }
+};
+
+// Lancer le scheduler au démarrage
+scheduleCalendarReminder();
