@@ -18,6 +18,7 @@ import { PageHeader } from "./shared.js";
 import { t as tr } from "../../translations.js";
 
 const API = "https://social-ai-app-production.up.railway.app";
+const API = "https://social-ai-app-production.up.railway.app";
 
 /* ─── Thèmes visuels ─────────────────────────────────────────── */
 const THEMES = {
@@ -178,20 +179,14 @@ Slide ${slideCount}: CTA — clear call to action (follow, save, comment).
 Niche context: ${memory?.niche || "business"} | Audience: ${memory?.audience || "professionals"} | Tone: ${memory?.tone || "expert"}.
 Topic: "${topic}"`;
 
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch(`${API}/generate/carousel`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          system: systemPrompt,
-          messages: [{ role: "user", content: `Create a ${slideCount}-slide LinkedIn carousel about: ${topic}. Write in ${langName} language.` }],
-        }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ topic, slideCount, systemPrompt, lang: trendsLang }),
       });
       const data = await res.json();
-      const raw = data.content?.find(b => b.type === "text")?.text || "[]";
-      const clean = raw.replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(clean);
+      if (!res.ok) throw new Error(data.error || "server error");
+      const parsed = data.slides;
       if (!Array.isArray(parsed) || parsed.length === 0) throw new Error("bad response");
       setSlides(parsed);
       showToast(tr(trendsLang, "carousel.generated"));

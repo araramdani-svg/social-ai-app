@@ -283,7 +283,7 @@ router.get("/posts", authenticateToken, async (req, res) => {
 router.get("/project/:name", authenticateToken, async (req, res) => {
   try {
     const [proj, memory, posts] = await Promise.all([
-      db.query("SELECT * FROM projects WHERE name=$1", [req.params.name]),
+      db.query("SELECT * FROM projects WHERE name=$1 AND user_id=$2", [req.params.name, req.user.id]),
       db.query("SELECT * FROM brand_memory WHERE project_name=$1", [req.params.name]),
       db.query(
         "SELECT * FROM posts WHERE user_id=$1 AND project_name=$2 ORDER BY created_at DESC LIMIT 20",
@@ -306,25 +306,26 @@ router.get("/project/:name", authenticateToken, async (req, res) => {
 router.post("/create-project", authenticateToken, async (req, res) => {
   const { name, workspace, campaign } = req.body;
   const result = await db.query(
-    "INSERT INTO projects(name,workspace,campaign) VALUES($1,$2,$3) RETURNING id",
-    [name, workspace, campaign]
+    "INSERT INTO projects(name,workspace,campaign,user_id) VALUES($1,$2,$3,$4) RETURNING id",
+    [name, workspace, campaign, req.user.id]
+  );
   );
   res.json({ success: true, id: result.rows[0].id });
 });
 
 router.get("/projects", authenticateToken, async (req, res) => {
-  const result = await db.query("SELECT * FROM projects ORDER BY created_at DESC");
+  const result = await db.query("SELECT * FROM projects WHERE user_id=$1 ORDER BY created_at DESC", [req.user.id]);
   res.json(result.rows);
 });
 
 router.delete("/delete-project/:name", authenticateToken, async (req, res) => {
-  await db.query("DELETE FROM projects WHERE name=$1", [req.params.name]);
+  await db.query("DELETE FROM projects WHERE name=$1 AND user_id=$2", [req.params.name, req.user.id]);
   res.json({ success: true });
 });
 
 router.post("/rename-project", authenticateToken, async (req, res) => {
   const { oldName, newName } = req.body;
-  await db.query("UPDATE projects SET name=$1 WHERE name=$2", [newName, oldName]);
+  await db.query("UPDATE projects SET name=$1 WHERE name=$2 AND user_id=$3", [newName, oldName, req.user.id]);
   res.json({ success: true });
 });
 

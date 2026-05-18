@@ -15,6 +15,7 @@
 import { PageHeader } from "./shared.js";
 import { useState } from "react";
 import { t as tr } from "../../translations.js";
+const API = "https://social-ai-app-production.up.railway.app";
 
 const PRESET_AUTHORS = [
   { id: "hormozi",   label: "Alex Hormozi",    emoji: "💰", desc: "Direct, frameworks chiffrés, no-BS, bullet lists brutaux" },
@@ -101,18 +102,14 @@ Rules:
 - Do NOT add disclaimers or meta-commentary. Return ONLY the rewritten content.
 Context: niche=${memory?.niche || "business"}, audience=${memory?.audience || "professionals"}`;
 
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch(`${API}/generate/ghostwrite`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          system: systemPrompt,
-          messages: [{ role: "user", content: `Rewrite this:\n\n${source}` }],
-        }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ source, systemPrompt, lang: trendsLang }),
       });
       const data = await res.json();
-      const text = data.content?.find(b => b.type === "text")?.text?.trim() || "";
+      if (!res.ok) throw new Error(data.error || "server error");
+      const text = data.text || "";
       if (!text) throw new Error("empty");
       setResult(text);
       setHistory(prev => [{ author: selectedAuthor?.label || "Custom", mode: modeDesc?.label, original: source, result: text, ts: new Date().toLocaleTimeString() }, ...prev.slice(0, 4)]);

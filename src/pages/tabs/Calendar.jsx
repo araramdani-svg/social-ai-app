@@ -12,7 +12,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { t as tr } from "../../translations.js";
 import { PageHeader, ConfirmModal } from "./shared.js";
 
-const API = import.meta.env.VITE_API_URL;
+const API = "https://social-ai-app-production.up.railway.app";
 
 const COLUMNS = (lang) => [
   { id:"ideas",     label:tr(lang,"calendar.colIdeas"),     color:"#475569",  bg:"rgba(71,85,105,0.1)" },

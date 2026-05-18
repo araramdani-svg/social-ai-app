@@ -71,6 +71,8 @@ const analyticsLimiter = rateLimit({
 import db from "./server/config/db.js";
 import authRoutes              from "./server/routes/auth.js";
 import generateRoutes          from "./server/routes/generate.js";
+import carouselRouter          from "./server/routes/carousel.js";
+import ghostwriteRouter        from "./server/routes/ghostwrite.js";
 import analyzeRoutes           from "./server/routes/analyze.js";
 import stripeRoutes            from "./server/routes/stripe.js";
 import linkedinRoutes          from "./server/routes/linkedin.js";
@@ -121,6 +123,8 @@ app.use((req, res, next) => {
 // ─── Routes ───────────────────────────────────────────────────────────────────
 app.use("/auth",               authLimiter,      authRoutes);
 app.use("/generate",           generateLimiter,  generateRoutes);
+app.use("/generate/carousel",   generateLimiter,  carouselRouter);
+app.use("/generate/ghostwrite", generateLimiter,  ghostwriteRouter);
 app.use("/analyze",                              analyzeRoutes);
 app.use("/stripe",                               stripeRoutes);
 app.use("/linkedin",                             linkedinRoutes);
