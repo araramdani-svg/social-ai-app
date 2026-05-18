@@ -13,9 +13,9 @@ const TODAY = () => new Date().toLocaleDateString("en-US", { weekday:"long", mon
 
 // Actions principales — mises en avant
 const SPOTLIGHT = [
-  { key:"create",    icon:"✍️", color:"#ef4444", gradient:"linear-gradient(135deg,rgba(220,38,38,0.15),rgba(220,38,38,0.05))", border:"rgba(220,38,38,0.3)" },
-  { key:"calendar",  icon:"📅", color:"#8b5cf6", gradient:"linear-gradient(135deg,rgba(139,92,246,0.15),rgba(139,92,246,0.05))", border:"rgba(139,92,246,0.3)" },
-  { key:"trends",    icon:"🌍", color:"#22c55e", gradient:"linear-gradient(135deg,rgba(34,197,94,0.15),rgba(34,197,94,0.05))", border:"rgba(34,197,94,0.3)" },
+  { key:"create",   icon:"✍️", color:"#ef4444", gradient:"linear-gradient(135deg,rgba(220,38,38,0.15),rgba(220,38,38,0.05))", border:"rgba(220,38,38,0.3)",  descKey:"ui.qlCreate",   descFallback:"Generate strategic authority content" },
+  { key:"calendar", icon:"📅", color:"#8b5cf6", gradient:"linear-gradient(135deg,rgba(139,92,246,0.15),rgba(139,92,246,0.05))", border:"rgba(139,92,246,0.3)", descKey:"ui.qlCalendar", descFallback:"Plan and schedule your content" },
+  { key:"trends",   icon:"🌍", color:"#22c55e", gradient:"linear-gradient(135deg,rgba(34,197,94,0.15),rgba(34,197,94,0.05))", border:"rgba(34,197,94,0.3)",   descKey:"ui.qlTrends",   descFallback:"Discover viral topics in real time" },
 ];
 
 // Modules secondaires
@@ -77,8 +77,8 @@ export default function Home({ trendsLang, isMobile, setTab, stats, userPlan, fi
 
         {/* Badge plan + quota */}
         <div style={{
-          display:"flex", flexDirection:"column", gap:8, alignItems: isMobile ? "flex-start" : "flex-end",
-          flexShrink:0,
+          display:"flex", flexDirection:"row", gap:16, alignItems:"center", justifyContent: isMobile ? "flex-start" : "flex-end",
+          flexShrink:0, flexWrap:"wrap",
         }}>
           <div style={{
             display:"inline-flex", alignItems:"center", gap:8,
@@ -103,7 +103,7 @@ export default function Home({ trendsLang, isMobile, setTab, stats, userPlan, fi
           QUICK ACTIONS
         </div>
         <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3,1fr)", gap:10 }}>
-          {SPOTLIGHT.map(({ key, icon, color, gradient, border }, i) => (
+          {SPOTLIGHT.map(({ key, icon, color, gradient, border, descKey, descFallback }, i) => (
             <motion.div
               key={key}
               initial={{ opacity:0, y:12 }}
@@ -133,7 +133,7 @@ export default function Home({ trendsLang, isMobile, setTab, stats, userPlan, fi
                   {tr(trendsLang, `nav.${key}`)}
                 </div>
                 <div style={{ color:"#475569", fontSize:12, lineHeight:1.4 }}>
-                  {tr(trendsLang, `ui.ql${key.charAt(0).toUpperCase() + key.slice(1)}`) || tr(trendsLang, `${key}.subtitle`) || ""}
+                  {tr(trendsLang, descKey) || descFallback}
                 </div>
               </div>
               <div style={{ marginLeft:"auto", color:"#334155", fontSize:18 }}>›</div>
