@@ -309,7 +309,6 @@ router.post("/create-project", authenticateToken, async (req, res) => {
     "INSERT INTO projects(name,workspace,campaign,user_id) VALUES($1,$2,$3,$4) RETURNING id",
     [name, workspace, campaign, req.user.id]
   );
-  );
   res.json({ success: true, id: result.rows[0].id });
 });
 
