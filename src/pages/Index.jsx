@@ -31,7 +31,7 @@ function useGoogleFonts() {
 }
 
 /* ── SEO ── */
-function useSEO(lang) {
+function useSEO(activeLang) {
   useEffect(() => {
     const SEO = {
       en: { title:"GrowthPILOT — The Only Multi-Platform AI Content OS", desc:"Generate, schedule & publish AI content to LinkedIn, X, Threads, Instagram, Facebook & TikTok from one command center. Free to start." },
@@ -179,8 +179,8 @@ function useStyles() {
 /* ══ MAIN COMPONENT ══════════════════════════════════════════════════════════ */
 export default function Index({ openApp, openLogin, openPricing, lang: propLang, setLang: propSetLang }) {
   const [lang, setLangState]        = useState(() => propLang || localStorage.getItem("gp_lang") || "en");
+  const activeLang = propLang || lang;
   const setLang = (l) => { setLangState(l); localStorage.setItem("gp_lang", l); if (propSetLang) propSetLang(l); };
-  useEffect(() => { if (propLang && propLang !== lang) setLangState(propLang); }, [propLang]);
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [scrolled, setScrolled]     = useState(false);
   const [yearly, setYearly]         = useState(false);
@@ -189,9 +189,9 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
 
   useGoogleFonts();
   useStyles();
-  useSEO(lang);
+  useSEO(activeLang);
 
-  const handleLang = (l) => { setLang(l); setShowLangMenu(false); };
+  const handleLang = (l) => { setLang(l); localStorage.setItem("gp_lang", l); setShowLangMenu(false); };
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 40);
@@ -285,13 +285,13 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
           <div style={{ position:"relative" }}>
             <button onClick={() => setShowLangMenu(!showLangMenu)}
               style={{ padding:"6px 10px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:6, color:"#64748b", cursor:"pointer", fontSize:12, fontFamily:"'DM Mono', monospace" }}>
-              {LANGS.find(lx => lx.key === lang)?.flag} {lang.toUpperCase()}
+              {LANGS.find(lx => lx.key === activeLang)?.flag} {activeLang.toUpperCase()}
             </button>
             {showLangMenu && (
               <div style={{ position:"absolute", top:40, right:0, background:"#0d1626", border:"1px solid rgba(220,38,38,0.2)", borderRadius:10, overflow:"hidden", zIndex:9999, minWidth:120, boxShadow:"0 20px 40px rgba(0,0,0,0.6)" }}>
                 {LANGS.map(lx => (
                   <button key={lx.key} onClick={() => handleLang(lx.key)}
-                    style={{ width:"100%", padding:"10px 14px", background: lang===lx.key ? "rgba(220,38,38,0.12)" : "transparent", border:"none", color: lang===lx.key ? "#ef4444":"#94a3b8", cursor:"pointer", textAlign:"left", fontSize:13, fontFamily:"'DM Mono', monospace" }}>
+                    style={{ width:"100%", padding:"10px 14px", background: activeLang===lx.key ? "rgba(220,38,38,0.12)" : "transparent", border:"none", color: activeLang===lx.key ? "#ef4444":"#94a3b8", cursor:"pointer", textAlign:"left", fontSize:13, fontFamily:"'DM Mono', monospace" }}>
                     {lx.flag} {lx.key.toUpperCase()}
                   </button>
                 ))}
@@ -350,7 +350,7 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
         <div className={`gp-fade-up ${heroVisible ? "visible":""}`} style={{ textAlign:"center", marginBottom:40, animationDelay:"0.1s" }}>
           <p style={{ fontSize:"clamp(16px,2vw,20px)", color:"#64748b", margin:0, lineHeight:1.6 }}>
             One workspace.{" "}
-            <span style={{ fontFamily:"'DM Mono', monospace", color:"#94a3b8", whiteSpace:"nowrap", display:"inline-block" }}>
+            <span style={{ fontFamily:"'DM Mono', monospace", color:"#94a3b8" }}>
               <Typewriter words={["LinkedIn.", "X (Twitter).", "Threads.", "Instagram.", "Facebook.", "TikTok."]} />
             </span>
           </p>
