@@ -179,7 +179,14 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
 
   const platformData  = [{ name:"LinkedIn",value:linkedinStatus.connected?(stats.avgScore||60):0 },{ name:"X",value:0 },{ name:"Threads",value:threadsStatus.connected?Math.max(0,(stats.avgScore||50)-15):0 }];
   const timelineData  = scheduledPosts.slice(0,4).map(p=>({ time:p.time||"—",platform:p.platform||"LinkedIn",status:"Scheduled" }));
-  const aiSteps       = ["Analyzing audience patterns...","Scanning market signals...","Detecting viral opportunities...","Optimizing hook structure...","Training engagement prediction...","Finalizing premium output..."];
+  const aiSteps = [
+    tr(trendsLang,"ui.aiStep1"),
+    tr(trendsLang,"ui.aiStep2"),
+    tr(trendsLang,"ui.aiStep3"),
+    tr(trendsLang,"ui.aiStep4"),
+    tr(trendsLang,"ui.aiStep5"),
+    tr(trendsLang,"ui.aiStep6"),
+  ];
   const activityPool  = ["AI optimized LinkedIn post","Audience signals updated","Best publish slot detected","Content generated successfully","Campaign strategy recalculated","Content resonance boosted","Hook structure refined","AI analysis complete","Growth signals updated","Brand memory applied","Viral score calculated"];
   const pageTransition= { initial:{ opacity:0,x:isMobile?0:80,y:isMobile?20:0 }, animate:{ opacity:1,x:0,y:0 }, exit:{ opacity:0,x:isMobile?0:-80,y:isMobile?-20:0 }, transition:{ duration:0.35 } };
 
