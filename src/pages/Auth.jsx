@@ -7,6 +7,8 @@ export default function Auth({ loginSuccess, initialMode = "login" }) {
   const [email, setEmail]     = useState("");
   const [password, setPassword] = useState("");
   const [error, setError]     = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName]   = useState("");
   const [pendingEmail, setPendingEmail] = useState(""); // email en attente de vérification
   const [resendSent, setResendSent]     = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
@@ -33,7 +35,7 @@ export default function Auth({ loginSuccess, initialMode = "login" }) {
       const res  = await fetch(route, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, ...(mode === "register" && { first_name: firstName, last_name: lastName }) }),
       });
       const data = await res.json();
 
@@ -138,6 +140,29 @@ export default function Auth({ loginSuccess, initialMode = "login" }) {
         )}
 
         <h1>{mode === "login" ? "Login" : inviteInfo ? "Join the team" : "Create account"}</h1>
+
+        {mode === "register" && (
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginTop:16 }}>
+            <input
+              style={{ ...styles.input, marginTop:0 }}
+              placeholder="First name"
+              value={firstName}
+              type="text"
+              autoComplete="given-name"
+              onChange={e => setFirstName(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && submit()}
+            />
+            <input
+              style={{ ...styles.input, marginTop:0 }}
+              placeholder="Last name"
+              value={lastName}
+              type="text"
+              autoComplete="family-name"
+              onChange={e => setLastName(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && submit()}
+            />
+          </div>
+        )}
 
         <input
           style={styles.input}

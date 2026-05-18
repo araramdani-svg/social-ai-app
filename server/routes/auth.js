@@ -200,7 +200,7 @@ const validateEmailPassword = (email, password) => {
 
 // ─── Auth routes (publiques) ───────────────────────────────────────────────────
 router.post("/register", async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, first_name, last_name } = req.body;
 
   const validationError = validateEmailPassword(email, password);
   if (validationError) return res.status(400).json({ message: validationError });
@@ -222,8 +222,8 @@ router.post("/register", async (req, res) => {
 
   try {
     const result = await db.query(
-      "INSERT INTO users(email,password,plan,generations_count,email_verified,verification_token) VALUES($1,$2,'Free',0,false,$3) RETURNING id",
-      [email, hashed, verificationToken]
+      "INSERT INTO users(email,password,plan,generations_count,email_verified,verification_token,first_name,last_name) VALUES($1,$2,'Free',0,false,$3,$4,$5) RETURNING id",
+      [email, hashed, verificationToken, first_name || null, last_name || null]
     );
 
     // Envoyer email de vérification
@@ -347,6 +347,21 @@ router.get("/brand-memory/:project", authenticateToken, async (req, res) => {
 router.delete("/delete-account", authenticateToken, async (req, res) => {
   await db.query("DELETE FROM users WHERE id=$1", [req.user.id]);
   res.json({ success: true });
+});
+
+// ─── POST /auth/save-profile ──────────────────────────────────────────────────
+router.post("/save-profile", authenticateToken, async (req, res) => {
+  const { first_name, last_name } = req.body;
+  try {
+    await db.query(
+      "UPDATE users SET first_name=$1, last_name=$2 WHERE id=$3",
+      [first_name?.trim() || null, last_name?.trim() || null, req.user.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Save profile error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 // ─── POST /auth/change-password ───────────────────────────────────────────────
@@ -528,7 +543,7 @@ router.post("/resend-verification", async (req, res) => {
 router.get("/me", authenticateToken, async (req, res) => {
   try {
     const result = await db.query(
-      "SELECT id, email, plan, onboarding_done FROM users WHERE id=$1",
+      "SELECT id, email, plan, onboarding_done, first_name, last_name FROM users WHERE id=$1",
       [req.user.id]
     );
     if (!result.rows.length) return res.status(404).json({ message: "User not found" });

@@ -11,8 +11,10 @@ export default function Profile({
   newPassword, setNewPassword,
   confirmPassword, setConfirmPassword,
   newEmail, setNewEmail,
+  firstName, setFirstName,
+  lastName, setLastName,
   userPlan, projects, stats, workspace,
-  changePassword, changeEmailAddress, deleteAccount,
+  changePassword, changeEmailAddress, deleteAccount, saveProfile,
   setPage, showToast
 }) {
   const [confirm, setConfirm] = useState(null);
@@ -118,27 +120,45 @@ export default function Profile({
           {profileSection === "account" && (
             <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
               <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>{tr(trendsLang, "profile.accountTitle")}</h2>
-              <div style={{ display:"grid", gap:16 }}>
+
+              {/* Champs prénom / nom éditables */}
+              <div>
+                <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:10 }}>IDENTITY</div>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:10 }}>
+                  <div>
+                    <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px", marginBottom:6 }}>FIRST NAME</div>
+                    <input type="text" value={firstName || ""} onChange={e => setFirstName(e.target.value)} placeholder="First name" style={{ ...st.input, maxWidth:"100%", marginBottom:0 }} />
+                  </div>
+                  <div>
+                    <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px", marginBottom:6 }}>LAST NAME</div>
+                    <input type="text" value={lastName || ""} onChange={e => setLastName(e.target.value)} placeholder="Last name" style={{ ...st.input, maxWidth:"100%", marginBottom:0 }} />
+                  </div>
+                </div>
+                <button style={{ ...st.button, margin:0, fontSize:12, padding:"10px 18px", opacity: profileLoading ? 0.6 : 1 }} onClick={saveProfile} disabled={profileLoading}>
+                  {profileLoading ? tr(trendsLang, "profile.updating") : "💾 SAVE NAME"}
+                </button>
+              </div>
+
+              {/* Infos lecture seule */}
+              <div style={{ display:"grid", gap:12 }}>
                 {[
                   { label: tr(trendsLang, "profile.fieldEmail"),     value: token && token !== "guest" ? getEmail() : "—" },
-                  { label: tr(trendsLang, "profile.fieldMember"),    value: "May 2026" },
                   { label: tr(trendsLang, "profile.fieldWorkspace"), value: workspace || "PERSONAL" },
                   { label: tr(trendsLang, "profile.fieldPlan"),      value: `${userPlan.plan}${userPlan.interval ? " · " + userPlan.interval : ""}` },
                 ].map(({ label, value }) => (
-                  <div key={label} style={{ padding:"16px 20px", background:"#0f172a", borderRadius:10, border:"1px solid rgba(220,38,38,0.15)", borderLeft:"3px solid rgba(220,38,38,0.4)" }}>
-                    <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:6 }}>{label.toUpperCase()}</div>
+                  <div key={label} style={{ padding:"14px 18px", background:"#0f172a", borderRadius:10, border:"1px solid rgba(220,38,38,0.1)", borderLeft:"3px solid rgba(220,38,38,0.3)" }}>
+                    <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px", marginBottom:5 }}>{label.toUpperCase()}</div>
                     <div style={{ color:"#fff", fontSize:14, fontWeight:600 }}>{value}</div>
                   </div>
                 ))}
               </div>
-              <div style={{ marginTop:16 }}>
-                <button
-                  style={{ ...st.buttonSecondary, margin:0, fontSize:12, padding:"10px 18px", display:"flex", alignItems:"center", gap:8 }}
-                  onClick={onShowOnboarding}
-                >
-                  {tr(trendsLang, 'onboarding.reviewOnboarding')}
-                </button>
-              </div>
+
+              <button
+                style={{ ...st.buttonSecondary, margin:0, fontSize:12, padding:"10px 18px", display:"flex", alignItems:"center", gap:8 }}
+                onClick={onShowOnboarding}
+              >
+                {tr(trendsLang, 'onboarding.reviewOnboarding')}
+              </button>
             </div>
           )}
 
