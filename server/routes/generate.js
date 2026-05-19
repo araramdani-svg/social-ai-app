@@ -647,14 +647,14 @@ Topic: "${topic}"`;
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-4-5-20251001",
         max_tokens: 2000,
         system: sysPrompt,
         messages: [{ role: "user", content: `Create a ${count}-slide LinkedIn carousel about: ${topic}. Write in ${lName} language.` }],
       }),
     });
     const data = await response.json();
-    if (!response.ok) return res.status(500).json({ error: "AI generation failed" });
+    if (!response.ok) { console.error("Anthropic carousel error:", JSON.stringify(data)); return res.status(500).json({ error: "AI generation failed", detail: data }); }
     const raw = data.content?.find(b => b.type === "text")?.text || "[]";
     const slides = JSON.parse(raw.replace(/```json|```/g, "").trim());
     if (!Array.isArray(slides) || slides.length === 0) return res.status(500).json({ error: "Invalid AI response" });
@@ -680,14 +680,14 @@ router.post("/ghostwrite", authenticateToken, async (req, res) => {
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-4-5-20251001",
         max_tokens: 1500,
         system: sysPrompt,
         messages: [{ role: "user", content: `Rewrite this:\n\n${source}` }],
       }),
     });
     const data = await response.json();
-    if (!response.ok) return res.status(500).json({ error: "AI generation failed" });
+    if (!response.ok) { console.error("Anthropic ghostwrite error:", JSON.stringify(data)); return res.status(500).json({ error: "AI generation failed", detail: data }); }
     const text = data.content?.find(b => b.type === "text")?.text?.trim() || "";
     if (!text) return res.status(500).json({ error: "Empty AI response" });
     res.json({ text });

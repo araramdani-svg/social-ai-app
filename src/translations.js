@@ -2301,18 +2301,6 @@ const translations = {
 
 };
 
-export const t = (lang, path) => {
-  const keys = path.split(".");
-  let val = translations[lang] || translations.en;
-  for (const key of keys) {
-    val = val?.[key];
-    if (!val) break;
-  }
-  return val || path;
-};
-
-export default translations;
-
 // ─── Landing page translations ────────────────────────────────────────────────
 export const landing = {
   en: {
@@ -2550,3 +2538,14 @@ export const landing = {
     footerTerms:"Termos",footerPrivacy:"Privacidade",footerContact:"Contato",
   },
 };
+export const t = (lang, path) => {
+  const keys = path.split(".");
+  let val = translations[lang] || translations.en;
+  for (const key of keys) {
+    val = val?.[key];
+    if (!val) break;
+  }
+  return val || path;
+};
+
+export default translations;
