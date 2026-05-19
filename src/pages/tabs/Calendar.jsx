@@ -47,7 +47,7 @@ export default function Calendar({ trendsLang, isMobile, post, setPost, setTab, 
   const [filterPlat,     setFilterPlat]    = useState("All");
   const [viewMode,       setViewMode]      = useState("kanban");
   const [confirmDelete,  setConfirmDelete] = useState(null); // id de la carte à supprimer
-  const token = localStorage.getItem("gp_token");
+  const token = localStorage.getItem("token");
 
   const authHeaders = useCallback(() => ({
     "Content-Type": "application/json",

@@ -312,7 +312,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
 
   const NAV_TABS   = ["home","dashboard","insights","create","memory","carousel","ghostwrite","autorepost","templates","calendar","scheduler","autopost","analyze","planner","history","publish","team","integrations","trends"];
   const BOTTOM_NAV = [{ key:"home",icon:"🏠" },{ key:"create",icon:"✍️" },{ key:"trends",icon:"🌍" },{ key:"analyze",icon:"📊" },{ key:"profile",icon:"👤" }];
-  const shared     = { trendsLang, isMobile };
+  const shared     = { trendsLang, isMobile, token };
 
   {showOnboarding && token && token !== 'guest' && <OnboardingWizard token={token} onComplete={(mem) => { setShowOnboarding(false); if (mem.project) { setSelectedProject(mem.project); } }} />}
 
