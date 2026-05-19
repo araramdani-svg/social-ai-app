@@ -96,6 +96,18 @@ router.get("/oauth/callback", async (req, res) => {
       if (userIgData.instagram_business_account?.id) { igUserId = userIgData.instagram_business_account.id; pageToken = longToken; }
       else if (userIgData.connected_instagram_account?.id) { igUserId = userIgData.connected_instagram_account.id; pageToken = longToken; }
     }
+    // Méthode C : Business Manager API
+    if (!igUserId) {
+      const bizRes  = await fetch(`https://graph.facebook.com/v19.0/me/businesses?access_token=${longToken}`);
+      const bizData = await bizRes.json();
+      console.log("IG step3c biz:", JSON.stringify(bizData));
+      if (bizData.data?.[0]?.id) {
+        const igAccRes  = await fetch(`https://graph.facebook.com/v19.0/${bizData.data[0].id}/instagram_accounts?access_token=${longToken}`);
+        const igAccData = await igAccRes.json();
+        console.log("IG step3c ig_accounts:", JSON.stringify(igAccData));
+        if (igAccData.data?.[0]?.id) { igUserId = igAccData.data[0].id; pageToken = longToken; }
+      }
+    }
 
     if (!igUserId || !pageToken) { console.error("No IG account found"); return res.redirect(`${FRONTEND_URL}?instagram=error`); }
 
