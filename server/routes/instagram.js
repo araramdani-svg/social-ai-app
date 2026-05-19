@@ -28,6 +28,7 @@ router.get("/connect", auth, (req, res) => {
     redirect_uri:  IG_REDIRECT_URI,
     scope:         "pages_show_list,pages_read_engagement,pages_manage_posts,business_management",
     response_type: "code",
+    auth_type: "rerequest",
     state,
   });
   const authUrl = `https://www.facebook.com/v19.0/dialog/oauth?${params.toString()}`;
