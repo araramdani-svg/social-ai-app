@@ -259,11 +259,10 @@ router.post("/login", async (req, res) => {
 
 // ─── Routes protégées (token requis) ──────────────────────────────────────────
 router.post("/save-post", authenticateToken, async (req, res) => {
-  const { title, content } = req.body;
+  const { title, content, project_name } = req.body;
   try {
-    const result = await db.query(
-      "INSERT INTO posts(user_id,title,content,created_at) VALUES($1,$2,$3,NOW()) RETURNING id",
-      [req.user.id, title, content]
+      "INSERT INTO posts(user_id,title,content,project_name,created_at) VALUES($1,$2,$3,$4,NOW()) RETURNING id",
+      [req.user.id, title, content, project_name || null]
     );
     res.json({ success: true, id: result.rows[0].id });
   } catch (err) {
@@ -278,6 +277,19 @@ router.get("/posts", authenticateToken, async (req, res) => {
     [req.user.id]
   );
   res.json(result.rows);
+});
+
+router.get("/posts/by-project/:name", authenticateToken, async (req, res) => {
+  try {
+    const result = await db.query(
+      "SELECT id, title, content, created_at FROM posts WHERE user_id=$1 AND project_name=$2 ORDER BY created_at DESC LIMIT 20",
+      [req.user.id, req.params.name]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("posts by-project error:", err.message);
+    res.status(500).json({ error: "Failed to fetch posts" });
+  }
 });
 
 router.get("/project/:name", authenticateToken, async (req, res) => {

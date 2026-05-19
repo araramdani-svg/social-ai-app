@@ -15,8 +15,10 @@ export default function Create({
   postMetrics,
   savePost, copyPost, exportPost, analyze, generatePlanner,
   generate, rewrite, createProject, duplicateProject, renameProject, deleteProject, selectProject,
+  projectPosts,
 }) {
   const [activePanel,     setActivePanel]     = useState("generate");
+  const [showHistory,     setShowHistory]     = useState(false);
   const [repurposeUrl,    setRepurposeUrl]    = useState("");
   const [repurposeText,   setRepurposeText]   = useState("");
   const [repurposing,     setRepurposing]     = useState(false);
@@ -210,6 +212,48 @@ export default function Create({
               </div>
             )}
           </div>
+
+          {/* ── Historique du projet ── */}
+          {selectedProject && projectPosts && projectPosts.length > 0 && (
+            <div style={{ ...st.card, marginTop:0, padding:0, overflow:"hidden" }}>
+              <button
+                onClick={() => setShowHistory(h => !h)}
+                style={{ width:"100%", padding:"12px 16px", background:"transparent", border:"none", display:"flex", alignItems:"center", justifyContent:"space-between", cursor:"pointer" }}
+              >
+                <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                  <span style={{ fontSize:14 }}>📋</span>
+                  <span style={{ color:"#64748b", fontSize:10, fontWeight:700, letterSpacing:"1.5px" }}>HISTORIQUE DU PROJET</span>
+                  <span style={{ background:"rgba(220,38,38,0.15)", color:"#ef4444", fontSize:9, fontWeight:700, padding:"2px 7px", borderRadius:10 }}>{projectPosts.length}</span>
+                </div>
+                <span style={{ color:"#475569", fontSize:12 }}>{showHistory ? "▲" : "▼"}</span>
+              </button>
+              {showHistory && (
+                <div style={{ borderTop:"1px solid rgba(255,255,255,0.06)", maxHeight:280, overflowY:"auto" }}>
+                  {projectPosts.map((p, i) => (
+                    <div
+                      key={p.id || i}
+                      onClick={() => setPost(p.content)}
+                      style={{ padding:"10px 16px", borderBottom:"1px solid rgba(255,255,255,0.04)", cursor:"pointer", transition:"background 0.15s" }}
+                      onMouseEnter={e => e.currentTarget.style.background="rgba(220,38,38,0.05)"}
+                      onMouseLeave={e => e.currentTarget.style.background="transparent"}
+                    >
+                      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:3 }}>
+                        <span style={{ color:"#94a3b8", fontSize:12, fontWeight:600, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth:"70%" }}>
+                          {p.title || "Untitled"}
+                        </span>
+                        <span style={{ color:"#334155", fontSize:10, flexShrink:0 }}>
+                          {new Date(p.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div style={{ color:"#475569", fontSize:11, lineHeight:1.4, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                        {p.content?.slice(0, 80)}...
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Panel switcher */}
           <div style={{ ...st.card, marginTop:0, padding:0, overflow:"hidden" }}>
