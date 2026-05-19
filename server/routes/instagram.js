@@ -1,4 +1,7 @@
 // server/routes/instagram.js
+// GrowthPILOT — Instagram API with Instagram Login (app growthPILOT-IG)
+// Flow : instagram.com/oauth/authorize → api.instagram.com/oauth/access_token → graph.instagram.com
+
 import express from "express";
 import crypto  from "crypto";
 import jwt     from "jsonwebtoken";
@@ -21,20 +24,22 @@ const auth = (req, res, next) => {
   });
 };
 
+// ─── GET /instagram/connect ───────────────────────────────────────────────────
 router.get("/connect", auth, (req, res) => {
   const state = Buffer.from(JSON.stringify({ userId: req.user.id })).toString("base64");
   const params = new URLSearchParams({
     client_id:     IG_APP_ID,
     redirect_uri:  IG_REDIRECT_URI,
-    scope:         "pages_show_list,pages_read_engagement,pages_manage_posts,business_management",
+    scope:         "instagram_business_basic,instagram_content_publish,instagram_business_manage_messages,instagram_business_manage_comments",
     response_type: "code",
-    auth_type: "rerequest",
     state,
   });
-  const authUrl = `https://www.facebook.com/v19.0/dialog/oauth?${params.toString()}`;
+  const authUrl = `https://www.instagram.com/oauth/authorize?${params.toString()}`;
+  console.log("IG connect URL:", authUrl);
   if (req.query.token) { res.redirect(authUrl); } else { res.json({ url: authUrl }); }
 });
 
+// ─── GET /instagram/oauth/callback ───────────────────────────────────────────
 router.get("/oauth/callback", async (req, res) => {
   const { code, state, error } = req.query;
   if (error || !code) {
@@ -50,76 +55,59 @@ router.get("/oauth/callback", async (req, res) => {
   }
 
   try {
-    // Étape 1 : code → user token
-    const tokenRes = await fetch(
-      `https://graph.facebook.com/v19.0/oauth/access_token?` +
-      new URLSearchParams({ client_id: IG_APP_ID, client_secret: IG_APP_SECRET, redirect_uri: IG_REDIRECT_URI, code }).toString()
-    );
+    // Étape 1 : code → short-lived token
+    const tokenRes = await fetch("https://api.instagram.com/oauth/access_token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id:     IG_APP_ID,
+        client_secret: IG_APP_SECRET,
+        grant_type:    "authorization_code",
+        redirect_uri:  IG_REDIRECT_URI,
+        code,
+      }).toString(),
+    });
     const tokenData = await tokenRes.json();
-    console.log("IG step1:", JSON.stringify(tokenData));
-    if (!tokenData.access_token) return res.redirect(`${FRONTEND_URL}?instagram=error`);
+    console.log("IG step1 short token:", JSON.stringify(tokenData));
+    if (!tokenData.access_token) {
+      console.error("IG token exchange failed:", JSON.stringify(tokenData));
+      return res.redirect(`${FRONTEND_URL}?instagram=error`);
+    }
 
-    // Étape 2 : long-lived token
+    const shortToken = tokenData.access_token;
+    const igUserId   = tokenData.user_id?.toString();
+
+    // Étape 2 : short-lived → long-lived token (60 jours)
     const longRes = await fetch(
-      `https://graph.facebook.com/v19.0/oauth/access_token?` +
-      new URLSearchParams({ grant_type: "fb_exchange_token", client_id: IG_APP_ID, client_secret: IG_APP_SECRET, fb_exchange_token: tokenData.access_token }).toString()
+      `https://graph.instagram.com/access_token?` +
+      new URLSearchParams({
+        grant_type:    "ig_exchange_token",
+        client_secret: IG_APP_SECRET,
+        access_token:  shortToken,
+      }).toString()
     );
     const longData = await longRes.json();
-    console.log("IG step2:", JSON.stringify(longData));
-    const longToken = longData.access_token || tokenData.access_token;
+    console.log("IG step2 long token:", JSON.stringify(longData));
+    const accessToken = longData.access_token || shortToken;
 
-    // Étape 3A : pages avec champs détaillés
-    const pagesRes  = await fetch(`https://graph.facebook.com/v19.0/me/accounts?fields=id,name,access_token,instagram_business_account&access_token=${longToken}`);
-    const pagesData = await pagesRes.json();
-    console.log("IG step3 pages:", JSON.stringify(pagesData));
+    // Étape 3 : profil Instagram
+    const profileRes = await fetch(
+      `https://graph.instagram.com/v21.0/me?fields=id,username,name,account_type&access_token=${accessToken}`
+    );
+    const profile = await profileRes.json();
+    console.log("IG step3 profile:", JSON.stringify(profile));
+    const username = profile.username || profile.name || null;
+    const finalId  = igUserId || profile.id;
 
-    let igUserId = null, igUsername = null, pageToken = null;
-
-    if (pagesData.data?.length) {
-      for (const page of pagesData.data) {
-        const igRes  = await fetch(`https://graph.facebook.com/v19.0/${page.id}?fields=id,name,instagram_business_account,connected_instagram_account&access_token=${page.access_token}`);
-        const igData = await igRes.json();
-        console.log("IG step3 page detail:", JSON.stringify(igData));
-        if (igData.instagram_business_account?.id) {
-          igUserId = igData.instagram_business_account.id; pageToken = page.access_token;
-        } else if (igData.connected_instagram_account?.id) {
-          igUserId = igData.connected_instagram_account.id; pageToken = page.access_token;
-        }
-        if (igUserId) break;
-      }
+    if (!finalId) {
+      console.error("IG no user ID found");
+      return res.redirect(`${FRONTEND_URL}?instagram=error`);
     }
 
-    if (!igUserId) {
-      const userIgRes  = await fetch(`https://graph.facebook.com/v19.0/me?fields=instagram_business_account,connected_instagram_account&access_token=${longToken}`);
-      const userIgData = await userIgRes.json();
-      console.log("IG step3b:", JSON.stringify(userIgData));
-      if (userIgData.instagram_business_account?.id) { igUserId = userIgData.instagram_business_account.id; pageToken = longToken; }
-      else if (userIgData.connected_instagram_account?.id) { igUserId = userIgData.connected_instagram_account.id; pageToken = longToken; }
-    }
-    // Méthode C : Business Manager API
-    if (!igUserId) {
-      const bizRes  = await fetch(`https://graph.facebook.com/v19.0/me/businesses?access_token=${longToken}`);
-      const bizData = await bizRes.json();
-      console.log("IG step3c biz:", JSON.stringify(bizData));
-      if (bizData.data?.[0]?.id) {
-        const igAccRes  = await fetch(`https://graph.facebook.com/v19.0/${bizData.data[0].id}/instagram_accounts?access_token=${longToken}`);
-        const igAccData = await igAccRes.json();
-        console.log("IG step3c ig_accounts:", JSON.stringify(igAccData));
-        if (igAccData.data?.[0]?.id) { igUserId = igAccData.data[0].id; pageToken = longToken; }
-      }
-    }
-
-    if (!igUserId || !pageToken) { console.error("No IG account found"); return res.redirect(`${FRONTEND_URL}?instagram=error`); }
-
-    // Étape 4 : profil Instagram
-    const profileRes = await fetch(`https://graph.facebook.com/v19.0/${igUserId}?fields=id,username,name&access_token=${pageToken}`);
-    const profile    = await profileRes.json();
-    console.log("IG step4 profile:", JSON.stringify(profile));
-    igUsername = profile.username || profile.name || null;
-
+    // Étape 4 : sauvegarder en DB
     await db.query(
       "UPDATE users SET instagram_access_token=$1, instagram_user_id=$2, instagram_username=$3 WHERE id=$4",
-      [pageToken, igUserId, igUsername, userId]
+      [accessToken, finalId, username, userId]
     );
 
     res.redirect(`${FRONTEND_URL}?instagram=connected`);
@@ -129,6 +117,7 @@ router.get("/oauth/callback", async (req, res) => {
   }
 });
 
+// ─── GET /instagram/status ────────────────────────────────────────────────────
 router.get("/status", auth, async (req, res) => {
   try {
     const result = await db.query("SELECT instagram_user_id, instagram_username FROM users WHERE id=$1", [req.user.id]);
@@ -137,6 +126,7 @@ router.get("/status", auth, async (req, res) => {
   } catch { res.json({ connected: false, username: null }); }
 });
 
+// ─── POST /instagram/post ─────────────────────────────────────────────────────
 router.post("/post", auth, async (req, res) => {
   const { caption, imageUrl } = req.body;
   if (!caption)  return res.status(400).json({ message: "Caption required" });
@@ -146,14 +136,19 @@ router.post("/post", auth, async (req, res) => {
     const user = result.rows[0];
     if (!user?.instagram_access_token) return res.status(400).json({ message: "Instagram not connected" });
     const { instagram_access_token: token, instagram_user_id: igUserId } = user;
-    const containerRes  = await fetch(`https://graph.facebook.com/v19.0/${igUserId}/media`, {
+
+    // Créer container
+    const containerRes = await fetch(`https://graph.instagram.com/v21.0/${igUserId}/media`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ image_url: imageUrl, caption, access_token: token }),
     });
     const containerData = await containerRes.json();
     if (!containerData.id) return res.status(500).json({ message: "Failed to create container", detail: containerData });
+
     await new Promise(r => setTimeout(r, 2000));
-    const publishRes  = await fetch(`https://graph.facebook.com/v19.0/${igUserId}/media_publish`, {
+
+    // Publier
+    const publishRes = await fetch(`https://graph.instagram.com/v21.0/${igUserId}/media_publish`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ creation_id: containerData.id, access_token: token }),
     });
@@ -166,11 +161,13 @@ router.post("/post", auth, async (req, res) => {
   }
 });
 
+// ─── DELETE /instagram/disconnect ─────────────────────────────────────────────
 router.delete("/disconnect", auth, async (req, res) => {
   await db.query("UPDATE users SET instagram_access_token=NULL, instagram_user_id=NULL, instagram_username=NULL WHERE id=$1", [req.user.id]);
   res.json({ success: true });
 });
 
+// ─── Webhook ──────────────────────────────────────────────────────────────────
 router.get("/callback", (req, res) => {
   const { "hub.mode": mode, "hub.verify_token": token, "hub.challenge": challenge } = req.query;
   const VERIFY = process.env.INSTAGRAM_WEBHOOK_TOKEN || "growthpilot_ig_webhook_2026";
