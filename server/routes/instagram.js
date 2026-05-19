@@ -30,7 +30,7 @@ router.get("/connect", auth, (req, res) => {
   const params = new URLSearchParams({
     client_id:     IG_APP_ID,
     redirect_uri:  IG_REDIRECT_URI,
-    scope:         "pages_show_list,pages_read_engagement,business_management,instagram_manage_comments",
+    scope:         "pages_show_list,pages_read_engagement,pages_manage_posts,business_management",
     response_type: "code",
     state,
   });
