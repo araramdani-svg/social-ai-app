@@ -563,12 +563,12 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
 
           {/* Toggle */}
           <div style={{ display:"inline-flex", alignItems:"center", gap:12, marginTop:28, background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:10, padding:"6px 16px" }}>
-            <span style={{ fontFamily:"'DM Mono', monospace", fontSize:12, color: !yearly?"#fff":"#475569" }}{l.pricingMonthly}</span>
+            <span style={{ fontFamily:"'DM Mono', monospace", fontSize:12, color: !yearly?"#fff":"#475569" }}>{l.pricingMonthly}</span>
             <div onClick={() => setYearly(!yearly)} style={{ width:44, height:24, background:"rgba(220,38,38,0.3)", border:"1px solid rgba(220,38,38,0.5)", borderRadius:12, cursor:"pointer", position:"relative" }}>
               <div style={{ position:"absolute", top:2, width:18, height:18, background:"#ef4444", borderRadius:"50%", transition:"transform 0.2s", transform: yearly?"translateX(22px)":"translateX(2px)" }}/>
             </div>
             <span style={{ fontFamily:"'DM Mono', monospace", fontSize:12, color: yearly?"#fff":"#475569" }}>
-              Yearly <span style={{ background:"rgba(220,38,38,0.2)", border:"1px solid rgba(220,38,38,0.4)", borderRadius:4, padding:"1px 6px", fontSize:10, color:"#ef4444", fontWeight:700, marginLeft:4 }}>-20%</span>
+              {l.pricingYearly} <span style={{ background:"rgba(220,38,38,0.2)", border:"1px solid rgba(220,38,38,0.4)", borderRadius:4, padding:"1px 6px", fontSize:10, color:"#ef4444", fontWeight:700, marginLeft:4 }}>-20%</span>
             </span>
           </div>
         </div>
@@ -665,9 +665,9 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
           <span style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:"#334155", marginLeft:8 }}>© 2026</span>
         </div>
         <div style={{ display:"flex", gap:20, alignItems:"center" }}>
-          <a href="/termsofservice" style={{ fontFamily:"'DM Mono', monospace", color:"#334155", fontSize:12, textDecoration:"none" }}{l.footerTerms}</a>
-          <a href="/privacy"        style={{ fontFamily:"'DM Mono', monospace", color:"#334155", fontSize:12, textDecoration:"none" }}{l.footerPrivacy}</a>
-          <a href="mailto:team@aigrowthpilot.app" style={{ fontFamily:"'DM Mono', monospace", color:"#334155", fontSize:12, textDecoration:"none" }}{l.footerContact}</a>
+          <a href="/termsofservice" style={{ fontFamily:"'DM Mono', monospace", color:"#334155", fontSize:12, textDecoration:"none" }}>{l.footerTerms}</a>
+          <a href="/privacy"        style={{ fontFamily:"'DM Mono', monospace", color:"#334155", fontSize:12, textDecoration:"none" }}>{l.footerPrivacy}</a>
+          <a href="mailto:team@aigrowthpilot.app" style={{ fontFamily:"'DM Mono', monospace", color:"#334155", fontSize:12, textDecoration:"none" }}>{l.footerContact}</a>
         </div>
       </footer>
 
