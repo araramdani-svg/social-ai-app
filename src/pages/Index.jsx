@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import logo from "../assets/logo.png";
-import { t as tr } from "../translations.js";
+import { t as tr, landing as ld } from "../translations.js";
 
 /* ── GIFs produit ── */
 import gifDashboard  from "../assets/gifs/dashboard.gif";
@@ -180,6 +180,7 @@ function useStyles() {
 export default function Index({ openApp, openLogin, openPricing, lang: propLang, setLang: propSetLang }) {
   const [lang, setLangState]        = useState(() => propLang || localStorage.getItem("gp_lang") || "en");
   const activeLang = propLang || lang;
+  const l = ld[activeLang] || ld.en;
   const setLang = (l) => { setLangState(l); localStorage.setItem("gp_lang", l); if (propSetLang) propSetLang(l); };
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [scrolled, setScrolled]     = useState(false);
@@ -216,32 +217,32 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
   ];
 
   const FEATURE_TABS = [
-    { label:"AI Creator",    icon:"✍️", gif: gifCreator,   desc:"Generate viral posts, threads & carousels in seconds. Hook generator, rewrite modes, viral score — all in one command." },
-    { label:"Dashboard",     icon:"📊", gif: gifDashboard,  desc:"Track every post, every platform, every metric. Your content command center in real-time." },
-    { label:"Trends Radar",  icon:"🌍", gif: gifTrends,     desc:"12 real-time sources. Surface what's viral before anyone else in your niche and turn it into a post instantly." },
-    { label:"Analytics",     icon:"🔍", gif: gifAnalytics,  desc:"Deep-dive into what works. Score every piece of content and get AI-powered recommendations." },
+    { label:l.featTab0Label, icon:"✍️", gif:gifCreator,   desc:l.featTab0Desc },
+    { label:l.featTab1Label, icon:"📊", gif:gifDashboard,  desc:l.featTab1Desc },
+    { label:l.featTab2Label, icon:"🌍", gif:gifTrends,     desc:l.featTab2Desc },
+    { label:l.featTab3Label, icon:"🔍", gif:gifAnalytics,  desc:l.featTab3Desc },
   ];
 
   const COMPARE = [
-    { feature:"Multi-platform publishing",     gp:true,  taplio:false, supergrow:false, magicpost:false },
-    { feature:"LinkedIn direct publish",       gp:true,  taplio:true,  supergrow:true,  magicpost:true  },
-    { feature:"X / Twitter publish",           gp:true,  taplio:false, supergrow:false, magicpost:false },
-    { feature:"Threads publish",               gp:true,  taplio:false, supergrow:false, magicpost:false },
-    { feature:"Facebook publish",              gp:true,  taplio:false, supergrow:false, magicpost:false },
-    { feature:"TikTok publish",                gp:true,  taplio:false, supergrow:false, magicpost:false },
-    { feature:"Viral score AI",                gp:true,  taplio:false, supergrow:false, magicpost:false },
-    { feature:"Brand Memory AI",               gp:true,  taplio:false, supergrow:true,  magicpost:false },
-    { feature:"Real-time trend radar",         gp:true,  taplio:false, supergrow:false, magicpost:false },
-    { feature:"Agency mode + client billing",  gp:true,  taplio:false, supergrow:false, magicpost:false },
-    { feature:"Multi-format repurpose",        gp:true,  taplio:true,  supergrow:false, magicpost:false },
-    { feature:"Entry price with AI",           gp:"€19", taplio:"$69", supergrow:"$19", magicpost:"$27" },
+    { feature:l.compareFeatures[0],  gp:true,  taplio:false, supergrow:false, magicpost:false },
+    { feature:l.compareFeatures[1],  gp:true,  taplio:true,  supergrow:true,  magicpost:true  },
+    { feature:l.compareFeatures[2],  gp:true,  taplio:false, supergrow:false, magicpost:false },
+    { feature:l.compareFeatures[3],  gp:true,  taplio:false, supergrow:false, magicpost:false },
+    { feature:l.compareFeatures[4],  gp:true,  taplio:false, supergrow:false, magicpost:false },
+    { feature:l.compareFeatures[5],  gp:true,  taplio:false, supergrow:false, magicpost:false },
+    { feature:l.compareFeatures[6],  gp:true,  taplio:false, supergrow:false, magicpost:false },
+    { feature:l.compareFeatures[7],  gp:true,  taplio:false, supergrow:true,  magicpost:false },
+    { feature:l.compareFeatures[8],  gp:true,  taplio:false, supergrow:false, magicpost:false },
+    { feature:l.compareFeatures[9],  gp:true,  taplio:false, supergrow:false, magicpost:false },
+    { feature:l.compareFeatures[10], gp:true,  taplio:true,  supergrow:false, magicpost:false },
+    { feature:l.compareFeatures[11], gp:"€19", taplio:"$69", supergrow:"$19", magicpost:"$27" },
   ];
 
   const PLANS = [
-    { name:"Free",     price:0,    yearlyPrice:0,   color:"#475569", features:["5 AI generations/mo","1 project","Basic analytics"],                                             cta:"Start free",      action:openApp,     popular:false },
-    { name:"Pro",      price:19,   yearlyPrice:15,  color:"#ef4444", features:["100 AI generations/mo","10 projects","Brand Memory","Multi-format repurpose","Viral score AI"],   cta:"Start Pro →",     action:openPricing, popular:true  },
-    { name:"Business", price:49,   yearlyPrice:39,  color:"#f97316", features:["Unlimited generations","5 team members","All Pro features","Priority support"],                   cta:"Start Business →",action:openPricing, popular:false },
-    { name:"Agency",   price:99,   yearlyPrice:79,  color:"#8b5cf6", features:["50 client accounts","20 team members","Agency dashboard","MRR tracking","PDF invoices"],          cta:"Start Agency →",  action:openPricing, popular:false },
+    { name:l.planFreeName||"Free",     price:0,  yearlyPrice:0,  color:"#475569", features:l.planFreeFeatures, cta:l.planFreeCta, action:openApp,     popular:false },
+    { name:l.planProName||"Pro",       price:19, yearlyPrice:15, color:"#ef4444", features:l.planProFeatures,  cta:l.planProCta,  action:openPricing, popular:true  },
+    { name:l.planBizName||"Business",  price:49, yearlyPrice:39, color:"#f97316", features:l.planBizFeatures,  cta:l.planBizCta,  action:openPricing, popular:false },
+    { name:l.planAgyName||"Agency",    price:99, yearlyPrice:79, color:"#8b5cf6", features:l.planAgyFeatures,  cta:l.planAgyCta,  action:openPricing, popular:false },
   ];
 
   const px = typeof window !== "undefined" && window.innerWidth < 768 ? "20px" : "clamp(24px, 5vw, 80px)";
@@ -299,8 +300,8 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
             )}
           </div>
 
-          <button onClick={openLogin} className="gp-btn-ghost" style={{ padding:"7px 12px", fontSize:12 }}>Sign in</button>
-          <button onClick={openApp}   className="gp-btn-primary" style={{ padding:"7px 14px", fontSize:12, whiteSpace:"nowrap" }}>Try free →</button>
+          <button onClick={openLogin} className="gp-btn-ghost" style={{ padding:"7px 12px", fontSize:12 }}>{l.navSignIn}</button>
+          <button onClick={openApp} className="gp-btn-primary" style={{ padding:"7px 14px", fontSize:12, whiteSpace:"nowrap" }}>{l.navTryFree}</button>
         </div>
       </nav>
 
@@ -323,7 +324,7 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
           <div className={`gp-fade-in ${heroVisible ? "visible":""}`}
             style={{ display:"inline-flex", alignItems:"center", gap:8, background:"rgba(34,197,94,0.08)", border:"1px solid rgba(34,197,94,0.2)", borderRadius:20, padding:"6px 14px" }}>
             <span style={{ width:6, height:6, borderRadius:"50%", background:"#22c55e", boxShadow:"0 0 8px #22c55e", display:"inline-block", animation:"pulse 2s ease infinite" }}/>
-            <span style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:"#22c55e", letterSpacing:"1.5px" }}>LIVE PLATFORM — FREE TO START</span>
+            <span style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:"#22c55e", letterSpacing:"1.5px" }}>{l.liveBadge}</span>
           </div>
         </div>
 
@@ -334,7 +335,7 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
             fontSize:"clamp(40px, 6.5vw, 80px)",
             lineHeight:1.05, margin:0, letterSpacing:"-2px",
           }}>
-            <span style={{ color:"#fff" }}>The only </span>
+            <span style={{ color:"#fff" }}>{l.heroTitle1} </span>
             <span style={{ color:"#ef4444", position:"relative" }}>
               multi-platform
               <svg style={{ position:"absolute", bottom:-8, left:0, width:"100%", height:4, overflow:"visible" }} viewBox="0 0 100 4" preserveAspectRatio="none">
@@ -342,27 +343,27 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
               </svg>
             </span>
             <br/>
-            <span style={{ color:"#fff" }}>AI content OS</span>
+            <span style={{ color:"#fff" }}>{l.heroTitle3}</span>
           </h1>
         </div>
 
         {/* Typewriter sub */}
         <div className={`gp-fade-up ${heroVisible ? "visible":""}`} style={{ textAlign:"center", marginBottom:40, animationDelay:"0.1s" }}>
           <p style={{ fontSize:"clamp(16px,2vw,20px)", color:"#64748b", margin:0, lineHeight:1.6 }}>
-            One workspace.{" "}
+            {l.heroSub1}{" "}
             <span style={{ fontFamily:"'DM Mono', monospace", color:"#94a3b8" }}>
               <Typewriter words={["LinkedIn.", "X (Twitter).", "Threads.", "Instagram.", "Facebook.", "TikTok."]} />
             </span>
           </p>
           <p style={{ fontSize:"clamp(14px,1.5vw,17px)", color:"#475569", margin:"8px 0 0", lineHeight:1.6 }}>
-            While competitors lock you to LinkedIn-only, GrowthPILOT publishes everywhere — from one AI command center.
+            {l.heroSub2}
           </p>
         </div>
 
         {/* CTAs */}
         <div className={`gp-fade-up ${heroVisible ? "visible":""}`} style={{ display:"flex", justifyContent:"center", gap:12, flexWrap:"wrap", marginBottom:64, animationDelay:"0.15s" }}>
-          <button onClick={openApp}   className="gp-btn-primary" style={{ fontSize:14, padding:"14px 24px", whiteSpace:"nowrap" }}>Start for free →</button>
-          <button onClick={openLogin} className="gp-btn-ghost"   style={{ fontSize:14, padding:"14px 20px", whiteSpace:"nowrap" }}>Sign in</button>
+          <button onClick={openApp}   className="gp-btn-primary" style={{ fontSize:14, padding:"14px 24px", whiteSpace:"nowrap" }}>{l.ctaStart}</button>
+          <button onClick={openLogin} className="gp-btn-ghost" style={{ fontSize:14, padding:"14px 20px", whiteSpace:"nowrap" }}>{l.ctaSignIn}</button>
         </div>
 
         {/* Platform badges */}
@@ -388,10 +389,10 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
           borderRadius:16, overflow:"hidden", maxWidth:800, margin:"0 auto",
         }}>
           {[
-            { label:"AI generations", to:50000, suffix:"+" },
-            { label:"Platforms connected", to:6, suffix:"" },
-            { label:"Content types", to:12, suffix:"+" },
-            { label:"Languages", to:6, suffix:"" },
+            { label:l.statGen, to:50000, suffix:"+" },
+            { label:l.statPlatforms, to:6, suffix:"" },
+            { label:l.statTypes, to:12, suffix:"+" },
+            { label:l.statLangs, to:6, suffix:"" },
           ].map((s, i) => (
             <div key={i} style={{ padding:"28px 24px", textAlign:"center", background:"rgba(5,10,20,0.8)" }}>
               <div style={{ fontFamily:"'Syne', sans-serif", fontWeight:800, fontSize:"clamp(28px,3vw,36px)", color:"#ef4444", lineHeight:1 }}>
@@ -406,9 +407,9 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
       {/* ══ FEATURE TABS WITH GIFs ══ */}
       <section ref={featRef} style={{ padding:"clamp(60px,8vh,100px) clamp(20px,5vw,80px)", position:"relative", zIndex:1, maxWidth:1400, margin:"0 auto" }}>
         <div style={{ textAlign:"center", marginBottom:48 }}>
-          <div style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:"#ef4444", letterSpacing:"3px", marginBottom:12 }}>— PLATFORM OVERVIEW —</div>
+          <div style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:"#ef4444", letterSpacing:"3px", marginBottom:12 }}>{l.featLabel}</div>
           <h2 style={{ fontFamily:"'Syne', sans-serif", fontWeight:800, fontSize:"clamp(28px,4vw,48px)", margin:0, letterSpacing:"-1px" }}>
-            Everything in one <span style={{ color:"#ef4444" }}>command center</span>
+            {l.featTitle1} <span style={{ color:"#ef4444" }}>{l.featTitle2}</span>
           </h2>
         </div>
 
@@ -491,11 +492,11 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
       <section ref={compareRef} style={{ padding:"clamp(60px,8vh,100px) clamp(20px,5vw,80px)", position:"relative", zIndex:1, background:"rgba(255,255,255,0.01)", borderTop:"1px solid rgba(255,255,255,0.04)", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
         <div style={{ maxWidth:900, margin:"0 auto" }}>
           <div style={{ textAlign:"center", marginBottom:48 }}>
-            <div style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:"#ef4444", letterSpacing:"3px", marginBottom:12 }}>— HONEST COMPARISON —</div>
+            <div style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:"#ef4444", letterSpacing:"3px", marginBottom:12 }}>{l.compareLabel}</div>
             <h2 style={{ fontFamily:"'Syne', sans-serif", fontWeight:800, fontSize:"clamp(26px,4vw,44px)", margin:0, letterSpacing:"-1px" }}>
-              Why creators are <span style={{ color:"#ef4444" }}>switching</span>
+              {l.compareTitle1} <span style={{ color:"#ef4444" }}>{l.compareTitle2}</span>
             </h2>
-            <p style={{ color:"#475569", fontSize:15, margin:"12px 0 0" }}>LinkedIn-only tools are a dead end in 2026.</p>
+            <p style={{ color:"#475569", fontSize:15, margin:"12px 0 0" }}>{l.compareSub}</p>
           </div>
 
           <div style={{ overflowX:"auto" }}>
@@ -545,7 +546,7 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
 
           <div style={{ textAlign:"center", marginTop:40 }}>
             <button onClick={openApp} className="gp-btn-primary" style={{ fontSize:15, padding:"14px 32px" }}>
-              Switch to GrowthPILOT — free →
+              {l.compareCta}
             </button>
           </div>
         </div>
@@ -554,15 +555,15 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
       {/* ══ PRICING ══ */}
       <section ref={pricingRef} style={{ padding:"clamp(60px,8vh,100px) clamp(20px,5vw,80px)", position:"relative", zIndex:1, maxWidth:1400, margin:"0 auto" }}>
         <div style={{ textAlign:"center", marginBottom:48 }}>
-          <div style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:"#ef4444", letterSpacing:"3px", marginBottom:12 }}>— PRICING —</div>
+          <div style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:"#ef4444", letterSpacing:"3px", marginBottom:12 }}>{l.pricingLabel}</div>
           <h2 style={{ fontFamily:"'Syne', sans-serif", fontWeight:800, fontSize:"clamp(26px,4vw,44px)", margin:0, letterSpacing:"-1px" }}>
-            Simple, <span style={{ color:"#ef4444" }}>honest</span> pricing
+            {l.pricingTitle1} <span style={{ color:"#ef4444" }}>{l.pricingTitle2}</span> {l.pricingTitle3}
           </h2>
-          <p style={{ color:"#475569", fontSize:15, margin:"12px 0 0" }}>No hidden credits. No bait-and-switch entry price.</p>
+          <p style={{ color:"#475569", fontSize:15, margin:"12px 0 0" }}>{l.pricingSub}</p>
 
           {/* Toggle */}
           <div style={{ display:"inline-flex", alignItems:"center", gap:12, marginTop:28, background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:10, padding:"6px 16px" }}>
-            <span style={{ fontFamily:"'DM Mono', monospace", fontSize:12, color: !yearly?"#fff":"#475569" }}>Monthly</span>
+            <span style={{ fontFamily:"'DM Mono', monospace", fontSize:12, color: !yearly?"#fff":"#475569" }}{l.pricingMonthly}</span>
             <div onClick={() => setYearly(!yearly)} style={{ width:44, height:24, background:"rgba(220,38,38,0.3)", border:"1px solid rgba(220,38,38,0.5)", borderRadius:12, cursor:"pointer", position:"relative" }}>
               <div style={{ position:"absolute", top:2, width:18, height:18, background:"#ef4444", borderRadius:"50%", transition:"transform 0.2s", transform: yearly?"translateX(22px)":"translateX(2px)" }}/>
             </div>
@@ -584,7 +585,7 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
               }}>
                 {plan.popular && (
                   <div style={{ position:"absolute", top:-12, left:"50%", transform:"translateX(-50%)", background:plan.color, padding:"4px 14px", borderRadius:20, fontSize:10, fontWeight:800, color:"#fff", fontFamily:"'DM Mono', monospace", letterSpacing:"1px", whiteSpace:"nowrap" }}>
-                    MOST POPULAR
+                    {l.mostPopular}
                   </div>
                 )}
                 <div style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:plan.color, letterSpacing:"2px", marginBottom:12 }}>{plan.name.toUpperCase()}</div>
@@ -611,23 +612,17 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
         </div>
 
         <p style={{ textAlign:"center", color:"#334155", fontSize:13, marginTop:24, fontFamily:"'DM Mono', monospace" }}>
-          No credit card required · Cancel anytime · 30-day money back guarantee
+          {l.pricingNote}
         </p>
       </section>
 
       {/* ══ FAQ ══ */}
       <section style={{ padding:"clamp(48px,6vh,80px) clamp(20px,5vw,80px)", position:"relative", zIndex:1, maxWidth:720, margin:"0 auto" }}>
         <div style={{ textAlign:"center", marginBottom:40 }}>
-          <div style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:"#ef4444", letterSpacing:"3px", marginBottom:12 }}>— FAQ —</div>
-          <h2 style={{ fontFamily:"'Syne', sans-serif", fontWeight:800, fontSize:"clamp(24px,3vw,36px)", margin:0, letterSpacing:"-0.5px" }}>Common questions</h2>
+          <div style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:"#ef4444", letterSpacing:"3px", marginBottom:12 }}>{l.faqLabel}</div>
+          <h2 style={{ fontFamily:"'Syne', sans-serif", fontWeight:800, fontSize:"clamp(24px,3vw,36px)", margin:0, letterSpacing:"-0.5px" }}>{l.faqTitle}</h2>
         </div>
-        {[
-          { q:"What makes GrowthPILOT different from Taplio or Supergrow?", a:"GrowthPILOT is the only tool that publishes directly to 6 platforms: LinkedIn, X, Threads, Instagram, Facebook and TikTok. Every competitor is LinkedIn-only. We also include a viral score AI, real-time trend radar, and Agency mode — all at a lower real price." },
-          { q:"Is there a free plan?", a:"Yes. The free plan includes 5 AI generations per month, 1 project, and basic analytics. No credit card required to start." },
-          { q:"Can I use GrowthPILOT for my agency?", a:"The Agency plan supports 50 client accounts, 20 team members, a dedicated agency dashboard, MRR tracking and PDF invoice export. Built specifically for content agencies." },
-          { q:"Does the AI learn my writing style?", a:"Yes. Brand Memory lets you define your niche, tone, audience, CTA and banned words. The Voice Learning feature analyzes your past posts to match your exact writing style automatically." },
-          { q:"Which languages are supported?", a:"The platform is available in English, French, Spanish, German, Italian and Portuguese. Content can be generated in all 6 languages." },
-        ].map((item, i) => (
+        {(l.faqItems||[]).map((item, i) => (
           <details key={i} style={{ marginBottom:8, background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:10, overflow:"hidden" }}>
             <summary style={{ padding:"16px 20px", cursor:"pointer", fontFamily:"'Syne', sans-serif", fontWeight:600, fontSize:15, color:"#e2e8f0", listStyle:"none", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
               {item.q}
@@ -644,18 +639,18 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
         <div style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)", width:600, height:600, background:"radial-gradient(circle, rgba(220,38,38,0.12) 0%, transparent 70%)", pointerEvents:"none" }}/>
 
         <div className={`gp-fade-up ${ctaVisible ? "visible":""}`}>
-          <div style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:"#ef4444", letterSpacing:"3px", marginBottom:24 }}>— GET STARTED —</div>
+          <div style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:"#ef4444", letterSpacing:"3px", marginBottom:24 }}>{l.ctaFinalLabel}</div>
           <h2 style={{ fontFamily:"'Syne', sans-serif", fontWeight:800, fontSize:"clamp(32px,5vw,64px)", margin:"0 0 16px", letterSpacing:"-2px", lineHeight:1.05 }}>
-            Stop posting on<br/><span style={{ color:"#ef4444" }}>one platform.</span>
+            {l.ctaFinalTitle1}<br/><span style={{ color:"#ef4444" }}>{l.ctaFinalTitle2}</span>
           </h2>
           <p style={{ color:"#475569", fontSize:"clamp(15px,2vw,18px)", margin:"0 0 48px", lineHeight:1.6 }}>
-            Your audience is everywhere. Your content should be too.
+            {l.ctaFinalSub}
           </p>
           <button onClick={openApp} className="gp-btn-primary" style={{ fontSize:18, padding:"20px 52px", letterSpacing:"0.5px", animation:"glow 3s ease infinite" }}>
-            Launch your command center — free →
+            {l.ctaFinalBtn}
           </button>
           <p style={{ color:"#334155", fontSize:13, marginTop:16, fontFamily:"'DM Mono', monospace" }}>
-            No credit card · Ready in 2 minutes
+            {l.ctaFinalNote}
           </p>
         </div>
       </section>
@@ -670,9 +665,9 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
           <span style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:"#334155", marginLeft:8 }}>© 2026</span>
         </div>
         <div style={{ display:"flex", gap:20, alignItems:"center" }}>
-          <a href="/termsofservice" style={{ fontFamily:"'DM Mono', monospace", color:"#334155", fontSize:12, textDecoration:"none" }}>Terms</a>
-          <a href="/privacy"        style={{ fontFamily:"'DM Mono', monospace", color:"#334155", fontSize:12, textDecoration:"none" }}>Privacy</a>
-          <a href="mailto:team@aigrowthpilot.app" style={{ fontFamily:"'DM Mono', monospace", color:"#334155", fontSize:12, textDecoration:"none" }}>Contact</a>
+          <a href="/termsofservice" style={{ fontFamily:"'DM Mono', monospace", color:"#334155", fontSize:12, textDecoration:"none" }}{l.footerTerms}</a>
+          <a href="/privacy"        style={{ fontFamily:"'DM Mono', monospace", color:"#334155", fontSize:12, textDecoration:"none" }}{l.footerPrivacy}</a>
+          <a href="mailto:team@aigrowthpilot.app" style={{ fontFamily:"'DM Mono', monospace", color:"#334155", fontSize:12, textDecoration:"none" }}{l.footerContact}</a>
         </div>
       </footer>
 
