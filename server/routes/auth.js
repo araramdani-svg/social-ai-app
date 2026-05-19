@@ -261,6 +261,7 @@ router.post("/login", async (req, res) => {
 router.post("/save-post", authenticateToken, async (req, res) => {
   const { title, content, project_name } = req.body;
   try {
+    const result = await db.query(
       "INSERT INTO posts(user_id,title,content,project_name,created_at) VALUES($1,$2,$3,$4,NOW()) RETURNING id",
       [req.user.id, title, content, project_name || null]
     );
