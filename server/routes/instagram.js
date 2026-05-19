@@ -68,7 +68,7 @@ router.get("/oauth/callback", async (req, res) => {
     console.log("IG step2:", JSON.stringify(longData));
     const longToken = longData.access_token || tokenData.access_token;
 
-    // Étape 3A : pages avec instagram_business_account inline
+    // Étape 3A : pages avec champs détaillés
     const pagesRes  = await fetch(`https://graph.facebook.com/v19.0/me/accounts?fields=id,name,access_token,instagram_business_account&access_token=${longToken}`);
     const pagesData = await pagesRes.json();
     console.log("IG step3 pages:", JSON.stringify(pagesData));
@@ -77,36 +77,27 @@ router.get("/oauth/callback", async (req, res) => {
 
     if (pagesData.data?.length) {
       for (const page of pagesData.data) {
-        if (page.instagram_business_account?.id) {
-          igUserId  = page.instagram_business_account.id;
-          pageToken = page.access_token;
-        } else {
-          const igRes  = await fetch(`https://graph.facebook.com/v19.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`);
-          const igData = await igRes.json();
-          if (igData.instagram_business_account?.id) {
-            igUserId  = igData.instagram_business_account.id;
-            pageToken = page.access_token;
-          }
+        const igRes  = await fetch(`https://graph.facebook.com/v19.0/${page.id}?fields=id,name,instagram_business_account,connected_instagram_account&access_token=${page.access_token}`);
+        const igData = await igRes.json();
+        console.log("IG step3 page detail:", JSON.stringify(igData));
+        if (igData.instagram_business_account?.id) {
+          igUserId = igData.instagram_business_account.id; pageToken = page.access_token;
+        } else if (igData.connected_instagram_account?.id) {
+          igUserId = igData.connected_instagram_account.id; pageToken = page.access_token;
         }
         if (igUserId) break;
       }
     }
 
-    // Étape 3B : via /me directement
     if (!igUserId) {
-      const userIgRes  = await fetch(`https://graph.facebook.com/v19.0/me?fields=instagram_business_account&access_token=${longToken}`);
+      const userIgRes  = await fetch(`https://graph.facebook.com/v19.0/me?fields=instagram_business_account,connected_instagram_account&access_token=${longToken}`);
       const userIgData = await userIgRes.json();
       console.log("IG step3b:", JSON.stringify(userIgData));
-      if (userIgData.instagram_business_account?.id) {
-        igUserId  = userIgData.instagram_business_account.id;
-        pageToken = longToken;
-      }
+      if (userIgData.instagram_business_account?.id) { igUserId = userIgData.instagram_business_account.id; pageToken = longToken; }
+      else if (userIgData.connected_instagram_account?.id) { igUserId = userIgData.connected_instagram_account.id; pageToken = longToken; }
     }
 
-    if (!igUserId || !pageToken) {
-      console.error("No Instagram Business account found");
-      return res.redirect(`${FRONTEND_URL}?instagram=error`);
-    }
+    if (!igUserId || !pageToken) { console.error("No IG account found"); return res.redirect(`${FRONTEND_URL}?instagram=error`); }
 
     // Étape 4 : profil Instagram
     const profileRes = await fetch(`https://graph.facebook.com/v19.0/${igUserId}?fields=id,username,name&access_token=${pageToken}`);
