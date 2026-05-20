@@ -34,12 +34,12 @@ function useGoogleFonts() {
 function useSEO(activeLang) {
   useEffect(() => {
     const SEO = {
-      en: { title:"GrowthPILOT — The Only Multi-Platform AI Content OS", desc:"Generate, schedule & publish AI content to LinkedIn, X, Threads, Instagram, Facebook & TikTok from one command center. Free to start." },
-      fr: { title:"GrowthPILOT — Le seul OS IA multi-plateformes pour créateurs", desc:"Générez, planifiez et publiez du contenu IA sur LinkedIn, X, Threads, Instagram, Facebook et TikTok depuis un seul outil." },
-      es: { title:"GrowthPILOT — El único OS de contenido IA multi-plataforma", desc:"Genera, programa y publica contenido IA en LinkedIn, X, Threads, Instagram, Facebook y TikTok desde un centro de control." },
-      de: { title:"GrowthPILOT — Das einzige Multi-Plattform KI-Content-OS", desc:"Erstelle, plane und veröffentliche KI-Inhalte auf LinkedIn, X, Threads, Instagram, Facebook und TikTok aus einer Zentrale." },
-      it: { title:"GrowthPILOT — L'unico OS IA multi-piattaforma per i creator", desc:"Genera, pianifica e pubblica contenuti IA su LinkedIn, X, Threads, Instagram, Facebook e TikTok da un'unica piattaforma." },
-      pt: { title:"GrowthPILOT — O único OS de conteúdo IA multi-plataforma", desc:"Gere, agende e publique conteúdo IA no LinkedIn, X, Threads, Instagram, Facebook e TikTok a partir de um centro de controle." },
+      en: { title:"GrowthPILOT — The Only Multi-Platform AI Content OS", desc:"Generate, schedule & publish AI content to LinkedIn, X, Threads, Facebook & TikTok from one command center. Free to start.", keywords:"AI content platform, LinkedIn automation, social media AI, multi-platform publishing, content generator, brand memory, viral trends, SaaS marketing, founder content", locale:"en_US" },
+      fr: { title:"GrowthPILOT — Le seul OS IA multi-plateformes pour créateurs", desc:"Générez, planifiez et publiez du contenu IA sur LinkedIn, X, Threads, Facebook et TikTok depuis un seul outil. Gratuit pour commencer.", keywords:"plateforme contenu IA, automatisation LinkedIn, IA réseaux sociaux, publication multi-plateforme, générateur contenu, mémoire de marque, tendances virales", locale:"fr_FR" },
+      es: { title:"GrowthPILOT — El único OS de contenido IA multi-plataforma", desc:"Genera, programa y publica contenido IA en LinkedIn, X, Threads, Facebook y TikTok desde un centro de control. Gratis para empezar.", keywords:"plataforma contenido IA, automatización LinkedIn, IA redes sociales, publicación multiplataforma, generador contenido, memoria de marca", locale:"es_ES" },
+      de: { title:"GrowthPILOT — Das einzige Multi-Plattform KI-Content-OS", desc:"Erstelle, plane und veröffentliche KI-Inhalte auf LinkedIn, X, Threads, Facebook und TikTok aus einer Zentrale. Kostenlos starten.", keywords:"KI Content Plattform, LinkedIn Automatisierung, Social Media KI, Multi-Plattform Publishing, Content Generator, Brand Memory", locale:"de_DE" },
+      it: { title:"GrowthPILOT — L'unico OS IA multi-piattaforma per i creator", desc:"Genera, pianifica e pubblica contenuti IA su LinkedIn, X, Threads, Facebook e TikTok da un'unica piattaforma. Gratis per iniziare.", keywords:"piattaforma contenuti IA, automazione LinkedIn, IA social media, pubblicazione multi-piattaforma, generatore contenuti, brand memory", locale:"it_IT" },
+      pt: { title:"GrowthPILOT — O único OS de conteúdo IA multi-plataforma", desc:"Gere, agende e publique conteúdo IA no LinkedIn, X, Threads, Facebook e TikTok a partir de um centro de controle. Grátis para começar.", keywords:"plataforma conteúdo IA, automação LinkedIn, IA redes sociais, publicação multiplataforma, gerador conteúdo, memória de marca", locale:"pt_BR" },
     };
     const s = SEO[activeLang] || SEO.en;
     document.title = s.title;
@@ -48,9 +48,35 @@ function useSEO(activeLang) {
       if (!el) { el = document.createElement("meta"); el.setAttribute("name", name); document.head.appendChild(el); }
       el.setAttribute("content", content);
     };
+    const setOG = (prop, content) => {
+      let el = document.querySelector(`meta[property="${prop}"]`);
+      if (!el) { el = document.createElement("meta"); el.setAttribute("property", prop); document.head.appendChild(el); }
+      el.setAttribute("content", content);
+    };
+    // Core SEO
     setMeta("description", s.desc);
+    setMeta("keywords", s.keywords);
     setMeta("robots", "index, follow");
+    // Open Graph
+    setOG("og:title", s.title);
+    setOG("og:description", s.desc);
+    setOG("og:locale", s.locale);
+    setOG("og:url", "https://www.aigrowthpilot.app/");
+    setOG("og:image", "https://www.aigrowthpilot.app/og-image.png");
+    // Twitter Card
+    setMeta("twitter:title", s.title);
+    setMeta("twitter:description", s.desc);
+    // Hreflang canonical
+    document.querySelectorAll("link[hreflang]").forEach(el => el.remove());
+    Object.keys(SEO).forEach(lang => {
+      const link = document.createElement("link");
+      link.rel = "alternate";
+      link.hreflang = lang;
+      link.href = `https://www.aigrowthpilot.app/?lang=${lang}`;
+      document.head.appendChild(link);
+    });
   }, [activeLang]);
+}
 }
 
 /* ── Intersection observer hook ── */

@@ -31,28 +31,75 @@
     <meta name="twitter:description" content="Generate, schedule and publish authority content on LinkedIn, Threads, X and more. AI-powered brand memory, viral trend detection." />
     <meta name="twitter:image" content="https://aigrowthpilot.app/og-image.png" />
 
-    <!-- ── Structured Data (JSON-LD) ── -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "GrowthPILOT",
-      "url": "https://aigrowthpilot.app",
-      "description": "AI-powered content platform for founders and creators. Generate, schedule and publish authority content across LinkedIn, Threads, X and more.",
-      "applicationCategory": "BusinessApplication",
-      "operatingSystem": "Web",
-      "offers": [
-        { "@type": "Offer", "name": "Free", "price": "0", "priceCurrency": "EUR" },
-        { "@type": "Offer", "name": "Pro", "price": "19", "priceCurrency": "EUR" },
-        { "@type": "Offer", "name": "Business", "price": "49", "priceCurrency": "EUR" }
-      ],
-      "creator": {
-        "@type": "Organization",
-        "name": "GrowthPILOT",
-        "url": "https://aigrowthpilot.app"
-      }
+      "@graph": [
+        {
+          "@type": "SoftwareApplication",
+          "name": "GrowthPILOT",
+          "url": "https://www.aigrowthpilot.app",
+          "logo": "https://www.aigrowthpilot.app/logo.png",
+          "description": "AI-powered multi-platform content OS for founders and creators. Generate, schedule and publish authority content across LinkedIn, X, Threads, Facebook, Instagram and TikTok.",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web",
+          "inLanguage": ["en", "fr", "es", "de", "it", "pt"],
+          "offers": [
+            { "@type": "Offer", "name": "Free", "price": "0", "priceCurrency": "EUR", "description": "5 AI generations per month" },
+            { "@type": "Offer", "name": "Pro", "price": "19", "priceCurrency": "EUR", "description": "100 AI generations, Brand Memory, multi-format repurpose" },
+            { "@type": "Offer", "name": "Business", "price": "49", "priceCurrency": "EUR", "description": "Unlimited generations, 5 team members" },
+            { "@type": "Offer", "name": "Agency", "price": "99", "priceCurrency": "EUR", "description": "50 client accounts, MRR tracking, PDF invoices" }
+          ],
+          "featureList": [
+            "Multi-platform publishing (LinkedIn, X, Threads, Facebook, Instagram, TikTok)",
+            "AI content generation with viral score",
+            "Brand Memory AI",
+            "Real-time trend radar",
+            "Carousel generator",
+            "GhostWrite",
+            "Agency mode with client billing",
+            "6 languages supported"
+          ],
+          "creator": {
+            "@type": "Person",
+            "name": "Azzedine Ramdani",
+            "url": "https://www.aigrowthpilot.app"
+          }
+        },
+        {
+          "@type": "WebSite",
+          "name": "GrowthPILOT",
+          "url": "https://www.aigrowthpilot.app",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://www.aigrowthpilot.app/?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What makes GrowthPILOT different from Taplio or Supergrow?",
+              "acceptedAnswer": { "@type": "Answer", "text": "GrowthPILOT is the only tool that publishes directly to 6 platforms: LinkedIn, X, Threads, Instagram, Facebook and TikTok. Every competitor is LinkedIn-only." }
+            },
+            {
+              "@type": "Question",
+              "name": "Is there a free plan?",
+              "acceptedAnswer": { "@type": "Answer", "text": "Yes. The free plan includes 5 AI generations per month, 1 project, and basic analytics. No credit card required." }
+            },
+            {
+              "@type": "Question",
+              "name": "Does the AI learn my writing style?",
+              "acceptedAnswer": { "@type": "Answer", "text": "Yes. Brand Memory lets you define your niche, tone, audience, CTA and banned words. Voice Learning analyzes your past posts to match your exact writing style." }
+            }
+          ]
+        }
+      ]
     }
     </script>
+
 
     <!-- ── PWA ── -->
     <link rel="manifest" href="/manifest.json" />
