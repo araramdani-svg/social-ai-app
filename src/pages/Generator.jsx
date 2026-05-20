@@ -309,13 +309,21 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   const changeEmailAddress= async (currentPassword) => { if(!newEmail||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) return showProfileMsg("error","Invalid email address"); if(!currentPassword) return showProfileMsg("error","Current password is required"); setProfileLoading(true); try{ const r=await fetch(`${API}/auth/change-email/request`,{ method:"POST",headers:{ "Content-Type":"application/json",Authorization:`Bearer ${token}` },body:JSON.stringify({ newEmail,currentPassword }) }); const d=await r.json(); if(r.ok){ showProfileMsg("success","✓ Confirmation email sent — check your new inbox to confirm the change"); setNewEmail(""); } else showProfileMsg("error",d.message||"Failed to request email change"); } catch{ showProfileMsg("error","Server error"); } finally{ setProfileLoading(false); } };
   const saveProfile = async () => { setProfileLoading(true); try{ const r=await fetch(`${API}/auth/save-profile`,{ method:"POST",headers:{ "Content-Type":"application/json",Authorization:`Bearer ${token}` },body:JSON.stringify({ first_name:firstName,last_name:lastName }) }); const d=await r.json(); if(r.ok){ showProfileMsg("success","✓ Profile updated"); } else showProfileMsg("error",d.message||"Failed to update profile"); } catch{ showProfileMsg("error","Server error"); } finally{ setProfileLoading(false); } };
   const deleteAccount     = async () => { await api("auth/delete-account",{},"DELETE"); localStorage.removeItem("token"); window.location.reload(); };
-  const completeOnboarding= () => { setShowOnboarding(false); showToast(tr(trendsLang,"messages.workspaceReady")); };
+  const completeOnboarding = (mem) => {
+    setShowOnboarding(false);
+    showToast(tr(trendsLang,"messages.workspaceReady"));
+    if (mem?.niche || mem?.tone || mem?.audience) {
+      setMemory({ niche: mem.niche||"", audience: mem.audience||"", tone: mem.tone||"", cta:"", banned_words:"" });
+    }
+    // Charger le projet default et sa brand memory
+    selectProject("default").catch(() => {});
+    setTab("create");
+  };
 
   const NAV_TABS   = ["home","dashboard","insights","create","memory","carousel","ghostwrite","autorepost","templates","calendar","scheduler","autopost","analyze","planner","history","publish","team","integrations","trends"];
   const BOTTOM_NAV = [{ key:"home",icon:"🏠" },{ key:"create",icon:"✍️" },{ key:"trends",icon:"🌍" },{ key:"analyze",icon:"📊" },{ key:"profile",icon:"👤" }];
   const shared     = { trendsLang, isMobile, token };
 
-  {showOnboarding && token && token !== 'guest' && <OnboardingWizard token={token} onComplete={(mem) => { setShowOnboarding(false); if (mem.project) { setSelectedProject(mem.project); } }} />}
 
   return (
     <div style={st.page}>
@@ -361,7 +369,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
           <OnboardingWizard
             token={token}
             trendsLang={trendsLang}
-            onComplete={() => { completeOnboarding(); }}
+            onComplete={(mem) => completeOnboarding(mem)}
           />
         )}
 
