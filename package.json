@@ -4,7 +4,7 @@
     "node": "20.x"
   },
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,10 +13,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@sentry/node": "^10.53.1",
+    "@sentry/react": "^10.53.1",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-rate-limit": "^7.5.0",
     "framer-motion": "^12.38.0",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^1.14.0",
@@ -28,7 +31,6 @@
     "recharts": "^3.8.1",
     "stripe": "^22.1.1",
     "winston": "^3.17.0",
-    "express-rate-limit": "^7.5.0",
     "zustand": "^5.0.12"
   },
   "devDependencies": {
