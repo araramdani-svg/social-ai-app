@@ -113,7 +113,7 @@ function LinkedInAnalytics({ token, isMobile, trendsLang }) {
     <div style={{ textAlign: "center", padding: "60px 20px" }}>
       <div style={{ fontSize: 32, marginBottom: 12 }}>⚠️</div>
       <div style={{ color: "#ef4444", marginBottom: 16 }}>{error}</div>
-      <button style={s.btn} onClick={fetchData}>Retry</button>
+      <button style={s.btn} onClick={fetchData}>{tr(trendsLang,"analyze.retry")}</button>
     </div>
   );
 
@@ -123,10 +123,10 @@ function LinkedInAnalytics({ token, isMobile, trendsLang }) {
       {/* Header actions */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ color: "#64748b", fontSize: 11, fontWeight: 700 }}>
-          {posts.length} POST{posts.length !== 1 ? "S" : ""} PUBLISHED VIA GROWTHPILOT
+          {posts.length} {tr(trendsLang,"analyze.postsPublished")}
         </div>
         <button style={s.btn} onClick={refresh} disabled={refreshing}>
-          {refreshing ? "⏳ REFRESHING..." : "🔄 REFRESH STATS"}
+          {refreshing ? `⏳ ${tr(trendsLang,"analyze.refreshing")}` : `🔄 ${tr(trendsLang,"analyze.refreshStats")}`}
         </button>
       </div>
 
@@ -151,7 +151,7 @@ function LinkedInAnalytics({ token, isMobile, trendsLang }) {
       {summary?.topPost && (
         <div style={{ background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: 12, padding: "16px 20px" }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: "#ef4444", letterSpacing: "1.5px", marginBottom: 8 }}>
-            🏆 TOP POST BY ENGAGEMENT
+            {`🏆 ${tr(trendsLang,"analyze.topPost")}`}
           </div>
           <div style={{ color: "#e2e8f0", fontSize: 13, lineHeight: 1.6, marginBottom: 12,
             display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
@@ -169,7 +169,7 @@ function LinkedInAnalytics({ token, isMobile, trendsLang }) {
       {chartData.length > 0 && (
         <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "16px 20px" }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: "#64748b", letterSpacing: "1.5px", marginBottom: 16 }}>
-            ENGAGEMENT BY POST
+            {tr(trendsLang,"analyze.engagementByPost")}
           </div>
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={chartData} barSize={20}>
@@ -185,7 +185,7 @@ function LinkedInAnalytics({ token, isMobile, trendsLang }) {
             </BarChart>
           </ResponsiveContainer>
           <div style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 8 }}>
-            {[["Likes","#ef4444"],["Comments","#60a5fa"],["Shares","#fbbf24"]].map(([l,c]) => (
+            {[[tr(trendsLang,"analyze.likes"),"#ef4444"],[tr(trendsLang,"analyze.comments"),"#60a5fa"],[tr(trendsLang,"analyze.shares"),"#fbbf24"]].map(([l,c]) => (
               <div key={l} style={{ display:"flex", alignItems:"center", gap:6, fontSize:11, color:"#64748b" }}>
                 <div style={{ width:8, height:8, borderRadius:2, background:c }} />{l}
               </div>
@@ -198,13 +198,13 @@ function LinkedInAnalytics({ token, isMobile, trendsLang }) {
       {posts.length === 0 ? (
         <div style={s.empty}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>📊</div>
-          <div style={{ fontWeight: 700, color: "#e2e8f0", marginBottom: 8 }}>No LinkedIn posts yet</div>
-          <div style={{ fontSize: 13 }}>Publish posts via GrowthPILOT to see real analytics here.</div>
+          <div style={{ fontWeight: 700, color: "#e2e8f0", marginBottom: 8 }}>{tr(trendsLang,"analyze.noPostsYet")}</div>
+          <div style={{ fontSize: 13 }}>{tr(trendsLang,"analyze.noPostsDesc")}</div>
         </div>
       ) : (
         <div>
           <div style={{ fontSize: 10, fontWeight: 700, color: "#64748b", letterSpacing: "1.5px", marginBottom: 10 }}>
-            ALL POSTS
+            {tr(trendsLang,"analyze.allPosts")}
           </div>
           {posts.map((post) => (
             <div key={post.id} style={s.postRow}>
@@ -236,7 +236,7 @@ function LinkedInAnalytics({ token, isMobile, trendsLang }) {
 
       {/* Note */}
       <div style={{ background: "rgba(96,165,250,0.05)", border: "1px solid rgba(96,165,250,0.1)", borderRadius: 8, padding: "10px 14px", fontSize: 11, color: "#475569" }}>
-        ℹ️ Stats shown for posts published via GrowthPILOT only. Click REFRESH STATS to sync latest engagement from LinkedIn.
+        {`ℹ️ ${tr(trendsLang,"analyze.statsNote")}`}
       </div>
     </div>
   );
@@ -253,10 +253,10 @@ export default function Analyze({ trendsLang, isMobile, analysis, platformData, 
       {/* Tab switcher */}
       <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.07)", marginBottom: 16 }}>
         <button style={s.tabBtn(activeTab === "content")}   onClick={() => setActiveTab("content")}>
-          📝 CONTENT ANALYSIS
+          {tr(trendsLang,"analyze.tabContent")}
         </button>
         <button style={s.tabBtn(activeTab === "linkedin")}  onClick={() => setActiveTab("linkedin")}>
-          🔗 LINKEDIN ANALYTICS
+          {tr(trendsLang,"analyze.tabLinkedin")}
         </button>
       </div>
 

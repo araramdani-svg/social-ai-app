@@ -278,3 +278,129 @@ const sendCalendarReminderEmail = async (email, emptySlots) => {
 
 // Lancer le scheduler au démarrage
 scheduleCalendarReminder();
+
+// ─── Cron : email hebdo (chaque lundi à 9h UTC) ───────────────────────────────
+const scheduleWeeklyEmail = () => {
+  const now  = new Date();
+  const next = new Date(now);
+  const day  = now.getUTCDay();
+  const daysUntilMonday = day === 1 ? 7 : (8 - day) % 7 || 7;
+  next.setUTCDate(now.getUTCDate() + daysUntilMonday);
+  next.setUTCHours(9, 0, 0, 0); // 9h UTC (après le rappel calendrier à 8h)
+
+  const msUntilNext = next.getTime() - now.getTime();
+  logger.info(`📧 Weekly email scheduled in ${Math.round(msUntilNext / 3600000)}h (next Monday 9:00 UTC)`);
+
+  setTimeout(async () => {
+    await sendWeeklyEmails();
+    setInterval(sendWeeklyEmails, 7 * 24 * 60 * 60 * 1000);
+  }, msUntilNext);
+};
+
+const sendWeeklyEmails = async () => {
+  logger.info("📧 Running weekly summary email job...");
+  try {
+    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    // Récupérer les users actifs avec au moins 1 post cette semaine
+    const result = await db.query(`
+      SELECT u.id, u.email, u.first_name,
+             COUNT(p.id) AS posts_this_week,
+             MAX(p.created_at) AS last_post_at
+      FROM users u
+      JOIN posts p ON p.user_id = u.id
+      WHERE p.created_at >= $1
+        AND u.email_verified = true
+        AND u.banned = false
+      GROUP BY u.id, u.email, u.first_name
+      HAVING COUNT(p.id) > 0
+    `, [oneWeekAgo.toISOString()]);
+
+    logger.info(`📧 Weekly email: ${result.rows.length} users to notify`);
+
+    for (const user of result.rows) {
+      try {
+        await sendWeeklySummaryEmail(user);
+        logger.info(`📧 Weekly summary sent to ${user.email}`);
+      } catch (err) {
+        logger.error(`❌ Weekly email failed for ${user.email}`, { error: err.message });
+      }
+    }
+  } catch (err) {
+    logger.error("❌ Weekly email job error", { error: err.message });
+  }
+};
+
+const sendWeeklySummaryEmail = async (user) => {
+  const firstName = user.first_name || "there";
+  const postsCount = parseInt(user.posts_this_week);
+
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
+    },
+    body: JSON.stringify({
+      from: "GrowthPILOT <team@aigrowthpilot.app>",
+      to: user.email,
+      subject: `📊 Your week on GrowthPILOT — ${postsCount} post${postsCount > 1 ? "s" : ""} created`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <body style="margin:0;padding:0;background:#050a14;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+          <div style="max-width:560px;margin:40px auto;background:#0d1626;border:1px solid rgba(220,38,38,0.2);border-radius:16px;overflow:hidden;">
+            <div style="background:linear-gradient(135deg,#dc2626,#991b1b);padding:32px;text-align:center;">
+              <h1 style="color:#fff;margin:0;font-size:24px;font-weight:900;letter-spacing:-0.5px;">Growth<span style="opacity:0.8">PILOT</span></h1>
+              <p style="color:rgba(255,255,255,0.7);margin:8px 0 0;font-size:14px;">Your Weekly Summary</p>
+            </div>
+            <div style="padding:40px 32px;">
+              <h2 style="color:#e2e8f0;font-size:20px;font-weight:800;margin:0 0 8px;">Good week, ${firstName} 👋</h2>
+              <p style="color:#64748b;font-size:14px;line-height:1.7;margin:0 0 28px;">
+                Here's what you accomplished this week on GrowthPILOT.
+              </p>
+
+              <!-- Stats -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:28px;">
+                <div style="background:rgba(220,38,38,0.06);border:1px solid rgba(220,38,38,0.15);border-radius:12px;padding:20px;text-align:center;">
+                  <div style="color:#ef4444;font-size:32px;font-weight:900;">${postsCount}</div>
+                  <div style="color:#64748b;font-size:11px;font-weight:700;letter-spacing:1.5px;margin-top:4px;">POSTS CREATED</div>
+                </div>
+                <div style="background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.15);border-radius:12px;padding:20px;text-align:center;">
+                  <div style="color:#22c55e;font-size:32px;font-weight:900;">🔥</div>
+                  <div style="color:#64748b;font-size:11px;font-weight:700;letter-spacing:1.5px;margin-top:4px;">KEEP IT UP</div>
+                </div>
+              </div>
+
+              <a href="https://www.aigrowthpilot.app" style="display:block;background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;text-decoration:none;text-align:center;padding:16px 32px;border-radius:10px;font-weight:800;font-size:15px;letter-spacing:0.5px;margin-bottom:24px;">
+                Continue creating →
+              </a>
+
+              <div style="background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.15);border-radius:10px;padding:16px 20px;">
+                <div style="color:#818cf8;font-size:11px;font-weight:700;letter-spacing:1.5px;margin-bottom:8px;">💡 THIS WEEK'S TIP</div>
+                <div style="color:#64748b;font-size:13px;line-height:1.6;">
+                  Consistency beats perfection. Posting 3x per week for a month outperforms posting 1 viral piece. Your streak matters.
+                </div>
+              </div>
+
+              <p style="color:#334155;font-size:12px;margin:24px 0 0;text-align:center;">
+                You're receiving this because you created content this week. 
+                <a href="https://www.aigrowthpilot.app" style="color:#475569;">Manage preferences</a>
+              </p>
+            </div>
+            <div style="border-top:1px solid rgba(255,255,255,0.05);padding:20px 32px;text-align:center;">
+              <p style="color:#1e293b;font-size:11px;margin:0;">© 2026 GrowthPILOT · <a href="https://www.aigrowthpilot.app" style="color:#334155;">aigrowthpilot.app</a></p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Resend error: ${err}`);
+  }
+};
+
+scheduleWeeklyEmail();
