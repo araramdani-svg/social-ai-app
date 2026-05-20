@@ -5,6 +5,9 @@ import Auth      from "./pages/Auth";
 import Pricing   from "./pages/Pricing";
 import { Toast } from "./pages/tabs/shared.js";
 import Admin    from "./pages/Admin";
+import { initSentry } from "./sentry.js";
+
+initSentry();
 
 /* ── Hook breakpoint ── */
 function useWindowWidth() {

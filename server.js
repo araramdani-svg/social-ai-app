@@ -5,6 +5,18 @@ import dotenv from "dotenv";
 // ✅ dotenv en premier
 dotenv.config();
 
+// ─── Sentry ───────────────────────────────────────────────────────────────────
+import * as Sentry from "@sentry/node";
+
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || "production",
+    tracesSampleRate: 0.2,
+  });
+  console.info("✅ Sentry backend initialized");
+}
+
 // ─── Logger Winston ───────────────────────────────────────────────────────────
 import winston from "winston";
 
@@ -98,6 +110,9 @@ const corsOptions = {
 app.set("trust proxy", 1); // Railway est derrière un proxy
 app.use(cors(corsOptions));
 
+// Sentry request handler — doit être AVANT les routes
+if (process.env.SENTRY_DSN) app.use(Sentry.Handlers.requestHandler());
+
 // ⚠️ IMPORTANT : le webhook Stripe doit recevoir le raw body AVANT express.json()
 app.use("/stripe/webhook", express.raw({ type: "application/json" }));
 
@@ -138,6 +153,8 @@ app.use("/admin",              adminLimiter,     adminRouter);
 app.use("/analytics",          analyticsLimiter, analyticsRouter);
 
 // ─── Error handler global ──────────────────────────────────────────────────────
+// Sentry error handler — doit être AVANT le error handler global
+if (process.env.SENTRY_DSN) app.use(Sentry.Handlers.errorHandler());
 app.use((err, req, res, next) => {
   logger.error("Unhandled error", { message: err.message, stack: err.stack, path: req.path });
   res.status(500).json({ error: "Internal server error" });
