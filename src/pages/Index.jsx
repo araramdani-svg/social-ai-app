@@ -77,7 +77,6 @@ function useSEO(activeLang) {
     });
   }, [activeLang]);
 }
-}
 
 /* ── Intersection observer hook ── */
 function useInView(threshold = 0.15) {
