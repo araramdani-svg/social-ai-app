@@ -199,6 +199,8 @@ function useStyles() {
         .gp-nav-right   { gap: 6px !important; }
         .gp-hero-sub    { padding: 0 16px !important; }
         .gp-pricing-scroll { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+        .gp-compare-table  { font-size: 11px !important; }
+        .gp-compare-table th, .gp-compare-table td { padding: 8px 6px !important; min-width: 60px !important; }
       }
       @media (max-width:480px) {
         .gp-nav-logo-text { display: none !important; }
@@ -321,7 +323,7 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
           <div className="gp-nav-lang" style={{ position:"relative" }}>
             <button onClick={() => setShowLangMenu(!showLangMenu)}
               style={{ padding:"6px 10px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:6, color:"#64748b", cursor:"pointer", fontSize:12, fontFamily:"'DM Mono', monospace" }}>
-              {LANGS.find(lx => lx.key === activeLang)?.flag} {activeLang.toUpperCase()}
+              {LANGS.find(lx => lx.key === activeLang)?.flag}
             </button>
             {showLangMenu && (
               <div style={{ position:"absolute", top:40, right:0, background:"#0d1626", border:"1px solid rgba(220,38,38,0.2)", borderRadius:10, overflow:"hidden", zIndex:9999, minWidth:120, boxShadow:"0 20px 40px rgba(0,0,0,0.6)" }}>
@@ -534,7 +536,7 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
             <p style={{ color:"#475569", fontSize:15, margin:"12px 0 0" }}>{l.compareSub}</p>
           </div>
 
-          <div style={{ overflowX:"auto" }}>
+          <div style={{ overflowX:"auto", WebkitOverflowScrolling:"touch", margin:"0 -8px", padding:"0 8px" }}>
             <table className="gp-compare-table" style={{ width:"100%", borderCollapse:"collapse", fontFamily:"'DM Mono', monospace", fontSize:13 }}>
               <thead>
                 <tr>
@@ -638,7 +640,7 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
                   ))}
                 </div>
                 <button onClick={plan.action} className={plan.popular ? "gp-btn-primary" : "gp-btn-ghost"}
-                  style={{ width:"100%", padding:"12px", fontSize:14,
+                  style={{ width:"100%", padding:"12px", fontSize:13, boxSizing:"border-box",
                     ...(plan.popular ? { background:`linear-gradient(135deg,${plan.color},#991b1b)` } : {}) }}>
                   {plan.cta}
                 </button>
