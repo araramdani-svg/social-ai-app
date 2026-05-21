@@ -142,7 +142,7 @@ export default function Auth({ loginSuccess, initialMode = "login" }) {
         <h1>{mode === "login" ? "Login" : inviteInfo ? "Join the team" : "Create account"}</h1>
 
         {mode === "register" && (
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginTop:16 }}>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr", gap:10, marginTop:16 }}>
             <input
               style={{ ...styles.input, marginTop:0 }}
               placeholder="First name"
@@ -212,7 +212,7 @@ const styles = {
     width: "100%",
     maxWidth: "420px",
     background: "linear-gradient(145deg,#1a2235,#111827)",
-    padding: "40px",
+    padding: "clamp(24px, 5vw, 40px)",
     borderRadius: "16px",
     border: "1px solid rgba(220,38,38,0.2)",
     borderLeft: "3px solid #ef4444",
@@ -221,7 +221,7 @@ const styles = {
   input: {
     display: "block",
     width: "100%",
-    padding: "14px 18px",
+    padding: "12px 16px",
     marginTop: "16px",
     background: "#0f172a",
     borderRadius: 10,

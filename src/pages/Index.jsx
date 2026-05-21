@@ -291,7 +291,7 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
       <nav style={{
         position:"sticky", top:0, zIndex:100,
         display:"flex", justifyContent:"space-between", alignItems:"center",
-        padding:"0 clamp(20px,4vw,60px)", height:64,
+        padding:"0 clamp(12px,3vw,60px)", height:56,
         background: scrolled ? "rgba(5,10,20,0.97)" : "rgba(5,10,20,0.8)",
         backdropFilter:"blur(20px)",
         borderBottom: scrolled ? "1px solid rgba(220,38,38,0.2)" : "1px solid rgba(255,255,255,0.04)",
@@ -300,13 +300,13 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
         {/* Logo */}
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
           <img src={logo} alt="GrowthPILOT" style={{ width:32, height:32, objectFit:"contain" }} />
-          <span style={{ fontFamily:"'Syne', sans-serif", fontWeight:800, fontSize:18, color:"#fff", letterSpacing:"-0.5px" }}>
+          <span style={{ fontFamily:"'Syne', sans-serif", fontWeight:800, fontSize:16, color:"#fff", letterSpacing:"-0.5px" }}>
             Growth<span style={{ color:"#ef4444" }}>PILOT</span>
           </span>
         </div>
 
         {/* Right */}
-        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:6 }}>
           {/* Lang */}
           <div style={{ position:"relative" }}>
             <button onClick={() => setShowLangMenu(!showLangMenu)}
@@ -325,8 +325,8 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
             )}
           </div>
 
-          <button onClick={openLogin} className="gp-btn-ghost" style={{ padding:"7px 12px", fontSize:12 }}>{l.navSignIn}</button>
-          <button onClick={openApp} className="gp-btn-primary" style={{ padding:"7px 14px", fontSize:12, whiteSpace:"nowrap" }}>{l.navTryFree}</button>
+          <button onClick={openLogin} className="gp-btn-ghost" style={{ padding:"6px 10px", fontSize:11, whiteSpace:"nowrap" }}>{l.navSignIn}</button>
+          <button onClick={openApp} className="gp-btn-primary" style={{ padding:"6px 10px", fontSize:11, whiteSpace:"nowrap" }}>{l.navTryFree}</button>
         </div>
       </nav>
 
@@ -373,10 +373,10 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
         </div>
 
         {/* Typewriter sub */}
-        <div className={`gp-fade-up ${heroVisible ? "visible":""}`} style={{ textAlign:"center", marginBottom:40, animationDelay:"0.1s" }}>
+        <div className={`gp-fade-up ${heroVisible ? "visible":""}`} style={{ textAlign:"center", marginBottom:40, animationDelay:"0.1s", padding:"0 16px" }}>
           <p style={{ fontSize:"clamp(16px,2vw,20px)", color:"#64748b", margin:0, lineHeight:1.6 }}>
             {l.heroSub1}{" "}
-            <span style={{ fontFamily:"'DM Mono', monospace", color:"#94a3b8" }}>
+            <span style={{ fontFamily:"'DM Mono', monospace", color:"#94a3b8", display:"inline-block", minWidth:120 }}>
               <Typewriter words={["LinkedIn.", "X (Twitter).", "Threads.", "Instagram.", "Facebook.", "TikTok."]} />
             </span>
           </p>
@@ -386,9 +386,9 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
         </div>
 
         {/* CTAs */}
-        <div className={`gp-fade-up ${heroVisible ? "visible":""}`} style={{ display:"flex", justifyContent:"center", gap:12, flexWrap:"wrap", marginBottom:64, animationDelay:"0.15s" }}>
-          <button onClick={openApp}   className="gp-btn-primary" style={{ fontSize:14, padding:"14px 24px", whiteSpace:"nowrap" }}>{l.ctaStart}</button>
-          <button onClick={openLogin} className="gp-btn-ghost" style={{ fontSize:14, padding:"14px 20px", whiteSpace:"nowrap" }}>{l.ctaSignIn}</button>
+        <div className={`gp-fade-up ${heroVisible ? "visible":""}`} style={{ display:"flex", justifyContent:"center", gap:12, flexWrap:"wrap", marginBottom:64, animationDelay:"0.15s", padding:"0 16px" }}>
+          <button onClick={openApp}   className="gp-btn-primary" style={{ fontSize:"clamp(13px,2vw,14px)", padding:"12px 22px", whiteSpace:"nowrap", width: "auto" }}>{l.ctaStart}</button>
+          <button onClick={openLogin} className="gp-btn-ghost"   style={{ fontSize:"clamp(13px,2vw,14px)", padding:"12px 18px", whiteSpace:"nowrap", width: "auto" }}>{l.ctaSignIn}</button>
         </div>
 
         {/* Platform badges */}
