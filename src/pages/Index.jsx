@@ -338,7 +338,7 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
           </div>
 
           <button onClick={openLogin} className="gp-btn-ghost gp-nav-signin" style={{ padding:"7px 12px", fontSize:12, whiteSpace:"nowrap" }}>{l.navSignIn}</button>
-          <button onClick={openApp} className="gp-btn-primary" style={{ padding:"6px 10px", fontSize:11, whiteSpace:"nowrap" }}>{l.navTryFree}</button>
+          <button onClick={openApp} className="gp-btn-primary" style={{ padding:"6px 10px", fontSize:11, whiteSpace:"nowrap", flexShrink:0 }}>{l.navTryFree}</button>
         </div>
       </nav>
 
@@ -610,7 +610,8 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
           </div>
         </div>
 
-        <div className="gp-pricing-grid" style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, maxWidth:1100, margin:"0 auto", alignItems:"start" }}>
+        <div style={{ overflowX:"auto", WebkitOverflowScrolling:"touch", margin:"0 -20px", padding:"0 20px" }}>
+        <div className="gp-pricing-grid" style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, maxWidth:1100, margin:"0 auto", alignItems:"start", minWidth:700 }}>
           {PLANS.map((plan, i) => {
             const price = yearly ? plan.yearlyPrice : plan.price;
             return (
@@ -646,6 +647,7 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
               </div>
             );
           })}
+        </div>
         </div>
 
         <p style={{ textAlign:"center", color:"#334155", fontSize:13, marginTop:24, fontFamily:"'DM Mono', monospace" }}>

@@ -129,7 +129,7 @@ export default function Auth({ loginSuccess, initialMode = "login" }) {
   // ── Formulaire login/register ──────────────────────────────────────────────
   return (
     <div style={styles.page}>
-      <div style={styles.card}>
+      <div className="gp-auth-card" style={styles.card}>
         {inviteInfo && (
           <div style={{ background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:10, padding:"12px 16px", marginBottom:20 }}>
             <div style={{ color:"#ef4444", fontSize:11, fontWeight:700, letterSpacing:"1px", marginBottom:4 }}>👥 TEAM INVITATION</div>
@@ -197,6 +197,22 @@ export default function Auth({ loginSuccess, initialMode = "login" }) {
       </div>
     </div>
   );
+}
+
+// Inject mobile styles
+if (typeof document !== "undefined") {
+  const styleId = "gp-auth-styles";
+  if (!document.getElementById(styleId)) {
+    const s = document.createElement("style");
+    s.id = styleId;
+    s.textContent = `
+      @media (max-width: 600px) {
+        .gp-auth-name-grid { grid-template-columns: 1fr !important; }
+        .gp-auth-card { padding: 24px !important; }
+      }
+    `;
+    document.head.appendChild(s);
+  }
 }
 
 const styles = {
