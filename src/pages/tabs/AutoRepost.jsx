@@ -214,10 +214,10 @@ export default function AutoRepost({
                   {tr(trendsLang,"autorepost.noHistory") || "No saved posts yet"}
                 </div>
                 <div style={{ color:"#334155", fontSize:12, marginBottom:16 }}>
-                  Generate and save posts in Create to repost them here.
+                  {tr(trendsLang,"ui.generateAndSave")}
                 </div>
                 <button style={{ ...btnStyle, fontSize:11, padding:"9px 18px" }} onClick={() => setTab("create")}>
-                  ✍️ Go to Create
+                  {tr(trendsLang,"ui.goToCreate")}
                 </button>
               </div>
             ) : posts.map((p, i) => {

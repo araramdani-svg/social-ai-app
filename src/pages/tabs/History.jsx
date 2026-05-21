@@ -85,7 +85,7 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
       <div style={{ display:"flex", gap:10, marginBottom:14, flexWrap:"wrap" }}>
         <input
           style={{ ...st.input, marginBottom:0, flex:1, minWidth:200, fontSize:12 }}
-          placeholder={`🔍 ${tr(trendsLang,"ui.searchPosts") || "Search posts..."}`}
+          placeholder={`🔍 ${tr(trendsLang,"ui.searchPosts")}`}
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
