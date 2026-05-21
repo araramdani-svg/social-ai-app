@@ -271,6 +271,7 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
   ];
 
   const px = typeof window !== "undefined" && window.innerWidth < 768 ? "20px" : "clamp(24px, 5vw, 80px)";
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 480;
 
   /* ── ticker content ── */
   const TICKER = ["LinkedIn", "X (Twitter)", "Threads", "Instagram", "Facebook", "TikTok", "Viral Score", "Brand Memory", "Trend Radar", "Agency Mode", "30-day Planner", "Multi-format"];
@@ -300,7 +301,7 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
         {/* Logo */}
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
           <img src={logo} alt="GrowthPILOT" style={{ width:32, height:32, objectFit:"contain" }} />
-          <span style={{ fontFamily:"'Syne', sans-serif", fontWeight:800, fontSize:16, color:"#fff", letterSpacing:"-0.5px" }}>
+          <span style={{ fontFamily:"'Syne', sans-serif", fontWeight:800, fontSize:16, color:"#fff", letterSpacing:"-0.5px", display: isMobile ? "none" : "inline" }}>
             Growth<span style={{ color:"#ef4444" }}>PILOT</span>
           </span>
         </div>
@@ -308,7 +309,7 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
         {/* Right */}
         <div style={{ display:"flex", alignItems:"center", gap:6 }}>
           {/* Lang */}
-          <div style={{ position:"relative" }}>
+          <div style={{ position:"relative", display: isMobile ? "none" : "block" }}>
             <button onClick={() => setShowLangMenu(!showLangMenu)}
               style={{ padding:"6px 10px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:6, color:"#64748b", cursor:"pointer", fontSize:12, fontFamily:"'DM Mono', monospace" }}>
               {LANGS.find(lx => lx.key === activeLang)?.flag} {activeLang.toUpperCase()}
@@ -325,7 +326,7 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
             )}
           </div>
 
-          <button onClick={openLogin} className="gp-btn-ghost" style={{ padding:"6px 10px", fontSize:11, whiteSpace:"nowrap" }}>{l.navSignIn}</button>
+          <button onClick={openLogin} className="gp-btn-ghost" style={{ padding:"6px 10px", fontSize:11, whiteSpace:"nowrap", display: isMobile ? "none" : "block" }}>{l.navSignIn}</button>
           <button onClick={openApp} className="gp-btn-primary" style={{ padding:"6px 10px", fontSize:11, whiteSpace:"nowrap" }}>{l.navTryFree}</button>
         </div>
       </nav>

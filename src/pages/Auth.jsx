@@ -12,6 +12,7 @@ export default function Auth({ loginSuccess, initialMode = "login" }) {
   const [pendingEmail, setPendingEmail] = useState(""); // email en attente de vérification
   const [resendSent, setResendSent]     = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 480;
 
   // Detect invite token
   const inviteToken = typeof window !== "undefined"
@@ -142,7 +143,7 @@ export default function Auth({ loginSuccess, initialMode = "login" }) {
         <h1>{mode === "login" ? "Login" : inviteInfo ? "Join the team" : "Create account"}</h1>
 
         {mode === "register" && (
-          <div style={{ display:"grid", gridTemplateColumns:"1fr", gap:10, marginTop:16 }}>
+          <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:10, marginTop:16 }}>
             <input
               style={{ ...styles.input, marginTop:0 }}
               placeholder="First name"
