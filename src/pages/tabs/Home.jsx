@@ -2,14 +2,16 @@ import { motion } from "framer-motion";
 import { t as tr } from "../../translations.js";
 import { st, PageHeader } from "./shared.js";
 
-const GREETING = () => {
+const GREETING = (lang) => {
   const h = new Date().getHours();
-  if (h < 12) return "Good morning";
-  if (h < 18) return "Good afternoon";
-  return "Good evening";
+  const key = h < 12 ? "ui.goodMorning" : h < 18 ? "ui.goodAfternoon" : "ui.goodEvening";
+  return tr(lang, key);
 };
 
-const TODAY = () => new Date().toLocaleDateString("en-US", { weekday:"long", month:"long", day:"numeric" });
+const TODAY = (lang) => {
+  const localeMap = { fr:"fr-FR", es:"es-ES", de:"de-DE", it:"it-IT", pt:"pt-BR" };
+  return new Date().toLocaleDateString(localeMap[lang] || "en-US", { weekday:"long", month:"long", day:"numeric" });
+};
 
 // Actions principales — mises en avant
 const SPOTLIGHT = [
@@ -36,7 +38,7 @@ const MODULES = [
 
 export default function Home({ trendsLang, isMobile, setTab, stats, userPlan, firstName }) {
 
-  const greeting = GREETING();
+  const greeting = GREETING(trendsLang);
   const name = firstName ? `, ${firstName}` : "";
   const plan = userPlan?.plan || "Free";
 
@@ -64,14 +66,14 @@ export default function Home({ trendsLang, isMobile, setTab, stats, userPlan, fi
         }}
       >
         <div>
-          <div style={{ color:"#64748b", fontSize:12, letterSpacing:"0.5px", marginBottom:6 }}>{TODAY()}</div>
+          <div style={{ color:"#64748b", fontSize:12, letterSpacing:"0.5px", marginBottom:6 }}>{TODAY(trendsLang)}</div>
           <h1 style={{ margin:0, fontSize: isMobile ? 20 : 26, fontWeight:800, color:"#f1f5f9", letterSpacing:"-0.5px" }}>
             {greeting}{name} 👋
           </h1>
           <p style={{ margin:"8px 0 0", color:"#64748b", fontSize: isMobile ? 13 : 14 }}>
             {stats?.posts > 0
-              ? `You've generated ${stats.posts} post${stats.posts > 1 ? "s" : ""} so far. Keep the momentum going.`
-              : "Your AI content command center is ready. Let's create something great."}
+              ? `${stats.posts} ${tr(trendsLang,"ui.heroPosts")}`
+              : tr(trendsLang,"ui.heroReady")}
           </p>
         </div>
 
@@ -91,7 +93,7 @@ export default function Home({ trendsLang, isMobile, setTab, stats, userPlan, fi
           </div>
           {stats?.posts !== undefined && (
             <div style={{ color:"#334155", fontSize:11, letterSpacing:"0.5px" }}>
-              {stats.posts} posts · {stats.projects || 0} projects
+              {stats.posts} {tr(trendsLang,"ui.statPosts").toLowerCase()} · {stats.projects || 0} {tr(trendsLang,"ui.statProjects").toLowerCase()}
             </div>
           )}
         </div>
@@ -100,7 +102,7 @@ export default function Home({ trendsLang, isMobile, setTab, stats, userPlan, fi
       {/* ── Actions Spotlight ─────────────────────────────────────────────── */}
       <div>
         <div style={{ color:"#475569", fontSize:10, fontWeight:700, letterSpacing:"2px", marginBottom:10 }}>
-          QUICK ACTIONS
+          {tr(trendsLang,"ui.quickActions")}
         </div>
         <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3,1fr)", gap:10 }}>
           {SPOTLIGHT.map(({ key, icon, color, gradient, border, descKey, descFallback }, i) => (
@@ -145,7 +147,7 @@ export default function Home({ trendsLang, isMobile, setTab, stats, userPlan, fi
       {/* ── Modules secondaires ───────────────────────────────────────────── */}
       <div>
         <div style={{ color:"#475569", fontSize:10, fontWeight:700, letterSpacing:"2px", marginBottom:10 }}>
-          ALL MODULES
+          {tr(trendsLang,"ui.allModules")}
         </div>
         <div style={{
           display:"grid",
