@@ -356,6 +356,16 @@ export default function Admin({ token, logout }) {
     }});
   };
 
+  const verifyEmail = async (u) => {
+    await fetch(`${API}/admin/users/${u.id}`, {
+      method: "PATCH",
+      headers: { ...headers, "Content-Type":"application/json" },
+      body: JSON.stringify({ email_verified: true }),
+    });
+    await logAction("verify_email", u.id, { email: u.email });
+    fetchUsers(page);
+  };
+
   const resendVerification = async (u) => {
     try {
       await fetch(`${API}/auth/resend-verification`, {
@@ -493,6 +503,9 @@ export default function Admin({ token, logout }) {
                             <button title="Reset quota" style={{ ...s.btnSm, background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.3)", color:"#22c55e" }} onClick={()=>resetQuota(u.id)}>↺</button>
                             {!u.email_verified && (
                               <button title="Renvoyer email de vérification" style={{ ...s.btnSm, background:"rgba(249,115,22,0.1)", border:"1px solid rgba(249,115,22,0.3)", color:"#f97316" }} onClick={()=>resendVerification(u)}>📧</button>
+                            )}
+                            {!u.email_verified && (
+                              <button title="Vérifier manuellement" style={{ ...s.btnSm, background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.3)", color:"#22c55e" }} onClick={()=>verifyEmail(u)}>✓</button>
                             )}
                             <button
                               title={u.banned ? "Débannir" : "Bannir"}
