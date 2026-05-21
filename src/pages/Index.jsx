@@ -194,7 +194,7 @@ function useStyles() {
         .gp-features-tabs { flex-direction: column !important; }
         .gp-compare-table { font-size: 12px !important; }
         .gp-pricing-grid { grid-template-columns: 1fr !important; }
-        .gp-nav-lang    { display: none !important; }
+        .gp-nav-lang-text { display: none !important; }
         .gp-nav-signin  { display: none !important; }
         .gp-nav-right   { gap: 6px !important; }
         .gp-hero-sub    { padding: 0 16px !important; }
@@ -320,10 +320,10 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
         {/* Right */}
         <div className="gp-nav-right" style={{ display:"flex", alignItems:"center", gap:8 }}>
           {/* Lang */}
-          <div className="gp-nav-lang" style={{ position:"relative" }}>
+          <div style={{ position:"relative" }}>
             <button onClick={() => setShowLangMenu(!showLangMenu)}
               style={{ padding:"6px 10px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:6, color:"#64748b", cursor:"pointer", fontSize:12, fontFamily:"'DM Mono', monospace" }}>
-              {LANGS.find(lx => lx.key === activeLang)?.flag}
+              {LANGS.find(lx => lx.key === activeLang)?.flag}<span className="gp-nav-lang-text" style={{ marginLeft:4 }}>{activeLang.toUpperCase()}</span>
             </button>
             {showLangMenu && (
               <div style={{ position:"absolute", top:40, right:0, background:"#0d1626", border:"1px solid rgba(220,38,38,0.2)", borderRadius:10, overflow:"hidden", zIndex:9999, minWidth:120, boxShadow:"0 20px 40px rgba(0,0,0,0.6)" }}>
