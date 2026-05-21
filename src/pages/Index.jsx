@@ -194,6 +194,17 @@ function useStyles() {
         .gp-features-tabs { flex-direction: column !important; }
         .gp-compare-table { font-size: 12px !important; }
         .gp-pricing-grid { grid-template-columns: 1fr !important; }
+        .gp-nav-lang { display: none !important; }
+        .gp-nav-signin { display: none !important; }
+        .gp-nav-logo-text { font-size: 15px !important; }
+        .gp-nav-right { gap: 6px !important; }
+        .gp-hero-sub { padding: 0 16px !important; }
+        .gp-auth-name-grid { grid-template-columns: 1fr !important; }
+      }
+      @media (max-width:480px) {
+        .gp-nav-logo-text { display: none !important; }
+        .gp-btn-primary { font-size: 12px !important; padding: 8px 12px !important; }
+        .gp-btn-ghost   { font-size: 12px !important; padding: 8px 10px !important; }
       }
     `;
     document.head.appendChild(s);
@@ -301,15 +312,15 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
         {/* Logo */}
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
           <img src={logo} alt="GrowthPILOT" style={{ width:32, height:32, objectFit:"contain" }} />
-          <span style={{ fontFamily:"'Syne', sans-serif", fontWeight:800, fontSize:16, color:"#fff", letterSpacing:"-0.5px", display: isMobile ? "none" : "inline" }}>
+          <span style={{ fontFamily:"'Syne', sans-serif", fontWeight:800, fontSize:16, color:"#fff", letterSpacing:"-0.5px", }}
             Growth<span style={{ color:"#ef4444" }}>PILOT</span>
           </span>
         </div>
 
         {/* Right */}
-        <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+        <div className="gp-nav-right" style={{ display:"flex", alignItems:"center", gap:8 }}>
           {/* Lang */}
-          <div style={{ position:"relative", display: isMobile ? "none" : "block" }}>
+          <div className="gp-nav-lang" style={{ position:"relative" }}>
             <button onClick={() => setShowLangMenu(!showLangMenu)}
               style={{ padding:"6px 10px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:6, color:"#64748b", cursor:"pointer", fontSize:12, fontFamily:"'DM Mono', monospace" }}>
               {LANGS.find(lx => lx.key === activeLang)?.flag} {activeLang.toUpperCase()}
@@ -326,7 +337,7 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
             )}
           </div>
 
-          <button onClick={openLogin} className="gp-btn-ghost" style={{ padding:"6px 10px", fontSize:11, whiteSpace:"nowrap", display: isMobile ? "none" : "block" }}>{l.navSignIn}</button>
+          <button onClick={openLogin} className="gp-btn-ghost gp-nav-signin" style={{ padding:"7px 12px", fontSize:12, whiteSpace:"nowrap" }}>{l.navSignIn}</button>
           <button onClick={openApp} className="gp-btn-primary" style={{ padding:"6px 10px", fontSize:11, whiteSpace:"nowrap" }}>{l.navTryFree}</button>
         </div>
       </nav>
@@ -374,7 +385,7 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
         </div>
 
         {/* Typewriter sub */}
-        <div className={`gp-fade-up ${heroVisible ? "visible":""}`} style={{ textAlign:"center", marginBottom:40, animationDelay:"0.1s", padding:"0 16px" }}>
+        <div className={`gp-fade-up gp-hero-sub ${heroVisible ? "visible":""}`} style={{ textAlign:"center", marginBottom:40, animationDelay:"0.1s" }}>
           <p style={{ fontSize:"clamp(16px,2vw,20px)", color:"#64748b", margin:0, lineHeight:1.6 }}>
             {l.heroSub1}{" "}
             <span style={{ fontFamily:"'DM Mono', monospace", color:"#94a3b8", display:"inline-block", minWidth:120 }}>

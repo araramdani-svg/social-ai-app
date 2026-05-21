@@ -143,7 +143,7 @@ export default function Auth({ loginSuccess, initialMode = "login" }) {
         <h1>{mode === "login" ? "Login" : inviteInfo ? "Join the team" : "Create account"}</h1>
 
         {mode === "register" && (
-          <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:10, marginTop:16 }}>
+          <div className="gp-auth-name-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginTop:16 }}>
             <input
               style={{ ...styles.input, marginTop:0 }}
               placeholder="First name"
