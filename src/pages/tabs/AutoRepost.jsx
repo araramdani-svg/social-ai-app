@@ -124,7 +124,7 @@ export default function AutoRepost({
       const text = p.content || p.text || "";
       const title = p.title || text.slice(0, 40);
       if (delay !== "now") {
-        log.push({ platform, title, status: `⏰ Scheduled (${delay})` });
+        log.push({ platform, title, status: `${tr(trendsLang,"ui.statusScheduled")} (${delay})` });
         continue;
       }
       try {
@@ -134,11 +134,11 @@ export default function AutoRepost({
         if (platform === "twitter")   fn = postToTwitter;
         if (platform === "facebook")  fn = postToFacebook;
         if (platform === "instagram") fn = postToInstagram;
-        if (platform === "copy")      { navigator.clipboard.writeText(text); log.push({ platform, title, status: "✓ Copied" }); continue; }
-        if (fn) { await fn(text); log.push({ platform, title, status: "✓ Published" }); }
-        else log.push({ platform, title, status: "⚠️ Not connected" });
+        if (platform === "copy")      { navigator.clipboard.writeText(text); log.push({ platform, title, status: tr(trendsLang,"ui.statusCopied") }); continue; }
+        if (fn) { await fn(text); log.push({ platform, title, status: tr(trendsLang,"ui.statusPublished") }); }
+        else log.push({ platform, title, status: tr(trendsLang,"ui.statusNotConnected") });
       } catch {
-        log.push({ platform, title, status: "✗ Failed" });
+        log.push({ platform, title, status: tr(trendsLang,"ui.statusFailed") });
       }
     }
     setRepostLog(log);
@@ -358,7 +358,7 @@ export default function AutoRepost({
             style={{ ...btnStyle, width:"100%", padding:"14px", fontSize:13, opacity: selected.size===0 ? 0.4 : 1 }}
             onClick={repost} disabled={posting || selected.size===0}
           >
-            {posting ? "⏳ Republication..." : `🔄 ${tr(trendsLang,"autorepost.repostBtn") || "Repost"} (${selected.size})`}
+            {posting ? `⏳ ${tr(trendsLang,"autorepost.repostBtn")}...` : `🔄 ${tr(trendsLang,"autorepost.repostBtn")} (${selected.size})`}
           </button>
 
           {/* Log */}

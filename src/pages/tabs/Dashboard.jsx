@@ -59,12 +59,12 @@ export default function Dashboard({
   // ── Accroche contextuelle ─────────────────────────────────────────────────
   const getInsight = () => {
     if ((stats?.posts || 0) === 0 && (stats?.projects || 0) === 0)
-      return { msg: tr(trendsLang,"ui.noHistoryLoaded"), cta:"create", ctaLabel:"✍️ " + tr(trendsLang,"ui.copyBtn") };
+      return { msg: tr(trendsLang,"ui.insightNoPosts"), cta:"create", ctaLabel: tr(trendsLang,"ui.insightCtaStreak") };
     if ((stats?.published || 0) === 0 && (stats?.posts || 0) > 0)
-      return { msg: `${stats.posts} post${stats.posts>1?"s":""} generated but none published yet. Time to go live.`, cta:"publish", ctaLabel:"📤 Publish" };
+      return { msg: `${stats.posts} post${stats.posts>1?"s":""} ${tr(trendsLang,"ui.insightNoPublished")}`, cta:"publish", ctaLabel: tr(trendsLang,"ui.insightCtaPublish") };
     if ((stats?.streak || 0) === 0)
-      return { msg: "No streak yet. Generate a post today to start your momentum.", cta:"create", ctaLabel:"✍️ Start streak" };
-    return { msg: `${stats?.streak || 0}-day streak 🔥 Keep it going — consistency is your edge.`, cta:null };
+      return { msg: tr(trendsLang,"ui.insightNoStreak"), cta:"create", ctaLabel: tr(trendsLang,"ui.insightCtaStreak") };
+    return { msg: `${stats?.streak || 0} ${tr(trendsLang,"ui.insightStreak")}`, cta:null };
   };
   const insight = getInsight();
   const name = firstName ? ` ${firstName}` : "";
@@ -189,7 +189,7 @@ export default function Dashboard({
           </h3>
           {timelineData.length === 0 ? (
             <div style={{ color:"#334155", fontSize:13, textAlign:"center", padding:"24px 0" }}>
-              No scheduled posts yet
+              {tr(trendsLang, "ui.noScheduledPosts")}
             </div>
           ) : (
             <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
@@ -232,7 +232,7 @@ export default function Dashboard({
             {tr(trendsLang, "ui.contentPerformance")}
           </h3>
           <div style={{ color:"#334155", fontSize:11 }}>
-            Last 7 days
+            {tr(trendsLang, "ui.lastDays")}
           </div>
         </div>
         <ResponsiveContainer width="100%" height={160}>
