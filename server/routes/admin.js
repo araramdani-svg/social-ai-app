@@ -188,7 +188,7 @@ router.get("/logs", adminAuth, async (req, res) => {
       db.query(
         `SELECT l.*, u.email AS target_email
          FROM admin_logs l
-         LEFT JOIN users u ON u.id = l.target_user_id
+         LEFT JOIN users u ON u.id = l.target_user_id::integer
          ORDER BY l.created_at DESC
          LIMIT $1 OFFSET $2`,
         [limit, offset]
