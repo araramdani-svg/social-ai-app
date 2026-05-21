@@ -55,15 +55,15 @@ function scorePost(post) {
   return Math.min(score, 99);
 }
 
-function timeAgo(dateStr) {
+function timeAgo(dateStr, lang="en") {
   if (!dateStr) return "—";
   const diff = Date.now() - new Date(dateStr).getTime();
   const d = Math.floor(diff / 86400000);
-  if (d === 0) return "Aujourd'hui";
-  if (d === 1) return "Hier";
-  if (d < 7) return `Il y a ${d}j`;
-  if (d < 30) return `Il y a ${Math.floor(d / 7)}sem`;
-  return `Il y a ${Math.floor(d / 30)}mois`;
+  const l = { en:{t:"Today",y:"Yesterday",da:"d ago",wa:"w ago"}, fr:{t:"Aujourd'hui",y:"Hier",da:"j",wa:"sem"}, es:{t:"Hoy",y:"Ayer",da:"d",wa:"sem"}, de:{t:"Heute",y:"Gestern",da:"T",wa:"W"}, it:{t:"Oggi",y:"Ieri",da:"g",wa:"sett"}, pt:{t:"Hoje",y:"Ontem",da:"d",wa:"sem"} }[lang] || { t:"Today",y:"Yesterday",da:"d ago",wa:"w ago" };
+  if (d === 0) return l.t;
+  if (d === 1) return l.y;
+  if (d < 7) return `${d}${l.da}`;
+  return `${Math.floor(d/7)}${l.wa}`;
 }
 
 const s = {
@@ -86,12 +86,14 @@ const s = {
     color: score >= 75 ? "#34d399" : score >= 50 ? "#fbbf24" : "#ef4444",
     borderRadius: 6, padding: "2px 8px", fontSize: 11, fontWeight: 700,
   }),
-  platformBtn: (active) => ({
-    display: "flex", alignItems: "center", gap: 8, padding: "10px 16px",
-    background: active ? "rgba(239,68,68,0.08)" : "rgba(255,255,255,0.03)",
-    border: active ? "1px solid rgba(239,68,68,0.3)" : "1px solid rgba(255,255,255,0.07)",
-    borderRadius: 8, cursor: "pointer", transition: "all 0.2s",
-    color: active ? "#ef4444" : "#64748b", fontSize: 12, fontWeight: 700,
+  PLATFORM_COLORS: { linkedin:"#0077b5", threads:"#a855f7", twitter:"#1da1f2", facebook:"#1877f2", instagram:"#e1306c", tiktok:"#ff0050", copy:"#64748b" },
+  platformBtn: (active, connected, color) => ({
+    display: "flex", alignItems: "center", gap: 10, padding: "10px 14px",
+    background: active ? `${color}15` : "rgba(255,255,255,0.02)",
+    border: active ? `1px solid ${color}50` : "1px solid rgba(255,255,255,0.06)",
+    borderRadius: 10, cursor: "pointer", transition: "all 0.2s",
+    color: active ? color : "#64748b", fontSize: 12, fontWeight: 700,
+    opacity: connected === false ? 0.5 : 1,
   }),
   delayBtn: (active) => ({
     padding: "7px 12px", fontSize: 11, fontWeight: 600,
@@ -127,6 +129,7 @@ export default function AutoRepost({
   const [repostLog, setRepostLog]     = useState([]);
   const [posting, setPosting]         = useState(false);
   const [varyText, setVaryText]       = useState(false);
+  const [previewPost,    setPreviewPost]    = useState(null);
 
   /* Scored + filtered + sorted posts */
   const posts = useMemo(() => {
@@ -230,7 +233,7 @@ export default function AutoRepost({
                   <div style={{ color: "#e2e8f0", fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {p.title || (p.content || p.text || "").slice(0, 60)}
                   </div>
-                  <div style={{ color: "#475569", fontSize: 11, marginTop: 2 }}>{timeAgo(p.createdAt)}</div>
+                  <div style={{ color: "#475569", fontSize: 11, marginTop: 2 }}>{timeAgo(p.createdAt, trendsLang)}</div>
                 </div>
                 <span style={s.scoreBadge(p._score)}>{p._score}</span>
                 <button style={s.btnSmall} onClick={() => { setPost(p.content || p.text || ""); setTab("create"); showToast(tr(trendsLang, "ghostwrite.sentToCreate")); }}>
@@ -241,7 +244,7 @@ export default function AutoRepost({
           </div>
         </div>
       )}
-
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : previewPost ? "1fr 360px 320px" : "1fr 320px", gap: 20, transition: "grid-template-columns 0.3s ease" }}>
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 320px", gap: 20 }}>
 
         {/* ── LEFT : Liste posts ── */}
@@ -292,11 +295,18 @@ export default function AutoRepost({
           )}
 
           {/* Posts list */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 520, overflowY: "auto" }}>
-            {posts.length === 0 && (
               <div style={{ ...s.card, textAlign: "center", padding: "40px 20px" }}>
-                <div style={{ fontSize: 36, marginBottom: 12 }}>📭</div>
-                <div style={{ color: "#475569", fontSize: 13 }}>{tr(trendsLang, "autorepost.noHistory")}</div>
+                <div style={{ fontSize: 44, marginBottom: 12 }}>📭</div>
+                <div style={{ color: "#64748b", fontSize: 14, fontWeight: 700, marginBottom: 6 }}>
+                  {tr(trendsLang, "autorepost.noHistory") || "No saved posts yet"}
+                </div>
+                <div style={{ color: "#334155", fontSize: 12, marginBottom: 16 }}>
+                  Generate and save posts in Create to repost them here.
+                </div>
+                <button style={{ ...s.btn, fontSize: 11, padding: "9px 18px", display: "inline-block" }}
+                  onClick={() => setTab("create")}>
+                  ✍️ Go to Create
+                </button>
               </div>
             )}
             {posts.map((p, i) => {
@@ -304,7 +314,7 @@ export default function AutoRepost({
               const text = p.content || p.text || "";
               const isSelected = selected.has(id);
               return (
-                <div key={i} style={s.postCard(isSelected)} onClick={() => toggleSelect(id)}>
+                <div key={i} style={s.postCard(isSelected)} onClick={() => setPreviewPost(p)}>
                   <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
                     <div style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${isSelected ? "#ef4444" : "rgba(255,255,255,0.15)"}`, background: isSelected ? "#ef4444" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
                       {isSelected && <span style={{ color: "#fff", fontSize: 11 }}>✓</span>}
@@ -317,7 +327,7 @@ export default function AutoRepost({
                         {text}
                       </div>
                       <div style={{ display: "flex", gap: 10, marginTop: 6, alignItems: "center" }}>
-                        <span style={{ color: "#334155", fontSize: 10 }}>{timeAgo(p.createdAt)}</span>
+                        <span style={{ color: "#334155", fontSize: 10 }}>{timeAgo(p.createdAt, trendsLang)}</span>
                         <span style={{ color: "#334155", fontSize: 10 }}>·</span>
                         <span style={{ color: "#334155", fontSize: 10 }}>{text.trim().split(/\s+/).length} mots</span>
                       </div>
@@ -329,6 +339,55 @@ export default function AutoRepost({
             })}
           </div>
         </div>
+
+        {/* ── MIDDLE : Preview panel ── */}
+        {previewPost && (
+          <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+            <div style={{ ...s.card, padding:20, position:"sticky", top:0 }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
+                <div style={{ color:"#475569", fontSize:9, fontWeight:700, letterSpacing:"2px" }}>APERÇU DU POST</div>
+                <button onClick={() => setPreviewPost(null)}
+                  style={{ background:"transparent", border:"none", color:"#475569", fontSize:18, cursor:"pointer", padding:"2px 6px", borderRadius:6 }}>✕</button>
+              </div>
+
+              <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
+                <span style={{ color:"#e2e8f0", fontSize:13, fontWeight:700, flex:1,
+                  overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                  {previewPost.title || "Untitled"}
+                </span>
+                <span style={{ ...s.scoreBadge(previewPost._score), flexShrink:0 }}>{previewPost._score}</span>
+              </div>
+
+              <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)",
+                borderRadius:10, padding:14, maxHeight:280, overflowY:"auto", marginBottom:14 }}>
+                <div style={{ color:"#e2e8f0", fontSize:13, lineHeight:1.8, whiteSpace:"pre-wrap" }}>
+                  {previewPost.content || previewPost.text || ""}
+                </div>
+              </div>
+
+              <div style={{ display:"flex", gap:8, color:"#334155", fontSize:10, marginBottom:16 }}>
+                <span>{timeAgo(previewPost.createdAt, trendsLang)}</span>
+                <span>·</span>
+                <span>{(previewPost.content || previewPost.text || "").trim().split(/\s+/).length} mots</span>
+                {previewPost.project_name && <><span>·</span><span style={{ color:"#a78bfa" }}>📁 {previewPost.project_name}</span></>}
+              </div>
+
+              <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                <button
+                  onClick={() => { const id = previewPost.id || previewPost.title; toggleSelect(id); }}
+                  style={{ ...s.btn, width:"100%", padding:"12px",
+                    background: selected.has(previewPost.id || previewPost.title) ? "linear-gradient(135deg,#22c55e,#16a34a)" : "linear-gradient(135deg,#ef4444,#dc2626)" }}>
+                  {selected.has(previewPost.id || previewPost.title) ? "✓ Sélectionné" : "✓ Sélectionner pour repost"}
+                </button>
+                <button
+                  onClick={() => { setPost(previewPost.content || previewPost.text || ""); setTab("create"); }}
+                  style={{ ...s.btnGhost, width:"100%", padding:"10px", textAlign:"center" }}>
+                  ✍️ Modifier dans Create
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── RIGHT : Config repost ── */}
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -345,13 +404,12 @@ export default function AutoRepost({
                   pl.id === "facebook"  ? facebookStatus?.connected  :
                   pl.id === "instagram" ? instagramStatus?.connected :
                   pl.id === "tiktok"    ? tiktokStatus?.connected    : true;
-                return (
-                  <button key={pl.id} style={s.platformBtn(platform === pl.id)} onClick={() => setPlatform(pl.id)}>
+                  <button key={pl.id} style={s.platformBtn(platform === pl.id, connected, s.PLATFORM_COLORS[pl.id] || "#64748b")} onClick={() => setPlatform(pl.id)}>
                     <span>{pl.emoji}</span>
                     <span style={{ flex: 1 }}>{pl.id === "copy" ? (tr(trendsLang,"autorepost.copyLabel") || "Copy") : pl.label}</span>
                     {pl.id !== "copy" && (
-                      <span style={{ fontSize: 10, color: connected ? "#34d399" : "#ef4444" }}>
-                        {connected ? `● ${tr(trendsLang,"labels.connected") || "connected"}` : `○ ${tr(trendsLang,"labels.disconnected") || "disconnected"}`}
+                      <span style={{ fontSize: 10, color: connected ? "#22c55e" : "#334155" }}>
+                        {connected ? "●" : "○"}
                       </span>
                     )}
                   </button>
