@@ -52,9 +52,9 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
     const d = new Date(dateStr);
     const diff = Date.now() - d.getTime();
     const days = Math.floor(diff / 86400000);
-    if (days === 0) return "Today";
-    if (days === 1) return "Yesterday";
-    if (days < 7)  return `${days}d ago`;
+    if (days === 0) return tr(trendsLang, "ui.todayLabel");
+    if (days === 1) return tr(trendsLang, "ui.yesterdayLabel");
+    if (days < 7)  return `${days}${tr(trendsLang, "ui.daysAgoLabel")}`;
     return d.toLocaleDateString();
   };
 
@@ -67,8 +67,8 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
         {[
           { icon:"✍️", label: tr(trendsLang,"ui.totalPosts"),   value: history.length,    color:"#ef4444" },
           { icon:"📁", label: tr(trendsLang,"ui.statProjects"), value: projects.length,   color:"#8b5cf6" },
-          { icon:"📅", label: "This week",                      value: history.filter(h => h.created_at && Date.now()-new Date(h.created_at).getTime() < 7*86400000).length, color:"#22c55e" },
-          { icon:"🔍", label: "Filtered",                       value: filtered.length,   color:"#f59e0b" },
+          { icon:"📅", label: tr(trendsLang,"ui.thisWeekLabel"),                      value: history.filter(h => h.created_at && Date.now()-new Date(h.created_at).getTime() < 7*86400000).length, color:"#22c55e" },
+          { icon:"🔍", label: tr(trendsLang,"ui.filteredLabel"),                       value: filtered.length,   color:"#f59e0b" },
         ].map(({ icon, label, value, color }) => (
           <motion.div key={label} whileHover={{ y:-3 }}
             style={{ ...st.card, marginTop:0, padding:"14px 16px", borderLeft:`3px solid ${color}40` }}>
@@ -94,7 +94,7 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
           value={filterProject}
           onChange={e => setFilterProject(e.target.value)}
         >
-          <option value="all">📁 All projects</option>
+          <option value="all">📁 {tr(trendsLang,"ui.statProjects") || "All projects"}</option>
           {projectNames.map(p => <option key={p} value={p}>{p}</option>)}
         </select>
         <button
@@ -120,10 +120,10 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
           <div style={{ textAlign:"center", padding:"48px 20px" }}>
             <div style={{ fontSize:40, marginBottom:12 }}>📭</div>
             <div style={{ color:"#475569", fontSize:14, fontWeight:700, marginBottom:6 }}>
-              {search || filterProject !== "all" ? "No posts match your search" : tr(trendsLang,"ui.noHistoryLoaded") || "No history yet"}
+              {search || filterProject !== "all" ? tr(trendsLang,"ui.noPostsMatch") : tr(trendsLang,"ui.noHistoryLoaded")}
             </div>
             <div style={{ color:"#334155", fontSize:12 }}>
-              {search || filterProject !== "all" ? "Try adjusting your filters" : "Generate and save posts to see them here"}
+              {search || filterProject !== "all" ? tr(trendsLang,"ui.tryFilters") : tr(trendsLang,"ui.generateSave")}
             </div>
           </div>
         ) : (
@@ -146,7 +146,7 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
                       {/* Titre + projet */}
                       <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6, flexWrap:"wrap" }}>
                         <span style={{ color:"#e2e8f0", fontSize:13, fontWeight:700, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth: isMobile ? 160 : 300 }}>
-                          {h.title || "Untitled"}
+                          {h.title || tr(trendsLang,"ui.untitledLabel")}
                         </span>
                         {h.project_name && (
                           <span style={{ background:"rgba(139,92,246,0.12)", color:"#a78bfa", fontSize:9, fontWeight:700, padding:"2px 8px", borderRadius:10, letterSpacing:"0.5px", flexShrink:0 }}>
@@ -170,13 +170,13 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
                           style={{ padding:"5px 10px", borderRadius:6, border:"1px solid rgba(255,255,255,0.08)", background:"rgba(255,255,255,0.03)", color: copiedIdx===i ? "#22c55e" : "#64748b", fontSize:10, fontWeight:700, cursor:"pointer" }}
                           onClick={() => copyPost(h.content, i)}
                         >
-                          {copiedIdx === i ? "✓" : "Copy"}
+                          {copiedIdx === i ? "✓" : tr(trendsLang,"ui.copyBtn")}
                         </motion.button>
                         <motion.button whileHover={{ scale:1.05 }} whileTap={{ scale:0.95 }}
                           style={{ padding:"5px 10px", borderRadius:6, border:"1px solid rgba(220,38,38,0.2)", background:"rgba(220,38,38,0.08)", color:"#ef4444", fontSize:10, fontWeight:700, cursor:"pointer" }}
                           onClick={() => loadInCreate(h.content)}
                         >
-                          Edit →
+                          {tr(trendsLang,"ui.editBtn")} →
                         </motion.button>
                       </div>
                     </div>

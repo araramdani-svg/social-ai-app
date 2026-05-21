@@ -29,6 +29,9 @@ export default function Publish({
             <button style={{ ...st.button, margin:0, opacity: facebookStatus?.connected ? 1 : 0.5, background:"linear-gradient(135deg,#1877f2,#0d5cbf)" }} onClick={() => facebookStatus?.connected ? postToFacebook() : null} disabled={facebookPosting}>
               f {facebookPosting ? tr(trendsLang,"buttons.publishing") : "Facebook"} {facebookStatus?.connected ? "✓" : "🔗"}
             </button>
+            <button style={{ ...st.button, margin:0, background:"linear-gradient(135deg,#000,#1a1a1a)", opacity:0.5 }} onClick={() => copyAndOpen("https://www.threads.net")}>
+              🧵 Threads 🔗
+            </button>
           </div>
 
           {publishStatus && (

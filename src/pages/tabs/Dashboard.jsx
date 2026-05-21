@@ -59,7 +59,7 @@ export default function Dashboard({
   // ── Accroche contextuelle ─────────────────────────────────────────────────
   const getInsight = () => {
     if ((stats?.posts || 0) === 0 && (stats?.projects || 0) === 0)
-      return { msg: "Start by creating your first project and generating a post.", cta:"create", ctaLabel:"✍️ Create now" };
+      return { msg: tr(trendsLang,"ui.noHistoryLoaded"), cta:"create", ctaLabel:"✍️ " + tr(trendsLang,"ui.copyBtn") };
     if ((stats?.published || 0) === 0 && (stats?.posts || 0) > 0)
       return { msg: `${stats.posts} post${stats.posts>1?"s":""} generated but none published yet. Time to go live.`, cta:"publish", ctaLabel:"📤 Publish" };
     if ((stats?.streak || 0) === 0)
@@ -71,11 +71,11 @@ export default function Dashboard({
 
   // ── KPI config ────────────────────────────────────────────────────────────
   const KPIS = [
-    { label: tr(trendsLang, "ui.statPosts"),     value: animatedStats.posts,     icon:"✍️", color:"#ef4444", hint: "Total generated" },
-    { label: tr(trendsLang, "ui.statProjects"),  value: animatedStats.projects,  icon:"📁", color:"#8b5cf6", hint: "Active projects" },
-    { label: tr(trendsLang, "ui.statPublished"), value: animatedStats.published, icon:"📤", color:"#22c55e", hint: "Published posts" },
-    { label: tr(trendsLang, "ui.statAvgScore"),  value: animatedStats.avgScore,  icon:"⭐", color:"#f59e0b", hint: "Avg viral score" },
-    { label: tr(trendsLang, "ui.statStreak"),    value: animatedStats.streak,    icon:"🔥", color:"#f97316", hint: "Day streak" },
+    { label: tr(trendsLang, "ui.statPosts"),     value: animatedStats.posts,     icon:"✍️", color:"#ef4444", hint: tr(trendsLang, "ui.hintTotalGenerated") },
+    { label: tr(trendsLang, "ui.statProjects"),  value: animatedStats.projects,  icon:"📁", color:"#8b5cf6", hint: tr(trendsLang, "ui.hintActiveProjects") },
+    { label: tr(trendsLang, "ui.statPublished"), value: animatedStats.published, icon:"📤", color:"#22c55e", hint: tr(trendsLang, "ui.hintPublishedPosts") },
+    { label: tr(trendsLang, "ui.statAvgScore"),  value: animatedStats.avgScore,  icon:"⭐", color:"#f59e0b", hint: tr(trendsLang, "ui.hintAvgViralScore") },
+    { label: tr(trendsLang, "ui.statStreak"),    value: animatedStats.streak,    icon:"🔥", color:"#f97316", hint: tr(trendsLang, "ui.hintDayStreak") },
   ];
 
   return (
