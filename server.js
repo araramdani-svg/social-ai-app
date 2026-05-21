@@ -111,7 +111,7 @@ app.set("trust proxy", 1); // Railway est derrière un proxy
 app.use(cors(corsOptions));
 
 // Sentry request handler — doit être AVANT les routes
-if (process.env.SENTRY_DSN) app.use(Sentry.Handlers.requestHandler());
+// Sentry v8+ — requestHandler remplacé par setupExpressErrorHandler en fin de routes
 
 // ⚠️ IMPORTANT : le webhook Stripe doit recevoir le raw body AVANT express.json()
 app.use("/stripe/webhook", express.raw({ type: "application/json" }));
@@ -154,7 +154,7 @@ app.use("/analytics",          analyticsLimiter, analyticsRouter);
 
 // ─── Error handler global ──────────────────────────────────────────────────────
 // Sentry error handler — doit être AVANT le error handler global
-if (process.env.SENTRY_DSN) app.use(Sentry.Handlers.errorHandler());
+if (process.env.SENTRY_DSN) Sentry.setupExpressErrorHandler(app);
 app.use((err, req, res, next) => {
   logger.error("Unhandled error", { message: err.message, stack: err.stack, path: req.path });
   res.status(500).json({ error: "Internal server error" });
