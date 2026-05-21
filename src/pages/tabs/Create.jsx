@@ -39,6 +39,10 @@ export default function Create({
   const [imgFormat,     setImgFormat]     = useState("square");
   const [imgType,       setImgType]       = useState("illustrative");
   const [imgTab,        setImgTab]        = useState("illustrative");
+  const [mediaLoading,  setMediaLoading]  = useState(false);
+  const [mediaResult,   setMediaResult]   = useState(null);
+  const [mediaTab,      setMediaTab]      = useState("photo");
+  const [selectedMedia, setSelectedMedia] = useState(null);
 
   const isPro = plan === "Pro" || plan === "Business" || plan === "Agency";
   const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
@@ -57,6 +61,19 @@ export default function Create({
       if (d.imageUrl) setImgResult({ ...d, type });
     } catch {}
     setImgLoading(false);
+  };
+
+  const searchMedia = async () => {
+    if (!post || post.length < 30) return;
+    setMediaLoading(true);
+    setMediaResult(null);
+    setSelectedMedia(null);
+    try {
+      const r = await fetch(`${API}/generate/media`, { method:"POST", headers, body: JSON.stringify({ post, type: "both" }) });
+      const d = await r.json();
+      setMediaResult(d);
+    } catch {}
+    setMediaLoading(false);
   };
 
   // Voice learning
@@ -667,6 +684,129 @@ export default function Create({
                       >
                         ⬇️ {tr(trendsLang,"ui.downloadImage") || "Download"}
                       </a>
+                    </motion.div>
+                  )}
+                </>
+              )}
+            </motion.div>
+          )}
+          {/* ── Media Library — Pexels + Unsplash ────────────────────────── */}
+          {post && post.length >= 30 && (
+            <motion.div initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }}
+              style={{ ...st.card, marginTop:0, padding:16 }}>
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
+                <div style={{ color:"#475569", fontSize:9, fontWeight:700, letterSpacing:"2px" }}>📸 {tr(trendsLang,"ui.mediaLibrary") || "MEDIA LIBRARY"}</div>
+                <div style={{ display:"flex", gap:6, alignItems:"center" }}>
+                  <span style={{ color:"#334155", fontSize:9 }}>Pexels · Unsplash</span>
+                </div>
+              </div>
+
+              {/* Bouton recherche */}
+              <motion.button
+                whileHover={{ scale:1.01 }} whileTap={{ scale:0.98 }}
+                style={{ ...st.button, margin:0, width:"100%", fontSize:12, opacity: mediaLoading ? 0.7 : 1,
+                  background:"linear-gradient(135deg,#0369a1,#0c4a6e)" }}
+                disabled={mediaLoading}
+                onClick={searchMedia}
+              >
+                {mediaLoading ? "⏳ Searching..." : "🔍 Find relevant photos & videos"}
+              </motion.button>
+
+              {/* Mots-clés détectés */}
+              {mediaResult?.keywords && (
+                <div style={{ display:"flex", gap:4, marginTop:8, flexWrap:"wrap" }}>
+                  {mediaResult.keywords.map(k => (
+                    <span key={k} style={{ background:"rgba(3,105,161,0.1)", border:"1px solid rgba(3,105,161,0.3)", borderRadius:10, color:"#38bdf8", fontSize:9, fontWeight:700, padding:"2px 8px" }}>
+                      #{k}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Tabs photo/vidéo */}
+              {mediaResult && (
+                <>
+                  <div style={{ display:"flex", gap:6, marginTop:10, marginBottom:8 }}>
+                    {[["photo",`📷 Photos (${mediaResult.photos?.length || 0})`],["video",`🎬 Vidéos (${mediaResult.videos?.length || 0})`]].map(([k,l]) => (
+                      <button key={k}
+                        style={{ flex:1, padding:"6px", borderRadius:8, border:`1px solid ${mediaTab===k?"rgba(3,105,161,0.5)":"rgba(255,255,255,0.08)"}`, background: mediaTab===k?"rgba(3,105,161,0.1)":"transparent", color: mediaTab===k?"#38bdf8":"#475569", fontSize:10, fontWeight:700, cursor:"pointer" }}
+                        onClick={() => setMediaTab(k)}
+                      >{l}</button>
+                    ))}
+                  </div>
+
+                  {/* Grille photos */}
+                  {mediaTab === "photo" && (
+                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
+                      {(mediaResult.photos || []).map(photo => (
+                        <div key={photo.id}
+                          onClick={() => setSelectedMedia(selectedMedia?.id === photo.id ? null : photo)}
+                          style={{ position:"relative", borderRadius:8, overflow:"hidden", cursor:"pointer",
+                            border: selectedMedia?.id === photo.id ? "2px solid #38bdf8" : "2px solid transparent",
+                            aspectRatio:"16/9",
+                          }}
+                        >
+                          <img src={photo.thumb} alt={photo.alt} style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
+                          <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"rgba(0,0,0,0.6)", padding:"4px 6px", fontSize:8, color:"#94a3b8" }}>
+                            {photo.source} · {photo.author}
+                          </div>
+                          {selectedMedia?.id === photo.id && (
+                            <div style={{ position:"absolute", top:6, right:6, background:"#38bdf8", borderRadius:"50%", width:20, height:20, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:900, color:"#000" }}>✓</div>
+                          )}
+                        </div>
+                      ))}
+                      {(mediaResult.photos || []).length === 0 && (
+                        <div style={{ gridColumn:"1/-1", textAlign:"center", color:"#475569", fontSize:12, padding:16 }}>No photos found</div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Grille vidéos */}
+                  {mediaTab === "video" && (
+                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
+                      {(mediaResult.videos || []).map(video => (
+                        <div key={video.id}
+                          onClick={() => setSelectedMedia(selectedMedia?.id === video.id ? null : video)}
+                          style={{ position:"relative", borderRadius:8, overflow:"hidden", cursor:"pointer",
+                            border: selectedMedia?.id === video.id ? "2px solid #38bdf8" : "2px solid transparent",
+                            aspectRatio:"16/9",
+                          }}
+                        >
+                          <img src={video.thumb} alt="video" style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
+                          <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                            <div style={{ background:"rgba(0,0,0,0.6)", borderRadius:"50%", width:32, height:32, display:"flex", alignItems:"center", justifyContent:"center", fontSize:14 }}>▶️</div>
+                          </div>
+                          <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"rgba(0,0,0,0.6)", padding:"4px 6px", fontSize:8, color:"#94a3b8" }}>
+                            {video.duration}s · {video.author}
+                          </div>
+                          {selectedMedia?.id === video.id && (
+                            <div style={{ position:"absolute", top:6, right:6, background:"#38bdf8", borderRadius:"50%", width:20, height:20, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:900, color:"#000" }}>✓</div>
+                          )}
+                        </div>
+                      ))}
+                      {(mediaResult.videos || []).length === 0 && (
+                        <div style={{ gridColumn:"1/-1", textAlign:"center", color:"#475569", fontSize:12, padding:16 }}>No videos found</div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Media sélectionné — actions */}
+                  {selectedMedia && (
+                    <motion.div initial={{ opacity:0, y:4 }} animate={{ opacity:1, y:0 }}
+                      style={{ marginTop:10, background:"rgba(3,105,161,0.06)", border:"1px solid rgba(3,105,161,0.2)", borderRadius:10, padding:"10px 12px" }}>
+                      <div style={{ color:"#38bdf8", fontSize:10, fontWeight:700, marginBottom:6 }}>
+                        ✓ {selectedMedia.type === "video" ? "Vidéo" : "Photo"} sélectionnée
+                      </div>
+                      <div style={{ display:"flex", gap:6 }}>
+                        <a href={selectedMedia.url} target="_blank" rel="noreferrer"
+                          style={{ flex:1, textAlign:"center", padding:"7px", background:"rgba(3,105,161,0.15)", border:"1px solid rgba(3,105,161,0.3)", borderRadius:8, color:"#38bdf8", fontSize:10, fontWeight:700, textDecoration:"none" }}>
+                          ⬇️ Download
+                        </a>
+                        <a href={selectedMedia.link} target="_blank" rel="noreferrer"
+                          style={{ flex:1, textAlign:"center", padding:"7px", background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:8, color:"#475569", fontSize:10, fontWeight:700, textDecoration:"none" }}>
+                          🔗 Source
+                        </a>
+                      </div>
                     </motion.div>
                   )}
                 </>

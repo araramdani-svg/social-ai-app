@@ -799,4 +799,97 @@ router.post("/visual", authenticateToken, requirePro, async (req, res) => {
   res.json({ imageUrl: dataUrl, quote, format, type: "visual" });
 });
 
+// ─── POST /generate/media — Recherche Pexels + Unsplash ──────────────────────
+router.post("/media", authenticateToken, async (req, res) => {
+  const { post, type = "both" } = req.body; // type: "photo" | "video" | "both"
+  if (!post || post.trim().length < 20) return res.status(400).json({ error: "Post content required" });
+
+  // Extraire 3 mots-clés visuels du post via GPT
+  const kwRes = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      { role: "system", content: "Extract 3 short visual search keywords from this LinkedIn post. Return ONLY a JSON array of 3 strings in English, max 2 words each. Example: [\"team meeting\", \"growth chart\", \"entrepreneur\"]" },
+      { role: "user", content: post.slice(0, 600) },
+    ],
+    max_tokens: 60,
+    temperature: 0.2,
+  });
+
+  let keywords = ["business", "success", "professional"];
+  try {
+    const raw = kwRes.choices[0]?.message?.content?.trim().replace(/```json|```/g, "").trim();
+    keywords = JSON.parse(raw);
+  } catch {}
+
+  const query = keywords.slice(0, 2).join(" ");
+
+  // Fetch Pexels + Unsplash en parallèle
+  const [pexelsPhotos, pexelsVideos, unsplashPhotos] = await Promise.allSettled([
+    // Pexels photos
+    fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=6&orientation=landscape`, {
+      headers: { Authorization: process.env.PEXELS_API_KEY },
+    }).then(r => r.json()),
+
+    // Pexels vidéos
+    type !== "photo" ? fetch(`https://api.pexels.com/videos/search?query=${encodeURIComponent(query)}&per_page=4`, {
+      headers: { Authorization: process.env.PEXELS_API_KEY },
+    }).then(r => r.json()) : Promise.resolve({ videos: [] }),
+
+    // Unsplash photos
+    fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=6&orientation=landscape`, {
+      headers: { Authorization: `Client-ID ${process.env.UNSPLASH_ACCESS_KEY}` },
+    }).then(r => r.json()),
+  ]);
+
+  const photos = [];
+  const videos = [];
+
+  // Parser Pexels photos
+  if (pexelsPhotos.status === "fulfilled" && pexelsPhotos.value?.photos) {
+    pexelsPhotos.value.photos.forEach(p => photos.push({
+      id:       `pexels-${p.id}`,
+      source:   "pexels",
+      type:     "photo",
+      url:      p.src.large,
+      thumb:    p.src.medium,
+      alt:      p.alt || query,
+      author:   p.photographer,
+      link:     p.url,
+    }));
+  }
+
+  // Parser Unsplash photos
+  if (unsplashPhotos.status === "fulfilled" && unsplashPhotos.value?.results) {
+    unsplashPhotos.value.results.forEach(p => photos.push({
+      id:       `unsplash-${p.id}`,
+      source:   "unsplash",
+      type:     "photo",
+      url:      p.urls.regular,
+      thumb:    p.urls.small,
+      alt:      p.alt_description || query,
+      author:   p.user.name,
+      link:     p.links.html,
+    }));
+  }
+
+  // Parser Pexels vidéos
+  if (pexelsVideos.status === "fulfilled" && pexelsVideos.value?.videos) {
+    pexelsVideos.value.videos.forEach(v => {
+      const file = v.video_files?.find(f => f.quality === "sd") || v.video_files?.[0];
+      if (file) videos.push({
+        id:       `pexels-video-${v.id}`,
+        source:   "pexels",
+        type:     "video",
+        url:      file.link,
+        thumb:    v.image,
+        duration: v.duration,
+        author:   v.user?.name || "Pexels",
+        link:     v.url,
+      });
+    });
+  }
+
+  res.json({ photos, videos, keywords, query });
+});
+
 export default router;
