@@ -295,6 +295,8 @@ export default function AutoRepost({
           )}
 
           {/* Posts list */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 520, overflowY: "auto" }}>
+            {posts.length === 0 && (
               <div style={{ ...s.card, textAlign: "center", padding: "40px 20px" }}>
                 <div style={{ fontSize: 44, marginBottom: 12 }}>📭</div>
                 <div style={{ color: "#64748b", fontSize: 14, fontWeight: 700, marginBottom: 6 }}>
