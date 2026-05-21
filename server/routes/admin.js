@@ -110,7 +110,7 @@ router.get("/users", adminAuth, async (req, res) => {
 
 // ─── PATCH /admin/users/:id ───────────────────────────────────────────────────
 router.patch("/users/:id", adminAuth, async (req, res) => {
-  const { plan, generations_count, banned } = req.body;
+  const { plan, generations_count, banned, email_verified } = req.body;
   const fields = [];
   const values = [];
   let i = 1;
@@ -118,6 +118,7 @@ router.patch("/users/:id", adminAuth, async (req, res) => {
   if (plan               !== undefined) { fields.push(`plan=$${i++}`);               values.push(plan); }
   if (generations_count  !== undefined) { fields.push(`generations_count=$${i++}`);  values.push(parseInt(generations_count)); }
   if (banned             !== undefined) { fields.push(`banned=$${i++}`);             values.push(banned); }
+  if (email_verified     !== undefined) { fields.push(`email_verified=$${i++}`);     values.push(email_verified); }
 
   if (!fields.length) return res.status(400).json({ error: "Nothing to update" });
   values.push(req.params.id);
@@ -128,7 +129,10 @@ router.patch("/users/:id", adminAuth, async (req, res) => {
       values
     );
     if (!result.rows.length) return res.status(404).json({ error: "User not found" });
-    await logAction(req.user.id, banned !== undefined ? (banned ? "ban_user" : "unban_user") : "edit_user", req.params.id, { plan, generations_count, banned });
+    await logAction(req.user.id, 
+      banned !== undefined ? (banned ? "ban_user" : "unban_user") : 
+      email_verified !== undefined ? "verify_email" : "edit_user", 
+      req.params.id, { plan, generations_count, banned, email_verified });
     res.json({ user: result.rows[0] });
   } catch (err) {
     console.error("Admin patch user error:", err.message);
