@@ -446,6 +446,16 @@ const translations = {
           catAll: "All Templates", catHooks: "Hooks", catStory: "Story",
       catAuthority: "Authority", catFrameworks: "Frameworks", catViral: "Viral",
       catContrarian: "Contrarian", catLists: "Lists", catLessons: "Lessons Learned", catCta: "CTA / Offer",},
+    pricing: {
+      badge: "💳 SIMPLE PRICING", title: "Invest in your", titleAccent: "content growth.",
+      subtitle: "No hidden fees. No surprises. Cancel anytime.",
+      monthly: "Monthly", yearly: "Yearly", save: "SAVE 20%",
+      billedYearly: "Billed", perYear: "/year",
+      mostPopular: "MOST POPULAR", bestValue: "BEST VALUE", forAgencies: "FOR AGENCIES",
+      redirecting: "Redirecting...", currentPlan: "✓ Current Plan",
+      footer: "🔒 Secure payment via Stripe · Cancel anytime · No commitment",
+      back: "← Back", login: "LOGIN", tryFree: "TRY FOR FREE",
+    },
   },
 
   fr: {
@@ -887,6 +897,7 @@ const translations = {
           catAll: "Tous les modèles", catHooks: "Accroches", catStory: "Histoire",
       catAuthority: "Autorité", catFrameworks: "Frameworks", catViral: "Viral",
       catContrarian: "Contre-courant", catLists: "Listes", catLessons: "Leçons", catCta: "CTA / Offre",},
+    pricing: { badge: "💳 TARIFICATION SIMPLE", title: "Investissez dans votre", titleAccent: "croissance de contenu.", subtitle: "Aucun frais caché. Aucune surprise. Résiliez à tout moment.", monthly: "Mensuel", yearly: "Annuel", save: "ÉCONOMISEZ 20%", billedYearly: "Facturé", perYear: "/an", mostPopular: "LE PLUS POPULAIRE", bestValue: "MEILLEUR RAPPORT", forAgencies: "POUR AGENCES", redirecting: "Redirection...", currentPlan: "✓ Plan actuel", footer: "🔒 Paiement sécurisé via Stripe · Résiliez à tout moment", back: "← Retour", login: "CONNEXION", tryFree: "ESSAI GRATUIT" },
   },
 
   es: {
@@ -1264,6 +1275,7 @@ const translations = {
           catAll: "Todas las plantillas", catHooks: "Ganchos", catStory: "Historia",
       catAuthority: "Autoridad", catFrameworks: "Frameworks", catViral: "Viral",
       catContrarian: "Contracorriente", catLists: "Listas", catLessons: "Lecciones", catCta: "CTA / Oferta",},
+    pricing: { badge: "💳 PRECIOS SIMPLES", title: "Invierte en tu", titleAccent: "crecimiento de contenido.", subtitle: "Sin cargos ocultos. Sin sorpresas. Cancela cuando quieras.", monthly: "Mensual", yearly: "Anual", save: "AHORRA 20%", billedYearly: "Facturado", perYear: "/año", mostPopular: "MÁS POPULAR", bestValue: "MEJOR VALOR", forAgencies: "PARA AGENCIAS", redirecting: "Redirigiendo...", currentPlan: "✓ Plan actual", footer: "🔒 Pago seguro via Stripe · Cancela cuando quieras", back: "← Volver", login: "INICIAR SESIÓN", tryFree: "PROBAR GRATIS" },
   },
 
   de: {
@@ -1629,6 +1641,7 @@ const translations = {
           catAll: "Alle Vorlagen", catHooks: "Hooks", catStory: "Geschichte",
       catAuthority: "Autorität", catFrameworks: "Frameworks", catViral: "Viral",
       catContrarian: "Konträr", catLists: "Listen", catLessons: "Lektionen", catCta: "CTA / Angebot",},
+    pricing: { badge: "💳 EINFACHE PREISE", title: "Investiere in dein", titleAccent: "Content-Wachstum.", subtitle: "Keine versteckten Kosten. Keine Überraschungen. Jederzeit kündbar.", monthly: "Monatlich", yearly: "Jährlich", save: "20% SPAREN", billedYearly: "Abgerechnet", perYear: "/Jahr", mostPopular: "AM BELIEBTESTEN", bestValue: "BESTES ANGEBOT", forAgencies: "FÜR AGENTUREN", redirecting: "Weiterleitung...", currentPlan: "✓ Aktueller Plan", footer: "🔒 Sichere Zahlung via Stripe · Jederzeit kündbar", back: "← Zurück", login: "ANMELDEN", tryFree: "KOSTENLOS TESTEN" },
   },
 
   it: {
@@ -1996,6 +2009,7 @@ const translations = {
           catAll: "Tutti i modelli", catHooks: "Ganci", catStory: "Storia",
       catAuthority: "Autorità", catFrameworks: "Framework", catViral: "Virale",
       catContrarian: "Controcorrente", catLists: "Liste", catLessons: "Lezioni", catCta: "CTA / Offerta",},
+    pricing: { badge: "💳 PREZZI SEMPLICI", title: "Investi nella tua", titleAccent: "crescita dei contenuti.", subtitle: "Nessun costo nascosto. Nessuna sorpresa. Cancella quando vuoi.", monthly: "Mensile", yearly: "Annuale", save: "RISPARMIA 20%", billedYearly: "Fatturato", perYear: "/anno", mostPopular: "PIÙ POPOLARE", bestValue: "MIGLIOR VALORE", forAgencies: "PER AGENZIE", redirecting: "Reindirizzamento...", currentPlan: "✓ Piano attuale", footer: "🔒 Pagamento sicuro via Stripe · Cancella quando vuoi", back: "← Indietro", login: "ACCEDI", tryFree: "PROVA GRATIS" },
   },
 
   pt: {
@@ -2363,6 +2377,7 @@ const translations = {
           catAll: "Todos os modelos", catHooks: "Ganchos", catStory: "História",
       catAuthority: "Autoridade", catFrameworks: "Frameworks", catViral: "Viral",
       catContrarian: "Contracorrente", catLists: "Listas", catLessons: "Lições", catCta: "CTA / Oferta",},
+    pricing: { badge: "💳 PREÇOS SIMPLES", title: "Invista no seu", titleAccent: "crescimento de conteúdo.", subtitle: "Sem taxas ocultas. Sem surpresas. Cancele quando quiser.", monthly: "Mensal", yearly: "Anual", save: "ECONOMIZE 20%", billedYearly: "Cobrado", perYear: "/ano", mostPopular: "MAIS POPULAR", bestValue: "MELHOR CUSTO", forAgencies: "PARA AGÊNCIAS", redirecting: "Redirecionando...", currentPlan: "✓ Plano atual", footer: "🔒 Pagamento seguro via Stripe · Cancele quando quiser", back: "← Voltar", login: "ENTRAR", tryFree: "TESTAR GRÁTIS" },
   },
 
 };

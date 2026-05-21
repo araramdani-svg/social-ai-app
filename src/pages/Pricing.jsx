@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from "react";
 import logo from "../assets/logo.png";
+import { t as tr } from "../translations.js";
 
 const API = "https://social-ai-app-production.up.railway.app";
+
+const detectLang = () => {
+  const saved = localStorage.getItem("lang");
+  if (saved) return saved;
+  const browser = navigator.language?.slice(0,2);
+  return ["fr","es","de","it","pt"].includes(browser) ? browser : "en";
+};
 
 const PLANS = [
   {
@@ -94,6 +102,8 @@ export default function Pricing({ openLogin, openApp, token }) {
   const [yearly,      setYearly]      = useState(false);
   const [loading,     setLoading]     = useState(null);
   const [currentPlan, setCurrentPlan] = useState(null);
+  const [lang,        setLang]        = useState(detectLang);
+  const p = (key) => tr(lang, `pricing.${key}`);
 
   useEffect(() => {
     if (token) {
@@ -132,26 +142,26 @@ export default function Pricing({ openLogin, openApp, token }) {
           <span style={styles.brandName}>GrowthPILOT</span>
         </div>
         <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-          {openApp && <button style={{ ...styles.navBtn, marginRight:8 }} onClick={openApp}>← Back</button>}
-          <button style={styles.navBtn} onClick={openLogin}>LOGIN</button>
-          <button style={styles.navCta} onClick={openApp}>TRY FOR FREE</button>
+          {openApp && <button style={{ ...styles.navBtn, marginRight:8 }} onClick={openApp}>{p("back")}</button>}
+          <button style={styles.navBtn} onClick={openLogin}>{p("login")}</button>
+          <button style={styles.navCta} onClick={openApp}>{p("tryFree")}</button>
         </div>
       </nav>
 
       {/* Header */}
       <div style={styles.header}>
-        <div style={styles.badge}>💳 SIMPLE PRICING</div>
-        <h1 style={styles.title}>Invest in your<br /><span style={styles.titleAccent}>content growth.</span></h1>
-        <p style={styles.subtitle}>No hidden fees. No surprises. Cancel anytime.</p>
+        <div style={styles.badge}>{p("badge")}</div>
+        <h1 style={styles.title}>{p("title")}<br /><span style={styles.titleAccent}>{p("titleAccent")}</span></h1>
+        <p style={styles.subtitle}>{p("subtitle")}</p>
 
         {/* Toggle */}
         <div style={styles.toggle}>
-          <span style={{ color:!yearly?"#fff":"#475569", fontWeight:700, fontSize:14 }}>Monthly</span>
+          <span style={{ color:!yearly?"#fff":"#475569", fontWeight:700, fontSize:14 }}>{p("monthly")}</span>
           <div style={styles.toggleTrack} onClick={()=>setYearly(!yearly)}>
             <div style={{ ...styles.toggleThumb, transform:yearly?"translateX(22px)":"translateX(2px)" }} />
           </div>
           <span style={{ color:yearly?"#fff":"#475569", fontWeight:700, fontSize:14 }}>
-            Yearly <span style={styles.saveBadge}>SAVE 20%</span>
+            {p("yearly")} <span style={styles.saveBadge}>{p("save")}</span>
           </span>
         </div>
       </div>
@@ -183,7 +193,7 @@ export default function Pricing({ openLogin, openApp, token }) {
 
               {plan.badge && (
                 <div style={{ ...styles.planBadge, background:plan.accent, color:plan.color, border:`1px solid ${plan.border}` }}>
-                  {plan.badge}
+                  {plan.key === "pro" ? p("mostPopular") : plan.key === "business" ? p("bestValue") : p("forAgencies")}
                 </div>
               )}
 
@@ -199,7 +209,7 @@ export default function Pricing({ openLogin, openApp, token }) {
                 <span style={styles.per}>/mo</span>
               </div>
               {yearly && price > 0 && (
-                <div style={styles.billedYearly}>Billed €{price * 12}/year</div>
+                <div style={styles.billedYearly}>{p("billedYearly")} €{price * 12}{p("perYear")}</div>
               )}
 
               <div style={{ ...styles.divider, background:plan.border }} />
@@ -233,14 +243,14 @@ export default function Pricing({ openLogin, openApp, token }) {
                 onClick={() => !isActive && handleCheckout(plan)}
                 disabled={loading===plan.key || isActive}
               >
-                {loading===plan.key ? "Redirecting..." : isActive ? "✓ Current Plan" : plan.cta}
+                {loading===plan.key ? p("redirecting") : isActive ? p("currentPlan") : plan.cta}
               </button>
             </div>
           );
         })}
       </div>
 
-      <p style={styles.footerNote}>🔒 Secure payment via Stripe · Cancel anytime · No commitment</p>
+      <p style={styles.footerNote}>{p("footer")}</p>
     </div>
   );
 }

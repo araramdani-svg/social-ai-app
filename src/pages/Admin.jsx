@@ -109,7 +109,7 @@ function EditUserModal({ user, token, onClose, onSave }) {
             style={{ ...s.btnSm, padding:"10px 14px", background: user.banned ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)", border: user.banned ? "1px solid rgba(34,197,94,0.4)" : "1px solid rgba(239,68,68,0.4)", color: user.banned ? "#22c55e" : "#ef4444", fontSize:11, borderRadius:8 }}
             onClick={toggleBan}
           >{user.banned ? "✅ Débannir" : "🚫 Bannir"}</button>
-          <button style={{ ...s.btn, flex:2, opacity:saving?0.7:1 }} onClick={save} disabled={saving}>{saving?"Saving...":"💾 Enregistrer"}</button>
+          <button style={{ ...s.btn, flex:2, opacity:saving?0.7:1 }} onClick={save} disabled={saving}>{saving?"💾 Enregistrement...":"💾 Enregistrer"}</button>
         </div>
       </div>
     </div>
@@ -321,9 +321,20 @@ export default function Admin({ token, logout }) {
   useEffect(() => { fetchStats(); fetchUsers(); }, []);
   useEffect(() => { fetchUsers(1); }, [search, planFilter]);
 
+  const logAction = async (action, targetUserId, details = {}) => {
+    try {
+      await fetch(`${API}/admin/logs`, {
+        method: "POST",
+        headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+        body: JSON.stringify({ action, target_user_id: targetUserId, details: JSON.stringify(details) }),
+      });
+    } catch {}
+  };
+
   const deleteUser = (id, email) => {
     setConfirm({ message: `Supprimer définitivement ${email} ?`, onConfirm: async () => {
       await fetch(`${API}/admin/users/${id}`, { method:"DELETE", headers });
+      await logAction("delete_user", id, { email });
       fetchUsers(page);
       fetchStats();
       setConfirm(null);
@@ -338,14 +349,43 @@ export default function Admin({ token, logout }) {
         headers: { ...headers, "Content-Type":"application/json" },
         body: JSON.stringify({ banned: !u.banned }),
       });
+      await logAction(u.banned ? "unban_user" : "ban_user", u.id, { email: u.email });
       fetchUsers(page);
       fetchStats();
       setConfirm(null);
     }});
   };
 
+  const resendVerification = async (u) => {
+    try {
+      await fetch(`${API}/auth/resend-verification`, {
+        method: "POST",
+        headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+        body: JSON.stringify({ email: u.email }),
+      });
+      setConfirm({ message: `✅ Email de vérification renvoyé à ${u.email}`, onConfirm: () => setConfirm(null) });
+    } catch {
+      setConfirm({ message: `❌ Erreur lors de l'envoi`, onConfirm: () => setConfirm(null) });
+    }
+  };
+
+  const exportCSV = () => {
+    const headers = ["ID","Email","Plan","Générations","Posts","Stripe","Statut","Vérifié"];
+    const rows = users.map(u => [
+      u.id, u.email, u.plan, u.generations_count||0, u.post_count||0,
+      u.stripe_subscription_id ? "Actif" : "—",
+      u.banned ? "Banni" : "Actif",
+      u.email_verified ? "Oui" : "Non",
+    ]);
+    const csv = [headers, ...rows].map(r => r.join(",")).join("\n");
+    const blob = new Blob([csv], { type:"text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = "users.csv"; a.click();
+  };
+
   const resetQuota = async (id) => {
     await fetch(`${API}/admin/users/${id}/reset-quota`, { method:"POST", headers });
+    await logAction("reset_quota", id);
     fetchUsers(page);
   };
 
@@ -399,7 +439,11 @@ export default function Admin({ token, logout }) {
                   <button key={p||"all"} style={{ ...s.btnSm, background:planFilter===p?"rgba(220,38,38,0.15)":"rgba(255,255,255,0.04)", border:`1px solid ${planFilter===p?"rgba(220,38,38,0.4)":"rgba(255,255,255,0.1)"}`, color:planFilter===p?"#ef4444":"#64748b", padding:"7px 12px", fontSize:11 }} onClick={()=>setPlanFilter(p)}>{p||"Tous"}</button>
                 ))}
               </div>
-              <div style={{ marginLeft:"auto", color:"#475569", fontSize:12 }}>{total} utilisateurs</div>
+              <button
+                style={{ ...s.btnSm, background:"rgba(34,197,94,0.08)", border:"1px solid rgba(34,197,94,0.25)", color:"#22c55e", padding:"7px 14px", fontSize:11, marginLeft:"auto" }}
+                onClick={exportCSV}
+              >⬇️ Export CSV</button>
+              <div style={{ color:"#475569", fontSize:12 }}>{total} utilisateurs</div>
             </div>
 
             <div style={{ ...s.card, padding:0, overflow:"hidden" }}>
@@ -407,14 +451,14 @@ export default function Admin({ token, logout }) {
                 <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
                   <thead>
                     <tr style={{ background:"rgba(255,255,255,0.03)" }}>
-                      {["ID","EMAIL","PLAN","GÉNÉRATIONS","POSTS","STRIPE","STATUT","ACTIONS"].map(h => (
+                      {["ID","EMAIL","PLAN","GÉNÉRATIONS","POSTS","STRIPE","STATUT","VÉRIFIÉ","ACTIONS"].map(h => (
                         <th key={h} style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"14px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)", whiteSpace:"nowrap" }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {loading && <tr><td colSpan={8} style={{ textAlign:"center", padding:40, color:"#475569" }}>Chargement...</td></tr>}
-                    {!loading && users.length === 0 && <tr><td colSpan={8} style={{ textAlign:"center", padding:40, color:"#475569" }}>Aucun utilisateur trouvé</td></tr>}
+                    {loading && <tr><td colSpan={9} style={{ textAlign:"center", padding:40, color:"#475569" }}>Chargement...</td></tr>}
+                    {!loading && users.length === 0 && <tr><td colSpan={9} style={{ textAlign:"center", padding:40, color:"#475569" }}>Aucun utilisateur trouvé</td></tr>}
                     {users.map(u => (
                       <tr key={u.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)", background: u.banned ? "rgba(239,68,68,0.03)" : "transparent" }}>
                         <td style={{ padding:"12px 16px", color:"#475569" }}>#{u.id}</td>
@@ -439,14 +483,23 @@ export default function Admin({ token, logout }) {
                             : <span style={{ background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.3)", borderRadius:20, padding:"2px 8px", fontSize:10, fontWeight:700, color:"#22c55e" }}>✓ Actif</span>}
                         </td>
                         <td style={{ padding:"12px 16px" }}>
+                          {u.email_verified
+                            ? <span style={{ color:"#22c55e", fontSize:11 }}>✓ Oui</span>
+                            : <span style={{ color:"#f59e0b", fontSize:11 }}>⚠ Non</span>}
+                        </td>
+                        <td style={{ padding:"12px 16px" }}>
                           <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
-                            <button style={{ ...s.btnSm, background:"rgba(59,130,246,0.1)", border:"1px solid rgba(59,130,246,0.3)", color:"#60a5fa" }} onClick={()=>setEditUser(u)}>✏️</button>
-                            <button style={{ ...s.btnSm, background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.3)", color:"#22c55e" }} onClick={()=>resetQuota(u.id)}>↺</button>
+                            <button title="Modifier" style={{ ...s.btnSm, background:"rgba(59,130,246,0.1)", border:"1px solid rgba(59,130,246,0.3)", color:"#60a5fa" }} onClick={()=>setEditUser(u)}>✏️</button>
+                            <button title="Reset quota" style={{ ...s.btnSm, background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.3)", color:"#22c55e" }} onClick={()=>resetQuota(u.id)}>↺</button>
+                            {!u.email_verified && (
+                              <button title="Renvoyer email de vérification" style={{ ...s.btnSm, background:"rgba(249,115,22,0.1)", border:"1px solid rgba(249,115,22,0.3)", color:"#f97316" }} onClick={()=>resendVerification(u)}>📧</button>
+                            )}
                             <button
+                              title={u.banned ? "Débannir" : "Bannir"}
                               style={{ ...s.btnSm, background: u.banned ? "rgba(34,197,94,0.1)" : "rgba(245,158,11,0.1)", border: u.banned ? "1px solid rgba(34,197,94,0.3)" : "1px solid rgba(245,158,11,0.3)", color: u.banned ? "#22c55e" : "#f59e0b" }}
                               onClick={()=>toggleBan(u)}
                             >{u.banned ? "✅" : "🚫"}</button>
-                            <button style={{ ...s.btnSm, background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", color:"#ef4444" }} onClick={()=>deleteUser(u.id, u.email)}>🗑️</button>
+                            <button title="Supprimer" style={{ ...s.btnSm, background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", color:"#ef4444" }} onClick={()=>deleteUser(u.id, u.email)}>🗑️</button>
                           </div>
                         </td>
                       </tr>
