@@ -199,9 +199,9 @@ function useStyles() {
         .gp-nav-right   { gap: 6px !important; }
         .gp-hero-sub    { padding: 0 16px !important; }
         .gp-pricing-scroll { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
-        .gp-compare-table  { font-size: 11px !important; min-width: 480px !important; }
-        .gp-compare-table th, .gp-compare-table td { padding: 8px 8px !important; }
-        .gp-compare-table th:first-child, .gp-compare-table td:first-child { min-width: 130px !important; position: sticky; left: 0; background: #050a14; z-index: 2; }
+        .gp-compare-table  { font-size: 11px !important; min-width: 440px !important; }
+        .gp-compare-table th, .gp-compare-table td { padding: 8px 6px !important; }
+        .gp-compare-table th:first-child, .gp-compare-table td:first-child { width: 38% !important; }
       }
       @media (max-width:480px) {
         .gp-nav-logo-text { display: none !important; }
@@ -538,10 +538,10 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
           </div>
 
           <div style={{ overflowX:"auto", WebkitOverflowScrolling:"touch", margin:"0 -16px", padding:"0 16px 8px" }}>
-            <table className="gp-compare-table" style={{ width:"100%", minWidth:520, borderCollapse:"collapse", fontFamily:"'DM Mono', monospace", fontSize:13 }}>
+            <table className="gp-compare-table" style={{ width:"100%", minWidth:440, borderCollapse:"collapse", fontFamily:"'DM Mono', monospace", fontSize:13 }}>
               <thead>
                 <tr>
-                  <th style={{ textAlign:"left", padding:"14px 16px", color:"#475569", fontWeight:500, borderBottom:"1px solid rgba(255,255,255,0.06)", fontSize:11, letterSpacing:"1px", minWidth:140, whiteSpace:"nowrap" }}>FEATURE</th>
+                  <th style={{ textAlign:"left", padding:"10px 12px", color:"#475569", fontWeight:500, borderBottom:"1px solid rgba(255,255,255,0.06)", fontSize:10, letterSpacing:"1px", width:"38%" }}>FEATURE</th>
                   {[
                     { name:"GrowthPILOT", highlight:true },
                     { name:"Taplio",      highlight:false },
@@ -549,12 +549,13 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
                     { name:"MagicPost",   highlight:false },
                   ].map((col, i) => (
                     <th key={i} style={{
-                      textAlign:"center", padding:"14px 16px", fontWeight:700, fontSize:12,
+                      textAlign:"center", padding:"10px 8px", fontWeight:700, fontSize:11,
                       borderBottom:"1px solid rgba(255,255,255,0.06)", letterSpacing:"0.5px",
                       color: col.highlight ? "#ef4444" : "#475569",
                       background: col.highlight ? "rgba(220,38,38,0.05)" : "transparent",
                       borderLeft: col.highlight ? "1px solid rgba(220,38,38,0.2)" : "1px solid rgba(255,255,255,0.04)",
                       borderRight: col.highlight ? "1px solid rgba(220,38,38,0.2)" : "1px solid rgba(255,255,255,0.04)",
+                      width:"15.5%",
                     }}>{col.name}</th>
                   ))}
                 </tr>
@@ -562,10 +563,10 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
               <tbody>
                 {COMPARE.map((row, i) => (
                   <tr key={i} className="gp-compare-row" style={{ borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
-                    <td style={{ padding:"12px 16px", color:"#94a3b8", fontSize:12, whiteSpace:"nowrap" }}>{row.feature}</td>
+                    <td style={{ padding:"10px 12px", color:"#94a3b8", fontSize:11, wordBreak:"break-word" }}>{row.feature}</td>
                     {[row.gp, row.taplio, row.supergrow, row.magicpost].map((val, j) => (
                       <td key={j} style={{
-                        textAlign:"center", padding:"12px 16px",
+                        textAlign:"center", padding:"10px 8px",
                         background: j===0 ? "rgba(220,38,38,0.04)" : "transparent",
                         borderLeft: j===0 ? "1px solid rgba(220,38,38,0.15)" : "1px solid rgba(255,255,255,0.03)",
                         borderRight: j===0 ? "1px solid rgba(220,38,38,0.15)" : "1px solid rgba(255,255,255,0.03)",
