@@ -312,7 +312,7 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
         {/* Logo */}
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
           <img src={logo} alt="GrowthPILOT" style={{ width:32, height:32, objectFit:"contain" }} />
-          <span style={{ fontFamily:"'Syne', sans-serif", fontWeight:800, fontSize:16, color:"#fff", letterSpacing:"-0.5px", }}
+          <span className="gp-nav-logo-text" style={{ fontFamily:"'Syne', sans-serif", fontWeight:800, fontSize:18, color:"#fff", letterSpacing:"-0.5px" }}>
             Growth<span style={{ color:"#ef4444" }}>PILOT</span>
           </span>
         </div>
