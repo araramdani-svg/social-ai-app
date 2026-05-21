@@ -161,7 +161,7 @@ function LogsTab({ token }) {
                   </td>
                   <td style={{ padding:"12px 16px", color:"#94a3b8" }}>{log.target_email || `#${log.target_user_id}` || "—"}</td>
                   <td style={{ padding:"12px 16px", color:"#64748b", fontSize:11 }}>
-                    {log.details ? JSON.stringify(JSON.parse(log.details), null, 0).slice(0, 80) : "—"}
+                    {log.details ? (() => { try { const d = typeof log.details === "string" ? JSON.parse(log.details) : log.details; return JSON.stringify(d, null, 0).slice(0, 80); } catch { return String(log.details).slice(0, 80); } })() : "—"}
                   </td>
                 </tr>
               );
