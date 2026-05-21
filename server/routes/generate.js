@@ -665,4 +665,138 @@ ${source}` }],
     res.status(500).json({ error: "Server error" });
   }
 });
+// ─── Middleware Pro+ uniquement ───────────────────────────────────────────────
+const requirePro = async (req, res, next) => {
+  try {
+    const result = await db.query("SELECT plan FROM users WHERE id=$1", [req.user.id]);
+    const plan = result.rows[0]?.plan || "Free";
+    if (plan === "Free") return res.status(403).json({ error: "pro_required", message: "Image generation requires a Pro plan or above." });
+    next();
+  } catch { next(); }
+};
+
+// ─── POST /generate/image — DALL-E 3 ─────────────────────────────────────────
+router.post("/image", authenticateToken, requirePro, async (req, res) => {
+  const { post, format = "square", style = "illustrative" } = req.body;
+  if (!post || post.trim().length < 20) return res.status(400).json({ error: "Post content required" });
+
+  // Extraire l'idée principale du post pour le prompt visuel
+  const ideaRes = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      { role: "system", content: "Extract the single core idea of this LinkedIn post in 1 concise sentence (max 20 words). Return ONLY the sentence, no quotes, no punctuation at the end." },
+      { role: "user", content: post.slice(0, 800) },
+    ],
+    max_tokens: 60,
+    temperature: 0.3,
+  });
+  const coreIdea = ideaRes.choices[0]?.message?.content?.trim() || post.slice(0, 100);
+
+  const styleGuide = {
+    illustrative: "modern digital illustration, clean minimalist style, dark navy blue background, red accent colors (#ef4444), professional business aesthetic, no text, no words",
+    abstract:     "abstract geometric shapes, professional gradient background, dark theme, red and blue accents, modern corporate art, no text",
+    photo:        "cinematic professional photography style, dark moody lighting, business context, high contrast, editorial quality",
+  };
+
+  const sizeMap = {
+    square:   "1024x1024",
+    linkedin: "1792x1024",
+  };
+
+  const prompt = `${coreIdea}. Visual style: ${styleGuide[style] || styleGuide.illustrative}. High quality, 4K, professional social media content.`;
+
+  try {
+    const response = await openai.images.generate({
+      model:   "dall-e-3",
+      prompt,
+      n:       1,
+      size:    sizeMap[format] || "1024x1024",
+      quality: "standard",
+    });
+
+    const imageUrl = response.data[0]?.url;
+    if (!imageUrl) return res.status(500).json({ error: "Image generation failed" });
+
+    res.json({ imageUrl, prompt, coreIdea, format, style });
+  } catch (err) {
+    console.error("Image generation error:", err.message);
+    res.status(500).json({ error: "Image generation failed", detail: err.message });
+  }
+});
+
+// ─── POST /generate/visual — Citation brandée (SVG base64) ───────────────────
+router.post("/visual", authenticateToken, requirePro, async (req, res) => {
+  const { post, format = "square" } = req.body;
+  if (!post || post.trim().length < 20) return res.status(400).json({ error: "Post content required" });
+
+  // Extraire la meilleure citation du post
+  const quoteRes = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      { role: "system", content: "Extract the single most powerful, quotable sentence from this LinkedIn post. Max 15 words. Return ONLY the sentence, no quotes." },
+      { role: "user", content: post.slice(0, 800) },
+    ],
+    max_tokens: 50,
+    temperature: 0.2,
+  });
+  const quote = quoteRes.choices[0]?.message?.content?.trim() || post.slice(0, 100);
+
+  // Dimensions
+  const dims = format === "linkedin" ? { w: 1200, h: 627 } : { w: 1080, h: 1080 };
+  const { w, h } = dims;
+
+  // Wrapper texte SVG (max ~30 chars par ligne)
+  const words = quote.split(" ");
+  const lines = [];
+  let current = "";
+  const maxChars = format === "linkedin" ? 35 : 28;
+  for (const word of words) {
+    if ((current + " " + word).trim().length > maxChars) {
+      lines.push(current.trim());
+      current = word;
+    } else {
+      current = (current + " " + word).trim();
+    }
+  }
+  if (current) lines.push(current);
+
+  const lineH   = format === "linkedin" ? 64 : 72;
+  const fontSize = format === "linkedin" ? 48 : 56;
+  const totalH  = lines.length * lineH;
+  const startY  = (h / 2) - (totalH / 2) + lineH * 0.8;
+
+  const textLines = lines.map((line, i) =>
+    `<text x="${w/2}" y="${startY + i * lineH}" font-family="Arial, sans-serif" font-size="${fontSize}" font-weight="800" fill="white" text-anchor="middle" letter-spacing="-1">${line}</text>`
+  ).join("\n    ");
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#020617"/>
+      <stop offset="50%" style="stop-color:#0f172a"/>
+      <stop offset="100%" style="stop-color:#1a0a0a"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="${w}" height="${h}" fill="url(#bg)"/>
+  <!-- Accent line gauche -->
+  <rect x="0" y="0" width="6" height="${h}" fill="#ef4444"/>
+  <!-- Accent coins -->
+  <rect x="${w-80}" y="${h-6}" width="80" height="6" fill="#ef4444" opacity="0.5"/>
+  <!-- Guillemets décoratifs -->
+  <text x="${w/2}" y="${startY - lineH * 1.4}" font-family="Georgia, serif" font-size="${fontSize * 2.5}" fill="#ef4444" text-anchor="middle" opacity="0.15">"</text>
+  <!-- Citation -->
+  ${textLines}
+  <!-- Ligne séparatrice -->
+  <rect x="${w/2 - 40}" y="${startY + totalH + 20}" width="80" height="3" fill="#ef4444" rx="2"/>
+  <!-- Branding -->
+  <text x="${w/2}" y="${h - 40}" font-family="Arial, sans-serif" font-size="22" fill="#475569" text-anchor="middle" font-weight="700" letter-spacing="3">GROWTHPILOT</text>
+</svg>`;
+
+  const base64 = Buffer.from(svg).toString("base64");
+  const dataUrl = `data:image/svg+xml;base64,${base64}`;
+
+  res.json({ imageUrl: dataUrl, quote, format, type: "visual" });
+});
+
 export default router;

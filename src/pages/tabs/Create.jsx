@@ -34,9 +34,30 @@ export default function Create({
   const [multiResult,   setMultiResult]   = useState(null);
   const [multiTab,      setMultiTab]      = useState("thread");
   const [copiedIdx,     setCopiedIdx]     = useState(null);
+  const [imgLoading,    setImgLoading]    = useState(false);
+  const [imgResult,     setImgResult]     = useState(null);
+  const [imgFormat,     setImgFormat]     = useState("square");
+  const [imgType,       setImgType]       = useState("illustrative");
+  const [imgTab,        setImgTab]        = useState("illustrative");
 
-  const isPro = plan === "Pro" || plan === "Business";
+  const isPro = plan === "Pro" || plan === "Business" || plan === "Agency";
   const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+
+  const generateImage = async (type) => {
+    if (!post || post.length < 30) return;
+    setImgLoading(true);
+    setImgResult(null);
+    try {
+      const route = type === "visual" ? "/generate/visual" : "/generate/image";
+      const body  = type === "visual"
+        ? { post, format: imgFormat }
+        : { post, format: imgFormat, style: imgType };
+      const r = await fetch(`${API}${route}`, { method:"POST", headers, body: JSON.stringify(body) });
+      const d = await r.json();
+      if (d.imageUrl) setImgResult({ ...d, type });
+    } catch {}
+    setImgLoading(false);
+  };
 
   // Voice learning
   useEffect(() => {
@@ -553,6 +574,100 @@ export default function Create({
                     <div style={{ background:"rgba(251,191,36,0.06)", border:"1px solid rgba(251,191,36,0.15)", borderRadius:8, padding:"8px 12px", fontSize:11, color:"#fbbf24" }}>
                       💡 {viralScore.tip}
                     </div>
+                  )}
+                </>
+              )}
+            </motion.div>
+          )}
+          {/* ── Image Generator ───────────────────────────────────────────── */}
+          {post && post.length >= 30 && (
+            <motion.div initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }}
+              style={{ ...st.card, marginTop:0, padding:16 }}>
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
+                <div style={{ color:"#475569", fontSize:9, fontWeight:700, letterSpacing:"2px" }}>🖼️ {tr(trendsLang,"ui.imageGen") || "IMAGE GENERATOR"}</div>
+                {!isPro && <span style={{ background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:10, color:"#ef4444", fontSize:9, fontWeight:700, padding:"2px 8px" }}>PRO+</span>}
+              </div>
+
+              {!isPro ? (
+                <div style={{ textAlign:"center", padding:"12px 0", color:"#475569", fontSize:12 }}>
+                  🔒 {tr(trendsLang,"ui.imageGenLock") || "Upgrade to Pro to generate images"}
+                </div>
+              ) : (
+                <>
+                  {/* Tabs type */}
+                  <div style={{ display:"flex", gap:6, marginBottom:10 }}>
+                    {[["illustrative","🎨 Illustrative"],["visual","💬 Citation"]].map(([k,l]) => (
+                      <button key={k}
+                        style={{ flex:1, padding:"7px 6px", borderRadius:8, border:`1px solid ${imgTab===k?"rgba(239,68,68,0.5)":"rgba(255,255,255,0.08)"}`, background: imgTab===k?"rgba(239,68,68,0.1)":"transparent", color: imgTab===k?"#ef4444":"#475569", fontSize:10, fontWeight:700, cursor:"pointer" }}
+                        onClick={() => setImgTab(k)}
+                      >{l}</button>
+                    ))}
+                  </div>
+
+                  {/* Style (illustrative seulement) */}
+                  {imgTab === "illustrative" && (
+                    <div style={{ display:"flex", gap:4, marginBottom:10 }}>
+                      {[["illustrative","Modern"],["abstract","Abstract"],["photo","Photo"]].map(([k,l]) => (
+                        <button key={k}
+                          style={{ flex:1, padding:"5px 4px", borderRadius:6, border:`1px solid ${imgType===k?"rgba(239,68,68,0.4)":"rgba(255,255,255,0.06)"}`, background: imgType===k?"rgba(239,68,68,0.08)":"transparent", color: imgType===k?"#ef4444":"#475569", fontSize:9, fontWeight:700, cursor:"pointer" }}
+                          onClick={() => setImgType(k)}
+                        >{l}</button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Format */}
+                  <div style={{ display:"flex", gap:4, marginBottom:12 }}>
+                    {[["square","⬛ Carré 1:1"],["linkedin","▬ LinkedIn"]].map(([k,l]) => (
+                      <button key={k}
+                        style={{ flex:1, padding:"5px 4px", borderRadius:6, border:`1px solid ${imgFormat===k?"rgba(139,92,246,0.4)":"rgba(255,255,255,0.06)"}`, background: imgFormat===k?"rgba(139,92,246,0.08)":"transparent", color: imgFormat===k?"#a78bfa":"#475569", fontSize:9, fontWeight:700, cursor:"pointer" }}
+                        onClick={() => setImgFormat(k)}
+                      >{l}</button>
+                    ))}
+                  </div>
+
+                  {/* Bouton générer */}
+                  <motion.button
+                    whileHover={{ scale:1.01 }} whileTap={{ scale:0.98 }}
+                    style={{ ...st.button, margin:0, width:"100%", fontSize:12, opacity: imgLoading ? 0.7 : 1,
+                      background: imgTab === "visual"
+                        ? "linear-gradient(135deg,#0f172a,#1e293b)"
+                        : "linear-gradient(135deg,#7c3aed,#6d28d9)",
+                      border: imgTab === "visual" ? "1px solid rgba(239,68,68,0.3)" : "none",
+                    }}
+                    disabled={imgLoading}
+                    onClick={() => generateImage(imgTab)}
+                  >
+                    {imgLoading ? "⏳ Generating..." : imgTab === "visual" ? "💬 Generate Quote Visual" : "🎨 Generate Image"}
+                  </motion.button>
+
+                  {/* Résultat */}
+                  {imgResult && (
+                    <motion.div initial={{ opacity:0, y:6 }} animate={{ opacity:1, y:0 }}
+                      style={{ marginTop:12, borderRadius:10, overflow:"hidden", border:"1px solid rgba(255,255,255,0.08)" }}>
+                      <img
+                        src={imgResult.imageUrl}
+                        alt="Generated visual"
+                        style={{ width:"100%", display:"block", borderRadius:10 }}
+                      />
+                      {imgResult.quote && (
+                        <div style={{ padding:"8px 12px", background:"rgba(0,0,0,0.3)", fontSize:10, color:"#64748b", fontStyle:"italic" }}>
+                          "{imgResult.quote}"
+                        </div>
+                      )}
+                      {imgResult.coreIdea && (
+                        <div style={{ padding:"8px 12px", background:"rgba(0,0,0,0.3)", fontSize:10, color:"#64748b" }}>
+                          💡 {imgResult.coreIdea}
+                        </div>
+                      )}
+                      <a
+                        href={imgResult.imageUrl}
+                        download={`growthpilot-${imgTab}-${imgFormat}.${imgTab==="visual"?"svg":"png"}`}
+                        style={{ display:"block", textAlign:"center", padding:"10px", background:"rgba(239,68,68,0.1)", color:"#ef4444", fontSize:11, fontWeight:700, textDecoration:"none" }}
+                      >
+                        ⬇️ {tr(trendsLang,"ui.downloadImage") || "Download"}
+                      </a>
+                    </motion.div>
                   )}
                 </>
               )}
