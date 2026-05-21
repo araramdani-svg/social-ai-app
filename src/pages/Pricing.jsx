@@ -156,8 +156,8 @@ export default function Pricing({ openLogin, openApp, token }) {
         </div>
       </div>
 
-      {/* Plans — 4 colonnes */}
-      <div style={{ ...styles.plans, gridTemplateColumns:"1fr 1fr 1fr 1fr", maxWidth:1200 }}>
+      {/* Plans — responsive */}
+      <div style={{ ...styles.plans, gridTemplateColumns:"repeat(auto-fit, minmax(240px, 1fr))", maxWidth:1200, padding:"0 16px" }}>
         {PLANS.map((plan) => {
           const price    = yearly ? plan.yearlyPrice : plan.monthlyPrice;
           const isActive = currentPlan?.toLowerCase() === plan.name.toLowerCase();
@@ -246,9 +246,9 @@ export default function Pricing({ openLogin, openApp, token }) {
 }
 
 const styles = {
-  page: { minHeight:"100vh", overflowY:"auto", background:"linear-gradient(135deg,#020617 0%,#0f172a 50%,#1a0a0a 100%)", color:"white", padding:"20px 48px 60px", boxSizing:"border-box", fontFamily:"Arial,sans-serif", position:"relative", overflow:"hidden" },
+  page: { minHeight:"100vh", overflowX:"hidden", overflowY:"auto", background:"linear-gradient(135deg,#020617 0%,#0f172a 50%,#1a0a0a 100%)", color:"white", padding:"20px clamp(16px,4vw,48px) 60px", boxSizing:"border-box", fontFamily:"Arial,sans-serif", position:"relative" },
   noise: { position:"fixed", inset:0, backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E")`, pointerEvents:"none", zIndex:0 },
-  nav: { display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:48, position:"relative", zIndex:1 },
+  nav: { display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:48, position:"relative", zIndex:1, flexWrap:"wrap", gap:12 },
   brand: { display:"flex", alignItems:"center", gap:12 },
   navLogo: { width:44, height:44, objectFit:"contain" },
   brandName: { fontSize:20, fontWeight:900, fontStyle:"italic", color:"#000", WebkitTextStroke:"1px white", textShadow:"1px 1px 0 #ef4444" },

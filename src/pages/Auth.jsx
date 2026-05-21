@@ -12,7 +12,14 @@ export default function Auth({ loginSuccess, initialMode = "login" }) {
   const [pendingEmail, setPendingEmail] = useState(""); // email en attente de vérification
   const [resendSent, setResendSent]     = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 480;
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" && window.innerWidth < 480
+  );
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 480);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Detect invite token
   const inviteToken = typeof window !== "undefined"
@@ -143,7 +150,12 @@ export default function Auth({ loginSuccess, initialMode = "login" }) {
         <h1>{mode === "login" ? "Login" : inviteInfo ? "Join the team" : "Create account"}</h1>
 
         {mode === "register" && (
-          <div className="gp-auth-name-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginTop:16 }}>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+            gap: 10,
+            marginTop: 16,
+          }}>
             <input
               style={{ ...styles.input, marginTop:0 }}
               placeholder="First name"
@@ -199,21 +211,7 @@ export default function Auth({ loginSuccess, initialMode = "login" }) {
   );
 }
 
-// Inject mobile styles
-if (typeof document !== "undefined") {
-  const styleId = "gp-auth-styles";
-  if (!document.getElementById(styleId)) {
-    const s = document.createElement("style");
-    s.id = styleId;
-    s.textContent = `
-      @media (max-width: 600px) {
-        .gp-auth-name-grid { grid-template-columns: 1fr !important; }
-        .gp-auth-card { padding: 24px !important; }
-      }
-    `;
-    document.head.appendChild(s);
-  }
-}
+
 
 const styles = {
   page: {
