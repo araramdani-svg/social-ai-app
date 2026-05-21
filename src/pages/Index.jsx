@@ -289,7 +289,7 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
   const TICKER = ["LinkedIn", "X (Twitter)", "Threads", "Instagram", "Facebook", "TikTok", "Viral Score", "Brand Memory", "Trend Radar", "Agency Mode", "30-day Planner", "Multi-format"];
 
   return (
-    <div style={{ minHeight:"100vh", background:"#050a14", color:"#e2e8f0", fontFamily:"'Inter', sans-serif", overflowX:"hidden" }}>
+    <div style={{ minHeight:"100vh", background:"#050a14", color:"#e2e8f0", fontFamily:"'Inter', sans-serif", overflowX:"clip" }}>
 
       {/* ── GRID BACKGROUND ── */}
       <div style={{
@@ -314,7 +314,7 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
           <img src={logo} alt="GrowthPILOT" style={{ width:32, height:32, objectFit:"contain" }} />
           <span className="gp-nav-logo-text" style={{ fontFamily:"'Syne', sans-serif", fontWeight:800, fontSize:18, color:"#fff", letterSpacing:"-0.5px" }}>
-            Growth<span style={{ color:"#ef4444" }}>PILOT</span>
+            {"Growth"}<span style={{ color:"#ef4444" }}>PILOT</span>
           </span>
         </div>
 
@@ -611,16 +611,17 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
           </div>
         </div>
 
-        <div className="gp-pricing-scroll" style={{ overflowX:"auto", WebkitOverflowScrolling:"touch", margin:"0 -16px", padding:"0 16px 8px" }}>
-        <div className="gp-pricing-grid" style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, maxWidth:1100, margin:"0 auto", alignItems:"start", minWidth:700 }}>
+        <div className="gp-pricing-scroll">
+        <div className="gp-pricing-grid" style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, maxWidth:1100, margin:"0 auto", alignItems:"start" }}>
           {PLANS.map((plan, i) => {
             const price = yearly ? plan.yearlyPrice : plan.price;
             return (
               <div key={i} className="gp-pricing-card" style={{
                 background:"#0d1626",
                 border:`1px solid ${plan.popular ? plan.color : "rgba(255,255,255,0.07)"}`,
-                borderRadius:16, padding:"28px 20px", position:"relative",
+                borderRadius:16, padding: plan.popular ? "36px 20px 28px" : "28px 20px", position:"relative",
                 boxShadow: plan.popular ? `0 0 40px ${plan.color}22` : "none",
+                overflow:"visible",
               }}>
                 {plan.popular && (
                   <div style={{ position:"absolute", top:-12, left:"50%", transform:"translateX(-50%)", background:plan.color, padding:"4px 14px", borderRadius:20, fontSize:10, fontWeight:800, color:"#fff", fontFamily:"'DM Mono', monospace", letterSpacing:"1px", whiteSpace:"nowrap" }}>
@@ -700,7 +701,7 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
           <img src={logo} alt="GrowthPILOT" style={{ width:28, height:28, objectFit:"contain" }} />
           <span style={{ fontFamily:"'Syne', sans-serif", fontWeight:800, fontSize:16, color:"#fff" }}>
-            Growth<span style={{ color:"#ef4444" }}>PILOT</span>
+            {"Growth"}<span style={{ color:"#ef4444" }}>PILOT</span>
           </span>
           <span style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:"#334155", marginLeft:8 }}>© 2026</span>
         </div>
