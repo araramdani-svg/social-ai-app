@@ -194,17 +194,16 @@ function useStyles() {
         .gp-features-tabs { flex-direction: column !important; }
         .gp-compare-table { font-size: 12px !important; }
         .gp-pricing-grid { grid-template-columns: 1fr !important; }
-        .gp-nav-lang { display: none !important; }
-        .gp-nav-signin { display: none !important; }
-        .gp-nav-logo-text { font-size: 15px !important; }
-        .gp-nav-right { gap: 6px !important; }
-        .gp-hero-sub { padding: 0 16px !important; }
-        .gp-auth-name-grid { grid-template-columns: 1fr !important; }
+        .gp-nav-lang    { display: none !important; }
+        .gp-nav-signin  { display: none !important; }
+        .gp-nav-right   { gap: 6px !important; }
+        .gp-hero-sub    { padding: 0 16px !important; }
+        .gp-pricing-scroll { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
       }
       @media (max-width:480px) {
         .gp-nav-logo-text { display: none !important; }
-        .gp-btn-primary { font-size: 12px !important; padding: 8px 12px !important; }
-        .gp-btn-ghost   { font-size: 12px !important; padding: 8px 10px !important; }
+        .gp-btn-primary   { font-size: 12px !important; padding: 8px 14px !important; }
+        .gp-btn-ghost     { font-size: 12px !important; padding: 8px 10px !important; }
       }
     `;
     document.head.appendChild(s);
@@ -282,7 +281,6 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
   ];
 
   const px = typeof window !== "undefined" && window.innerWidth < 768 ? "20px" : "clamp(24px, 5vw, 80px)";
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 480;
 
   /* ── ticker content ── */
   const TICKER = ["LinkedIn", "X (Twitter)", "Threads", "Instagram", "Facebook", "TikTok", "Viral Score", "Brand Memory", "Trend Radar", "Agency Mode", "30-day Planner", "Multi-format"];
@@ -303,7 +301,7 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
       <nav style={{
         position:"sticky", top:0, zIndex:100,
         display:"flex", justifyContent:"space-between", alignItems:"center",
-        padding:"0 clamp(12px,3vw,60px)", height:56,
+        padding:"0 clamp(20px,4vw,60px)", height:64,
         background: scrolled ? "rgba(5,10,20,0.97)" : "rgba(5,10,20,0.8)",
         backdropFilter:"blur(20px)",
         borderBottom: scrolled ? "1px solid rgba(220,38,38,0.2)" : "1px solid rgba(255,255,255,0.04)",
@@ -337,8 +335,8 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
             )}
           </div>
 
-          <button onClick={openLogin} className="gp-btn-ghost gp-nav-signin" style={{ padding:"7px 12px", fontSize:12, whiteSpace:"nowrap" }}>{l.navSignIn}</button>
-          <button onClick={openApp} className="gp-btn-primary" style={{ padding:"6px 10px", fontSize:11, whiteSpace:"nowrap", flexShrink:0 }}>{l.navTryFree}</button>
+          <button onClick={openLogin} className="gp-btn-ghost gp-nav-signin" style={{ padding:"7px 12px", fontSize:12 }}>{l.navSignIn}</button>
+          <button onClick={openApp} className="gp-btn-primary" style={{ padding:"7px 14px", fontSize:12, whiteSpace:"nowrap" }}>{l.navTryFree}</button>
         </div>
       </nav>
 
@@ -385,10 +383,10 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
         </div>
 
         {/* Typewriter sub */}
-        <div className={`gp-fade-up gp-hero-sub ${heroVisible ? "visible":""}`} style={{ textAlign:"center", marginBottom:40, animationDelay:"0.1s" }}>
+        <div className={`gp-fade-up ${heroVisible ? "visible":""}`} className="gp-hero-sub" style={{ textAlign:"center", marginBottom:40, animationDelay:"0.1s" }}>
           <p style={{ fontSize:"clamp(16px,2vw,20px)", color:"#64748b", margin:0, lineHeight:1.6 }}>
             {l.heroSub1}{" "}
-            <span style={{ fontFamily:"'DM Mono', monospace", color:"#94a3b8", display:"inline-block", minWidth:120 }}>
+            <span style={{ fontFamily:"'DM Mono', monospace", color:"#94a3b8" }}>
               <Typewriter words={["LinkedIn.", "X (Twitter).", "Threads.", "Instagram.", "Facebook.", "TikTok."]} />
             </span>
           </p>
@@ -398,9 +396,9 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
         </div>
 
         {/* CTAs */}
-        <div className={`gp-fade-up ${heroVisible ? "visible":""}`} style={{ display:"flex", justifyContent:"center", gap:12, flexWrap:"wrap", marginBottom:64, animationDelay:"0.15s", padding:"0 16px" }}>
-          <button onClick={openApp}   className="gp-btn-primary" style={{ fontSize:"clamp(13px,2vw,14px)", padding:"12px 22px", whiteSpace:"nowrap", width: "auto" }}>{l.ctaStart}</button>
-          <button onClick={openLogin} className="gp-btn-ghost"   style={{ fontSize:"clamp(13px,2vw,14px)", padding:"12px 18px", whiteSpace:"nowrap", width: "auto" }}>{l.ctaSignIn}</button>
+        <div className={`gp-fade-up ${heroVisible ? "visible":""}`} style={{ display:"flex", justifyContent:"center", gap:12, flexWrap:"wrap", marginBottom:64, animationDelay:"0.15s" }}>
+          <button onClick={openApp}   className="gp-btn-primary" style={{ fontSize:14, padding:"14px 24px", whiteSpace:"nowrap" }}>{l.ctaStart}</button>
+          <button onClick={openLogin} className="gp-btn-ghost" style={{ fontSize:14, padding:"14px 20px", whiteSpace:"nowrap" }}>{l.ctaSignIn}</button>
         </div>
 
         {/* Platform badges */}
@@ -610,7 +608,7 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
           </div>
         </div>
 
-        <div style={{ overflowX:"auto", WebkitOverflowScrolling:"touch", margin:"0 -20px", padding:"0 20px" }}>
+        <div className="gp-pricing-scroll" style={{ margin:"0 -8px", padding:"0 8px" }}>
         <div className="gp-pricing-grid" style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, maxWidth:1100, margin:"0 auto", alignItems:"start", minWidth:700 }}>
           {PLANS.map((plan, i) => {
             const price = yearly ? plan.yearlyPrice : plan.price;
