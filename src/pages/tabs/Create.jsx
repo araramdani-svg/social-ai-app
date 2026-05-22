@@ -613,19 +613,19 @@ export default function Create({
               ) : (
                 <>
                   <div style={{ display:"flex", gap:6, marginBottom:10 }}>
-                    {[["illustrative",`🎨 ${tr(trendsLang,"styleModern")}`],["visual","💬 Citation"]].map(([k,l]) => (
+                    {[["illustrative",`🎨 ${tr(trendsLang,"ui.styleModern")}`],["visual","💬 Citation"]].map(([k,l]) => (
                       <button key={k} style={{ flex:1, padding:"7px 6px", borderRadius:8, border:`1px solid ${imgTab===k?"rgba(239,68,68,0.5)":"rgba(255,255,255,0.08)"}`, background: imgTab===k?"rgba(239,68,68,0.1)":"transparent", color: imgTab===k?"#ef4444":"#475569", fontSize:10, fontWeight:700, cursor:"pointer" }} onClick={() => setImgTab(k)}>{l}</button>
                     ))}
                   </div>
                   {imgTab === "illustrative" && (
                     <div style={{ display:"flex", gap:4, marginBottom:10 }}>
-                      {[["illustrative",tr(trendsLang,"styleModern")],["abstract",tr(trendsLang,"styleAbstract")],["photo",tr(trendsLang,"stylePhoto")]].map(([k,l]) => (
+                      {[["illustrative",tr(trendsLang,"ui.styleModern")],["abstract",tr(trendsLang,"ui.styleAbstract")],["photo",tr(trendsLang,"ui.stylePhoto")]].map(([k,l]) => (
                         <button key={k} style={{ flex:1, padding:"5px 4px", borderRadius:6, border:`1px solid ${imgType===k?"rgba(239,68,68,0.4)":"rgba(255,255,255,0.06)"}`, background: imgType===k?"rgba(239,68,68,0.08)":"transparent", color: imgType===k?"#ef4444":"#475569", fontSize:9, fontWeight:700, cursor:"pointer" }} onClick={() => setImgType(k)}>{l}</button>
                       ))}
                     </div>
                   )}
                   <div style={{ display:"flex", gap:4, marginBottom:12 }}>
-                    {[["square",tr(trendsLang,"formatSquare")],["linkedin",tr(trendsLang,"formatLinkedin")]].map(([k,l]) => (
+                    {[["square",tr(trendsLang,"ui.formatSquare")],["linkedin",tr(trendsLang,"ui.formatLinkedin")]].map(([k,l]) => (
                       <button key={k} style={{ flex:1, padding:"5px 4px", borderRadius:6, border:`1px solid ${imgFormat===k?"rgba(139,92,246,0.4)":"rgba(255,255,255,0.06)"}`, background: imgFormat===k?"rgba(139,92,246,0.08)":"transparent", color: imgFormat===k?"#a78bfa":"#475569", fontSize:9, fontWeight:700, cursor:"pointer" }} onClick={() => setImgFormat(k)}>{l}</button>
                     ))}
                   </div>
