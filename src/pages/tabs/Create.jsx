@@ -49,6 +49,33 @@ export default function Create({
   const isPro = plan === "Pro" || plan === "Business" || plan === "Agency";
   const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
+  // Média actif — image générée ou média sélectionné
+  const activeMedia = imgResult
+    ? { media_url: imgResult.imageUrl, media_type: "image", media_source: imgResult.type === "visual" ? "visual" : "dalle" }
+    : selectedMedia
+    ? { media_url: selectedMedia.url, media_type: selectedMedia.type, media_source: selectedMedia.source }
+    : null;
+
+  // Wrapper savePost pour inclure le média
+  const handleSave = async () => {
+    if (!activeMedia) { savePost(); return; }
+    // On appelle savePost normalement, puis on met à jour le post avec le média
+    await savePost();
+    // Récupérer le dernier post sauvegardé et lui attacher le média
+    try {
+      const postsRes = await fetch(`${API}/posts`, { headers });
+      const posts = await postsRes.json();
+      const lastPost = posts?.[0];
+      if (lastPost?.id && activeMedia.media_url) {
+        await fetch(`${API}/generate/media/attach`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ url: activeMedia.media_url, post_id: lastPost.id, source: activeMedia.media_source, type: activeMedia.media_type }),
+        });
+      }
+    } catch {}
+  };
+
   const generateImage = async (type) => {
     if (!post || post.length < 30) return;
     setImgLoading(true);
@@ -442,7 +469,7 @@ export default function Create({
                 {/* Actions principales */}
                 <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
                   {[
-                    [tr(trendsLang,"buttons.save"),    savePost,    "#22c55e", "rgba(34,197,94,0.12)"],
+                    [tr(trendsLang,"buttons.save"),    handleSave,  "#22c55e", "rgba(34,197,94,0.12)"],
                     [tr(trendsLang,"buttons.copy"),    copyPost,    "#64748b", "rgba(255,255,255,0.04)"],
                     [tr(trendsLang,"buttons.export"),  exportPost,  "#64748b", "rgba(255,255,255,0.04)"],
                     [tr(trendsLang,"buttons.analyze"), analyze,     "#f59e0b", "rgba(245,158,11,0.1)"],
@@ -642,9 +669,21 @@ export default function Create({
                       </div>
                       {imgResult.quote && <div style={{ padding:"8px 12px", background:"rgba(0,0,0,0.3)", fontSize:10, color:"#64748b", fontStyle:"italic" }}>"{imgResult.quote}"</div>}
                       {imgResult.coreIdea && <div style={{ padding:"8px 12px", background:"rgba(0,0,0,0.3)", fontSize:10, color:"#64748b" }}>💡 {imgResult.coreIdea}</div>}
-                      <a href={imgResult.imageUrl} download={`growthpilot-${imgTab}-${imgFormat}.png`} style={{ display:"block", textAlign:"center", padding:"10px", background:"rgba(239,68,68,0.1)", color:"#ef4444", fontSize:11, fontWeight:700, textDecoration:"none" }}>
+                      <button
+                        onClick={async () => {
+                          try {
+                            const res = await fetch(imgResult.imageUrl);
+                            const blob = await res.blob();
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url; a.download = `growthpilot-${imgTab}-${imgFormat}.png`; a.click();
+                            URL.revokeObjectURL(url);
+                          } catch { window.open(imgResult.imageUrl, "_blank"); }
+                        }}
+                        style={{ display:"block", width:"100%", textAlign:"center", padding:"10px", background:"rgba(239,68,68,0.1)", color:"#ef4444", fontSize:11, fontWeight:700, border:"none", cursor:"pointer", borderRadius:"0 0 10px 10px" }}
+                      >
                         ⬇️ {tr(trendsLang,"ui.downloadImage")}
-                      </a>
+                      </button>
                     </motion.div>
                   )}
                 </>

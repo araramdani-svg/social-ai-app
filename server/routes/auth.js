@@ -259,11 +259,12 @@ router.post("/login", async (req, res) => {
 
 // ─── Routes protégées (token requis) ──────────────────────────────────────────
 router.post("/save-post", authenticateToken, async (req, res) => {
-  const { title, content, project_name } = req.body;
+  const { title, content, project_name, media_url, media_type, media_source } = req.body;
   try {
     const result = await db.query(
-      "INSERT INTO posts(user_id,title,content,project_name,created_at) VALUES($1,$2,$3,$4,NOW()) RETURNING id",
-      [req.user.id, title, content, project_name || null]
+      `INSERT INTO posts(user_id,title,content,project_name,media_url,media_type,media_source,created_at)
+       VALUES($1,$2,$3,$4,$5,$6,$7,NOW()) RETURNING id`,
+      [req.user.id, title, content, project_name || null, media_url || null, media_type || null, media_source || null]
     );
     res.json({ success: true, id: result.rows[0].id });
   } catch (err) {
@@ -274,7 +275,7 @@ router.post("/save-post", authenticateToken, async (req, res) => {
 
 router.get("/posts", authenticateToken, async (req, res) => {
   const result = await db.query(
-    "SELECT * FROM posts WHERE user_id=$1 ORDER BY created_at DESC",
+    "SELECT id,title,content,project_name,media_url,media_type,media_source,created_at FROM posts WHERE user_id=$1 ORDER BY created_at DESC",
     [req.user.id]
   );
   res.json(result.rows);
