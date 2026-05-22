@@ -41,6 +41,105 @@ function StatCard({ label, value, color, sub }) {
   );
 }
 
+function ResetPasswordModal({ user, token, onClose }) {
+  const API = "https://social-ai-app-production.up.railway.app";
+  const [newPassword, setNewPassword] = useState("");
+  const [loading,     setLoading]     = useState(false);
+  const [message,     setMessage]     = useState(null);
+
+  const forceReset = async () => {
+    if (newPassword.length < 8) { setMessage({ type:"error", text:"Minimum 8 caractères" }); return; }
+    setLoading(true);
+    try {
+      const r = await fetch(`${API}/auth/admin/force-password`, {
+        method: "POST",
+        headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+        body: JSON.stringify({ userId: user.id, newPassword }),
+      });
+      const d = await r.json();
+      if (d.success) setMessage({ type:"success", text:`✅ Mot de passe modifié pour ${d.email}` });
+      else setMessage({ type:"error", text: d.message || "Erreur" });
+    } catch { setMessage({ type:"error", text:"Erreur serveur" }); }
+    setLoading(false);
+  };
+
+  const sendReset = async () => {
+    setLoading(true);
+    try {
+      const r = await fetch(`${API}/auth/admin/send-reset`, {
+        method: "POST",
+        headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+        body: JSON.stringify({ userId: user.id }),
+      });
+      const d = await r.json();
+      if (d.success) setMessage({ type:"success", text:`✅ Email de reset envoyé à ${d.email}` });
+      else setMessage({ type:"error", text: d.message || "Erreur" });
+    } catch { setMessage({ type:"error", text:"Erreur serveur" }); }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center" }}>
+      <div style={{ background:"linear-gradient(145deg,#1a2235,#111827)", border:"1px solid rgba(220,38,38,0.2)", borderRadius:16, padding:28, width:"100%", maxWidth:420, color:"white" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
+          <div style={{ color:"#ef4444", fontSize:13, fontWeight:800 }}>🔑 Reset mot de passe</div>
+          <button onClick={onClose} style={{ background:"none", border:"none", color:"#475569", fontSize:18, cursor:"pointer" }}>✕</button>
+        </div>
+
+        <div style={{ background:"rgba(239,68,68,0.06)", border:"1px solid rgba(239,68,68,0.15)", borderRadius:10, padding:"10px 14px", marginBottom:20, fontSize:12, color:"#94a3b8" }}>
+          👤 <strong style={{ color:"#e2e8f0" }}>{user.email}</strong>
+        </div>
+
+        {message && (
+          <div style={{ padding:"10px 14px", borderRadius:10, marginBottom:16, fontSize:12, fontWeight:700,
+            background: message.type === "success" ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
+            color: message.type === "success" ? "#22c55e" : "#ef4444",
+            border: `1px solid ${message.type === "success" ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)"}`,
+          }}>
+            {message.text}
+          </div>
+        )}
+
+        {/* Option 1 — Reset forcé */}
+        <div style={{ marginBottom:16 }}>
+          <div style={{ color:"#64748b", fontSize:10, fontWeight:700, letterSpacing:"1px", marginBottom:8 }}>OPTION 1 — RESET FORCÉ</div>
+          <input
+            style={{ display:"block", width:"100%", padding:"11px 14px", background:"#0f172a", border:"1px solid rgba(220,38,38,0.2)", borderRadius:10, color:"white", fontSize:13, boxSizing:"border-box", marginBottom:8 }}
+            type="password"
+            placeholder="Nouveau mot de passe (min. 8 caractères)"
+            value={newPassword}
+            onChange={e => setNewPassword(e.target.value)}
+          />
+          <button
+            onClick={forceReset}
+            disabled={loading}
+            style={{ width:"100%", padding:"11px", background:"linear-gradient(135deg,#dc2626,#991b1b)", border:"none", borderRadius:10, color:"white", fontWeight:700, fontSize:13, cursor:"pointer", opacity: loading ? 0.7 : 1 }}
+          >
+            {loading ? "⏳..." : "🔐 Forcer le nouveau mot de passe"}
+          </button>
+        </div>
+
+        <div style={{ height:1, background:"rgba(255,255,255,0.06)", margin:"16px 0" }} />
+
+        {/* Option 2 — Email reset */}
+        <div>
+          <div style={{ color:"#64748b", fontSize:10, fontWeight:700, letterSpacing:"1px", marginBottom:8 }}>OPTION 2 — EMAIL DE RESET</div>
+          <div style={{ color:"#475569", fontSize:11, marginBottom:10, lineHeight:1.5 }}>
+            Envoie un lien de réinitialisation à l'utilisateur. Le lien expire dans 1 heure.
+          </div>
+          <button
+            onClick={sendReset}
+            disabled={loading}
+            style={{ width:"100%", padding:"11px", background:"rgba(59,130,246,0.1)", border:"1px solid rgba(59,130,246,0.3)", borderRadius:10, color:"#60a5fa", fontWeight:700, fontSize:13, cursor:"pointer", opacity: loading ? 0.7 : 1 }}
+          >
+            {loading ? "⏳..." : "📧 Envoyer le lien de reset"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function EditUserModal({ user, token, onClose, onSave }) {
   const [plan,   setPlan]   = useState(user.plan || "Free");
   const [quota,  setQuota]  = useState(user.generations_count || 0);
@@ -294,6 +393,7 @@ export default function Admin({ token, logout }) {
   const [planFilter,setPlanFilter]= useState("");
   const [loading,   setLoading]   = useState(false);
   const [editUser,  setEditUser]  = useState(null);
+  const [resetUser, setResetUser] = useState(null);
   const [confirm,   setConfirm]   = useState(null);
 
   const headers = { Authorization:`Bearer ${token}` };
@@ -500,6 +600,7 @@ export default function Admin({ token, logout }) {
                         <td style={{ padding:"12px 16px" }}>
                           <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
                             <button title="Modifier" style={{ ...s.btnSm, background:"rgba(59,130,246,0.1)", border:"1px solid rgba(59,130,246,0.3)", color:"#60a5fa" }} onClick={()=>setEditUser(u)}>✏️</button>
+                            <button title="Reset mot de passe" style={{ ...s.btnSm, background:"rgba(245,158,11,0.1)", border:"1px solid rgba(245,158,11,0.3)", color:"#f59e0b" }} onClick={()=>setResetUser(u)}>🔑</button>
                             <button title="Reset quota" style={{ ...s.btnSm, background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.3)", color:"#22c55e" }} onClick={()=>resetQuota(u.id)}>↺</button>
                             {!u.email_verified && (
                               <button title="Renvoyer email de vérification" style={{ ...s.btnSm, background:"rgba(249,115,22,0.1)", border:"1px solid rgba(249,115,22,0.3)", color:"#f97316" }} onClick={()=>resendVerification(u)}>📧</button>
@@ -538,8 +639,9 @@ export default function Admin({ token, logout }) {
         {tab === "analytics" && <AnalyticsTab token={token} />}
       </div>
 
-      {editUser && <EditUserModal user={editUser} token={token} onClose={()=>setEditUser(null)} onSave={()=>{ fetchUsers(page); fetchStats(); }} />}
-      {confirm && <ConfirmModal message={confirm.message} onConfirm={confirm.onConfirm} onCancel={()=>setConfirm(null)} />}
+      {editUser  && <EditUserModal user={editUser} token={token} onClose={()=>setEditUser(null)} onSave={()=>{ fetchUsers(page); fetchStats(); }} />}
+      {resetUser && <ResetPasswordModal user={resetUser} token={token} onClose={()=>setResetUser(null)} />}
+      {confirm   && <ConfirmModal message={confirm.message} onConfirm={confirm.onConfirm} onCancel={()=>setConfirm(null)} />}
     </div>
   );
 }

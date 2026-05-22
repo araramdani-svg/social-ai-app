@@ -579,4 +579,101 @@ router.post("/onboarding-done", authenticateToken, async (req, res) => {
   }
 });
 
+// ─── POST /auth/admin/force-password — Reset forcé par l'admin ───────────────
+router.post("/admin/force-password", authenticateToken, async (req, res) => {
+  try {
+    // Vérifier que c'est l'admin
+    const adminCheck = await db.query("SELECT email FROM users WHERE id=$1", [req.user.id]);
+    if (adminCheck.rows[0]?.email !== "admin@growthpilot.admin") {
+      return res.status(403).json({ message: "Admin only" });
+    }
+
+    const { userId, newPassword } = req.body;
+    if (!newPassword || newPassword.length < 8) {
+      return res.status(400).json({ message: "Password must be at least 8 characters" });
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    const result = await db.query(
+      "UPDATE users SET password=$1 WHERE id=$2 RETURNING email",
+      [hashed, userId]
+    );
+
+    if (!result.rows.length) return res.status(404).json({ message: "User not found" });
+
+    // Envoyer une alerte à l'user
+    try {
+      await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.RESEND_API_KEY}` },
+        body: JSON.stringify({
+          from: "GrowthPILOT <team@aigrowthpilot.app>",
+          to:   result.rows[0].email,
+          subject: "⚠️ Votre mot de passe a été modifié",
+          html: `<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:32px;background:#0f172a;color:#e2e8f0;border-radius:12px;">
+            <h2 style="color:#ef4444;">⚠️ Modification de mot de passe</h2>
+            <p>Votre mot de passe GrowthPILOT a été réinitialisé par un administrateur.</p>
+            <p>Si vous n'avez pas demandé cette modification, contactez-nous immédiatement à <a href="mailto:team@aigrowthpilot.app" style="color:#ef4444;">team@aigrowthpilot.app</a></p>
+          </div>`,
+        }),
+      });
+    } catch {}
+
+    res.json({ success: true, email: result.rows[0].email });
+  } catch (err) {
+    console.error("Force password error:", err.message);
+    res.status(500).json({ error: "Failed to reset password" });
+  }
+});
+
+// ─── POST /auth/admin/send-reset — Envoi email reset à l'user ────────────────
+router.post("/admin/send-reset", authenticateToken, async (req, res) => {
+  try {
+    // Vérifier que c'est l'admin
+    const adminCheck = await db.query("SELECT email FROM users WHERE id=$1", [req.user.id]);
+    if (adminCheck.rows[0]?.email !== "admin@growthpilot.admin") {
+      return res.status(403).json({ message: "Admin only" });
+    }
+
+    const { userId } = req.body;
+    const userRes = await db.query("SELECT email FROM users WHERE id=$1", [userId]);
+    if (!userRes.rows.length) return res.status(404).json({ message: "User not found" });
+
+    const email = userRes.rows[0].email;
+    const resetToken = jwt.sign({ id: userId, type: "password_reset" }, JWT_SECRET, { expiresIn: "1h" });
+
+    // Sauvegarder le token en base
+    await db.query(
+      "UPDATE users SET password_reset_token=$1, password_reset_expires=$2 WHERE id=$3",
+      [resetToken, new Date(Date.now() + 3600000), userId]
+    );
+
+    const resetUrl = `https://www.aigrowthpilot.app?reset=${resetToken}`;
+
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.RESEND_API_KEY}` },
+      body: JSON.stringify({
+        from: "GrowthPILOT <team@aigrowthpilot.app>",
+        to:   email,
+        subject: "🔑 Réinitialisation de votre mot de passe GrowthPILOT",
+        html: `<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:32px;background:#0f172a;color:#e2e8f0;border-radius:12px;">
+          <h2 style="color:#ef4444;">🔑 Réinitialisation de mot de passe</h2>
+          <p>Un administrateur a déclenché une réinitialisation de votre mot de passe.</p>
+          <p>Cliquez sur le bouton ci-dessous pour définir un nouveau mot de passe :</p>
+          <a href="${resetUrl}" style="display:block;background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;text-decoration:none;text-align:center;padding:16px 32px;border-radius:10px;font-weight:800;font-size:15px;margin:24px 0;">
+            Réinitialiser mon mot de passe
+          </a>
+          <p style="color:#64748b;font-size:12px;">Ce lien expire dans 1 heure.</p>
+        </div>`,
+      }),
+    });
+
+    res.json({ success: true, email });
+  } catch (err) {
+    console.error("Send reset error:", err.message);
+    res.status(500).json({ error: "Failed to send reset email" });
+  }
+});
+
 export default router;
