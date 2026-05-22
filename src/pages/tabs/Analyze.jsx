@@ -245,6 +245,40 @@ function LinkedInAnalytics({ token, isMobile, trendsLang }) {
 // ─── Composant principal Analyze ──────────────────────────────────────────────
 export default function Analyze({ trendsLang, isMobile, analysis, platformData, token }) {
   const [activeTab, setActiveTab] = useState("content");
+  const [watchQuery,   setWatchQuery]   = useState("");
+  const [watchResults, setWatchResults] = useState(null);
+  const [watchLoading, setWatchLoading] = useState(false);
+  const [watchTrending, setWatchTrending] = useState(null);
+
+  const API = "https://social-ai-app-production.up.railway.app";
+  const headers = { "Content-Type":"application/json", Authorization:`Bearer ${token}` };
+
+  const searchWatch = async () => {
+    if (!watchQuery.trim()) return;
+    setWatchLoading(true);
+    try {
+      const r = await fetch(`${API}/watch/search`, { method:"POST", headers, body: JSON.stringify({ query: watchQuery, lang: trendsLang }) });
+      const d = await r.json();
+      setWatchResults(d);
+    } catch {}
+    setWatchLoading(false);
+  };
+
+  const loadTrending = async () => {
+    setWatchLoading(true);
+    try {
+      const r = await fetch(`${API}/watch/trending?lang=${trendsLang}`, { headers });
+      const d = await r.json();
+      setWatchTrending(d);
+    } catch {}
+    setWatchLoading(false);
+  };
+
+  useEffect(() => {
+    if (activeTab === "watch" && !watchTrending) loadTrending();
+  }, [activeTab]);
+
+  const results = watchResults?.results || watchTrending?.trending || [];
 
   return (
     <>
@@ -258,7 +292,89 @@ export default function Analyze({ trendsLang, isMobile, analysis, platformData, 
         <button style={s.tabBtn(activeTab === "linkedin")}  onClick={() => setActiveTab("linkedin")}>
           {tr(trendsLang,"analyze.tabLinkedin")}
         </button>
+        <button style={s.tabBtn(activeTab === "watch")}     onClick={() => setActiveTab("watch")}>
+          🌍 {tr(trendsLang,"analyze.tabWatch") || "Veille"}
+        </button>
       </div>
+
+      {/* ── Onglet Veille mondiale ────────────────────────────────────────── */}
+      {activeTab === "watch" && (
+        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+
+          {/* Barre de recherche */}
+          <div style={{ display:"flex", gap:8 }}>
+            <input
+              style={{ ...s.input, flex:1, fontSize:13 }}
+              placeholder={`🔍 ${tr(trendsLang,"analyze.watchSearch") || "Rechercher un sujet mondial..."}`}
+              value={watchQuery}
+              onChange={e => setWatchQuery(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && searchWatch()}
+            />
+            <button style={{ ...s.btn, padding:"0 20px", whiteSpace:"nowrap" }} onClick={searchWatch} disabled={watchLoading}>
+              {watchLoading ? "⏳" : "🔍"}
+            </button>
+            <button style={{ ...s.btn, padding:"0 14px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)" }} onClick={() => { setWatchResults(null); loadTrending(); }} title="Tendances du moment">
+              🔥
+            </button>
+          </div>
+
+          {/* Topics détectés */}
+          {watchTrending?.topics && !watchResults && (
+            <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+              {watchTrending.topics.map(t => (
+                <button key={t} onClick={() => { setWatchQuery(t); }} style={{ background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:20, color:"#ef4444", fontSize:10, fontWeight:700, padding:"3px 10px", cursor:"pointer" }}>
+                  🔥 {t}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Header résultats */}
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+            <div style={{ color:"#475569", fontSize:9, fontWeight:700, letterSpacing:"2px" }}>
+              {watchResults ? `🔍 ${watchResults.total} RÉSULTATS` : "🔥 TENDANCES DU MOMENT"}
+            </div>
+            {watchResults && (
+              <button style={{ background:"none", border:"none", color:"#475569", fontSize:10, cursor:"pointer" }} onClick={() => setWatchResults(null)}>
+                ← Tendances
+              </button>
+            )}
+          </div>
+
+          {/* Résultats */}
+          {watchLoading ? (
+            <div style={{ textAlign:"center", padding:"32px", color:"#475569", fontSize:13 }}>⏳ Recherche en cours...</div>
+          ) : results.length === 0 ? (
+            <div style={{ textAlign:"center", padding:"32px", color:"#475569", fontSize:13 }}>Aucun résultat</div>
+          ) : (
+            <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+              {results.map((r, i) => (
+                <a key={i} href={r.url} target="_blank" rel="noreferrer" style={{ textDecoration:"none" }}>
+                  <div style={{ padding:"14px 16px", borderRadius:12, border:"1px solid rgba(255,255,255,0.06)", background:"rgba(255,255,255,0.01)", transition:"background 0.15s", cursor:"pointer" }}
+                    onMouseEnter={e => e.currentTarget.style.background = "rgba(220,38,38,0.03)"}
+                    onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.01)"}
+                  >
+                    <div style={{ display:"flex", alignItems:"flex-start", gap:12 }}>
+                      {r.image && (
+                        <img src={r.image} alt="" style={{ width:56, height:56, objectFit:"cover", borderRadius:8, flexShrink:0 }} onError={e => e.target.style.display="none"} />
+                      )}
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ color:"#e2e8f0", fontSize:13, fontWeight:700, marginBottom:4, lineHeight:1.4 }}>{r.title}</div>
+                        <div style={{ color:"#64748b", fontSize:11, lineHeight:1.5, marginBottom:6, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>{r.snippet}</div>
+                        <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+                          <span style={{ background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.15)", borderRadius:10, color:"#ef4444", fontSize:9, fontWeight:700, padding:"2px 8px" }}>{r.source}</span>
+                          {r.published && <span style={{ color:"#334155", fontSize:9 }}>{new Date(r.published).toLocaleDateString()}</span>}
+                          <span style={{ color:"#38bdf8", fontSize:9, marginLeft:"auto" }}>↗ Lire</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Content Analysis (existant) */}
       {activeTab === "content" && (

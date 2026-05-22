@@ -45,6 +45,24 @@ export default function Create({
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [fullscreenImg, setFullscreenImg] = useState(null);
   const [mediaCount,    setMediaCount]    = useState(6);
+  const [watchLoading,  setWatchLoading]  = useState(false);
+  const [watchContext,  setWatchContext]  = useState(null);
+
+  const searchWatchContext = async () => {
+    if (!post || post.length < 30) return;
+    setWatchLoading(true);
+    setWatchContext(null);
+    try {
+      const r = await fetch(`${API}/watch/context`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ post: post.slice(0, 500), lang: trendsLang }),
+      });
+      const d = await r.json();
+      setWatchContext(d);
+    } catch {}
+    setWatchLoading(false);
+  };
 
   const isPro = plan === "Pro" || plan === "Business" || plan === "Agency";
   const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
@@ -818,6 +836,51 @@ export default function Create({
                       </div>
                     </motion.div>
                   )}
+                </>
+              )}
+            </motion.div>
+          )}
+
+          {/* ── Veille contextuelle ──────────────────────────────────────── */}
+          {post && post.length >= 30 && (
+            <motion.div initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }}
+              style={{ ...st.card, marginTop:0, padding:16 }}>
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
+                <div style={{ color:"#475569", fontSize:9, fontWeight:700, letterSpacing:"2px" }}>🌍 {tr(trendsLang,"ui.watchContext") || "VEILLE CONTEXTUELLE"}</div>
+                <span style={{ color:"#334155", fontSize:9 }}>Tavily · NewsAPI</span>
+              </div>
+              <motion.button whileHover={{ scale:1.01 }} whileTap={{ scale:0.98 }}
+                style={{ ...st.button, margin:0, width:"100%", fontSize:12, opacity: watchLoading ? 0.7 : 1,
+                  background:"linear-gradient(135deg,#065f46,#047857)" }}
+                disabled={watchLoading}
+                onClick={searchWatchContext}
+              >
+                {watchLoading ? "⏳ Recherche..." : "🌍 Trouver des articles liés à ce post"}
+              </motion.button>
+
+              {watchContext && (
+                <>
+                  {watchContext.answer && (
+                    <div style={{ marginTop:10, padding:"10px 12px", background:"rgba(6,95,70,0.08)", border:"1px solid rgba(6,95,70,0.2)", borderRadius:10 }}>
+                      <div style={{ color:"#34d399", fontSize:9, fontWeight:700, marginBottom:4 }}>💡 SYNTHÈSE IA</div>
+                      <div style={{ color:"#94a3b8", fontSize:11, lineHeight:1.6 }}>{watchContext.answer}</div>
+                    </div>
+                  )}
+                  <div style={{ display:"flex", flexDirection:"column", gap:6, marginTop:10 }}>
+                    {(watchContext.results || []).slice(0, 5).map((r, i) => (
+                      <a key={i} href={r.url} target="_blank" rel="noreferrer" style={{ textDecoration:"none" }}>
+                        <div style={{ padding:"10px 12px", borderRadius:10, border:"1px solid rgba(255,255,255,0.06)", background:"rgba(255,255,255,0.01)" }}>
+                          <div style={{ color:"#e2e8f0", fontSize:12, fontWeight:600, marginBottom:3, lineHeight:1.4 }}>{r.title}</div>
+                          <div style={{ color:"#64748b", fontSize:10, lineHeight:1.5, marginBottom:4, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>{r.snippet}</div>
+                          <div style={{ display:"flex", gap:6, alignItems:"center" }}>
+                            <span style={{ background:"rgba(6,95,70,0.1)", border:"1px solid rgba(6,95,70,0.2)", borderRadius:10, color:"#34d399", fontSize:9, fontWeight:700, padding:"1px 6px" }}>{r.source}</span>
+                            {r.published && <span style={{ color:"#334155", fontSize:9 }}>{new Date(r.published).toLocaleDateString()}</span>}
+                            <span style={{ color:"#38bdf8", fontSize:9, marginLeft:"auto" }}>↗</span>
+                          </div>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
                 </>
               )}
             </motion.div>

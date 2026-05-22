@@ -98,6 +98,7 @@ import facebookRouter          from "./server/routes/facebook.js";
 import tiktokRouter            from "./server/routes/tiktok.js";
 import adminRouter             from "./server/routes/admin.js";
 import analyticsRouter         from "./server/routes/analytics.js";
+import watchRouter             from "./server/routes/watch.js";
 
 const app = express();
 
@@ -151,6 +152,7 @@ app.use("/facebook",                             facebookRouter);
 app.use("/tiktok",                               tiktokRouter);
 app.use("/admin",              adminLimiter,     adminRouter);
 app.use("/analytics",          analyticsLimiter, analyticsRouter);
+app.use("/watch",                                watchRouter);
 
 // ─── Error handler global ──────────────────────────────────────────────────────
 // Sentry error handler — doit être AVANT le error handler global
