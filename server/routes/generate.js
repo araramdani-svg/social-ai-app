@@ -733,18 +733,19 @@ router.post("/image", authenticateToken, requirePro, async (req, res) => {
 
   const prompt = `${coreIdea}. Visual style: ${styleGuide[style] || styleGuide.illustrative}. High quality, professional social media content.`;
 
-  console.log("Generating image with OpenAI, model: dall-e-3, size:", sizeMap[format]);
+  console.log("Generating image with OpenAI, model: gpt-image-1-mini, size:", sizeMap[format]);
 
   try {
     const response = await openai.images.generate({
-      model:   "dall-e-3",
-      prompt:  prompt.slice(0, 4000),
-      n:       1,
-      size:    sizeMap[format] || "1024x1024",
-      quality: "standard",
+      model:  "gpt-image-1-mini",
+      prompt: prompt.slice(0, 4000),
+      n:      1,
+      size:   sizeMap[format] || "1024x1024",
     });
 
-    const imageUrl = response.data[0]?.url;
+    // gpt-image-1-mini retourne en base64
+    const imgData = response.data[0];
+    const imageUrl = imgData?.url || (imgData?.b64_json ? `data:image/png;base64,${imgData.b64_json}` : null);
     if (!imageUrl) return res.status(500).json({ error: "Image generation failed" });
 
     // Upload sur Cloudinary
