@@ -1,7 +1,33 @@
-import express from "express";
-import OpenAI from "openai";
-import db from "../db.js";
-import jwt from "jsonwebtoken";
+import express    from "express";
+import OpenAI     from "openai";
+import db         from "../db.js";
+import jwt        from "jsonwebtoken";
+import { v2 as cloudinary } from "cloudinary";
+import fetch      from "node-fetch";
+
+cloudinary.config({
+  cloud_name:  process.env.CLOUDINARY_CLOUD_NAME,
+  api_key:     process.env.CLOUDINARY_API_KEY,
+  api_secret:  process.env.CLOUDINARY_API_SECRET,
+});
+
+// ─── Helper : upload une URL distante vers Cloudinary ────────────────────────
+const uploadToCloudinary = async (url, options = {}) => {
+  // Si c'est un data URL (SVG base64), on upload directement
+  if (url.startsWith("data:")) {
+    const result = await cloudinary.uploader.upload(url, {
+      folder:    "growthpilot",
+      ...options,
+    });
+    return result.secure_url;
+  }
+  // Sinon on fetch l'image et on l'upload en stream
+  const result = await cloudinary.uploader.upload(url, {
+    folder:    "growthpilot",
+    ...options,
+  });
+  return result.secure_url;
+};
 
 const router = express.Router();
 
@@ -717,7 +743,28 @@ router.post("/image", authenticateToken, requirePro, async (req, res) => {
     const imageUrl = response.data[0]?.url;
     if (!imageUrl) return res.status(500).json({ error: "Image generation failed" });
 
-    res.json({ imageUrl, prompt, coreIdea, format, style });
+    // Upload sur Cloudinary
+    let cloudUrl = imageUrl;
+    try {
+      cloudUrl = await uploadToCloudinary(imageUrl, {
+        public_id: `dalle_${req.user.id}_${Date.now()}`,
+        format:    "jpg",
+        transformation: [{ quality: "auto", fetch_format: "auto" }],
+      });
+    } catch (err) {
+      console.error("Cloudinary upload error:", err.message);
+    }
+
+    // Sauvegarder dans la table posts si post_id fourni
+    const { post_id } = req.body;
+    if (post_id) {
+      await db.query(
+        "UPDATE posts SET media_url=$1, media_type='image', media_source='dalle' WHERE id=$2 AND user_id=$3",
+        [cloudUrl, post_id, req.user.id]
+      ).catch(e => console.error("DB media save error:", e.message));
+    }
+
+    res.json({ imageUrl: cloudUrl, originalUrl: imageUrl, prompt, coreIdea, format, style, saved: !!post_id });
   } catch (err) {
     console.error("Image generation error:", err.message);
     res.status(500).json({ error: "Image generation failed", detail: err.message });
@@ -793,10 +840,71 @@ router.post("/visual", authenticateToken, requirePro, async (req, res) => {
   <text x="${w/2}" y="${h - 40}" font-family="Arial, sans-serif" font-size="22" fill="#475569" text-anchor="middle" font-weight="700" letter-spacing="3">GROWTHPILOT</text>
 </svg>`;
 
-  const base64 = Buffer.from(svg).toString("base64");
-  const dataUrl = `data:image/svg+xml;base64,${base64}`;
+  const base64  = Buffer.from(svg).toString("base64");
+  const dataUrl  = `data:image/svg+xml;base64,${base64}`;
 
-  res.json({ imageUrl: dataUrl, quote, format, type: "visual" });
+  // Upload sur Cloudinary
+  let cloudUrl = dataUrl;
+  try {
+    cloudUrl = await uploadToCloudinary(dataUrl, {
+      public_id:  `visual_${req.user.id}_${Date.now()}`,
+      format:     "png",
+      transformation: [{ quality: "auto" }],
+    });
+  } catch (err) {
+    console.error("Cloudinary visual upload error:", err.message);
+  }
+
+  // Sauvegarder dans la table posts si post_id fourni
+  const { post_id } = req.body;
+  if (post_id) {
+    await db.query(
+      "UPDATE posts SET media_url=$1, media_type='image', media_source='visual' WHERE id=$2 AND user_id=$3",
+      [cloudUrl, post_id, req.user.id]
+    ).catch(e => console.error("DB media save error:", e.message));
+  }
+
+  res.json({ imageUrl: cloudUrl, quote, format, type: "visual", saved: !!post_id });
+});
+
+// ─── POST /generate/media/attach — Sauvegarder un média externe sur Cloudinary ─
+router.post("/media/attach", authenticateToken, async (req, res) => {
+  const { url, post_id, source, type = "photo" } = req.body;
+  if (!url || !post_id) return res.status(400).json({ error: "url and post_id required" });
+
+  let cloudUrl = url;
+  try {
+    cloudUrl = await uploadToCloudinary(url, {
+      public_id:      `media_${req.user.id}_${Date.now()}`,
+      resource_type:  type === "video" ? "video" : "image",
+      format:         type === "video" ? "mp4" : "jpg",
+      transformation: type === "video" ? [] : [{ quality: "auto", fetch_format: "auto" }],
+    });
+  } catch (err) {
+    console.error("Cloudinary media attach error:", err.message);
+    // On garde l'URL originale si l'upload échoue
+  }
+
+  await db.query(
+    "UPDATE posts SET media_url=$1, media_type=$2, media_source=$3 WHERE id=$4 AND user_id=$5",
+    [cloudUrl, type, source || "external", post_id, req.user.id]
+  ).catch(e => console.error("DB media attach error:", e.message));
+
+  res.json({ mediaUrl: cloudUrl, post_id, type, source });
+});
+
+// ─── GET /generate/media/:post_id — Récupérer le média d'un post ──────────────
+router.get("/media/:post_id", authenticateToken, async (req, res) => {
+  try {
+    const result = await db.query(
+      "SELECT media_url, media_type, media_source FROM posts WHERE id=$1 AND user_id=$2",
+      [req.params.post_id, req.user.id]
+    );
+    if (!result.rows.length) return res.status(404).json({ error: "Post not found" });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch media" });
+  }
 });
 
 // ─── POST /generate/media — Recherche Pexels + Unsplash ──────────────────────
