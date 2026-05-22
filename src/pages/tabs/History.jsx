@@ -170,8 +170,6 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
                       </p>
                     </div>
 
-                    </div>
-
                     {/* Date + actions */}
                     <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:8, flexShrink:0 }}>
                       <span style={{ color:"#334155", fontSize:10 }}>{formatDate(h.created_at)}</span>
