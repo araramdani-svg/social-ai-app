@@ -725,17 +725,20 @@ router.post("/image", authenticateToken, requirePro, async (req, res) => {
 
   const sizeMap = {
     square:   "1024x1024",
-    linkedin: "1024x1024", // dall-e-2 ne supporte pas 1792x1024
+    linkedin: "1792x1024",
   };
 
   const prompt = `${coreIdea}. Visual style: ${styleGuide[style] || styleGuide.illustrative}. High quality, professional social media content.`;
 
+  console.log("Generating image with OpenAI, model: dall-e-3, size:", sizeMap[format]);
+
   try {
     const response = await openai.images.generate({
-      model:   "dall-e-2",
-      prompt:  prompt.slice(0, 1000), // dall-e-2 max 1000 chars
+      model:   "dall-e-3",
+      prompt:  prompt.slice(0, 4000),
       n:       1,
       size:    sizeMap[format] || "1024x1024",
+      quality: "standard",
     });
 
     const imageUrl = response.data[0]?.url;
