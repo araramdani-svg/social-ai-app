@@ -872,6 +872,26 @@ router.post("/visual", authenticateToken, requirePro, async (req, res) => {
   res.json({ imageUrl: cloudUrl, quote, format, type: "visual", saved: !!post_id });
 });
 
+// ─── POST /generate/media/upload — Upload Cloudinary sans post_id ─────────────
+router.post("/media/upload", authenticateToken, async (req, res) => {
+  const { url, type = "photo", source } = req.body;
+  if (!url) return res.status(400).json({ error: "url required" });
+
+  let cloudUrl = url;
+  try {
+    cloudUrl = await uploadToCloudinary(url, {
+      public_id:      `media_${req.user.id}_${Date.now()}`,
+      resource_type:  type === "video" ? "video" : "image",
+      format:         type === "video" ? "mp4" : "jpg",
+      transformation: type === "video" ? [] : [{ quality: "auto", fetch_format: "auto" }],
+    });
+  } catch (err) {
+    console.error("Cloudinary upload error:", err.message);
+  }
+
+  res.json({ mediaUrl: cloudUrl, type, source });
+});
+
 // ─── POST /generate/media/attach — Sauvegarder un média externe sur Cloudinary ─
 router.post("/media/attach", authenticateToken, async (req, res) => {
   const { url, post_id, source, type = "photo" } = req.body;

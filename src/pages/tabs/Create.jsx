@@ -53,21 +53,20 @@ export default function Create({
   const [attachedMedia, setAttachedMedia] = useState(null);
   const [attaching,     setAttaching]     = useState(false);
 
-  // Attacher un média : upload sur Cloudinary via media/attach puis stocker l'URL permanente
+  // Attacher un média : upload sur Cloudinary pour avoir une URL permanente
   const attachMedia = async (url, type, source) => {
     setAttaching(true);
     try {
-      // On upload sur Cloudinary pour avoir une URL permanente
-      const r = await fetch(`${API}/generate/media/attach`, {
+      // Upload direct sur Cloudinary via une route dédiée sans post_id
+      const r = await fetch(`${API}/generate/media/upload`, {
         method: "POST",
         headers,
-        body: JSON.stringify({ url, post_id: 0, source, type }), // post_id=0 = pas encore sauvegardé
+        body: JSON.stringify({ url, type, source }),
       });
       const d = await r.json();
       const finalUrl = d.mediaUrl || url;
       setAttachedMedia({ media_url: finalUrl, media_type: type, media_source: source });
     } catch {
-      // Si Cloudinary échoue, on garde l'URL originale
       setAttachedMedia({ media_url: url, media_type: type, media_source: source });
     }
     setAttaching(false);
