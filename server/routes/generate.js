@@ -3,7 +3,6 @@ import OpenAI     from "openai";
 import db         from "../db.js";
 import jwt        from "jsonwebtoken";
 import { v2 as cloudinary } from "cloudinary";
-import fetch      from "node-fetch";
 
 cloudinary.config({
   cloud_name:  process.env.CLOUDINARY_CLOUD_NAME,
