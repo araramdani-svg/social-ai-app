@@ -31,7 +31,10 @@ const uploadToCloudinary = async (url, options = {}) => {
 const router = express.Router();
 
 const langName = (lang) => ({ fr:"French", es:"Spanish", de:"German", it:"Italian", pt:"Portuguese" }[lang] || "English");
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({ 
+  apiKey:       process.env.OPENAI_API_KEY,
+  organization: process.env.OPENAI_ORG_ID,
+});
 
 // ─── Middleware auth ───────────────────────────────────────────────────────────
 const authenticateToken = (req, res, next) => {
