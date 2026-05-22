@@ -613,26 +613,26 @@ export default function Create({
               ) : (
                 <>
                   <div style={{ display:"flex", gap:6, marginBottom:10 }}>
-                    {[["illustrative","🎨 Illustrative"],["visual","💬 Citation"]].map(([k,l]) => (
+                    {[["illustrative",`🎨 ${tr(trendsLang,"styleModern")}`],["visual","💬 Citation"]].map(([k,l]) => (
                       <button key={k} style={{ flex:1, padding:"7px 6px", borderRadius:8, border:`1px solid ${imgTab===k?"rgba(239,68,68,0.5)":"rgba(255,255,255,0.08)"}`, background: imgTab===k?"rgba(239,68,68,0.1)":"transparent", color: imgTab===k?"#ef4444":"#475569", fontSize:10, fontWeight:700, cursor:"pointer" }} onClick={() => setImgTab(k)}>{l}</button>
                     ))}
                   </div>
                   {imgTab === "illustrative" && (
                     <div style={{ display:"flex", gap:4, marginBottom:10 }}>
-                      {[["illustrative","Modern"],["abstract","Abstract"],["photo","Photo"]].map(([k,l]) => (
+                      {[["illustrative",tr(trendsLang,"styleModern")],["abstract",tr(trendsLang,"styleAbstract")],["photo",tr(trendsLang,"stylePhoto")]].map(([k,l]) => (
                         <button key={k} style={{ flex:1, padding:"5px 4px", borderRadius:6, border:`1px solid ${imgType===k?"rgba(239,68,68,0.4)":"rgba(255,255,255,0.06)"}`, background: imgType===k?"rgba(239,68,68,0.08)":"transparent", color: imgType===k?"#ef4444":"#475569", fontSize:9, fontWeight:700, cursor:"pointer" }} onClick={() => setImgType(k)}>{l}</button>
                       ))}
                     </div>
                   )}
                   <div style={{ display:"flex", gap:4, marginBottom:12 }}>
-                    {[["square","⬛ Carré 1:1"],["linkedin","▬ LinkedIn"]].map(([k,l]) => (
+                    {[["square",tr(trendsLang,"formatSquare")],["linkedin",tr(trendsLang,"formatLinkedin")]].map(([k,l]) => (
                       <button key={k} style={{ flex:1, padding:"5px 4px", borderRadius:6, border:`1px solid ${imgFormat===k?"rgba(139,92,246,0.4)":"rgba(255,255,255,0.06)"}`, background: imgFormat===k?"rgba(139,92,246,0.08)":"transparent", color: imgFormat===k?"#a78bfa":"#475569", fontSize:9, fontWeight:700, cursor:"pointer" }} onClick={() => setImgFormat(k)}>{l}</button>
                     ))}
                   </div>
                   <motion.button whileHover={{ scale:1.01 }} whileTap={{ scale:0.98 }}
                     style={{ ...st.button, margin:0, width:"100%", fontSize:12, opacity: imgLoading ? 0.7 : 1, background: imgTab === "visual" ? "linear-gradient(135deg,#0f172a,#1e293b)" : "linear-gradient(135deg,#7c3aed,#6d28d9)", border: imgTab === "visual" ? "1px solid rgba(239,68,68,0.3)" : "none" }}
                     disabled={imgLoading} onClick={() => generateImage(imgTab)}>
-                    {imgLoading ? `⏳ ${tr(trendsLang,"ui.generating")}` : imgTab === "visual" ? "💬 Generate Quote Visual" : "🎨 Generate Image"}
+                    {imgLoading ? `⏳ ${tr(trendsLang,"ui.generating")}` : imgTab === "visual" ? `💬 ${tr(trendsLang,"ui.generateQuote")}` : `🎨 ${tr(trendsLang,"ui.generateImage")}`}
                   </motion.button>
                   {imgResult && (
                     <motion.div initial={{ opacity:0, y:6 }} animate={{ opacity:1, y:0 }} style={{ marginTop:12, borderRadius:10, overflow:"hidden", border:"1px solid rgba(255,255,255,0.08)" }}>
@@ -652,11 +652,11 @@ export default function Create({
             </motion.div>
           )}
 
-          {/* ── Media Library ─────────────────────────────────────────────── */}
+          {/* ── Photos Library ────────────────────────────────────────────── */}
           {post && post.length >= 30 && (
             <motion.div initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} style={{ ...st.card, marginTop:0, padding:16 }}>
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
-                <div style={{ color:"#475569", fontSize:9, fontWeight:700, letterSpacing:"2px" }}>📸 {tr(trendsLang,"ui.mediaLibrary")}</div>
+                <div style={{ color:"#475569", fontSize:9, fontWeight:700, letterSpacing:"2px" }}>📷 {tr(trendsLang,"ui.mediaLibrary")} — PHOTOS</div>
                 <span style={{ color:"#334155", fontSize:9 }}>Pexels · Unsplash</span>
               </div>
               <motion.button whileHover={{ scale:1.01 }} whileTap={{ scale:0.98 }}
@@ -671,53 +671,67 @@ export default function Create({
               )}
               {mediaResult && (
                 <>
-                  <div style={{ display:"flex", gap:6, marginTop:10, marginBottom:8 }}>
-                    {[["photo",`📷 Photos (${mediaResult.photos?.length || 0})`],["video",`🎬 Vidéos (${mediaResult.videos?.length || 0})`]].map(([k,l]) => (
-                      <button key={k} style={{ flex:1, padding:"6px", borderRadius:8, border:`1px solid ${mediaTab===k?"rgba(3,105,161,0.5)":"rgba(255,255,255,0.08)"}`, background: mediaTab===k?"rgba(3,105,161,0.1)":"transparent", color: mediaTab===k?"#38bdf8":"#475569", fontSize:10, fontWeight:700, cursor:"pointer" }} onClick={() => { setMediaTab(k); setMediaCount(6); }}>{l}</button>
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:5, marginTop:10 }}>
+                    {(mediaResult.photos || []).slice(0, mediaCount).map(photo => (
+                      <div key={photo.id} style={{ position:"relative", borderRadius:7, overflow:"hidden", cursor:"pointer", border: selectedMedia?.id === photo.id ? "2px solid #38bdf8" : "2px solid transparent", aspectRatio:"1" }}>
+                        <img src={photo.thumb} alt={photo.alt} style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} onClick={() => setSelectedMedia(selectedMedia?.id === photo.id ? null : photo)} />
+                        <button onClick={() => setFullscreenImg(photo.url)} style={{ position:"absolute", top:3, right:3, background:"rgba(0,0,0,0.6)", border:"none", borderRadius:4, color:"white", fontSize:10, cursor:"pointer", padding:"2px 5px" }}>⛶</button>
+                        <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"rgba(0,0,0,0.6)", padding:"2px 4px", fontSize:7, color:"#94a3b8" }}>{photo.source}</div>
+                        {selectedMedia?.id === photo.id && <div style={{ position:"absolute", top:3, left:3, background:"#38bdf8", borderRadius:"50%", width:16, height:16, display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, fontWeight:900, color:"#000" }}>✓</div>}
+                      </div>
                     ))}
                   </div>
-                  {mediaTab === "photo" && (
-                    <>
-                      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:5 }}>
-                        {(mediaResult.photos || []).slice(0, mediaCount).map(photo => (
-                          <div key={photo.id} style={{ position:"relative", borderRadius:7, overflow:"hidden", cursor:"pointer", border: selectedMedia?.id === photo.id ? "2px solid #38bdf8" : "2px solid transparent", aspectRatio:"1" }}>
-                            <img src={photo.thumb} alt={photo.alt} style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} onClick={() => setSelectedMedia(selectedMedia?.id === photo.id ? null : photo)} />
-                            <button onClick={() => setFullscreenImg(photo.url)} style={{ position:"absolute", top:3, right:3, background:"rgba(0,0,0,0.6)", border:"none", borderRadius:4, color:"white", fontSize:10, cursor:"pointer", padding:"2px 5px" }}>⛶</button>
-                            <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"rgba(0,0,0,0.6)", padding:"2px 4px", fontSize:7, color:"#94a3b8" }}>{photo.source}</div>
-                            {selectedMedia?.id === photo.id && <div style={{ position:"absolute", top:3, left:3, background:"#38bdf8", borderRadius:"50%", width:16, height:16, display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, fontWeight:900, color:"#000" }}>✓</div>}
-                          </div>
-                        ))}
-                      </div>
-                      {(mediaResult.photos || []).length === 0 && <div style={{ textAlign:"center", color:"#475569", fontSize:12, padding:16 }}>{tr(trendsLang,"ui.noPhotos")}</div>}
-                      {(mediaResult.photos || []).length > mediaCount && (
-                        <button onClick={() => setMediaCount(c => c + 6)} style={{ width:"100%", marginTop:8, padding:"7px", background:"rgba(3,105,161,0.08)", border:"1px solid rgba(3,105,161,0.2)", borderRadius:8, color:"#38bdf8", fontSize:10, fontWeight:700, cursor:"pointer" }}>+ Voir plus</button>
-                      )}
-                    </>
+                  {(mediaResult.photos || []).length === 0 && <div style={{ textAlign:"center", color:"#475569", fontSize:12, padding:16 }}>{tr(trendsLang,"ui.noPhotos")}</div>}
+                  {(mediaResult.photos || []).length > mediaCount && (
+                    <button onClick={() => setMediaCount(c => c + 6)} style={{ width:"100%", marginTop:8, padding:"7px", background:"rgba(3,105,161,0.08)", border:"1px solid rgba(3,105,161,0.2)", borderRadius:8, color:"#38bdf8", fontSize:10, fontWeight:700, cursor:"pointer" }}>+ {tr(trendsLang,"ui.seeMore")}</button>
                   )}
-                  {mediaTab === "video" && (
-                    <>
-                      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
-                        {(mediaResult.videos || []).slice(0, mediaCount).map(video => (
-                          <div key={video.id} style={{ position:"relative", borderRadius:8, overflow:"hidden", cursor:"pointer", border: selectedMedia?.id === video.id ? "2px solid #38bdf8" : "2px solid transparent", aspectRatio:"16/9" }}>
-                            <img src={video.thumb} alt="video" style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} onClick={() => setSelectedMedia(selectedMedia?.id === video.id ? null : video)} />
-                            <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", pointerEvents:"none" }}>
-                              <div style={{ background:"rgba(0,0,0,0.6)", borderRadius:"50%", width:28, height:28, display:"flex", alignItems:"center", justifyContent:"center", fontSize:12 }}>▶️</div>
-                            </div>
-                            <button onClick={() => setFullscreenImg(video.thumb)} style={{ position:"absolute", top:3, right:3, background:"rgba(0,0,0,0.6)", border:"none", borderRadius:4, color:"white", fontSize:10, cursor:"pointer", padding:"2px 5px" }}>⛶</button>
-                            <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"rgba(0,0,0,0.6)", padding:"2px 4px", fontSize:7, color:"#94a3b8" }}>{video.duration}s · {video.source}</div>
-                            {selectedMedia?.id === video.id && <div style={{ position:"absolute", top:3, left:3, background:"#38bdf8", borderRadius:"50%", width:16, height:16, display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, fontWeight:900, color:"#000" }}>✓</div>}
-                          </div>
-                        ))}
-                      </div>
-                      {(mediaResult.videos || []).length === 0 && <div style={{ textAlign:"center", color:"#475569", fontSize:12, padding:16 }}>{tr(trendsLang,"ui.noVideos")}</div>}
-                      {(mediaResult.videos || []).length > mediaCount && (
-                        <button onClick={() => setMediaCount(c => c + 4)} style={{ width:"100%", marginTop:8, padding:"7px", background:"rgba(3,105,161,0.08)", border:"1px solid rgba(3,105,161,0.2)", borderRadius:8, color:"#38bdf8", fontSize:10, fontWeight:700, cursor:"pointer" }}>+ Voir plus</button>
-                      )}
-                    </>
-                  )}
-                  {selectedMedia && (
+                  {selectedMedia?.type !== "video" && selectedMedia && (
                     <motion.div initial={{ opacity:0, y:4 }} animate={{ opacity:1, y:0 }} style={{ marginTop:10, background:"rgba(3,105,161,0.06)", border:"1px solid rgba(3,105,161,0.2)", borderRadius:10, padding:"10px 12px" }}>
-                      <div style={{ color:"#38bdf8", fontSize:10, fontWeight:700, marginBottom:6 }}>✓ {selectedMedia.type === "video" ? tr(trendsLang,"ui.videoSelected") : tr(trendsLang,"ui.photoSelected")}</div>
+                      <div style={{ color:"#38bdf8", fontSize:10, fontWeight:700, marginBottom:6 }}>✓ {tr(trendsLang,"ui.photoSelected")}</div>
+                      <div style={{ display:"flex", gap:6 }}>
+                        <a href={selectedMedia.url} target="_blank" rel="noreferrer" style={{ flex:1, textAlign:"center", padding:"7px", background:"rgba(3,105,161,0.15)", border:"1px solid rgba(3,105,161,0.3)", borderRadius:8, color:"#38bdf8", fontSize:10, fontWeight:700, textDecoration:"none" }}>⬇️ {tr(trendsLang,"ui.downloadImage")}</a>
+                        <a href={selectedMedia.link} target="_blank" rel="noreferrer" style={{ flex:1, textAlign:"center", padding:"7px", background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:8, color:"#475569", fontSize:10, fontWeight:700, textDecoration:"none" }}>🔗 Source</a>
+                      </div>
+                    </motion.div>
+                  )}
+                </>
+              )}
+            </motion.div>
+          )}
+
+          {/* ── Videos Library ────────────────────────────────────────────── */}
+          {post && post.length >= 30 && (
+            <motion.div initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} style={{ ...st.card, marginTop:0, padding:16 }}>
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
+                <div style={{ color:"#475569", fontSize:9, fontWeight:700, letterSpacing:"2px" }}>🎬 {tr(trendsLang,"ui.mediaLibrary")} — VIDÉOS</div>
+                <span style={{ color:"#334155", fontSize:9 }}>Pexels</span>
+              </div>
+              {!mediaResult ? (
+                <div style={{ textAlign:"center", color:"#334155", fontSize:12, padding:"16px 0" }}>
+                  {tr(trendsLang,"ui.findMedia")} ↑
+                </div>
+              ) : (
+                <>
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
+                    {(mediaResult.videos || []).slice(0, mediaCount).map(video => (
+                      <div key={video.id} style={{ position:"relative", borderRadius:8, overflow:"hidden", cursor:"pointer", border: selectedMedia?.id === video.id ? "2px solid #38bdf8" : "2px solid transparent", aspectRatio:"16/9" }}>
+                        <img src={video.thumb} alt="video" style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} onClick={() => setSelectedMedia(selectedMedia?.id === video.id ? null : video)} />
+                        <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", pointerEvents:"none" }}>
+                          <div style={{ background:"rgba(0,0,0,0.6)", borderRadius:"50%", width:28, height:28, display:"flex", alignItems:"center", justifyContent:"center", fontSize:12 }}>▶️</div>
+                        </div>
+                        <button onClick={() => setFullscreenImg(video.thumb)} style={{ position:"absolute", top:3, right:3, background:"rgba(0,0,0,0.6)", border:"none", borderRadius:4, color:"white", fontSize:10, cursor:"pointer", padding:"2px 5px" }}>⛶</button>
+                        <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"rgba(0,0,0,0.6)", padding:"2px 4px", fontSize:7, color:"#94a3b8" }}>{video.duration}s · {video.source}</div>
+                        {selectedMedia?.id === video.id && <div style={{ position:"absolute", top:3, left:3, background:"#38bdf8", borderRadius:"50%", width:16, height:16, display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, fontWeight:900, color:"#000" }}>✓</div>}
+                      </div>
+                    ))}
+                  </div>
+                  {(mediaResult.videos || []).length === 0 && <div style={{ textAlign:"center", color:"#475569", fontSize:12, padding:16 }}>{tr(trendsLang,"ui.noVideos")}</div>}
+                  {(mediaResult.videos || []).length > mediaCount && (
+                    <button onClick={() => setMediaCount(c => c + 4)} style={{ width:"100%", marginTop:8, padding:"7px", background:"rgba(3,105,161,0.08)", border:"1px solid rgba(3,105,161,0.2)", borderRadius:8, color:"#38bdf8", fontSize:10, fontWeight:700, cursor:"pointer" }}>+ {tr(trendsLang,"ui.seeMore")}</button>
+                  )}
+                  {selectedMedia?.type === "video" && (
+                    <motion.div initial={{ opacity:0, y:4 }} animate={{ opacity:1, y:0 }} style={{ marginTop:10, background:"rgba(3,105,161,0.06)", border:"1px solid rgba(3,105,161,0.2)", borderRadius:10, padding:"10px 12px" }}>
+                      <div style={{ color:"#38bdf8", fontSize:10, fontWeight:700, marginBottom:6 }}>✓ {tr(trendsLang,"ui.videoSelected")}</div>
                       <div style={{ display:"flex", gap:6 }}>
                         <a href={selectedMedia.url} target="_blank" rel="noreferrer" style={{ flex:1, textAlign:"center", padding:"7px", background:"rgba(3,105,161,0.15)", border:"1px solid rgba(3,105,161,0.3)", borderRadius:8, color:"#38bdf8", fontSize:10, fontWeight:700, textDecoration:"none" }}>⬇️ {tr(trendsLang,"ui.downloadImage")}</a>
                         <a href={selectedMedia.link} target="_blank" rel="noreferrer" style={{ flex:1, textAlign:"center", padding:"7px", background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:8, color:"#475569", fontSize:10, fontWeight:700, textDecoration:"none" }}>🔗 Source</a>
