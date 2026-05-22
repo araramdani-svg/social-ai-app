@@ -293,7 +293,7 @@ export default function Analyze({ trendsLang, isMobile, analysis, platformData, 
           {tr(trendsLang,"analyze.tabLinkedin")}
         </button>
         <button style={s.tabBtn(activeTab === "watch")}     onClick={() => setActiveTab("watch")}>
-          🌍 {tr(trendsLang,"analyze.tabWatch") || "Veille"}
+          {tr(trendsLang,"analyze.tabWatch") || "🌍 Veille"}
         </button>
       </div>
 
@@ -304,16 +304,16 @@ export default function Analyze({ trendsLang, isMobile, analysis, platformData, 
           {/* Barre de recherche */}
           <div style={{ display:"flex", gap:8 }}>
             <input
-              style={{ ...s.input, flex:1, fontSize:13 }}
-              placeholder={`🔍 ${tr(trendsLang,"analyze.watchSearch") || "Rechercher un sujet mondial..."}`}
+              style={{ ...s.input, flex:1, fontSize:13, minWidth:0 }}
+              placeholder={tr(trendsLang,"analyze.watchSearch") || "Rechercher un sujet mondial..."}
               value={watchQuery}
               onChange={e => setWatchQuery(e.target.value)}
               onKeyDown={e => e.key === "Enter" && searchWatch()}
             />
-            <button style={{ ...s.btn, padding:"0 20px", whiteSpace:"nowrap" }} onClick={searchWatch} disabled={watchLoading}>
+            <button style={{ ...s.btn, padding:"0 20px", whiteSpace:"nowrap", flexShrink:0 }} onClick={searchWatch} disabled={watchLoading}>
               {watchLoading ? "⏳" : "🔍"}
             </button>
-            <button style={{ ...s.btn, padding:"0 14px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)" }} onClick={() => { setWatchResults(null); loadTrending(); }} title="Tendances du moment">
+            <button style={{ ...s.btn, padding:"0 14px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", flexShrink:0 }} onClick={() => { setWatchResults(null); loadTrending(); }} title="Tendances du moment">
               🔥
             </button>
           </div>
@@ -332,7 +332,7 @@ export default function Analyze({ trendsLang, isMobile, analysis, platformData, 
           {/* Header résultats */}
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
             <div style={{ color:"#475569", fontSize:9, fontWeight:700, letterSpacing:"2px" }}>
-              {watchResults ? `🔍 ${watchResults.total} RÉSULTATS` : "🔥 TENDANCES DU MOMENT"}
+              {watchResults ? `🔍 ${watchResults.total} RÉSULTATS` : tr(trendsLang,"analyze.watchTrending") || "🔥 TENDANCES DU MOMENT"}
             </div>
             {watchResults && (
               <button style={{ background:"none", border:"none", color:"#475569", fontSize:10, cursor:"pointer" }} onClick={() => setWatchResults(null)}>
@@ -364,7 +364,7 @@ export default function Analyze({ trendsLang, isMobile, analysis, platformData, 
                         <div style={{ display:"flex", gap:8, alignItems:"center" }}>
                           <span style={{ background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.15)", borderRadius:10, color:"#ef4444", fontSize:9, fontWeight:700, padding:"2px 8px" }}>{r.source}</span>
                           {r.published && <span style={{ color:"#334155", fontSize:9 }}>{new Date(r.published).toLocaleDateString()}</span>}
-                          <span style={{ color:"#38bdf8", fontSize:9, marginLeft:"auto" }}>↗ Lire</span>
+                          <span style={{ color:"#38bdf8", fontSize:9, marginLeft:"auto" }}>{ tr(trendsLang,"analyze.watchRead") || "Lire" }</span>
                         </div>
                       </div>
                     </div>
