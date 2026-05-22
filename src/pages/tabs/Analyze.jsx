@@ -302,18 +302,25 @@ export default function Analyze({ trendsLang, isMobile, analysis, platformData, 
         <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
 
           {/* Barre de recherche */}
-          <div style={{ display:"flex", gap:8 }}>
+          <div style={{ display:"flex", gap:8, alignItems:"stretch" }}>
             <input
-              style={{ ...s.input, flex:1, fontSize:13, minWidth:0 }}
+              style={{ ...s.input, flex:1, fontSize:14, padding:"12px 16px", minWidth:0, height:48, boxSizing:"border-box" }}
               placeholder={tr(trendsLang,"analyze.watchSearch") || "Rechercher un sujet mondial..."}
               value={watchQuery}
               onChange={e => setWatchQuery(e.target.value)}
               onKeyDown={e => e.key === "Enter" && searchWatch()}
             />
-            <button style={{ ...s.btn, padding:"0 20px", whiteSpace:"nowrap", flexShrink:0 }} onClick={searchWatch} disabled={watchLoading}>
-              {watchLoading ? "⏳" : "🔍"}
+            <button
+              style={{ height:48, padding:"0 24px", background:"linear-gradient(135deg,#dc2626,#991b1b)", border:"none", borderRadius:10, color:"white", fontWeight:700, fontSize:14, cursor:"pointer", flexShrink:0, whiteSpace:"nowrap" }}
+              onClick={searchWatch} disabled={watchLoading}
+            >
+              {watchLoading ? "⏳" : "🔍 Rechercher"}
             </button>
-            <button style={{ ...s.btn, padding:"0 14px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", flexShrink:0 }} onClick={() => { setWatchResults(null); loadTrending(); }} title="Tendances du moment">
+            <button
+              style={{ height:48, width:48, background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.12)", borderRadius:10, color:"white", fontSize:18, cursor:"pointer", flexShrink:0 }}
+              onClick={() => { setWatchResults(null); loadTrending(); }}
+              title="Tendances du moment"
+            >
               🔥
             </button>
           </div>
