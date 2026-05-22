@@ -887,13 +887,15 @@ router.post("/media/attach", authenticateToken, async (req, res) => {
     });
   } catch (err) {
     console.error("Cloudinary media attach error:", err.message);
-    // On garde l'URL originale si l'upload échoue
   }
 
-  await db.query(
-    "UPDATE posts SET media_url=$1, media_type=$2, media_source=$3 WHERE id=$4 AND user_id=$5",
-    [cloudUrl, type, source || "external", post_id, req.user.id]
-  ).catch(e => console.error("DB media attach error:", e.message));
+  // Sauvegarder en base seulement si post_id valide
+  if (post_id && post_id !== 0) {
+    await db.query(
+      "UPDATE posts SET media_url=$1, media_type=$2, media_source=$3 WHERE id=$4 AND user_id=$5",
+      [cloudUrl, type, source || "external", post_id, req.user.id]
+    ).catch(e => console.error("DB media attach error:", e.message));
+  }
 
   res.json({ mediaUrl: cloudUrl, post_id, type, source });
 });

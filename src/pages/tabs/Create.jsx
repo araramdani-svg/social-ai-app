@@ -49,28 +49,43 @@ export default function Create({
   const isPro = plan === "Pro" || plan === "Business" || plan === "Agency";
   const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
-  // Média actif — image générée ou média sélectionné
-  const activeMedia = imgResult
-    ? { media_url: imgResult.imageUrl, media_type: "image", media_source: imgResult.type === "visual" ? "visual" : "dalle" }
-    : selectedMedia
-    ? { media_url: selectedMedia.url, media_type: selectedMedia.type, media_source: selectedMedia.source }
-    : null;
+  // Média attaché au post — persiste jusqu'à sauvegarde ou détachement
+  const [attachedMedia, setAttachedMedia] = useState(null);
+  const [attaching,     setAttaching]     = useState(false);
 
-  // Wrapper savePost pour inclure le média
+  // Attacher un média : upload sur Cloudinary via media/attach puis stocker l'URL permanente
+  const attachMedia = async (url, type, source) => {
+    setAttaching(true);
+    try {
+      // On upload sur Cloudinary pour avoir une URL permanente
+      const r = await fetch(`${API}/generate/media/attach`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ url, post_id: 0, source, type }), // post_id=0 = pas encore sauvegardé
+      });
+      const d = await r.json();
+      const finalUrl = d.mediaUrl || url;
+      setAttachedMedia({ media_url: finalUrl, media_type: type, media_source: source });
+    } catch {
+      // Si Cloudinary échoue, on garde l'URL originale
+      setAttachedMedia({ media_url: url, media_type: type, media_source: source });
+    }
+    setAttaching(false);
+  };
+
+  // Wrapper savePost pour inclure le média attaché
   const handleSave = async () => {
-    if (!activeMedia) { savePost(); return; }
-    // On appelle savePost normalement, puis on met à jour le post avec le média
+    if (!attachedMedia) { savePost(); return; }
     await savePost();
-    // Récupérer le dernier post sauvegardé et lui attacher le média
     try {
       const postsRes = await fetch(`${API}/posts`, { headers });
       const posts = await postsRes.json();
       const lastPost = posts?.[0];
-      if (lastPost?.id && activeMedia.media_url) {
+      if (lastPost?.id && attachedMedia.media_url) {
         await fetch(`${API}/generate/media/attach`, {
           method: "POST",
           headers,
-          body: JSON.stringify({ url: activeMedia.media_url, post_id: lastPost.id, source: activeMedia.media_source, type: activeMedia.media_type }),
+          body: JSON.stringify({ url: attachedMedia.media_url, post_id: lastPost.id, source: attachedMedia.media_source, type: attachedMedia.media_type }),
         });
       }
     } catch {}
@@ -466,6 +481,18 @@ export default function Create({
             {/* Actions */}
             {post && (
               <>
+                {/* Badge média attaché */}
+                {attachedMedia && (
+                  <div style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 12px", background:"rgba(34,197,94,0.06)", border:"1px solid rgba(34,197,94,0.2)", borderRadius:10, marginBottom:6 }}>
+                    <img src={attachedMedia.media_url} alt="média" style={{ width:32, height:32, objectFit:"cover", borderRadius:6, flexShrink:0 }} />
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ color:"#22c55e", fontSize:10, fontWeight:700 }}>🖼️ Média attaché</div>
+                      <div style={{ color:"#475569", fontSize:9, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{attachedMedia.media_source} · {attachedMedia.media_type}</div>
+                    </div>
+                    <button onClick={() => setAttachedMedia(null)} style={{ background:"none", border:"none", color:"#475569", fontSize:14, cursor:"pointer", padding:"0 4px" }}>✕</button>
+                  </div>
+                )}
+
                 {/* Actions principales */}
                 <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
                   {[
@@ -669,21 +696,30 @@ export default function Create({
                       </div>
                       {imgResult.quote && <div style={{ padding:"8px 12px", background:"rgba(0,0,0,0.3)", fontSize:10, color:"#64748b", fontStyle:"italic" }}>"{imgResult.quote}"</div>}
                       {imgResult.coreIdea && <div style={{ padding:"8px 12px", background:"rgba(0,0,0,0.3)", fontSize:10, color:"#64748b" }}>💡 {imgResult.coreIdea}</div>}
-                      <button
-                        onClick={async () => {
-                          try {
-                            const res = await fetch(imgResult.imageUrl);
-                            const blob = await res.blob();
-                            const url = URL.createObjectURL(blob);
-                            const a = document.createElement("a");
-                            a.href = url; a.download = `growthpilot-${imgTab}-${imgFormat}.png`; a.click();
-                            URL.revokeObjectURL(url);
-                          } catch { window.open(imgResult.imageUrl, "_blank"); }
-                        }}
-                        style={{ display:"block", width:"100%", textAlign:"center", padding:"10px", background:"rgba(239,68,68,0.1)", color:"#ef4444", fontSize:11, fontWeight:700, border:"none", cursor:"pointer", borderRadius:"0 0 10px 10px" }}
-                      >
-                        ⬇️ {tr(trendsLang,"ui.downloadImage")}
-                      </button>
+                      <div style={{ display:"flex", gap:0 }}>
+                        <button
+                          onClick={() => attachMedia(imgResult.imageUrl, "image", imgResult.type === "visual" ? "visual" : "dalle")}
+                          disabled={attaching || attachedMedia?.media_url === imgResult.imageUrl}
+                          style={{ flex:1, textAlign:"center", padding:"10px", background: attachedMedia?.media_url === imgResult.imageUrl ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: attachedMedia?.media_url === imgResult.imageUrl ? "#22c55e" : "#ef4444", fontSize:11, fontWeight:700, border:"none", cursor:"pointer", borderRadius:"0 0 0 10px" }}
+                        >
+                          {attaching ? "⏳..." : attachedMedia?.media_url === imgResult.imageUrl ? tr(trendsLang,"ui.attached") : tr(trendsLang,"ui.attachMedia")}
+                        </button>
+                        <button
+                          onClick={async () => {
+                            try {
+                              const res = await fetch(imgResult.imageUrl);
+                              const blob = await res.blob();
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement("a");
+                              a.href = url; a.download = `growthpilot-${imgTab}-${imgFormat}.png`; a.click();
+                              URL.revokeObjectURL(url);
+                            } catch { window.open(imgResult.imageUrl, "_blank"); }
+                          }}
+                          style={{ flex:1, textAlign:"center", padding:"10px", background:"rgba(255,255,255,0.03)", color:"#64748b", fontSize:11, fontWeight:700, border:"none", borderLeft:"1px solid rgba(255,255,255,0.06)", cursor:"pointer", borderRadius:"0 0 10px 0" }}
+                        >
+                          ⬇️ {tr(trendsLang,"ui.downloadImage")}
+                        </button>
+                      </div>
                     </motion.div>
                   )}
                 </>
@@ -728,7 +764,14 @@ export default function Create({
                     <motion.div initial={{ opacity:0, y:4 }} animate={{ opacity:1, y:0 }} style={{ marginTop:10, background:"rgba(3,105,161,0.06)", border:"1px solid rgba(3,105,161,0.2)", borderRadius:10, padding:"10px 12px" }}>
                       <div style={{ color:"#38bdf8", fontSize:10, fontWeight:700, marginBottom:6 }}>✓ {tr(trendsLang,"ui.photoSelected")}</div>
                       <div style={{ display:"flex", gap:6 }}>
-                        <a href={selectedMedia.url} target="_blank" rel="noreferrer" style={{ flex:1, textAlign:"center", padding:"7px", background:"rgba(3,105,161,0.15)", border:"1px solid rgba(3,105,161,0.3)", borderRadius:8, color:"#38bdf8", fontSize:10, fontWeight:700, textDecoration:"none" }}>⬇️ {tr(trendsLang,"ui.downloadImage")}</a>
+                        <button
+                          onClick={() => attachMedia(selectedMedia.url, "photo", selectedMedia.source)}
+                          disabled={attaching || attachedMedia?.media_url === selectedMedia.url}
+                          style={{ flex:1, textAlign:"center", padding:"7px", background: attachedMedia?.media_url === selectedMedia.url ? "rgba(34,197,94,0.15)" : "rgba(3,105,161,0.15)", border:`1px solid ${attachedMedia?.media_url === selectedMedia.url ? "rgba(34,197,94,0.3)" : "rgba(3,105,161,0.3)"}`, borderRadius:8, color: attachedMedia?.media_url === selectedMedia.url ? "#22c55e" : "#38bdf8", fontSize:10, fontWeight:700, cursor:"pointer" }}
+                        >
+                          {attaching ? "⏳..." : attachedMedia?.media_url === selectedMedia.url ? tr(trendsLang,"ui.attached") : tr(trendsLang,"ui.attachMedia")}
+                        </button>
+                        <a href={selectedMedia.url} target="_blank" rel="noreferrer" style={{ flex:1, textAlign:"center", padding:"7px", background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:8, color:"#475569", fontSize:10, fontWeight:700, textDecoration:"none" }}>⬇️ {tr(trendsLang,"ui.downloadImage")}</a>
                         <a href={selectedMedia.link} target="_blank" rel="noreferrer" style={{ flex:1, textAlign:"center", padding:"7px", background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:8, color:"#475569", fontSize:10, fontWeight:700, textDecoration:"none" }}>🔗 Source</a>
                       </div>
                     </motion.div>
@@ -772,7 +815,14 @@ export default function Create({
                     <motion.div initial={{ opacity:0, y:4 }} animate={{ opacity:1, y:0 }} style={{ marginTop:10, background:"rgba(3,105,161,0.06)", border:"1px solid rgba(3,105,161,0.2)", borderRadius:10, padding:"10px 12px" }}>
                       <div style={{ color:"#38bdf8", fontSize:10, fontWeight:700, marginBottom:6 }}>✓ {tr(trendsLang,"ui.videoSelected")}</div>
                       <div style={{ display:"flex", gap:6 }}>
-                        <a href={selectedMedia.url} target="_blank" rel="noreferrer" style={{ flex:1, textAlign:"center", padding:"7px", background:"rgba(3,105,161,0.15)", border:"1px solid rgba(3,105,161,0.3)", borderRadius:8, color:"#38bdf8", fontSize:10, fontWeight:700, textDecoration:"none" }}>⬇️ {tr(trendsLang,"ui.downloadImage")}</a>
+                        <button
+                          onClick={() => attachMedia(selectedMedia.thumb, "video", selectedMedia.source)}
+                          disabled={attaching || attachedMedia?.media_url === selectedMedia.thumb}
+                          style={{ flex:1, textAlign:"center", padding:"7px", background: attachedMedia?.media_url === selectedMedia.thumb ? "rgba(34,197,94,0.15)" : "rgba(3,105,161,0.15)", border:`1px solid ${attachedMedia?.media_url === selectedMedia.thumb ? "rgba(34,197,94,0.3)" : "rgba(3,105,161,0.3)"}`, borderRadius:8, color: attachedMedia?.media_url === selectedMedia.thumb ? "#22c55e" : "#38bdf8", fontSize:10, fontWeight:700, cursor:"pointer" }}
+                        >
+                          {attaching ? "⏳..." : attachedMedia?.media_url === selectedMedia.thumb ? tr(trendsLang,"ui.attached") : tr(trendsLang,"ui.attachMedia")}
+                        </button>
+                        <a href={selectedMedia.url} target="_blank" rel="noreferrer" style={{ flex:1, textAlign:"center", padding:"7px", background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:8, color:"#475569", fontSize:10, fontWeight:700, textDecoration:"none" }}>⬇️ {tr(trendsLang,"ui.downloadImage")}</a>
                         <a href={selectedMedia.link} target="_blank" rel="noreferrer" style={{ flex:1, textAlign:"center", padding:"7px", background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:8, color:"#475569", fontSize:10, fontWeight:700, textDecoration:"none" }}>🔗 Source</a>
                       </div>
                     </motion.div>
