@@ -244,13 +244,19 @@ export default function AutoRepost({
                       <div style={{ color:"#475569", fontSize:12, lineHeight:1.5, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>
                         {text}
                       </div>
-                      <div style={{ display:"flex", gap:8, marginTop:6 }}>
+                      <div style={{ display:"flex", gap:8, marginTop:6, alignItems:"center" }}>
                         <span style={{ color:"#334155", fontSize:10 }}>{timeAgo(p.created_at || p.createdAt, trendsLang)}</span>
                         <span style={{ color:"#334155", fontSize:10 }}>·</span>
                         <span style={{ color:"#334155", fontSize:10 }}>{text.trim().split(/\s+/).length} words</span>
                         {p.project_name && <span style={{ color:"#7c3aed", fontSize:10 }}>· 📁 {p.project_name}</span>}
+                        {p.media_url && <span style={{ color:"#38bdf8", fontSize:10 }}>· 🖼️</span>}
                       </div>
                     </div>
+                    {p.media_url && (
+                      <div style={{ flexShrink:0, width:44, height:44, borderRadius:6, overflow:"hidden", border:"1px solid rgba(255,255,255,0.08)" }}>
+                        <img src={p.media_url} alt="media" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                      </div>
+                    )}
                     <span style={scoreBadge(p._score)}>{p._score}</span>
                   </div>
                 </div>
@@ -275,6 +281,16 @@ export default function AutoRepost({
                 </span>
                 <span style={scoreBadge(previewPost._score)}>{previewPost._score}</span>
               </div>
+
+              {/* Thumbnail média dans le preview */}
+              {previewPost.media_url && (
+                <div style={{ marginBottom:12, borderRadius:10, overflow:"hidden", border:"1px solid rgba(255,255,255,0.08)", position:"relative" }}>
+                  <img src={previewPost.media_url} alt="media" style={{ width:"100%", maxHeight:160, objectFit:"cover", display:"block" }} />
+                  <div style={{ position:"absolute", bottom:6, right:6, background:"rgba(0,0,0,0.6)", borderRadius:6, padding:"2px 8px", fontSize:9, color:"#94a3b8" }}>
+                    {previewPost.media_source || "media"} · {previewPost.media_type || "image"}
+                  </div>
+                </div>
+              )}
 
               <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:10, padding:14, maxHeight:260, overflowY:"auto", marginBottom:14 }}>
                 <div style={{ color:"#e2e8f0", fontSize:13, lineHeight:1.8, whiteSpace:"pre-wrap" }}>

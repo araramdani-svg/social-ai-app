@@ -306,6 +306,14 @@ export default function Calendar({ trendsLang, isMobile, post, setPost, setTab, 
                   onDragStart={e => onDragStart(e, card.id)}
                 >
                   <div style={{ color:"#e2e8f0", fontSize:12, fontWeight:600, marginBottom:6, lineHeight:1.4 }}>{card.title}</div>
+
+                  {/* Thumbnail média */}
+                  {card.media_url && (
+                    <div style={{ marginBottom:6, borderRadius:6, overflow:"hidden", height:60, border:"1px solid rgba(255,255,255,0.06)" }}>
+                      <img src={card.media_url} alt="media" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                    </div>
+                  )}
+
                   <div style={{ display:"flex", gap:6, alignItems:"center", marginBottom:8 }}>
                     <span style={s.platBadge()}>{card.platform}</span>
                     <span style={{ color:"#334155", fontSize:10 }}>

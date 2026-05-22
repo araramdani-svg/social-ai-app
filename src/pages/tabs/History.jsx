@@ -142,6 +142,14 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
                   }}
                 >
                   <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12 }}>
+
+                    {/* Thumbnail média */}
+                    {h.media_url && (
+                      <div style={{ flexShrink:0, width:56, height:56, borderRadius:8, overflow:"hidden", border:"1px solid rgba(255,255,255,0.08)" }}>
+                        <img src={h.media_url} alt="media" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                      </div>
+                    )}
+
                     <div style={{ flex:1, minWidth:0 }}>
                       {/* Titre + projet */}
                       <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6, flexWrap:"wrap" }}>
@@ -160,6 +168,8 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
                         overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical" }}>
                         {h.content?.slice(0, 160)}...
                       </p>
+                    </div>
+
                     </div>
 
                     {/* Date + actions */}
