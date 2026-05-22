@@ -226,6 +226,32 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
   const [activeTab, setActiveTab]   = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  // ── Reset password via lien email ─────────────────────────────────────────
+  const [resetToken,    setResetToken]    = useState(() => new URLSearchParams(window.location.search).get("reset"));
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetStatus,   setResetStatus]   = useState(null);
+  const [resetLoading,  setResetLoading]  = useState(false);
+
+  const handleResetPassword = async () => {
+    if (resetPassword.length < 8) { setResetStatus({ type:"error", msg:"Minimum 8 caractères" }); return; }
+    setResetLoading(true);
+    try {
+      const r = await fetch("https://social-ai-app-production.up.railway.app/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type":"application/json" },
+        body: JSON.stringify({ token: resetToken, newPassword: resetPassword }),
+      });
+      const d = await r.json();
+      if (d.success) {
+        setResetStatus({ type:"success", msg:"✅ Mot de passe mis à jour ! Vous pouvez vous connecter." });
+        setTimeout(() => { setResetToken(null); window.history.replaceState({}, "", "/"); openLogin(); }, 2000);
+      } else {
+        setResetStatus({ type:"error", msg: d.message || "Erreur" });
+      }
+    } catch { setResetStatus({ type:"error", msg:"Erreur serveur" }); }
+    setResetLoading(false);
+  };
+
   useGoogleFonts();
   useStyles();
   useSEO(activeLang);
@@ -290,6 +316,43 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
 
   return (
     <div style={{ minHeight:"100vh", background:"#050a14", color:"#e2e8f0", fontFamily:"'Inter', sans-serif", overflowX:"clip" }}>
+
+      {/* ── Modale Reset Password ─────────────────────────────────────────── */}
+      {resetToken && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+          <div style={{ background:"linear-gradient(145deg,#1a2235,#111827)", border:"1px solid rgba(220,38,38,0.2)", borderLeft:"3px solid #ef4444", borderRadius:16, padding:32, width:"100%", maxWidth:420, color:"white" }}>
+            <div style={{ fontSize:32, textAlign:"center", marginBottom:16 }}>🔑</div>
+            <h2 style={{ margin:"0 0 8px", fontSize:20, textAlign:"center" }}>Nouveau mot de passe</h2>
+            <p style={{ color:"#64748b", fontSize:13, textAlign:"center", marginBottom:24 }}>Choisissez un nouveau mot de passe pour votre compte GrowthPILOT.</p>
+
+            {resetStatus && (
+              <div style={{ padding:"10px 14px", borderRadius:10, marginBottom:16, fontSize:13, fontWeight:700,
+                background: resetStatus.type === "success" ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
+                color: resetStatus.type === "success" ? "#22c55e" : "#ef4444",
+                border: `1px solid ${resetStatus.type === "success" ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)"}`,
+              }}>
+                {resetStatus.msg}
+              </div>
+            )}
+
+            <input
+              type="password"
+              placeholder="Nouveau mot de passe (min. 8 caractères)"
+              value={resetPassword}
+              onChange={e => setResetPassword(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleResetPassword()}
+              style={{ display:"block", width:"100%", padding:"12px 16px", background:"#0f172a", border:"1px solid rgba(220,38,38,0.2)", borderRadius:10, color:"white", fontSize:14, boxSizing:"border-box", marginBottom:16, outline:"none" }}
+            />
+            <button
+              onClick={handleResetPassword}
+              disabled={resetLoading}
+              style={{ width:"100%", padding:"14px", background:"linear-gradient(135deg,#dc2626,#991b1b)", border:"none", borderRadius:10, color:"white", fontWeight:800, fontSize:14, cursor:"pointer", opacity: resetLoading ? 0.7 : 1 }}
+            >
+              {resetLoading ? "⏳ Enregistrement..." : "✅ Enregistrer le nouveau mot de passe"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── GRID BACKGROUND ── */}
       <div style={{

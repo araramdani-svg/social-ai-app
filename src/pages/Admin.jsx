@@ -473,6 +473,7 @@ export default function Admin({ token, logout }) {
         headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
         body: JSON.stringify({ email: u.email }),
       });
+      await logAction("resend_verification", u.id, { email: u.email });
       setConfirm({ message: `✅ Email de vérification renvoyé à ${u.email}`, onConfirm: () => setConfirm(null) });
     } catch {
       setConfirm({ message: `❌ Erreur lors de l'envoi`, onConfirm: () => setConfirm(null) });

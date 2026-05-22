@@ -579,6 +579,39 @@ router.post("/onboarding-done", authenticateToken, async (req, res) => {
   }
 });
 
+// ─── POST /auth/reset-password — Valider token + nouveau mdp ─────────────────
+router.post("/reset-password", async (req, res) => {
+  const { token, newPassword } = req.body;
+  if (!token || !newPassword || newPassword.length < 8) {
+    return res.status(400).json({ message: "Token et mot de passe requis (min. 8 caractères)" });
+  }
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    if (decoded.type !== "password_reset") return res.status(400).json({ message: "Token invalide" });
+
+    const userRes = await db.query(
+      "SELECT id, email, password_reset_token, password_reset_expires FROM users WHERE id=$1",
+      [decoded.id]
+    );
+    if (!userRes.rows.length) return res.status(404).json({ message: "Utilisateur introuvable" });
+
+    const user = userRes.rows[0];
+    if (user.password_reset_token !== token) return res.status(400).json({ message: "Token invalide ou déjà utilisé" });
+    if (new Date(user.password_reset_expires) < new Date()) return res.status(400).json({ message: "Lien expiré. Demandez un nouveau reset." });
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await db.query(
+      "UPDATE users SET password=$1, password_reset_token=NULL, password_reset_expires=NULL WHERE id=$2",
+      [hashed, decoded.id]
+    );
+
+    res.json({ success: true, message: "Mot de passe mis à jour avec succès" });
+  } catch (err) {
+    if (err.name === "TokenExpiredError") return res.status(400).json({ message: "Lien expiré. Demandez un nouveau reset." });
+    res.status(400).json({ message: "Token invalide" });
+  }
+});
+
 // ─── POST /auth/admin/force-password — Reset forcé par l'admin ───────────────
 router.post("/admin/force-password", authenticateToken, async (req, res) => {
   try {
@@ -600,6 +633,14 @@ router.post("/admin/force-password", authenticateToken, async (req, res) => {
     );
 
     if (!result.rows.length) return res.status(404).json({ message: "User not found" });
+
+    // Log l'action
+    try {
+      await db.query(
+        `INSERT INTO admin_logs (admin_id, action, target_user_id, details, created_at) VALUES ($1, $2, $3, $4, NOW())`,
+        [req.user.id, "force_password_reset", userId, JSON.stringify({ email: result.rows[0].email })]
+      );
+    } catch {}
 
     // Envoyer une alerte à l'user
     try {
@@ -647,6 +688,14 @@ router.post("/admin/send-reset", authenticateToken, async (req, res) => {
       "UPDATE users SET password_reset_token=$1, password_reset_expires=$2 WHERE id=$3",
       [resetToken, new Date(Date.now() + 3600000), userId]
     );
+
+    // Log l'action
+    try {
+      await db.query(
+        `INSERT INTO admin_logs (admin_id, action, target_user_id, details, created_at) VALUES ($1, $2, $3, $4, NOW())`,
+        [req.user.id, "send_password_reset", userId, JSON.stringify({ email })]
+      );
+    } catch {}
 
     const resetUrl = `https://www.aigrowthpilot.app?reset=${resetToken}`;
 
