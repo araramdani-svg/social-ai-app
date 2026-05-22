@@ -939,17 +939,17 @@ router.post("/media", authenticateToken, async (req, res) => {
   // Fetch Pexels + Unsplash en parallèle
   const [pexelsPhotos, pexelsVideos, unsplashPhotos] = await Promise.allSettled([
     // Pexels photos
-    fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=6&orientation=landscape`, {
+    fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=15&orientation=landscape`, {
       headers: { Authorization: process.env.PEXELS_API_KEY },
     }).then(r => r.json()),
 
     // Pexels vidéos
-    type !== "photo" ? fetch(`https://api.pexels.com/videos/search?query=${encodeURIComponent(query)}&per_page=4`, {
+    type !== "photo" ? fetch(`https://api.pexels.com/videos/search?query=${encodeURIComponent(query)}&per_page=8`, {
       headers: { Authorization: process.env.PEXELS_API_KEY },
     }).then(r => r.json()) : Promise.resolve({ videos: [] }),
 
     // Unsplash photos
-    fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=6&orientation=landscape`, {
+    fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=15&orientation=landscape`, {
       headers: { Authorization: `Client-ID ${process.env.UNSPLASH_ACCESS_KEY}` },
     }).then(r => r.json()),
   ]);
