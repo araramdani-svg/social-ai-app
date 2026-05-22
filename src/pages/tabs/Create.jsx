@@ -76,19 +76,11 @@ export default function Create({
   // Wrapper savePost pour inclure le média attaché
   const handleSave = async () => {
     if (!attachedMedia) { savePost(); return; }
-    await savePost();
-    try {
-      const postsRes = await fetch(`${API}/posts`, { headers });
-      const posts = await postsRes.json();
-      const lastPost = posts?.[0];
-      if (lastPost?.id && attachedMedia.media_url) {
-        await fetch(`${API}/generate/media/attach`, {
-          method: "POST",
-          headers,
-          body: JSON.stringify({ url: attachedMedia.media_url, post_id: lastPost.id, source: attachedMedia.media_source, type: attachedMedia.media_type }),
-        });
-      }
-    } catch {}
+    await savePost({
+      media_url:    attachedMedia.media_url,
+      media_type:   attachedMedia.media_type,
+      media_source: attachedMedia.media_source,
+    });
   };
 
   const generateImage = async (type) => {
