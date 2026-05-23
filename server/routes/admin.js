@@ -4,6 +4,7 @@
 
 import express from "express";
 import jwt     from "jsonwebtoken";
+import bcrypt  from "bcryptjs";
 import db      from "../db.js";
 
 const router = express.Router();
@@ -28,7 +29,7 @@ const logAction = async (adminId, action, targetId = null, details = null) => {
     await db.query(
       `INSERT INTO admin_logs (admin_id, action, target_user_id, details, created_at)
        VALUES ($1, $2, $3, $4, NOW())`,
-      [adminId, action, targetId, details ? JSON.stringify(details) : null]
+      [adminId, action, targetId ? parseInt(targetId) : null, details ? JSON.stringify(details) : null]
     );
   } catch (err) {
     console.error("admin log error:", err.message);
@@ -59,17 +60,16 @@ router.post("/admins", adminAuth, async (req, res) => {
   try {
     const exists = await db.query("SELECT id FROM users WHERE email=$1", [email]);
     if (exists.rows.length) return res.status(400).json({ message: "Cet email existe déjà" });
-    const bcryptLib = await import("bcryptjs");
-    const hashed = await bcryptLib.default.hash(password, 10);
+    const hashed = await bcrypt.hash(password, 10);
     const result = await db.query(
-      "INSERT INTO users (email, password, plan, email_verified, is_admin, created_at) VALUES ($1, $2, 'Agency', true, true, NOW()) RETURNING id, email",
+      "INSERT INTO users (email, password, plan, email_verified, is_admin) VALUES ($1, $2, 'Agency', true, true) RETURNING id, email",
       [email, hashed]
     );
     await logAction(req.user.id, "create_admin", result.rows[0].id, { email });
     res.json({ success: true, admin: result.rows[0] });
   } catch (err) {
     console.error("Create admin error:", err.message);
-    res.status(500).json({ error: "Failed to create admin" });
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -95,8 +95,7 @@ router.patch("/admins/:id/password", adminAuth, async (req, res) => {
   if (!newPassword || newPassword.length < 8)
     return res.status(400).json({ message: "Mot de passe min. 8 caractères" });
   try {
-    const bcryptLib = await import("bcryptjs");
-    const hashed = await bcryptLib.default.hash(newPassword, 10);
+    const hashed = await bcrypt.hash(newPassword, 10);
     const result = await db.query(
       "UPDATE users SET password=$1 WHERE id=$2 RETURNING email",
       [hashed, req.params.id]
@@ -106,7 +105,7 @@ router.patch("/admins/:id/password", adminAuth, async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     console.error("Reset admin password error:", err.message);
-    res.status(500).json({ error: "Failed to reset password" });
+    res.status(500).json({ error: err.message });
   }
 });
 
