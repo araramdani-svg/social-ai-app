@@ -725,4 +725,20 @@ router.post("/admin/send-reset", authenticateToken, async (req, res) => {
   }
 });
 
+// ─── POST /auth/user-log — Logger une action utilisateur ─────────────────────
+router.post("/user-log", authenticateToken, async (req, res) => {
+  const { action, details } = req.body;
+  if (!action) return res.status(400).json({ error: "action required" });
+  try {
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+      [req.user.id, action, details ? JSON.stringify(details) : null]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error("user-log error:", err.message);
+    res.status(500).json({ error: "Log failed" });
+  }
+});
+
 export default router;

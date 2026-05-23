@@ -54,6 +54,15 @@ export default function Calendar({ trendsLang, isMobile, post, setPost, setTab, 
     "Authorization": `Bearer ${token}`,
   }), [token]);
 
+  const logUserAction = useCallback((action, details = {}) => {
+    if (!token) return;
+    fetch(`${API}/auth/user-log`, {
+      method: "POST",
+      headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+      body: JSON.stringify({ action, details }),
+    }).catch(() => {});
+  }, [token]);
+
   // ─── Chargement initial + migration localStorage ──────────────────────────
   useEffect(() => {
     const init = async () => {
@@ -113,6 +122,7 @@ export default function Calendar({ trendsLang, isMobile, post, setPost, setTab, 
         setCards(prev => [...prev, data.card]);
         setNewTitle(""); setAddingTo(null);
         showToast("✓ " + tr(trendsLang,"calendar.addCard"));
+        logUserAction("calendar_add_card", { title: newTitle.trim(), col: colId, platform: newPlat });
       }
     } catch (err) {
       console.error(err);
@@ -134,6 +144,7 @@ export default function Calendar({ trendsLang, isMobile, post, setPost, setTab, 
       if (res.ok) {
         setCards(prev => [...prev, data.card]);
         showToast("✓ " + tr(trendsLang,"calendar.importPost"));
+        logUserAction("calendar_import_post", { col: colId, platform: newPlat });
       }
     } catch (err) { console.error(err); }
   };
@@ -143,7 +154,7 @@ export default function Calendar({ trendsLang, isMobile, post, setPost, setTab, 
     // Optimistic update
     setCards(prev => prev.filter(c => c.id !== id));
     try {
-      await fetch(`${API}/calendar/${id}`, { method: "DELETE", headers: authHeaders() });
+      await fetch(`${API}/calendar/${id}`, { method: "DELETE", headers: authHeaders() }); logUserAction("calendar_delete_card", { id });
     } catch (err) {
       console.error(err);
       showToast(tr(trendsLang, "calendar.errorDelete"));

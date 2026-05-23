@@ -215,69 +215,139 @@ function EditUserModal({ user, token, onClose, onSave }) {
   );
 }
 
-// ─── Onglet Historique ────────────────────────────────────────────────────────
-function LogsTab({ token }) {
-  const [logs,  setLogs]  = useState([]);
+// ─── Onglet Admin Events ─────────────────────────────────────────────────────
+function AdminLogsTab({ token }) {
+  const [logs, setLogs] = useState([]);
   const [pages, setPages] = useState(1);
-  const [page,  setPage]  = useState(1);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [filter, setFilter] = useState("");
 
   const fetchLogs = useCallback(async (p = 1) => {
     setLoading(true);
     const r = await fetch(`${API}/admin/logs?page=${p}`, { headers:{ Authorization:`Bearer ${token}` } });
     const d = await r.json();
-    setLogs(d.logs || []);
-    setPages(d.pages || 1);
-    setPage(p);
+    setLogs(d.logs || []); setPages(d.pages || 1); setPage(p);
     setLoading(false);
   }, [token]);
 
   useEffect(() => { fetchLogs(); }, []);
 
+  const filtered = filter ? logs.filter(l => l.action?.includes(filter) || l.target_email?.includes(filter)) : logs;
+
   return (
     <div>
+      <div style={{ display:"flex", gap:8, marginBottom:12 }}>
+        <input style={{ ...s.input, flex:1, fontSize:12 }} placeholder="🔍 Filtrer par action ou email..." value={filter} onChange={e => setFilter(e.target.value)} />
+        <button style={{ ...s.btnSm, padding:"0 14px" }} onClick={() => fetchLogs(1)}>🔄</button>
+      </div>
       <div style={{ ...s.card, padding:0, overflow:"hidden" }}>
         <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
-          <thead>
-            <tr style={{ background:"rgba(255,255,255,0.03)" }}>
-              {["DATE","ACTION","CIBLE","DÉTAILS"].map(h => (
-                <th key={h} style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"14px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
+          <thead><tr style={{ background:"rgba(255,255,255,0.03)" }}>
+            {["DATE","ACTION","CIBLE","DÉTAILS"].map(h => <th key={h} style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"14px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>{h}</th>)}
+          </tr></thead>
           <tbody>
             {loading && <tr><td colSpan={4} style={{ textAlign:"center", padding:40, color:"#475569" }}>Chargement...</td></tr>}
-            {!loading && logs.length === 0 && <tr><td colSpan={4} style={{ textAlign:"center", padding:40, color:"#475569" }}>Aucune action enregistrée</td></tr>}
-            {logs.map(log => {
+            {!loading && filtered.length === 0 && <tr><td colSpan={4} style={{ textAlign:"center", padding:40, color:"#475569" }}>Aucune action enregistrée</td></tr>}
+            {filtered.map(log => {
               const cfg = ACTION_LABELS[log.action] || { label: log.action, color:"#94a3b8" };
               return (
                 <tr key={log.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
-                  <td style={{ padding:"12px 16px", color:"#475569", whiteSpace:"nowrap" }}>
-                    {new Date(log.created_at).toLocaleString("fr-FR")}
-                  </td>
-                  <td style={{ padding:"12px 16px" }}>
-                    <span style={{ background:`${cfg.color}15`, border:`1px solid ${cfg.color}40`, borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:700, color:cfg.color }}>{cfg.label}</span>
-                  </td>
+                  <td style={{ padding:"12px 16px", color:"#475569", whiteSpace:"nowrap", fontSize:11 }}>{new Date(log.created_at).toLocaleString("fr-FR")}</td>
+                  <td style={{ padding:"12px 16px" }}><span style={{ background:`${cfg.color}15`, border:`1px solid ${cfg.color}40`, borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:700, color:cfg.color }}>{cfg.label}</span></td>
                   <td style={{ padding:"12px 16px", color:"#94a3b8" }}>{log.target_email || `#${log.target_user_id}` || "—"}</td>
-                  <td style={{ padding:"12px 16px", color:"#64748b", fontSize:11 }}>
-                    {log.details ? (() => { try { const d = typeof log.details === "string" ? JSON.parse(log.details) : log.details; return JSON.stringify(d, null, 0).slice(0, 80); } catch { return String(log.details).slice(0, 80); } })() : "—"}
-                  </td>
+                  <td style={{ padding:"12px 16px", color:"#64748b", fontSize:11 }}>{log.details ? (() => { try { const d = typeof log.details === "string" ? JSON.parse(log.details) : log.details; return JSON.stringify(d, null, 0).slice(0, 80); } catch { return String(log.details).slice(0, 80); } })() : "—"}</td>
                 </tr>
               );
             })}
           </tbody>
         </table>
-        {pages > 1 && (
-          <div style={{ display:"flex", justifyContent:"center", gap:8, padding:16, borderTop:"1px solid rgba(255,255,255,0.06)" }}>
-            {Array.from({ length: pages }, (_, i) => i + 1).map(p => (
-              <button key={p} style={{ ...s.btnSm, background:page===p?"rgba(220,38,38,0.15)":"rgba(255,255,255,0.04)", border:`1px solid ${page===p?"rgba(220,38,38,0.4)":"rgba(255,255,255,0.1)"}`, color:page===p?"#ef4444":"#64748b", width:32, height:32 }} onClick={()=>fetchLogs(p)}>{p}</button>
-            ))}
-          </div>
-        )}
+        {pages > 1 && <div style={{ display:"flex", justifyContent:"center", gap:8, padding:16 }}>{Array.from({ length: pages }, (_, i) => i + 1).map(p => <button key={p} style={{ ...s.btnSm, background:page===p?"rgba(220,38,38,0.15)":"rgba(255,255,255,0.04)", border:`1px solid ${page===p?"rgba(220,38,38,0.4)":"rgba(255,255,255,0.1)"}`, color:page===p?"#ef4444":"#64748b", width:32, height:32 }} onClick={()=>fetchLogs(p)}>{p}</button>)}</div>}
       </div>
     </div>
   );
 }
+
+// ─── Onglet Users Events ──────────────────────────────────────────────────────
+const USER_ACTION_LABELS = {
+  generate_post:        { label:"✍️ Génération",    color:"#ef4444" },
+  save_post:            { label:"💾 Sauvegarde",     color:"#22c55e" },
+  copy_post:            { label:"📋 Copie",          color:"#64748b" },
+  rewrite_post:         { label:"🔄 Réécriture",     color:"#f59e0b" },
+  analyze_post:         { label:"🔍 Analyse",        color:"#8b5cf6" },
+  create_project:       { label:"📁 Projet créé",    color:"#3b82f6" },
+  delete_project:       { label:"🗑️ Projet supprimé",color:"#ef4444" },
+  rename_project:       { label:"✏️ Projet renommé", color:"#f59e0b" },
+  calendar_add_card:    { label:"📅 Cal. Ajout",     color:"#22c55e" },
+  calendar_delete_card: { label:"📅 Cal. Supprim.",  color:"#ef4444" },
+  calendar_move_card:   { label:"📅 Cal. Déplace",   color:"#f59e0b" },
+  calendar_edit_card:   { label:"📅 Cal. Édition",   color:"#64748b" },
+  calendar_import_post: { label:"📅 Cal. Import",    color:"#8b5cf6" },
+  update_profile:       { label:"👤 Profil modifié", color:"#3b82f6" },
+  change_password:      { label:"🔑 Mdp changé",     color:"#f97316" },
+  change_email:         { label:"📧 Email changé",   color:"#f97316" },
+  generate_image:       { label:"🖼️ Image générée",  color:"#8b5cf6" },
+  attach_media:         { label:"📎 Média attaché",  color:"#38bdf8" },
+  watch_search:         { label:"🌍 Veille",         color:"#22c55e" },
+};
+
+function UserLogsTab({ token }) {
+  const [logs, setLogs] = useState([]);
+  const [pages, setPages] = useState(1);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [filterAction, setFilterAction] = useState("");
+  const [filterUser, setFilterUser] = useState("");
+
+  const fetchLogs = useCallback(async (p = 1) => {
+    setLoading(true);
+    const params = new URLSearchParams({ page: p });
+    if (filterAction) params.append("action", filterAction);
+    if (filterUser)   params.append("user_id", filterUser);
+    const r = await fetch(`${API}/admin/user-logs?${params}`, { headers:{ Authorization:`Bearer ${token}` } });
+    const d = await r.json();
+    setLogs(d.logs || []); setPages(d.pages || 1); setPage(p);
+    setLoading(false);
+  }, [token, filterAction, filterUser]);
+
+  useEffect(() => { fetchLogs(1); }, []);
+
+  return (
+    <div>
+      <div style={{ display:"flex", gap:8, marginBottom:12, flexWrap:"wrap" }}>
+        <input style={{ ...s.input, flex:1, minWidth:160, fontSize:12 }} placeholder="🔍 Filtrer par action..." value={filterAction} onChange={e => setFilterAction(e.target.value)} />
+        <input style={{ ...s.input, width:120, fontSize:12 }} placeholder="User ID" value={filterUser} onChange={e => setFilterUser(e.target.value)} />
+        <button style={{ ...s.btnSm, padding:"0 14px", background:"rgba(220,38,38,0.1)", border:"1px solid rgba(220,38,38,0.3)", color:"#ef4444" }} onClick={() => fetchLogs(1)}>🔍</button>
+        <button style={{ ...s.btnSm, padding:"0 14px" }} onClick={() => { setFilterAction(""); setFilterUser(""); }}>✕</button>
+      </div>
+      <div style={{ ...s.card, padding:0, overflow:"hidden" }}>
+        <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+          <thead><tr style={{ background:"rgba(255,255,255,0.03)" }}>
+            {["DATE","USER","PLAN","ACTION","DÉTAILS"].map(h => <th key={h} style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"14px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>{h}</th>)}
+          </tr></thead>
+          <tbody>
+            {loading && <tr><td colSpan={5} style={{ textAlign:"center", padding:40, color:"#475569" }}>Chargement...</td></tr>}
+            {!loading && logs.length === 0 && <tr><td colSpan={5} style={{ textAlign:"center", padding:40, color:"#475569" }}>Aucune action utilisateur enregistrée</td></tr>}
+            {logs.map(log => {
+              const cfg = USER_ACTION_LABELS[log.action] || { label: log.action, color:"#94a3b8" };
+              return (
+                <tr key={log.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+                  <td style={{ padding:"12px 16px", color:"#475569", whiteSpace:"nowrap", fontSize:11 }}>{new Date(log.created_at).toLocaleString("fr-FR")}</td>
+                  <td style={{ padding:"12px 16px", color:"#94a3b8", fontSize:11 }}>{log.user_email || `#${log.user_id}`}</td>
+                  <td style={{ padding:"12px 16px" }}>{log.user_plan && <span style={{ background:"rgba(139,92,246,0.1)", border:"1px solid rgba(139,92,246,0.3)", borderRadius:10, padding:"2px 8px", fontSize:9, fontWeight:700, color:"#a78bfa" }}>{log.user_plan}</span>}</td>
+                  <td style={{ padding:"12px 16px" }}><span style={{ background:`${cfg.color}15`, border:`1px solid ${cfg.color}40`, borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:700, color:cfg.color }}>{cfg.label}</span></td>
+                  <td style={{ padding:"12px 16px", color:"#64748b", fontSize:11 }}>{log.details ? (() => { try { const d = typeof log.details === "string" ? JSON.parse(log.details) : log.details; return JSON.stringify(d, null, 0).slice(0, 80); } catch { return String(log.details).slice(0, 80); } })() : "—"}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        {pages > 1 && <div style={{ display:"flex", justifyContent:"center", gap:8, padding:16 }}>{Array.from({ length: pages }, (_, i) => i + 1).map(p => <button key={p} style={{ ...s.btnSm, background:page===p?"rgba(220,38,38,0.15)":"rgba(255,255,255,0.04)", border:`1px solid ${page===p?"rgba(220,38,38,0.4)":"rgba(255,255,255,0.1)"}`, color:page===p?"#ef4444":"#64748b", width:32, height:32 }} onClick={()=>fetchLogs(p)}>{p}</button>)}</div>}
+      </div>
+    </div>
+  );
+}
+
 
 // ─── Onglet Visites ───────────────────────────────────────────────────────────
 const PAGE_LABELS = { landing:"🏠 Landing", generator:"⚡ App", pricing:"💳 Pricing", auth:"🔑 Auth", other:"📄 Autre" };
@@ -389,8 +459,10 @@ export default function Admin({ token, logout }) {
   const [total,     setTotal]     = useState(0);
   const [pages,     setPages]     = useState(1);
   const [page,      setPage]      = useState(1);
-  const [search,    setSearch]    = useState("");
-  const [planFilter,setPlanFilter]= useState("");
+  const [search,      setSearch]      = useState("");
+  const [planFilter,  setPlanFilter]  = useState("");
+  const [banFilter,   setBanFilter]   = useState("all");
+  const [verifyFilter,setVerifyFilter]= useState("all");
   const [loading,   setLoading]   = useState(false);
   const [editUser,  setEditUser]  = useState(null);
   const [resetUser, setResetUser] = useState(null);
@@ -407,8 +479,10 @@ export default function Admin({ token, logout }) {
   const fetchUsers = useCallback(async (p = 1) => {
     setLoading(true);
     const params = new URLSearchParams({ page: p });
-    if (search)     params.append("search", search);
-    if (planFilter) params.append("plan",   planFilter);
+    if (search)                  params.append("search", search);
+    if (planFilter)              params.append("plan",   planFilter);
+    if (banFilter !== "all")     params.append("banned", banFilter === "banned" ? "true" : "false");
+    if (verifyFilter !== "all")  params.append("verified", verifyFilter === "verified" ? "true" : "false");
     const r = await fetch(`${API}/admin/users?${params}`, { headers });
     const d = await r.json();
     setUsers(d.users || []);
@@ -416,10 +490,10 @@ export default function Admin({ token, logout }) {
     setPages(d.pages || 1);
     setPage(p);
     setLoading(false);
-  }, [token, search, planFilter]);
+  }, [token, search, planFilter, banFilter, verifyFilter]);
 
   useEffect(() => { fetchStats(); fetchUsers(); }, []);
-  useEffect(() => { fetchUsers(1); }, [search, planFilter]);
+  useEffect(() => { fetchUsers(1); }, [search, planFilter, banFilter, verifyFilter]);
 
   const logAction = async (action, targetUserId, details = {}) => {
     try {
@@ -530,9 +604,10 @@ export default function Admin({ token, logout }) {
 
         {/* Tabs */}
         <div style={{ display:"flex", borderBottom:"1px solid rgba(255,255,255,0.07)", marginBottom:24 }}>
-          <button style={s.tabBtn(tab==="users")}     onClick={()=>setTab("users")}>👥 Utilisateurs</button>
-          <button style={s.tabBtn(tab==="logs")}      onClick={()=>setTab("logs")}>📋 Historique</button>
-          <button style={s.tabBtn(tab==="analytics")} onClick={()=>setTab("analytics")}>📊 Visites</button>
+          <button style={s.tabBtn(tab==="users")}      onClick={()=>setTab("users")}>👥 Utilisateurs</button>
+          <button style={s.tabBtn(tab==="adminlogs")}  onClick={()=>setTab("adminlogs")}>🛡️ Admin Events</button>
+          <button style={s.tabBtn(tab==="userlogs")}   onClick={()=>setTab("userlogs")}>👤 Users Events</button>
+          <button style={s.tabBtn(tab==="analytics")}  onClick={()=>setTab("analytics")}>📊 Visites</button>
         </div>
 
         {/* ── Onglet Users ── */}
@@ -549,6 +624,18 @@ export default function Admin({ token, logout }) {
                 {["", ...PLANS].map(p => (
                   <button key={p||"all"} style={{ ...s.btnSm, background:planFilter===p?"rgba(220,38,38,0.15)":"rgba(255,255,255,0.04)", border:`1px solid ${planFilter===p?"rgba(220,38,38,0.4)":"rgba(255,255,255,0.1)"}`, color:planFilter===p?"#ef4444":"#64748b", padding:"7px 12px", fontSize:11 }} onClick={()=>setPlanFilter(p)}>{p||"Tous"}</button>
                 ))}
+              </div>
+              <div style={{ display:"flex", gap:6 }}>
+                <select style={{ background:"#0f172a", border:"1px solid rgba(220,38,38,0.2)", borderRadius:8, color:"white", fontSize:11, padding:"6px 10px", cursor:"pointer" }} value={banFilter} onChange={e => setBanFilter(e.target.value)}>
+                  <option value="all">Tous statuts</option>
+                  <option value="active">✅ Actifs</option>
+                  <option value="banned">🚫 Bannis</option>
+                </select>
+                <select style={{ background:"#0f172a", border:"1px solid rgba(220,38,38,0.2)", borderRadius:8, color:"white", fontSize:11, padding:"6px 10px", cursor:"pointer" }} value={verifyFilter} onChange={e => setVerifyFilter(e.target.value)}>
+                  <option value="all">Tous comptes</option>
+                  <option value="verified">✓ Vérifiés</option>
+                  <option value="unverified">⚠ Non vérifiés</option>
+                </select>
               </div>
               <button
                 style={{ ...s.btnSm, background:"rgba(34,197,94,0.08)", border:"1px solid rgba(34,197,94,0.25)", color:"#22c55e", padding:"7px 14px", fontSize:11, marginLeft:"auto" }}
@@ -633,8 +720,11 @@ export default function Admin({ token, logout }) {
           </>
         )}
 
-        {/* ── Onglet Historique ── */}
-        {tab === "logs" && <LogsTab token={token} />}
+        {/* ── Onglet Admin Events ── */}
+        {tab === "adminlogs" && <AdminLogsTab token={token} />}
+
+        {/* ── Onglet Users Events ── */}
+        {tab === "userlogs" && <UserLogsTab token={token} />}
 
         {/* ── Onglet Visites ── */}
         {tab === "analytics" && <AnalyticsTab token={token} />}
