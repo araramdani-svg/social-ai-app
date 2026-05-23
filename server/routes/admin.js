@@ -39,7 +39,7 @@ const logAction = async (adminId, action, targetId = null, details = null) => {
 router.get("/admins", adminAuth, async (req, res) => {
   try {
     const result = await db.query(
-      `SELECT id, email, plan, created_at, is_admin FROM users 
+      `SELECT id, email, plan, is_admin FROM users 
        WHERE is_admin = true OR email = $1
        ORDER BY id ASC`,
       [ADMIN_EMAIL]

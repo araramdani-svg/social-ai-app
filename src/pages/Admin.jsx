@@ -568,7 +568,7 @@ function AdminsTab({ token }) {
         <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
           <thead>
             <tr style={{ background:"rgba(255,255,255,0.03)" }}>
-              {["ID","EMAIL","PLAN","CRÉÉ LE","ACTIONS"].map(h => (
+              {["ID","EMAIL","PLAN","ACTIONS"].map(h => (
                 <th key={h} style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"14px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>{h}</th>
               ))}
             </tr>
@@ -583,7 +583,6 @@ function AdminsTab({ token }) {
                 <td style={{ padding:"12px 16px" }}>
                   <span style={{ background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:10, color:"#ef4444", fontSize:10, fontWeight:700, padding:"2px 8px" }}>ADMIN</span>
                 </td>
-                <td style={{ padding:"12px 16px", color:"#475569", fontSize:11 }}>{admin.created_at ? new Date(admin.created_at).toLocaleDateString("fr-FR") : "—"}</td>
                 <td style={{ padding:"12px 16px" }}>
                   <div style={{ display:"flex", gap:6 }}>
                     <button
