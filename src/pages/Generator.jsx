@@ -219,6 +219,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
       fetch(`${API}/tiktok/status`,    { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setTiktokStatus).catch(()=>{});
     }
     const params = new URLSearchParams(window.location.search);
+    if (params.get("reset")) { const resetToken = params.get("reset"); localStorage.removeItem("token"); window.location.href = `/?reset=${resetToken}`; return; }
     if (params.get("linkedin")==="connected") { window.history.replaceState({},""," /"); fetch(`${API}/linkedin/status`,{ headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setLinkedinStatus).catch(()=>{}); }
     if (params.get("twitter")   ==="connected") { window.history.replaceState({},"", "/"); fetch(`${API}/twitter/status`,    { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setTwitterStatus).catch(()=>{}); }
     if (params.get("instagram") ==="connected") { window.history.replaceState({},"", "/"); fetch(`${API}/instagram/status`, { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setInstagramStatus).catch(()=>{}); }
