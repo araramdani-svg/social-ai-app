@@ -163,13 +163,28 @@ function App() {
     setPage("landing");
   };
 
-  const handleLoginSuccess = (newToken, email) => {
+  const handleLoginSuccess = async (newToken, email) => {
     setToken(newToken);
-    if (email === "admin@growthpilot.admin") {
-      setPage("admin");
-    } else {
-      setPage("generator");
-      showToast("✅ Welcome back!", "success");
+    // Vérifier is_admin depuis l'API plutôt que par email hardcodé
+    try {
+      const r = await fetch("https://social-ai-app-production.up.railway.app/auth/me", {
+        headers: { Authorization: `Bearer ${newToken}` }
+      });
+      const user = await r.json();
+      if (user.is_admin || email === "admin@growthpilot.admin") {
+        setPage("admin");
+      } else {
+        setPage("generator");
+        showToast("✅ Welcome back!", "success");
+      }
+    } catch {
+      // Fallback sur l'email
+      if (email === "admin@growthpilot.admin") {
+        setPage("admin");
+      } else {
+        setPage("generator");
+        showToast("✅ Welcome back!", "success");
+      }
     }
   };
 

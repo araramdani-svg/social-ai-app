@@ -16,8 +16,11 @@ const adminAuth = async (req, res, next) => {
   if (!token) return res.status(401).json({ message: "Access denied" });
   try {
     const user = jwt.verify(token, process.env.JWT_SECRET);
-    const result = await db.query("SELECT email FROM users WHERE id=$1", [user.id]);
-    if (result.rows[0]?.email !== ADMIN_EMAIL) return res.status(403).json({ message: "Admin only" });
+    const result = await db.query("SELECT email, is_admin FROM users WHERE id=$1", [user.id]);
+    const row = result.rows[0];
+    if (!row || (row.email !== ADMIN_EMAIL && !row.is_admin)) {
+      return res.status(403).json({ message: "Admin only" });
+    }
     req.user = user;
     next();
   } catch { return res.status(403).json({ message: "Invalid token" }); }
@@ -147,7 +150,7 @@ router.get("/users", adminAuth, async (req, res) => {
     const { search, plan, page = 1, banned, verified } = req.query;
     const limit  = 20;
     const offset = (page - 1) * limit;
-    const conditions = ["email != $1"];
+    const conditions = ["email != $1", "(is_admin IS NULL OR is_admin = false)"];
     const values     = [ADMIN_EMAIL];
     let i = 2;
 
