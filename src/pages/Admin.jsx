@@ -452,9 +452,191 @@ function AnalyticsTab({ token }) {
 }
 
 // ─── Composant principal ──────────────────────────────────────────────────────
+// ─── Onglet Administrateurs ───────────────────────────────────────────────────
+function AdminsTab({ token }) {
+  const API = "https://social-ai-app-production.up.railway.app";
+  const headers = { "Content-Type":"application/json", Authorization:`Bearer ${token}` };
+
+  const [admins,      setAdmins]      = useState([]);
+  const [loading,     setLoading]     = useState(false);
+  const [newEmail,    setNewEmail]    = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [creating,    setCreating]    = useState(false);
+  const [resetAdmin,  setResetAdmin]  = useState(null);
+  const [resetPwd,    setResetPwd]    = useState("");
+  const [resetting,   setResetting]   = useState(false);
+  const [msg,         setMsg]         = useState(null);
+  const [confirm,     setConfirm]     = useState(null);
+
+  const fetchAdmins = async () => {
+    setLoading(true);
+    try {
+      const r = await fetch(`${API}/admin/admins`, { headers: { Authorization:`Bearer ${token}` } });
+      const d = await r.json();
+      setAdmins(d.admins || []);
+    } catch {}
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchAdmins(); }, []);
+
+  const createAdmin = async () => {
+    if (!newEmail || !newPassword || newPassword.length < 8) {
+      setMsg({ type:"error", text:"Email et mot de passe requis (min. 8 caractères)" }); return;
+    }
+    setCreating(true);
+    try {
+      const r = await fetch(`${API}/admin/admins`, {
+        method: "POST", headers,
+        body: JSON.stringify({ email: newEmail, password: newPassword }),
+      });
+      const d = await r.json();
+      if (d.success) {
+        setMsg({ type:"success", text:`✅ Administrateur ${newEmail} créé` });
+        setNewEmail(""); setNewPassword("");
+        fetchAdmins();
+      } else setMsg({ type:"error", text: d.message || "Erreur" });
+    } catch { setMsg({ type:"error", text:"Erreur serveur" }); }
+    setCreating(false);
+  };
+
+  const deleteAdmin = (admin) => {
+    setConfirm({
+      message: `Supprimer l'administrateur ${admin.email} ?`,
+      onConfirm: async () => {
+        setConfirm(null);
+        try {
+          const r = await fetch(`${API}/admin/admins/${admin.id}`, { method:"DELETE", headers: { Authorization:`Bearer ${token}` } });
+          const d = await r.json();
+          if (d.success) { setMsg({ type:"success", text:`✅ Admin supprimé` }); fetchAdmins(); }
+          else setMsg({ type:"error", text: d.message || "Erreur" });
+        } catch { setMsg({ type:"error", text:"Erreur serveur" }); }
+      }
+    });
+  };
+
+  const resetPassword = async () => {
+    if (!resetPwd || resetPwd.length < 8) { setMsg({ type:"error", text:"Min. 8 caractères" }); return; }
+    setResetting(true);
+    try {
+      const r = await fetch(`${API}/admin/admins/${resetAdmin.id}/password`, {
+        method: "PATCH", headers,
+        body: JSON.stringify({ newPassword: resetPwd }),
+      });
+      const d = await r.json();
+      if (d.success) { setMsg({ type:"success", text:`✅ Mot de passe mis à jour` }); setResetAdmin(null); setResetPwd(""); }
+      else setMsg({ type:"error", text: d.message || "Erreur" });
+    } catch { setMsg({ type:"error", text:"Erreur serveur" }); }
+    setResetting(false);
+  };
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+
+      {msg && (
+        <div style={{ padding:"10px 14px", borderRadius:10, fontSize:12, fontWeight:700,
+          background: msg.type==="success" ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
+          color: msg.type==="success" ? "#22c55e" : "#ef4444",
+          border:`1px solid ${msg.type==="success" ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)"}`,
+        }}>
+          {msg.text}
+          <button onClick={() => setMsg(null)} style={{ float:"right", background:"none", border:"none", color:"inherit", cursor:"pointer" }}>✕</button>
+        </div>
+      )}
+
+      {/* Créer un admin */}
+      <div style={{ ...s.card, padding:20 }}>
+        <div style={{ color:"#64748b", fontSize:10, fontWeight:700, letterSpacing:"1.5px", marginBottom:14 }}>➕ CRÉER UN ADMINISTRATEUR</div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr auto", gap:10, alignItems:"end" }}>
+          <div>
+            <div style={{ color:"#64748b", fontSize:10, marginBottom:6 }}>EMAIL</div>
+            <input style={{ ...s.input, marginBottom:0 }} placeholder="admin@exemple.com" value={newEmail} onChange={e => setNewEmail(e.target.value)} />
+          </div>
+          <div>
+            <div style={{ color:"#64748b", fontSize:10, marginBottom:6 }}>MOT DE PASSE</div>
+            <input style={{ ...s.input, marginBottom:0 }} type="password" placeholder="Min. 8 caractères" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+          </div>
+          <button
+            onClick={createAdmin} disabled={creating}
+            style={{ padding:"10px 20px", background:"linear-gradient(135deg,#dc2626,#991b1b)", border:"none", borderRadius:10, color:"white", fontWeight:700, fontSize:13, cursor:"pointer", opacity: creating ? 0.7 : 1, whiteSpace:"nowrap" }}
+          >{creating ? "⏳..." : "✅ Créer"}</button>
+        </div>
+      </div>
+
+      {/* Liste des admins */}
+      <div style={{ ...s.card, padding:0, overflow:"hidden" }}>
+        <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+          <thead>
+            <tr style={{ background:"rgba(255,255,255,0.03)" }}>
+              {["ID","EMAIL","PLAN","CRÉÉ LE","ACTIONS"].map(h => (
+                <th key={h} style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"14px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {loading && <tr><td colSpan={5} style={{ textAlign:"center", padding:40, color:"#475569" }}>Chargement...</td></tr>}
+            {!loading && admins.length === 0 && <tr><td colSpan={5} style={{ textAlign:"center", padding:40, color:"#475569" }}>Aucun administrateur</td></tr>}
+            {admins.map(admin => (
+              <tr key={admin.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+                <td style={{ padding:"12px 16px", color:"#475569" }}>#{admin.id}</td>
+                <td style={{ padding:"12px 16px", color:"#e2e8f0", fontWeight:600 }}>{admin.email}</td>
+                <td style={{ padding:"12px 16px" }}>
+                  <span style={{ background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:10, color:"#ef4444", fontSize:10, fontWeight:700, padding:"2px 8px" }}>ADMIN</span>
+                </td>
+                <td style={{ padding:"12px 16px", color:"#475569", fontSize:11 }}>{admin.created_at ? new Date(admin.created_at).toLocaleDateString("fr-FR") : "—"}</td>
+                <td style={{ padding:"12px 16px" }}>
+                  <div style={{ display:"flex", gap:6 }}>
+                    <button
+                      title="Reset mot de passe"
+                      style={{ ...s.btnSm, background:"rgba(245,158,11,0.1)", border:"1px solid rgba(245,158,11,0.3)", color:"#f59e0b" }}
+                      onClick={() => { setResetAdmin(admin); setResetPwd(""); setMsg(null); }}
+                    >🔑</button>
+                    <button
+                      title="Supprimer l'administrateur"
+                      style={{ ...s.btnSm, background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", color:"#ef4444" }}
+                      onClick={() => deleteAdmin(admin)}
+                    >🗑️</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Modale reset password admin */}
+      {resetAdmin && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center" }}>
+          <div style={{ background:"linear-gradient(145deg,#1a2235,#111827)", border:"1px solid rgba(220,38,38,0.2)", borderRadius:16, padding:28, width:"100%", maxWidth:400, color:"white" }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+              <div style={{ color:"#ef4444", fontWeight:800 }}>🔑 Reset mot de passe admin</div>
+              <button onClick={() => setResetAdmin(null)} style={{ background:"none", border:"none", color:"#475569", fontSize:18, cursor:"pointer" }}>✕</button>
+            </div>
+            <div style={{ color:"#64748b", fontSize:12, marginBottom:14 }}>👤 {resetAdmin.email}</div>
+            <input
+              type="password"
+              placeholder="Nouveau mot de passe (min. 8 caractères)"
+              value={resetPwd}
+              onChange={e => setResetPwd(e.target.value)}
+              style={{ display:"block", width:"100%", padding:"11px 14px", background:"#0f172a", border:"1px solid rgba(220,38,38,0.2)", borderRadius:10, color:"white", fontSize:13, boxSizing:"border-box", marginBottom:14 }}
+            />
+            <button
+              onClick={resetPassword} disabled={resetting}
+              style={{ width:"100%", padding:"11px", background:"linear-gradient(135deg,#dc2626,#991b1b)", border:"none", borderRadius:10, color:"white", fontWeight:700, fontSize:13, cursor:"pointer", opacity: resetting ? 0.7 : 1 }}
+            >{resetting ? "⏳..." : "🔐 Enregistrer"}</button>
+          </div>
+        </div>
+      )}
+
+      {confirm && <ConfirmModal message={confirm.message} onConfirm={confirm.onConfirm} onCancel={() => setConfirm(null)} />}
+    </div>
+  );
+}
+
 export default function Admin({ token, logout }) {
   const [tab,         setTab]         = useState("users");
   const [logsSubTab,  setLogsSubTab]  = useState("admin");
+  const [usersSubTab, setUsersSubTab] = useState("users");
   const [stats,     setStats]     = useState(null);
   const [users,     setUsers]     = useState([]);
   const [total,     setTotal]     = useState(0);
@@ -612,14 +794,23 @@ export default function Admin({ token, logout }) {
 
         {/* Tabs */}
         <div style={{ display:"flex", borderBottom:"1px solid rgba(255,255,255,0.07)", marginBottom:24 }}>
-          <button style={s.tabBtn(tab==="users")}      onClick={()=>setTab("users")}>👥 Utilisateurs</button>
+          <button style={s.tabBtn(tab==="users")}      onClick={()=>setTab("users")}>👥 Comptes</button>
           <button style={s.tabBtn(tab==="logs")}       onClick={()=>setTab("logs")}>📋 Historique</button>
           <button style={s.tabBtn(tab==="analytics")}  onClick={()=>setTab("analytics")}>📊 Visites</button>
         </div>
 
-        {/* ── Onglet Users ── */}
+        {/* ── Onglet Comptes ── */}
         {tab === "users" && (
           <>
+            {/* Sous-onglets */}
+            <div style={{ display:"flex", gap:4, marginBottom:16, borderBottom:"1px solid rgba(255,255,255,0.06)" }}>
+              <button style={{ ...s.tabBtn(usersSubTab==="users"), fontSize:11, padding:"8px 16px" }} onClick={() => setUsersSubTab("users")}>👥 Utilisateurs</button>
+              <button style={{ ...s.tabBtn(usersSubTab==="admins"), fontSize:11, padding:"8px 16px" }} onClick={() => setUsersSubTab("admins")}>🛡️ Administrateurs</button>
+            </div>
+
+            {usersSubTab === "admins" && <AdminsTab token={token} />}
+
+            {usersSubTab === "users" && (<>
             <div style={{ display:"flex", gap:12, marginBottom:20, flexWrap:"wrap", alignItems:"center" }}>
               <input
                 style={{ ...s.input, width:260 }}
@@ -726,6 +917,7 @@ export default function Admin({ token, logout }) {
                 </div>
               )}
             </div>
+            </>)}
           </>
         )}
 

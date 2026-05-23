@@ -34,6 +34,79 @@ const logAction = async (adminId, action, targetId = null, details = null) => {
     console.error("admin log error:", err.message);
   }
 };
+
+// ─── GET /admin/admins — Liste des administrateurs ───────────────────────────
+router.get("/admins", adminAuth, async (req, res) => {
+  try {
+    const result = await db.query(
+      "SELECT id, email, plan, created_at FROM users WHERE email LIKE '%@growthpilot%' ORDER BY id ASC"
+    );
+    res.json({ admins: result.rows });
+  } catch (err) {
+    console.error("Get admins error:", err.message);
+    res.status(500).json({ error: "Failed to fetch admins" });
+  }
+});
+
+// ─── POST /admin/admins — Créer un administrateur ─────────────────────────────
+router.post("/admins", adminAuth, async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password || password.length < 8)
+    return res.status(400).json({ message: "Email et mot de passe requis (min. 8 caractères)" });
+  try {
+    const exists = await db.query("SELECT id FROM users WHERE email=$1", [email]);
+    if (exists.rows.length) return res.status(400).json({ message: "Cet email existe déjà" });
+    const bcryptLib = await import("bcryptjs");
+    const hashed = await bcryptLib.default.hash(password, 10);
+    const result = await db.query(
+      "INSERT INTO users (email, password, plan, email_verified, created_at) VALUES ($1, $2, 'Agency', true, NOW()) RETURNING id, email",
+      [email, hashed]
+    );
+    logAction(req.user.id, "create_admin", result.rows[0].id, { email });
+    res.json({ success: true, admin: result.rows[0] });
+  } catch (err) {
+    console.error("Create admin error:", err.message);
+    res.status(500).json({ error: "Failed to create admin" });
+  }
+});
+
+// ─── DELETE /admin/admins/:id — Supprimer un administrateur ───────────────────
+router.delete("/admins/:id", adminAuth, async (req, res) => {
+  try {
+    const userRes = await db.query("SELECT email FROM users WHERE id=$1", [req.params.id]);
+    if (!userRes.rows.length) return res.status(404).json({ message: "Admin introuvable" });
+    if (userRes.rows[0].email === ADMIN_EMAIL)
+      return res.status(403).json({ message: "Impossible de supprimer l'admin principal" });
+    await db.query("DELETE FROM users WHERE id=$1", [req.params.id]);
+    logAction(req.user.id, "delete_admin", req.params.id, { email: userRes.rows[0].email });
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Delete admin error:", err.message);
+    res.status(500).json({ error: "Failed to delete admin" });
+  }
+});
+
+// ─── PATCH /admin/admins/:id/password — Reset mdp admin ───────────────────────
+router.patch("/admins/:id/password", adminAuth, async (req, res) => {
+  const { newPassword } = req.body;
+  if (!newPassword || newPassword.length < 8)
+    return res.status(400).json({ message: "Mot de passe min. 8 caractères" });
+  try {
+    const bcryptLib = await import("bcryptjs");
+    const hashed = await bcryptLib.default.hash(newPassword, 10);
+    const result = await db.query(
+      "UPDATE users SET password=$1 WHERE id=$2 RETURNING email",
+      [hashed, req.params.id]
+    );
+    if (!result.rows.length) return res.status(404).json({ message: "Admin introuvable" });
+    logAction(req.user.id, "reset_admin_password", req.params.id, { email: result.rows[0].email });
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Reset admin password error:", err.message);
+    res.status(500).json({ error: "Failed to reset password" });
+  }
+});
+
 router.get("/stats", adminAuth, async (req, res) => {
   try {
     const [usersRes, plansRes, postsRes, activeRes, bannedRes] = await Promise.all([
