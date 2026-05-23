@@ -268,8 +268,8 @@ router.get("/logs", adminAuth, async (req, res) => {
     const offset = (page - 1) * limit;
 
     // Actions admin vs user
-    const ADMIN_ACTIONS = ["create_admin","delete_admin","reset_admin_password","force_password_reset","send_password_reset"];
-    const USER_ACTIONS  = ["edit_user","ban_user","unban_user","reset_quota","delete_user","verify_email","resend_verification"];
+    const ADMIN_ACTIONS = ["create_admin","delete_admin","reset_admin_password"];
+    const USER_ACTIONS  = ["edit_user","ban_user","unban_user","reset_quota","delete_user","verify_email","resend_verification","force_password_reset","send_password_reset"];
 
     let whereClause = "";
     if (type === "admin") whereClause = `WHERE l.action = ANY(ARRAY[${ADMIN_ACTIONS.map(a => `'${a}'`).join(",")}])`;

@@ -246,7 +246,7 @@ function AdminLogsTab({ token }) {
     <div>
       <div style={{ display:"flex", gap:8, marginBottom:12 }}>
         <input style={{ ...s.input, flex:1, fontSize:12 }} placeholder="🔍 Filtrer par action ou email..." value={filter} onChange={e => setFilter(e.target.value)} />
-        <button style={{ ...s.btnSm, padding:"0 14px" }} onClick={() => fetchLogs(1)}>🔄</button>
+        <button style={{ ...s.btnSm, padding:"8px 14px", background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)", color:"#64748b" }} onClick={() => fetchLogs(1)}>🔄</button>
       </div>
       <div style={{ ...s.card, padding:0, overflow:"hidden" }}>
         <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
@@ -299,7 +299,7 @@ function UsersActionsTab({ token }) {
     <div>
       <div style={{ display:"flex", gap:8, marginBottom:12 }}>
         <input style={{ ...s.input, flex:1, fontSize:12 }} placeholder="🔍 Filtrer par action ou email..." value={filter} onChange={e => setFilter(e.target.value)} />
-        <button style={{ ...s.btnSm, padding:"0 14px" }} onClick={() => fetchLogs(1)}>🔄</button>
+        <button style={{ ...s.btnSm, padding:"8px 14px", background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)", color:"#64748b" }} onClick={() => fetchLogs(1)}>🔄</button>
       </div>
       <div style={{ ...s.card, padding:0, overflow:"hidden" }}>
         <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
