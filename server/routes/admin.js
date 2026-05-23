@@ -39,7 +39,10 @@ const logAction = async (adminId, action, targetId = null, details = null) => {
 router.get("/admins", adminAuth, async (req, res) => {
   try {
     const result = await db.query(
-      "SELECT id, email, plan, created_at FROM users WHERE email LIKE '%@growthpilot%' ORDER BY id ASC"
+      `SELECT id, email, plan, created_at, is_admin FROM users 
+       WHERE is_admin = true OR email = $1
+       ORDER BY id ASC`,
+      [ADMIN_EMAIL]
     );
     res.json({ admins: result.rows });
   } catch (err) {
@@ -59,7 +62,7 @@ router.post("/admins", adminAuth, async (req, res) => {
     const bcryptLib = await import("bcryptjs");
     const hashed = await bcryptLib.default.hash(password, 10);
     const result = await db.query(
-      "INSERT INTO users (email, password, plan, email_verified, created_at) VALUES ($1, $2, 'Agency', true, NOW()) RETURNING id, email",
+      "INSERT INTO users (email, password, plan, email_verified, is_admin, created_at) VALUES ($1, $2, 'Agency', true, true, NOW()) RETURNING id, email",
       [email, hashed]
     );
     logAction(req.user.id, "create_admin", result.rows[0].id, { email });
