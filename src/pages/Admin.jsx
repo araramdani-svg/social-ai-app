@@ -232,7 +232,7 @@ function AdminLogsTab({ token }) {
 
   const fetchLogs = useCallback(async (p = 1) => {
     setLoading(true);
-    const r = await fetch(`${API}/admin/logs?page=${p}`, { headers:{ Authorization:`Bearer ${token}` } });
+    const r = await fetch(`${API}/admin/logs?page=${p}&type=admin`, { headers:{ Authorization:`Bearer ${token}` } });
     const d = await r.json();
     setLogs(d.logs || []); setPages(d.pages || 1); setPage(p);
     setLoading(false);
@@ -252,6 +252,59 @@ function AdminLogsTab({ token }) {
         <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
           <thead><tr style={{ background:"rgba(255,255,255,0.03)" }}>
             {["DATE","ACTION","CIBLE","DÉTAILS"].map(h => <th key={h} style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"14px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>{h}</th>)}
+          </tr></thead>
+          <tbody>
+            {loading && <tr><td colSpan={4} style={{ textAlign:"center", padding:40, color:"#475569" }}>Chargement...</td></tr>}
+            {!loading && filtered.length === 0 && <tr><td colSpan={4} style={{ textAlign:"center", padding:40, color:"#475569" }}>Aucune action enregistrée</td></tr>}
+            {filtered.map(log => {
+              const cfg = ACTION_LABELS[log.action] || { label: log.action, color:"#94a3b8" };
+              return (
+                <tr key={log.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+                  <td style={{ padding:"12px 16px", color:"#475569", whiteSpace:"nowrap", fontSize:11 }}>{new Date(log.created_at).toLocaleString("fr-FR")}</td>
+                  <td style={{ padding:"12px 16px" }}><span style={{ background:`${cfg.color}15`, border:`1px solid ${cfg.color}40`, borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:700, color:cfg.color }}>{cfg.label}</span></td>
+                  <td style={{ padding:"12px 16px", color:"#94a3b8" }}>{log.target_email || `#${log.target_user_id}` || "—"}</td>
+                  <td style={{ padding:"12px 16px", color:"#64748b", fontSize:11 }}>{log.details ? (() => { try { const d = typeof log.details === "string" ? JSON.parse(log.details) : log.details; return JSON.stringify(d, null, 0).slice(0, 80); } catch { return String(log.details).slice(0, 80); } })() : "—"}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        {pages > 1 && <div style={{ display:"flex", justifyContent:"center", gap:8, padding:16 }}>{Array.from({ length: pages }, (_, i) => i + 1).map(p => <button key={p} style={{ ...s.btnSm, background:page===p?"rgba(220,38,38,0.15)":"rgba(255,255,255,0.04)", border:`1px solid ${page===p?"rgba(220,38,38,0.4)":"rgba(255,255,255,0.1)"}`, color:page===p?"#ef4444":"#64748b", width:32, height:32 }} onClick={()=>fetchLogs(p)}>{p}</button>)}</div>}
+      </div>
+    </div>
+  );
+}
+
+// ─── Onglet Actions Users (depuis admin_logs) ─────────────────────────────────
+function UsersActionsTab({ token }) {
+  const [logs,    setLogs]    = useState([]);
+  const [pages,   setPages]   = useState(1);
+  const [page,    setPage]    = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [filter,  setFilter]  = useState("");
+
+  const fetchLogs = useCallback(async (p = 1) => {
+    setLoading(true);
+    const r = await fetch(`${API}/admin/logs?page=${p}&type=users`, { headers:{ Authorization:`Bearer ${token}` } });
+    const d = await r.json();
+    setLogs(d.logs || []); setPages(d.pages || 1); setPage(p);
+    setLoading(false);
+  }, [token]);
+
+  useEffect(() => { fetchLogs(); }, []);
+
+  const filtered = filter ? logs.filter(l => l.action?.includes(filter) || l.target_email?.includes(filter)) : logs;
+
+  return (
+    <div>
+      <div style={{ display:"flex", gap:8, marginBottom:12 }}>
+        <input style={{ ...s.input, flex:1, fontSize:12 }} placeholder="🔍 Filtrer par action ou email..." value={filter} onChange={e => setFilter(e.target.value)} />
+        <button style={{ ...s.btnSm, padding:"0 14px" }} onClick={() => fetchLogs(1)}>🔄</button>
+      </div>
+      <div style={{ ...s.card, padding:0, overflow:"hidden" }}>
+        <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+          <thead><tr style={{ background:"rgba(255,255,255,0.03)" }}>
+            {["DATE","ACTION","USER CIBLE","DÉTAILS"].map(h => <th key={h} style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"14px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>{h}</th>)}
           </tr></thead>
           <tbody>
             {loading && <tr><td colSpan={4} style={{ textAlign:"center", padding:40, color:"#475569" }}>Chargement...</td></tr>}
@@ -931,17 +984,13 @@ export default function Admin({ token, logout }) {
         {tab === "logs" && (
           <div>
             <div style={{ display:"flex", gap:4, marginBottom:16, borderBottom:"1px solid rgba(255,255,255,0.06)", paddingBottom:0 }}>
-              <button
-                style={{ ...s.tabBtn(logsSubTab==="admin"), fontSize:11, padding:"8px 16px" }}
-                onClick={() => setLogsSubTab("admin")}
-              >🛡️ Admin Events</button>
-              <button
-                style={{ ...s.tabBtn(logsSubTab==="users"), fontSize:11, padding:"8px 16px" }}
-                onClick={() => setLogsSubTab("users")}
-              >👤 Users Events</button>
+              <button style={{ ...s.tabBtn(logsSubTab==="admin"), fontSize:11, padding:"8px 16px" }} onClick={() => setLogsSubTab("admin")}>🛡️ Actions Admins</button>
+              <button style={{ ...s.tabBtn(logsSubTab==="users"), fontSize:11, padding:"8px 16px" }} onClick={() => setLogsSubTab("users")}>👥 Actions Users</button>
+              <button style={{ ...s.tabBtn(logsSubTab==="userevents"), fontSize:11, padding:"8px 16px" }} onClick={() => setLogsSubTab("userevents")}>📊 Events Users</button>
             </div>
             {logsSubTab === "admin" && <AdminLogsTab token={token} />}
-            {logsSubTab === "users" && <UserLogsTab token={token} />}
+            {logsSubTab === "users" && <UsersActionsTab token={token} />}
+            {logsSubTab === "userevents" && <UserLogsTab token={token} />}
           </div>
         )}
 

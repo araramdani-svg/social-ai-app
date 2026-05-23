@@ -263,19 +263,29 @@ router.post("/logs", adminAuth, async (req, res) => {
 // ─── GET /admin/logs ──────────────────────────────────────────────────────────
 router.get("/logs", adminAuth, async (req, res) => {
   try {
-    const { page = 1 } = req.query;
+    const { page = 1, type } = req.query;
     const limit  = 30;
     const offset = (page - 1) * limit;
+
+    // Actions admin vs user
+    const ADMIN_ACTIONS = ["create_admin","delete_admin","reset_admin_password","force_password_reset","send_password_reset"];
+    const USER_ACTIONS  = ["edit_user","ban_user","unban_user","reset_quota","delete_user","verify_email","resend_verification"];
+
+    let whereClause = "";
+    if (type === "admin") whereClause = `WHERE l.action = ANY(ARRAY[${ADMIN_ACTIONS.map(a => `'${a}'`).join(",")}])`;
+    if (type === "users") whereClause = `WHERE l.action = ANY(ARRAY[${USER_ACTIONS.map(a => `'${a}'`).join(",")}])`;
+
     const [logsRes, countRes] = await Promise.all([
       db.query(
         `SELECT l.*, u.email AS target_email
          FROM admin_logs l
          LEFT JOIN users u ON u.id = l.target_user_id::integer
+         ${whereClause}
          ORDER BY l.created_at DESC
          LIMIT $1 OFFSET $2`,
         [limit, offset]
       ),
-      db.query("SELECT COUNT(*)::int AS total FROM admin_logs"),
+      db.query(`SELECT COUNT(*)::int AS total FROM admin_logs l ${whereClause}`),
     ]);
     res.json({ logs: logsRes.rows, total: countRes.rows[0].total, pages: Math.ceil(countRes.rows[0].total / limit) });
   } catch (err) {
