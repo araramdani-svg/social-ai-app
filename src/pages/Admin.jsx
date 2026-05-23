@@ -532,7 +532,6 @@ export default function Admin({ token, logout }) {
   };
 
   const verifyEmail = async (u) => {
-    console.log("Verifying email for user:", u.id, u.email);
     try {
       const r = await fetch(`${API}/admin/users/${u.id}`, {
         method: "PATCH",
@@ -540,9 +539,10 @@ export default function Admin({ token, logout }) {
         body: JSON.stringify({ email_verified: true }),
       });
       const d = await r.json();
-      console.log("Verify response:", d);
-      await logAction("verify_email", u.id, { email: u.email });
-      fetchUsers(page);
+      if (d.user) {
+        logAction("verify_email", u.id, { email: u.email }); // non-bloquant
+        fetchUsers(page);
+      }
     } catch (err) {
       console.error("verifyEmail error:", err);
     }
