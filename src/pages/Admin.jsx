@@ -11,11 +11,18 @@ const PLANS = ["Free", "Pro", "Business", "Agency"];
 const PLAN_COLORS = { Free:"#64748b", Pro:"#3b82f6", Business:"#f59e0b", Agency:"#8b5cf6" };
 
 const ACTION_LABELS = {
-  edit_user:    { label:"✏️ Édition",      color:"#3b82f6" },
-  ban_user:     { label:"🚫 Banni",        color:"#ef4444" },
-  unban_user:   { label:"✅ Débanni",      color:"#22c55e" },
-  reset_quota:  { label:"↺ Reset quota",  color:"#f59e0b" },
-  delete_user:  { label:"🗑️ Suppression", color:"#ef4444" },
+  edit_user:             { label:"✏️ Édition user",       color:"#3b82f6" },
+  ban_user:              { label:"🚫 Banni",               color:"#ef4444" },
+  unban_user:            { label:"✅ Débanni",             color:"#22c55e" },
+  reset_quota:           { label:"↺ Reset quota",          color:"#f59e0b" },
+  delete_user:           { label:"🗑️ Suppression user",   color:"#ef4444" },
+  verify_email:          { label:"✓ Email vérifié",        color:"#22c55e" },
+  resend_verification:   { label:"📧 Email renvoyé",       color:"#f97316" },
+  force_password_reset:  { label:"🔐 Reset forcé",         color:"#f97316" },
+  send_password_reset:   { label:"📧 Lien reset envoyé",   color:"#f97316" },
+  create_admin:          { label:"🛡️ Admin créé",          color:"#8b5cf6" },
+  delete_admin:          { label:"🗑️ Admin supprimé",      color:"#ef4444" },
+  reset_admin_password:  { label:"🔑 Reset mdp admin",     color:"#f59e0b" },
 };
 
 const s = {
@@ -682,7 +689,7 @@ export default function Admin({ token, logout }) {
       await fetch(`${API}/admin/logs`, {
         method: "POST",
         headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
-        body: JSON.stringify({ action, target_user_id: targetUserId, details: JSON.stringify(details) }),
+        body: JSON.stringify({ action, target_user_id: targetUserId ? parseInt(targetUserId) : null, details: JSON.stringify(details) }),
       });
     } catch {}
   };

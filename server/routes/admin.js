@@ -65,7 +65,7 @@ router.post("/admins", adminAuth, async (req, res) => {
       "INSERT INTO users (email, password, plan, email_verified, is_admin, created_at) VALUES ($1, $2, 'Agency', true, true, NOW()) RETURNING id, email",
       [email, hashed]
     );
-    logAction(req.user.id, "create_admin", result.rows[0].id, { email });
+    await logAction(req.user.id, "create_admin", result.rows[0].id, { email });
     res.json({ success: true, admin: result.rows[0] });
   } catch (err) {
     console.error("Create admin error:", err.message);
@@ -81,7 +81,7 @@ router.delete("/admins/:id", adminAuth, async (req, res) => {
     if (userRes.rows[0].email === ADMIN_EMAIL)
       return res.status(403).json({ message: "Impossible de supprimer l'admin principal" });
     await db.query("DELETE FROM users WHERE id=$1", [req.params.id]);
-    logAction(req.user.id, "delete_admin", req.params.id, { email: userRes.rows[0].email });
+    await logAction(req.user.id, "delete_admin", req.params.id, { email: userRes.rows[0].email });
     res.json({ success: true });
   } catch (err) {
     console.error("Delete admin error:", err.message);
@@ -102,7 +102,7 @@ router.patch("/admins/:id/password", adminAuth, async (req, res) => {
       [hashed, req.params.id]
     );
     if (!result.rows.length) return res.status(404).json({ message: "Admin introuvable" });
-    logAction(req.user.id, "reset_admin_password", req.params.id, { email: result.rows[0].email });
+    await logAction(req.user.id, "reset_admin_password", req.params.id, { email: result.rows[0].email });
     res.json({ success: true });
   } catch (err) {
     console.error("Reset admin password error:", err.message);
@@ -271,7 +271,7 @@ router.get("/logs", adminAuth, async (req, res) => {
       db.query(
         `SELECT l.*, u.email AS target_email
          FROM admin_logs l
-         LEFT JOIN users u ON u.id = l.target_user_id
+         LEFT JOIN users u ON u.id = l.target_user_id::integer
          ORDER BY l.created_at DESC
          LIMIT $1 OFFSET $2`,
         [limit, offset]
