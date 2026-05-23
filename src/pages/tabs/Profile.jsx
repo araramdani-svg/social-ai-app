@@ -18,8 +18,18 @@ export default function Profile({
   setPage, showToast
 }) {
   const [confirm, setConfirm] = useState(null);
-  // Mot de passe de confirmation pour le changement d'email (state local, pas besoin de remonter)
   const [emailCurrentPassword, setEmailCurrentPassword] = useState("");
+
+  const API = "https://social-ai-app-production.up.railway.app";
+
+  const logUserAction = (action, details = {}) => {
+    if (!token || token === "guest") return;
+    fetch(`${API}/auth/user-log`, {
+      method: "POST",
+      headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+      body: JSON.stringify({ action, details }),
+    }).catch(() => {});
+  };
 
   const getPlanColor = (plan) => plan === "Business" ? "#a855f7" : plan === "Pro" ? "#ef4444" : "#475569";
   const getPlanIcon  = (plan) => plan === "Business" ? "🏢" : plan === "Pro" ? "⚡" : "🆓";
@@ -39,12 +49,19 @@ export default function Profile({
       onConfirm: async () => {
         setConfirm(null);
         try {
-          const res = await fetch("https://social-ai-app-production.up.railway.app/stripe/cancel", {
+          const res = await fetch(`${API}/stripe/cancel`, {
             method:"POST", headers:{ Authorization:`Bearer ${token}` }
           });
           const data = await res.json();
-          if (data.success) showToast(tr(trendsLang, "messages.subscriptionCanceled"));
-        } catch { showToast("Error"); }
+          if (data.success) {
+            showToast(tr(trendsLang, "messages.subscriptionCanceled"));
+            logUserAction("cancel_subscription", { plan: userPlan?.plan });
+            // Forcer un reload de la page pour rafraîchir userPlan
+            setTimeout(() => window.location.reload(), 1500);
+          } else {
+            showToast("❌ " + (data.message || "Erreur lors de l'annulation"));
+          }
+        } catch { showToast("❌ Erreur serveur"); }
       }
     });
   };
@@ -123,19 +140,19 @@ export default function Profile({
 
               {/* Champs prénom / nom éditables */}
               <div>
-                <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:10 }}>IDENTITY</div>
+                <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:10 }}>{tr(trendsLang,"profile.identity")}</div>
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:10 }}>
                   <div>
-                    <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px", marginBottom:6 }}>FIRST NAME</div>
-                    <input type="text" value={firstName || ""} onChange={e => setFirstName(e.target.value)} placeholder="First name" style={{ ...st.input, maxWidth:"100%", marginBottom:0 }} />
+                    <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px", marginBottom:6 }}>{tr(trendsLang,"profile.firstName")}</div>
+                    <input type="text" value={firstName || ""} onChange={e => setFirstName(e.target.value)} placeholder={tr(trendsLang,"profile.firstName")} style={{ ...st.input, maxWidth:"100%", marginBottom:0 }} />
                   </div>
                   <div>
-                    <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px", marginBottom:6 }}>LAST NAME</div>
-                    <input type="text" value={lastName || ""} onChange={e => setLastName(e.target.value)} placeholder="Last name" style={{ ...st.input, maxWidth:"100%", marginBottom:0 }} />
+                    <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px", marginBottom:6 }}>{tr(trendsLang,"profile.lastName")}</div>
+                    <input type="text" value={lastName || ""} onChange={e => setLastName(e.target.value)} placeholder={tr(trendsLang,"profile.lastName")} style={{ ...st.input, maxWidth:"100%", marginBottom:0 }} />
                   </div>
                 </div>
-                <button style={{ ...st.button, margin:0, fontSize:12, padding:"10px 18px", opacity: profileLoading ? 0.6 : 1 }} onClick={saveProfile} disabled={profileLoading}>
-                  {profileLoading ? tr(trendsLang, "profile.updating") : "💾 SAVE NAME"}
+                <button style={{ ...st.button, margin:0, fontSize:12, padding:"10px 18px", opacity: profileLoading ? 0.6 : 1 }} onClick={() => { saveProfile(); logUserAction("update_profile", { fields: ["firstName", "lastName"] }); }} disabled={profileLoading}>
+                  {profileLoading ? tr(trendsLang, "profile.updating") : tr(trendsLang,"profile.saveName")}
                 </button>
               </div>
 
@@ -143,7 +160,7 @@ export default function Profile({
               <div style={{ display:"grid", gap:12 }}>
                 {[
                   { label: tr(trendsLang, "profile.fieldEmail"),     value: token && token !== "guest" ? getEmail() : "—" },
-                  { label: tr(trendsLang, "profile.fieldWorkspace"), value: workspace || "PERSONAL" },
+                  { label: tr(trendsLang, "profile.fieldWorkspace"), value: workspace || tr(trendsLang,"profile.personalWorkspace") },
                   { label: tr(trendsLang, "profile.fieldPlan"),      value: `${userPlan.plan}${userPlan.interval ? " · " + userPlan.interval : ""}` },
                 ].map(({ label, value }) => (
                   <div key={label} style={{ padding:"14px 18px", background:"#0f172a", borderRadius:10, border:"1px solid rgba(220,38,38,0.1)", borderLeft:"3px solid rgba(220,38,38,0.3)" }}>
@@ -174,10 +191,10 @@ export default function Profile({
               ].map(({ label, value, setter }) => (
                 <div key={label}>
                   <div style={{ color:"#64748b", fontSize:11, letterSpacing:"1.5px", marginBottom:8 }}>{label.toUpperCase()}</div>
-                  <input type="password" value={value} onChange={e => setter(e.target.value)} placeholder={`Enter ${label.toLowerCase()}`} style={{ ...st.input, maxWidth:"100%", marginBottom:0 }} />
+                  <input type="password" value={value} onChange={e => setter(e.target.value)} placeholder={`${tr(trendsLang,"profile.enterField")} ${label.toLowerCase()}`} style={{ ...st.input, maxWidth:"100%", marginBottom:0 }} />
                 </div>
               ))}
-              <button style={{ ...st.button, margin:0, opacity: profileLoading ? 0.6 : 1 }} onClick={changePassword} disabled={profileLoading}>
+              <button style={{ ...st.button, margin:0, opacity: profileLoading ? 0.6 : 1 }} onClick={() => { changePassword(); logUserAction("change_password"); }} disabled={profileLoading}>
                 {profileLoading ? tr(trendsLang, "profile.updating") : tr(trendsLang, "profile.updatePassword")}
               </button>
             </div>
@@ -239,7 +256,7 @@ export default function Profile({
 
               <button
                 style={{ ...st.button, margin:0, opacity: profileLoading ? 0.6 : 1 }}
-                onClick={handleChangeEmail}
+                onClick={() => { handleChangeEmail(); logUserAction("change_email"); }}
                 disabled={profileLoading || !newEmail || !emailCurrentPassword}
               >
                 {profileLoading ? tr(trendsLang, "profile.updating") : tr(trendsLang, "profile.updateEmail")}
@@ -276,11 +293,11 @@ export default function Profile({
                 <div style={{ color:"#fff", fontWeight:700, marginBottom:8 }}>{tr(trendsLang, "ui.deleteAccountLabel")}</div>
                 <div style={{ color:"#64748b", fontSize:13, marginBottom:16 }}>{tr(trendsLang, "ui.deleteAccountDesc")}</div>
                 <button style={{ ...st.buttonDanger, margin:0 }} onClick={() => setConfirm({
-                  message: "Are you sure? This action is irreversible. All your data will be permanently deleted.",
-                  confirmLabel: "🗑️ DELETE MY ACCOUNT",
+                  message: tr(trendsLang,"profile.deleteConfirm"),
+                  confirmLabel: tr(trendsLang,"profile.deleteBtn"),
                   onConfirm: () => { setConfirm(null); deleteAccount(); }
                 })}>
-                  🗑️ DELETE MY ACCOUNT
+                  {tr(trendsLang,"profile.deleteBtn")}
                 </button>
               </div>
             </div>

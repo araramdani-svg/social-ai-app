@@ -135,6 +135,10 @@ const translations = {
       cancelNote: "Your subscription will remain active until the end of the current billing period.",
       intervalYear: "yearly", intervalMonth: "monthly",
       emailSecurityNote: "A confirmation link will be sent to your new address. Your current email will also receive a security alert. The change only takes effect after confirmation.",
+      identity: "IDENTITY", firstName: "FIRST NAME", lastName: "LAST NAME", saveName: "💾 SAVE NAME",
+      enterField: "Enter", personalWorkspace: "Personal",
+      deleteConfirm: "Are you sure? This action is irreversible. All your data will be permanently deleted.",
+      deleteBtn: "🗑️ DELETE MY ACCOUNT",
     },
     ui: {
       welcomeTitle: "Welcome to GrowthPILOT", welcomeSub: "Your AI content operating system is ready.",
@@ -590,6 +594,7 @@ const translations = {
       cancelConfirm: "Êtes-vous sûr ? Votre abonnement se terminera à la fin de la période en cours.",
       cancelNote: "Votre abonnement restera actif jusqu'à la fin de la période de facturation en cours.",
       intervalYear: "annuel", intervalMonth: "mensuel",
+      identity: "IDENTITÉ", firstName: "PRÉNOM", lastName: "NOM", saveName: "💾 ENREGISTRER", enterField: "Entrer", personalWorkspace: "Personnel", deleteConfirm: "Êtes-vous sûr ? Cette action est irréversible.", deleteBtn: "🗑️ SUPPRIMER MON COMPTE",
       emailSecurityNote: "Un lien de confirmation sera envoyé à votre nouvelle adresse. Votre email actuel recevra également une alerte de sécurité. Le changement n'est effectif qu'après confirmation.",
     },
     ui: {
@@ -1014,7 +1019,7 @@ const translations = {
       cancelSubscription: "Cancelar suscripción",
       cancelConfirm: "¿Estás seguro? Tu suscripción terminará al final del período actual.",
       cancelNote: "Tu suscripción permanecerá activa hasta el final del período de facturación actual.",
-      intervalYear: "anual", intervalMonth: "mensual",
+      intervalYear: "anual", intervalMonth: "mensual", identity: "IDENTIDAD", firstName: "NOMBRE", lastName: "APELLIDO", saveName: "💾 GUARDAR", enterField: "Ingresar", personalWorkspace: "Personal", deleteConfirm: "¿Estás seguro? Esta acción es irreversible.", deleteBtn: "🗑️ ELIMINAR MI CUENTA",
       emailSecurityNote: "Se enviará un enlace de confirmación a tu nueva dirección. Tu email actual también recibirá una alerta de seguridad. El cambio solo se aplica tras la confirmación.",
     },
     ui: {
@@ -1380,7 +1385,7 @@ const translations = {
       cancelSubscription: "Abonnement kündigen",
       cancelConfirm: "Sind Sie sicher? Ihr Abonnement endet am Ende des aktuellen Abrechnungszeitraums.",
       cancelNote: "Ihr Abonnement bleibt bis zum Ende des aktuellen Abrechnungszeitraums aktiv.",
-      intervalYear: "jährlich", intervalMonth: "monatlich",
+      intervalYear: "jährlich", intervalMonth: "monatlich", identity: "IDENTITÄT", firstName: "VORNAME", lastName: "NACHNAME", saveName: "💾 SPEICHERN", enterField: "Eingeben", personalWorkspace: "Persönlich", deleteConfirm: "Sind Sie sicher? Diese Aktion ist irreversibel.", deleteBtn: "🗑️ KONTO LÖSCHEN",
       emailSecurityNote: "Ein Bestätigungslink wird an Ihre neue Adresse gesendet. Ihre aktuelle E-Mail erhält ebenfalls eine Sicherheitswarnung. Die Änderung wird erst nach Bestätigung wirksam.",
     },
     ui: {
@@ -1748,7 +1753,7 @@ const translations = {
       cancelSubscription: "Annulla abbonamento",
       cancelConfirm: "Sei sicuro? Il tuo abbonamento terminerà alla fine del periodo corrente.",
       cancelNote: "Il tuo abbonamento rimarrà attivo fino alla fine del periodo di fatturazione corrente.",
-      intervalYear: "annuale", intervalMonth: "mensile",
+      intervalYear: "annuale", intervalMonth: "mensile", identity: "IDENTITÀ", firstName: "NOME", lastName: "COGNOME", saveName: "💾 SALVA", enterField: "Inserire", personalWorkspace: "Personale", deleteConfirm: "Sei sicuro? Questa azione è irreversibile.", deleteBtn: "🗑️ ELIMINA IL MIO ACCOUNT",
       emailSecurityNote: "Un link di conferma verrà inviato al tuo nuovo indirizzo. La tua email attuale riceverà anche un avviso di sicurezza. La modifica sarà effettiva solo dopo la conferma.",
     },
     ui: {
@@ -2116,7 +2121,7 @@ const translations = {
       cancelSubscription: "Cancelar assinatura",
       cancelConfirm: "Tem certeza? Sua assinatura terminará no final do período atual.",
       cancelNote: "Sua assinatura permanecerá ativa até o final do período de cobrança atual.",
-      intervalYear: "anual", intervalMonth: "mensal",
+      intervalYear: "anual", intervalMonth: "mensal", identity: "IDENTIDADE", firstName: "NOME", lastName: "SOBRENOME", saveName: "💾 SALVAR", enterField: "Inserir", personalWorkspace: "Pessoal", deleteConfirm: "Tem certeza? Esta ação é irreversível.", deleteBtn: "🗑️ EXCLUIR MINHA CONTA",
       emailSecurityNote: "Um link de confirmação será enviado para seu novo endereço. Seu email atual também receberá um alerta de segurança. A mudança só terá efeito após a confirmação.",
     },
     ui: {
