@@ -453,7 +453,8 @@ function AnalyticsTab({ token }) {
 
 // ─── Composant principal ──────────────────────────────────────────────────────
 export default function Admin({ token, logout }) {
-  const [tab,       setTab]       = useState("users");
+  const [tab,         setTab]         = useState("users");
+  const [logsSubTab,  setLogsSubTab]  = useState("admin");
   const [stats,     setStats]     = useState(null);
   const [users,     setUsers]     = useState([]);
   const [total,     setTotal]     = useState(0);
@@ -531,13 +532,20 @@ export default function Admin({ token, logout }) {
   };
 
   const verifyEmail = async (u) => {
-    await fetch(`${API}/admin/users/${u.id}`, {
-      method: "PATCH",
-      headers: { ...headers, "Content-Type":"application/json" },
-      body: JSON.stringify({ email_verified: true }),
-    });
-    await logAction("verify_email", u.id, { email: u.email });
-    fetchUsers(page);
+    console.log("Verifying email for user:", u.id, u.email);
+    try {
+      const r = await fetch(`${API}/admin/users/${u.id}`, {
+        method: "PATCH",
+        headers: { ...headers, "Content-Type":"application/json" },
+        body: JSON.stringify({ email_verified: true }),
+      });
+      const d = await r.json();
+      console.log("Verify response:", d);
+      await logAction("verify_email", u.id, { email: u.email });
+      fetchUsers(page);
+    } catch (err) {
+      console.error("verifyEmail error:", err);
+    }
   };
 
   const resendVerification = async (u) => {
@@ -605,8 +613,7 @@ export default function Admin({ token, logout }) {
         {/* Tabs */}
         <div style={{ display:"flex", borderBottom:"1px solid rgba(255,255,255,0.07)", marginBottom:24 }}>
           <button style={s.tabBtn(tab==="users")}      onClick={()=>setTab("users")}>👥 Utilisateurs</button>
-          <button style={s.tabBtn(tab==="adminlogs")}  onClick={()=>setTab("adminlogs")}>🛡️ Admin Events</button>
-          <button style={s.tabBtn(tab==="userlogs")}   onClick={()=>setTab("userlogs")}>👤 Users Events</button>
+          <button style={s.tabBtn(tab==="logs")}       onClick={()=>setTab("logs")}>📋 Historique</button>
           <button style={s.tabBtn(tab==="analytics")}  onClick={()=>setTab("analytics")}>📊 Visites</button>
         </div>
 
@@ -693,9 +700,11 @@ export default function Admin({ token, logout }) {
                             {!u.email_verified && (
                               <button title="Renvoyer email de vérification" style={{ ...s.btnSm, background:"rgba(249,115,22,0.1)", border:"1px solid rgba(249,115,22,0.3)", color:"#f97316" }} onClick={()=>resendVerification(u)}>📧</button>
                             )}
-                            {!u.email_verified && (
-                              <button title="Vérifier manuellement" style={{ ...s.btnSm, background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.3)", color:"#22c55e" }} onClick={()=>verifyEmail(u)}>✓</button>
-                            )}
+                            <button
+                              title={u.email_verified ? "✓ Email vérifié" : "Vérifier manuellement"}
+                              style={{ ...s.btnSm, background: u.email_verified ? "rgba(34,197,94,0.05)" : "rgba(34,197,94,0.1)", border:`1px solid ${u.email_verified ? "rgba(34,197,94,0.15)" : "rgba(34,197,94,0.3)"}`, color: u.email_verified ? "#334155" : "#22c55e", cursor: u.email_verified ? "default" : "pointer" }}
+                              onClick={()=>!u.email_verified && verifyEmail(u)}
+                            >{u.email_verified ? "✓" : "✓?"}</button>
                             <button
                               title={u.banned ? "Débannir" : "Bannir"}
                               style={{ ...s.btnSm, background: u.banned ? "rgba(34,197,94,0.1)" : "rgba(245,158,11,0.1)", border: u.banned ? "1px solid rgba(34,197,94,0.3)" : "1px solid rgba(245,158,11,0.3)", color: u.banned ? "#22c55e" : "#f59e0b" }}
@@ -720,11 +729,23 @@ export default function Admin({ token, logout }) {
           </>
         )}
 
-        {/* ── Onglet Admin Events ── */}
-        {tab === "adminlogs" && <AdminLogsTab token={token} />}
-
-        {/* ── Onglet Users Events ── */}
-        {tab === "userlogs" && <UserLogsTab token={token} />}
+        {/* ── Onglet Historique avec sous-onglets ── */}
+        {tab === "logs" && (
+          <div>
+            <div style={{ display:"flex", gap:4, marginBottom:16, borderBottom:"1px solid rgba(255,255,255,0.06)", paddingBottom:0 }}>
+              <button
+                style={{ ...s.tabBtn(logsSubTab==="admin"), fontSize:11, padding:"8px 16px" }}
+                onClick={() => setLogsSubTab("admin")}
+              >🛡️ Admin Events</button>
+              <button
+                style={{ ...s.tabBtn(logsSubTab==="users"), fontSize:11, padding:"8px 16px" }}
+                onClick={() => setLogsSubTab("users")}
+              >👤 Users Events</button>
+            </div>
+            {logsSubTab === "admin" && <AdminLogsTab token={token} />}
+            {logsSubTab === "users" && <UserLogsTab token={token} />}
+          </div>
+        )}
 
         {/* ── Onglet Visites ── */}
         {tab === "analytics" && <AnalyticsTab token={token} />}
