@@ -172,6 +172,19 @@ router.delete("/users/:id", adminAuth, async (req, res) => {
   }
 });
 
+// ─── POST /admin/logs — Enregistrer une action admin ─────────────────────────
+router.post("/logs", adminAuth, async (req, res) => {
+  const { action, target_user_id, details } = req.body;
+  if (!action) return res.status(400).json({ error: "action required" });
+  try {
+    await logAction(req.user.id, action, target_user_id || null, details ? JSON.parse(details) : null);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Post log error:", err.message);
+    res.status(500).json({ error: "Log failed" });
+  }
+});
+
 // ─── GET /admin/logs ──────────────────────────────────────────────────────────
 router.get("/logs", adminAuth, async (req, res) => {
   try {
