@@ -155,16 +155,16 @@ export default function Profile({
 
                 {/* DisplayName */}
                 <div style={{ marginBottom:10 }}>
-                  <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px", marginBottom:6 }}>{tr(trendsLang,"profile.displayName") || "DISPLAY NAME"}</div>
+                  <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px", marginBottom:6 }}>{tr(trendsLang,"profile.displayName") === "profile.displayName" ? "DISPLAY NAME" : tr(trendsLang,"profile.displayName")}</div>
                   <input
                     type="text"
                     value={displayName || ""}
                     onChange={e => setDisplayName(e.target.value)}
-                    placeholder={tr(trendsLang,"profile.displayNamePlaceholder") || "Name shown in GrowthPILOT"}
+                    placeholder={tr(trendsLang,"profile.displayNamePlaceholder") === "profile.displayNamePlaceholder" ? "Name shown in GrowthPILOT" : tr(trendsLang,"profile.displayNamePlaceholder")}
                     style={{ ...st.input, maxWidth:"100%", marginBottom:0 }}
                   />
                   <div style={{ color:"#334155", fontSize:10, marginTop:4 }}>
-                    {tr(trendsLang,"profile.displayNameHint") || "This name will appear on your Home and Dashboard"}
+                    {tr(trendsLang,"profile.displayNameHint") === "profile.displayNameHint" ? "This name will appear on your Home and Dashboard" : tr(trendsLang,"profile.displayNameHint")}
                   </div>
                 </div>
 
