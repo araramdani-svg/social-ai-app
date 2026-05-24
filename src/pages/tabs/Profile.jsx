@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { t as tr } from "../../translations.js";
 import { st, PageHeader, ConfirmModal } from "./shared.js";
 
@@ -20,6 +20,25 @@ export default function Profile({
 }) {
   const [confirm, setConfirm] = useState(null);
   const [emailCurrentPassword, setEmailCurrentPassword] = useState("");
+
+  // States locaux pour l'édition — ne pas modifier le parent avant Save
+  const [localFirstName,   setLocalFirstName]   = useState(firstName   || "");
+  const [localLastName,    setLocalLastName]     = useState(lastName    || "");
+  const [localDisplayName, setLocalDisplayName] = useState(displayName || "");
+
+  // Sync si les props changent (ex: chargement initial)
+  useEffect(() => { setLocalFirstName(firstName   || ""); }, [firstName]);
+  useEffect(() => { setLocalLastName(lastName     || ""); }, [lastName]);
+  useEffect(() => { setLocalDisplayName(displayName || ""); }, [displayName]);
+
+  // Sauvegarder + mettre à jour le parent seulement après succès
+  const handleSaveName = async () => {
+    setFirstName(localFirstName);
+    setLastName(localLastName);
+    setDisplayName(localDisplayName);
+    await saveProfile();
+    logUserAction("update_profile", { fields: ["firstName", "lastName", "displayName"] });
+  };
 
   const API = "https://social-ai-app-production.up.railway.app";
 
@@ -145,11 +164,11 @@ export default function Profile({
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:10 }}>
                   <div>
                     <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px", marginBottom:6 }}>{tr(trendsLang,"profile.firstName")}</div>
-                    <input type="text" value={firstName || ""} onChange={e => setFirstName(e.target.value)} placeholder={tr(trendsLang,"profile.firstName")} style={{ ...st.input, maxWidth:"100%", marginBottom:0 }} />
+                    <input type="text" value={localFirstName} onChange={e => setLocalFirstName(e.target.value)} placeholder={tr(trendsLang,"profile.firstName")} style={{ ...st.input, maxWidth:"100%", marginBottom:0 }} />
                   </div>
                   <div>
                     <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px", marginBottom:6 }}>{tr(trendsLang,"profile.lastName")}</div>
-                    <input type="text" value={lastName || ""} onChange={e => setLastName(e.target.value)} placeholder={tr(trendsLang,"profile.lastName")} style={{ ...st.input, maxWidth:"100%", marginBottom:0 }} />
+                    <input type="text" value={localLastName} onChange={e => setLocalLastName(e.target.value)} placeholder={tr(trendsLang,"profile.lastName")} style={{ ...st.input, maxWidth:"100%", marginBottom:0 }} />
                   </div>
                 </div>
 
@@ -158,9 +177,10 @@ export default function Profile({
                   <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px", marginBottom:6 }}>{tr(trendsLang,"profile.displayName") === "profile.displayName" ? "DISPLAY NAME" : tr(trendsLang,"profile.displayName")}</div>
                   <input
                     type="text"
-                    value={displayName || ""}
-                    onChange={e => setDisplayName(e.target.value)}
+                    value={localDisplayName}
+                    onChange={e => setLocalDisplayName(e.target.value)}
                     placeholder={tr(trendsLang,"profile.displayNamePlaceholder") === "profile.displayNamePlaceholder" ? "Name shown in GrowthPILOT" : tr(trendsLang,"profile.displayNamePlaceholder")}
+                    autoComplete="off"
                     style={{ ...st.input, maxWidth:"100%", marginBottom:0 }}
                   />
                   <div style={{ color:"#334155", fontSize:10, marginTop:4 }}>
@@ -168,7 +188,7 @@ export default function Profile({
                   </div>
                 </div>
 
-                <button style={{ ...st.button, margin:0, fontSize:12, padding:"10px 18px", opacity: profileLoading ? 0.6 : 1 }} onClick={() => { saveProfile(); logUserAction("update_profile", { fields: ["firstName", "lastName", "displayName"] }); }} disabled={profileLoading}>
+                <button style={{ ...st.button, margin:0, fontSize:12, padding:"10px 18px", opacity: profileLoading ? 0.6 : 1 }} onClick={handleSaveName} disabled={profileLoading}>
                   {profileLoading ? tr(trendsLang, "profile.updating") : tr(trendsLang,"profile.saveName")}
                 </button>
               </div>
