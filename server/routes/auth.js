@@ -725,6 +725,17 @@ router.post("/admin/send-reset", authenticateToken, async (req, res) => {
   }
 });
 
+// ─── DELETE /auth/posts/:id — Supprimer un post ───────────────────────────────
+router.delete("/posts/:id", authenticateToken, async (req, res) => {
+  try {
+    await db.query("DELETE FROM posts WHERE id=$1 AND user_id=$2", [req.params.id, req.user.id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Delete post error:", err.message);
+    res.status(500).json({ error: "Failed to delete post" });
+  }
+});
+
 // ─── POST /auth/user-log — Logger une action utilisateur ─────────────────────
 router.post("/user-log", authenticateToken, async (req, res) => {
   const { action, details } = req.body;

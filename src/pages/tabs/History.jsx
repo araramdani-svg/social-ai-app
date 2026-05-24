@@ -7,68 +7,134 @@ const API = "https://social-ai-app-production.up.railway.app";
 
 export default function History({ trendsLang, isMobile, history, projects, loadHistory, setPost, setTab, token }) {
 
-  const [search,        setSearch]        = useState("");
-  const [filterProject, setFilterProject] = useState("all");
-  const [copiedIdx,     setCopiedIdx]     = useState(null);
-  const [loaded,        setLoaded]        = useState(false);
+  const [search,       setSearch]       = useState("");
+  const [filterPeriod, setFilterPeriod] = useState("all");
+  const [filterProject,setFilterProject]= useState("all");
+  const [filterScore,  setFilterScore]  = useState("all");
+  const [filterMedia,  setFilterMedia]  = useState("all");
+  const [sortBy,       setSortBy]       = useState("recent");
+  const [copiedIdx,    setCopiedIdx]    = useState(null);
+  const [deletingId,   setDeletingId]   = useState(null);
+  const [loaded,       setLoaded]       = useState(false);
+  const [showFilters,  setShowFilters]  = useState(false);
 
-  // Auto-load au montage
   useEffect(() => {
-    if (!loaded) {
-      loadHistory();
-      setLoaded(true);
-    }
+    if (!loaded) { loadHistory(); setLoaded(true); }
   }, []);
 
-  // Projets uniques dans l'historique
   const projectNames = useMemo(() => {
-    const names = [...new Set(history.map(h => h.project_name).filter(Boolean))];
-    return names;
+    return [...new Set(history.map(h => h.project_name).filter(Boolean))];
   }, [history]);
 
-  // Filtrage
   const filtered = useMemo(() => {
-    return history.filter(h => {
-      const matchSearch  = !search || h.title?.toLowerCase().includes(search.toLowerCase()) || h.content?.toLowerCase().includes(search.toLowerCase());
-      const matchProject = filterProject === "all" || h.project_name === filterProject;
-      return matchSearch && matchProject;
+    let result = history.filter(h => {
+      // Recherche texte
+      if (search && !h.title?.toLowerCase().includes(search.toLowerCase()) && !h.content?.toLowerCase().includes(search.toLowerCase())) return false;
+      // Période
+      if (filterPeriod !== "all") {
+        const age = Date.now() - new Date(h.created_at).getTime();
+        if (filterPeriod === "today"  && age > 86400000)      return false;
+        if (filterPeriod === "week"   && age > 7*86400000)    return false;
+        if (filterPeriod === "month"  && age > 30*86400000)   return false;
+      }
+      // Projet
+      if (filterProject !== "all" && h.project_name !== filterProject) return false;
+      // Score viral
+      if (filterScore !== "all") {
+        const s = h.viral_score || 0;
+        if (filterScore === "high"   && s < 70)          return false;
+        if (filterScore === "medium" && (s < 50||s>=70)) return false;
+        if (filterScore === "low"    && s >= 50)         return false;
+      }
+      // Média
+      if (filterMedia === "with"    && !h.media_url) return false;
+      if (filterMedia === "without" && h.media_url)  return false;
+      return true;
     });
-  }, [history, search, filterProject]);
+
+    // Tri
+    if (sortBy === "recent")  result = result.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+    if (sortBy === "oldest")  result = result.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+    if (sortBy === "score")   result = result.sort((a,b) => (b.viral_score||0) - (a.viral_score||0));
+
+    return result;
+  }, [history, search, filterPeriod, filterProject, filterScore, filterMedia, sortBy]);
+
+  // Grouper par date
+  const grouped = useMemo(() => {
+    const groups = {};
+    filtered.forEach(h => {
+      const age = Date.now() - new Date(h.created_at).getTime();
+      const days = Math.floor(age / 86400000);
+      const key = days === 0 ? "today" : days === 1 ? "yesterday" : days < 7 ? "week" : days < 30 ? "month" : "older";
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(h);
+    });
+    return groups;
+  }, [filtered]);
+
+  const groupLabels = {
+    today:     { en:"Today", fr:"Aujourd'hui", es:"Hoy", de:"Heute", it:"Oggi", pt:"Hoje" },
+    yesterday: { en:"Yesterday", fr:"Hier", es:"Ayer", de:"Gestern", it:"Ieri", pt:"Ontem" },
+    week:      { en:"This week", fr:"Cette semaine", es:"Esta semana", de:"Diese Woche", it:"Questa settimana", pt:"Esta semana" },
+    month:     { en:"This month", fr:"Ce mois", es:"Este mes", de:"Diesen Monat", it:"Questo mese", pt:"Este mês" },
+    older:     { en:"Older", fr:"Plus ancien", es:"Más antiguo", de:"Älter", it:"Più vecchio", pt:"Mais antigo" },
+  };
+
+  const getGroupLabel = (key) => groupLabels[key]?.[trendsLang] || groupLabels[key]?.en || key;
+
+  const hasActiveFilters = filterPeriod !== "all" || filterProject !== "all" || filterScore !== "all" || filterMedia !== "all" || sortBy !== "recent";
+
+  const resetFilters = () => {
+    setFilterPeriod("all"); setFilterProject("all");
+    setFilterScore("all"); setFilterMedia("all"); setSortBy("recent"); setSearch("");
+  };
 
   const copyPost = (content, idx) => {
     navigator.clipboard.writeText(content).then(() => {
-      setCopiedIdx(idx);
-      setTimeout(() => setCopiedIdx(null), 1500);
+      setCopiedIdx(idx); setTimeout(() => setCopiedIdx(null), 1500);
     });
   };
 
-  const loadInCreate = (content) => {
-    setPost(content);
-    setTab("create");
+  const loadInCreate = (content) => { setPost(content); setTab("create"); };
+
+  const deletePost = async (id) => {
+    if (!window.confirm("Supprimer ce post ?")) return;
+    setDeletingId(id);
+    try {
+      await fetch(`${API}/auth/posts/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      loadHistory();
+    } catch {}
+    setDeletingId(null);
   };
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "—";
-    const d = new Date(dateStr);
-    const diff = Date.now() - d.getTime();
-    const days = Math.floor(diff / 86400000);
-    if (days === 0) return tr(trendsLang, "ui.todayLabel");
-    if (days === 1) return tr(trendsLang, "ui.yesterdayLabel");
-    if (days < 7)  return `${days}${tr(trendsLang, "ui.daysAgoLabel")}`;
-    return d.toLocaleDateString();
+    return new Date(dateStr).toLocaleDateString();
+  };
+
+  const scoreColor = (s) => s >= 70 ? "#22c55e" : s >= 50 ? "#f59e0b" : "#ef4444";
+  const scoreLabel = (s) => s >= 70 ? "HIGH" : s >= 50 ? "MED" : "LOW";
+
+  const selectStyle = {
+    background:"#0f172a", border:"1px solid rgba(220,38,38,0.2)", borderRadius:8,
+    color:"white", fontSize:11, padding:"7px 10px", cursor:"pointer", outline:"none",
   };
 
   return (
     <>
       <PageHeader tabKey="history" trendsLang={trendsLang} isMobile={isMobile} />
 
-      {/* ── KPIs ─────────────────────────────────────────────────────────── */}
+      {/* ── KPIs ── */}
       <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap:10, marginBottom:14 }}>
         {[
-          { icon:"✍️", label: tr(trendsLang,"ui.totalPosts"),   value: history.length,    color:"#ef4444" },
-          { icon:"📁", label: tr(trendsLang,"ui.statProjects"), value: projects.length,   color:"#8b5cf6" },
-          { icon:"📅", label: tr(trendsLang,"ui.thisWeekLabel"),                      value: history.filter(h => h.created_at && Date.now()-new Date(h.created_at).getTime() < 7*86400000).length, color:"#22c55e" },
-          { icon:"🔍", label: tr(trendsLang,"ui.filteredLabel"),                       value: filtered.length,   color:"#f59e0b" },
+          { icon:"✍️", label: tr(trendsLang,"ui.totalPosts"),    value: history.length,   color:"#ef4444" },
+          { icon:"📁", label: tr(trendsLang,"ui.statProjects"),  value: projects.length,  color:"#8b5cf6" },
+          { icon:"📅", label: tr(trendsLang,"ui.thisWeekLabel"), value: history.filter(h => h.created_at && Date.now()-new Date(h.created_at).getTime() < 7*86400000).length, color:"#22c55e" },
+          { icon:"🔍", label: tr(trendsLang,"ui.filteredLabel"), value: filtered.length,  color:"#f59e0b" },
         ].map(({ icon, label, value, color }) => (
           <motion.div key={label} whileHover={{ y:-3 }}
             style={{ ...st.card, marginTop:0, padding:"14px 16px", borderLeft:`3px solid ${color}40` }}>
@@ -81,118 +147,181 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
         ))}
       </div>
 
-      {/* ── Barre recherche + filtre ──────────────────────────────────────── */}
-      <div style={{ display:"flex", gap:10, marginBottom:14, flexWrap:"wrap" }}>
-        <input
-          style={{ ...st.input, marginBottom:0, flex:1, minWidth:200, fontSize:12 }}
-          placeholder={`🔍 ${tr(trendsLang,"ui.searchPosts")}`}
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
-        <select
-          style={{ ...st.input, marginBottom:0, fontSize:12, minWidth:160 }}
-          value={filterProject}
-          onChange={e => setFilterProject(e.target.value)}
-        >
-          <option value="all">📁 {tr(trendsLang,"ui.statProjects") || "All projects"}</option>
-          {projectNames.map(p => <option key={p} value={p}>{p}</option>)}
-        </select>
-        <button
-          style={{ ...st.buttonSecondary, margin:0, fontSize:11, padding:"10px 16px", whiteSpace:"nowrap" }}
-          onClick={loadHistory}
-        >
-          🔄 {tr(trendsLang,"ui.loadHistory") || "Refresh"}
-        </button>
-      </div>
-
-      {/* ── Liste des posts ───────────────────────────────────────────────── */}
-      <div style={{ ...st.card, marginTop:0, padding: isMobile ? 12 : 20 }}>
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16 }}>
-          <div style={{ color:"#475569", fontSize:9, fontWeight:700, letterSpacing:"2px" }}>
-            {tr(trendsLang,"ui.contentHistory") || "CONTENT HISTORY"}
-          </div>
-          {filtered.length > 0 && (
-            <div style={{ color:"#334155", fontSize:10 }}>{filtered.length} post{filtered.length > 1 ? "s" : ""}</div>
-          )}
+      {/* ── Barre recherche + filtres ── */}
+      <div style={{ ...st.card, marginTop:0, padding:"14px 16px", marginBottom:14 }}>
+        {/* Ligne 1 : Search + toggle filtres */}
+        <div style={{ display:"flex", gap:8, marginBottom: showFilters ? 12 : 0 }}>
+          <input
+            style={{ ...st.input, marginBottom:0, flex:1, fontSize:12 }}
+            placeholder={`🔍 ${tr(trendsLang,"ui.searchPosts")}`}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          <button
+            style={{ padding:"8px 14px", borderRadius:8, border:`1px solid ${hasActiveFilters ? "rgba(220,38,38,0.4)" : "rgba(255,255,255,0.1)"}`, background: hasActiveFilters ? "rgba(220,38,38,0.1)" : "rgba(255,255,255,0.04)", color: hasActiveFilters ? "#ef4444" : "#64748b", fontSize:11, fontWeight:700, cursor:"pointer", whiteSpace:"nowrap", flexShrink:0 }}
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            ⚙️ Filtres {hasActiveFilters && "●"}
+          </button>
+          <button
+            style={{ padding:"8px 12px", borderRadius:8, border:"1px solid rgba(255,255,255,0.08)", background:"rgba(255,255,255,0.03)", color:"#64748b", fontSize:11, cursor:"pointer", flexShrink:0 }}
+            onClick={loadHistory}
+          >🔄</button>
         </div>
 
+        {/* Ligne 2 : Filtres dépliables */}
+        <AnimatePresence>
+          {showFilters && (
+            <motion.div initial={{ opacity:0, height:0 }} animate={{ opacity:1, height:"auto" }} exit={{ opacity:0, height:0 }}
+              style={{ display:"flex", gap:8, flexWrap:"wrap", alignItems:"center", paddingTop:4 }}>
+
+              <select style={selectStyle} value={filterPeriod} onChange={e => setFilterPeriod(e.target.value)}>
+                <option value="all">📅 Toute période</option>
+                <option value="today">Aujourd'hui</option>
+                <option value="week">Cette semaine</option>
+                <option value="month">Ce mois</option>
+              </select>
+
+              <select style={selectStyle} value={filterProject} onChange={e => setFilterProject(e.target.value)}>
+                <option value="all">📁 Tous projets</option>
+                {projectNames.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+
+              <select style={selectStyle} value={filterScore} onChange={e => setFilterScore(e.target.value)}>
+                <option value="all">⚡ Tous scores</option>
+                <option value="high">🟢 High (70+)</option>
+                <option value="medium">🟡 Medium (50-70)</option>
+                <option value="low">🔴 Low (&lt;50)</option>
+              </select>
+
+              <select style={selectStyle} value={filterMedia} onChange={e => setFilterMedia(e.target.value)}>
+                <option value="all">🖼️ Tous médias</option>
+                <option value="with">Avec média</option>
+                <option value="without">Sans média</option>
+              </select>
+
+              <select style={selectStyle} value={sortBy} onChange={e => setSortBy(e.target.value)}>
+                <option value="recent">↓ Plus récent</option>
+                <option value="oldest">↑ Plus ancien</option>
+                <option value="score">⚡ Meilleur score</option>
+              </select>
+
+              {hasActiveFilters && (
+                <button onClick={resetFilters} style={{ padding:"6px 12px", borderRadius:8, border:"1px solid rgba(239,68,68,0.3)", background:"rgba(239,68,68,0.08)", color:"#ef4444", fontSize:11, fontWeight:700, cursor:"pointer" }}>
+                  ✕ Reset
+                </button>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* ── Liste des posts groupés ── */}
+      <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
         {filtered.length === 0 ? (
-          <div style={{ textAlign:"center", padding:"48px 20px" }}>
+          <div style={{ ...st.card, marginTop:0, textAlign:"center", padding:"48px 20px" }}>
             <div style={{ fontSize:40, marginBottom:12 }}>📭</div>
             <div style={{ color:"#475569", fontSize:14, fontWeight:700, marginBottom:6 }}>
-              {search || filterProject !== "all" ? tr(trendsLang,"ui.noPostsMatch") : tr(trendsLang,"ui.noHistoryLoaded")}
+              {search || hasActiveFilters ? "Aucun post ne correspond à ces filtres" : tr(trendsLang,"ui.noHistoryLoaded")}
             </div>
             <div style={{ color:"#334155", fontSize:12 }}>
-              {search || filterProject !== "all" ? tr(trendsLang,"ui.tryFilters") : tr(trendsLang,"ui.generateSave")}
+              {hasActiveFilters ? <button onClick={resetFilters} style={{ background:"none", border:"none", color:"#ef4444", cursor:"pointer", fontSize:12, fontWeight:700 }}>Réinitialiser les filtres</button> : tr(trendsLang,"ui.generateSave")}
             </div>
           </div>
         ) : (
-          <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-            <AnimatePresence>
-              {filtered.map((h, i) => (
-                <motion.div key={h.id || i}
-                  initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }}
-                  transition={{ duration:0.2, delay: i * 0.03 }}
-                  whileHover={{ background:"rgba(220,38,38,0.03)" }}
-                  style={{
-                    padding:"14px 16px", borderRadius:12,
-                    border:"1px solid rgba(255,255,255,0.06)",
-                    background:"rgba(255,255,255,0.01)",
-                    transition:"background 0.15s",
-                  }}
-                >
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12 }}>
-
-                    {/* Thumbnail média */}
-                    {h.media_url && (
-                      <div style={{ flexShrink:0, width:56, height:56, borderRadius:8, overflow:"hidden", border:"1px solid rgba(255,255,255,0.08)" }}>
-                        <img src={h.media_url} alt="media" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
-                      </div>
-                    )}
-
-                    <div style={{ flex:1, minWidth:0 }}>
-                      {/* Titre + projet */}
-                      <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6, flexWrap:"wrap" }}>
-                        <span style={{ color:"#e2e8f0", fontSize:13, fontWeight:700, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth: isMobile ? 160 : 300 }}>
-                          {h.title || tr(trendsLang,"ui.untitledLabel")}
-                        </span>
-                        {h.project_name && (
-                          <span style={{ background:"rgba(139,92,246,0.12)", color:"#a78bfa", fontSize:9, fontWeight:700, padding:"2px 8px", borderRadius:10, letterSpacing:"0.5px", flexShrink:0 }}>
-                            📁 {h.project_name}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Aperçu contenu */}
-                      <p style={{ color:"#64748b", fontSize:12, lineHeight:1.5, margin:0,
-                        overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical" }}>
-                        {h.content?.slice(0, 160)}...
-                      </p>
-                    </div>
-
-                    {/* Date + actions */}
-                    <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:8, flexShrink:0 }}>
-                      <span style={{ color:"#334155", fontSize:10 }}>{formatDate(h.created_at)}</span>
-                      <div style={{ display:"flex", gap:6 }}>
-                        <motion.button whileHover={{ scale:1.05 }} whileTap={{ scale:0.95 }}
-                          style={{ padding:"5px 10px", borderRadius:6, border:"1px solid rgba(255,255,255,0.08)", background:"rgba(255,255,255,0.03)", color: copiedIdx===i ? "#22c55e" : "#64748b", fontSize:10, fontWeight:700, cursor:"pointer" }}
-                          onClick={() => copyPost(h.content, i)}
-                        >
-                          {copiedIdx === i ? "✓" : tr(trendsLang,"ui.copyBtn")}
-                        </motion.button>
-                        <motion.button whileHover={{ scale:1.05 }} whileTap={{ scale:0.95 }}
-                          style={{ padding:"5px 10px", borderRadius:6, border:"1px solid rgba(220,38,38,0.2)", background:"rgba(220,38,38,0.08)", color:"#ef4444", fontSize:10, fontWeight:700, cursor:"pointer" }}
-                          onClick={() => loadInCreate(h.content)}
-                        >
-                          {tr(trendsLang,"ui.editBtn")} →
-                        </motion.button>
-                      </div>
-                    </div>
+          ["today","yesterday","week","month","older"].map(groupKey => {
+            const posts = grouped[groupKey];
+            if (!posts?.length) return null;
+            return (
+              <div key={groupKey}>
+                {/* Label du groupe */}
+                <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+                  <div style={{ color:"#334155", fontSize:10, fontWeight:700, letterSpacing:"1.5px", whiteSpace:"nowrap" }}>
+                    {getGroupLabel(groupKey).toUpperCase()}
                   </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
+                  <div style={{ flex:1, height:1, background:"rgba(255,255,255,0.04)" }} />
+                  <div style={{ color:"#334155", fontSize:10 }}>{posts.length} post{posts.length > 1 ? "s" : ""}</div>
+                </div>
+
+                {/* Posts du groupe */}
+                <div style={{ ...st.card, marginTop:0, padding: isMobile ? 10 : 16, display:"flex", flexDirection:"column", gap:6 }}>
+                  <AnimatePresence>
+                    {posts.map((h, i) => (
+                      <motion.div key={h.id || i}
+                        initial={{ opacity:0, y:6 }} animate={{ opacity:1, y:0 }}
+                        transition={{ duration:0.2, delay: i * 0.02 }}
+                        whileHover={{ background:"rgba(220,38,38,0.03)" }}
+                        style={{
+                          padding:"12px 14px", borderRadius:10,
+                          border:"1px solid rgba(255,255,255,0.05)",
+                          background:"rgba(255,255,255,0.01)",
+                          transition:"background 0.15s",
+                        }}
+                      >
+                        <div style={{ display:"flex", alignItems:"flex-start", gap:10 }}>
+
+                          {/* Thumbnail */}
+                          {h.media_url && (
+                            <div style={{ flexShrink:0, width:48, height:48, borderRadius:8, overflow:"hidden", border:"1px solid rgba(255,255,255,0.08)" }}>
+                              <img src={h.media_url} alt="media" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                            </div>
+                          )}
+
+                          {/* Contenu */}
+                          <div style={{ flex:1, minWidth:0 }}>
+                            <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:4, flexWrap:"wrap" }}>
+                              <span style={{ color:"#e2e8f0", fontSize:12, fontWeight:700, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth: isMobile ? 140 : 280 }}>
+                                {h.title || h.content?.split(" ").slice(0,5).join(" ") + "..." || tr(trendsLang,"ui.untitledLabel")}
+                              </span>
+                              {h.project_name && (
+                                <span style={{ background:"rgba(139,92,246,0.12)", color:"#a78bfa", fontSize:9, fontWeight:700, padding:"2px 6px", borderRadius:8, flexShrink:0 }}>
+                                  📁 {h.project_name}
+                                </span>
+                              )}
+                              {h.viral_score > 0 && (
+                                <span style={{ background:`${scoreColor(h.viral_score)}15`, border:`1px solid ${scoreColor(h.viral_score)}40`, color:scoreColor(h.viral_score), fontSize:9, fontWeight:700, padding:"2px 6px", borderRadius:8, flexShrink:0 }}>
+                                  ⚡ {h.viral_score} {scoreLabel(h.viral_score)}
+                                </span>
+                              )}
+                            </div>
+                            <p style={{ color:"#64748b", fontSize:11, lineHeight:1.5, margin:0, overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical" }}>
+                              {h.content?.slice(0, 140)}...
+                            </p>
+                          </div>
+
+                          {/* Date + Actions */}
+                          <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6, flexShrink:0 }}>
+                            <span style={{ color:"#334155", fontSize:10 }}>{formatDate(h.created_at)}</span>
+                            <div style={{ display:"flex", gap:4 }}>
+                              <motion.button whileHover={{ scale:1.05 }} whileTap={{ scale:0.95 }}
+                                style={{ padding:"4px 8px", borderRadius:6, border:"1px solid rgba(255,255,255,0.08)", background:"rgba(255,255,255,0.03)", color: copiedIdx===h.id ? "#22c55e" : "#64748b", fontSize:10, fontWeight:700, cursor:"pointer" }}
+                                onClick={() => copyPost(h.content, h.id)}
+                              >
+                                {copiedIdx === h.id ? "✓" : tr(trendsLang,"ui.copyBtn")}
+                              </motion.button>
+                              <motion.button whileHover={{ scale:1.05 }} whileTap={{ scale:0.95 }}
+                                style={{ padding:"4px 8px", borderRadius:6, border:"1px solid rgba(220,38,38,0.2)", background:"rgba(220,38,38,0.08)", color:"#ef4444", fontSize:10, fontWeight:700, cursor:"pointer" }}
+                                onClick={() => loadInCreate(h.content)}
+                              >
+                                {tr(trendsLang,"ui.editBtn")} →
+                              </motion.button>
+                              <motion.button whileHover={{ scale:1.05 }} whileTap={{ scale:0.95 }}
+                                style={{ padding:"4px 8px", borderRadius:6, border:"1px solid rgba(239,68,68,0.15)", background:"rgba(239,68,68,0.05)", color:"#475569", fontSize:10, cursor:"pointer", opacity: deletingId===h.id ? 0.5 : 1 }}
+                                onClick={() => deletePost(h.id)}
+                                disabled={deletingId===h.id}
+                              >
+                                🗑️
+                              </motion.button>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </div>
+            );
+          })
         )}
       </div>
     </>
