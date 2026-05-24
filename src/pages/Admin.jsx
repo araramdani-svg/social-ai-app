@@ -926,7 +926,7 @@ export default function Admin({ token, logout }) {
                 <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
                   <thead>
                     <tr style={{ background:"rgba(255,255,255,0.03)" }}>
-                      {["ID","EMAIL","NOM","PLAN","GÉNÉRATIONS","POSTS","STRIPE","STATUT","VÉRIFIÉ","ACTIONS"].map(h => (
+                      {["ID","EMAIL","NOM","DISPLAY NAME","PLAN","GÉNÉRATIONS","POSTS","STRIPE","STATUT","VÉRIFIÉ","ACTIONS"].map(h => (
                         <th key={h} style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"14px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)", whiteSpace:"nowrap" }}>{h}</th>
                       ))}
                     </tr>
@@ -939,16 +939,17 @@ export default function Admin({ token, logout }) {
                         <td style={{ padding:"12px 16px", color:"#475569" }}>#{u.id}</td>
                         <td style={{ padding:"12px 16px" }}>
                           <div style={{ color: u.banned ? "#ef4444" : "#e2e8f0", fontWeight:600 }}>{u.email}</div>
-                          {u.linkedin_name && <div style={{ color:"#64748b", fontSize:11 }}>{u.linkedin_name}</div>}
                           {u.banned && <div style={{ color:"#ef4444", fontSize:10, fontWeight:700 }}>🚫 SUSPENDU</div>}
                         </td>
                         <td style={{ padding:"12px 16px" }}>
-                          {(u.first_name || u.last_name) ? (
-                            <div>
-                              <div style={{ color:"#e2e8f0", fontSize:12 }}>{[u.first_name, u.last_name].filter(Boolean).join(" ")}</div>
-                              {u.display_name && <div style={{ color:"#64748b", fontSize:10 }}>@{u.display_name}</div>}
-                            </div>
-                          ) : <span style={{ color:"#334155" }}>—</span>}
+                          {(u.first_name || u.last_name)
+                            ? <span style={{ color:"#e2e8f0", fontSize:12 }}>{[u.first_name, u.last_name].filter(Boolean).join(" ")}</span>
+                            : <span style={{ color:"#334155" }}>—</span>}
+                        </td>
+                        <td style={{ padding:"12px 16px" }}>
+                          {u.display_name
+                            ? <span style={{ background:"rgba(139,92,246,0.08)", border:"1px solid rgba(139,92,246,0.2)", borderRadius:8, padding:"2px 8px", color:"#a78bfa", fontSize:11, fontWeight:600 }}>@{u.display_name}</span>
+                            : <span style={{ color:"#334155" }}>—</span>}
                         </td>
                         <td style={{ padding:"12px 16px" }}>
                           <span style={s.badge(u.plan)}>{u.plan}</span>
