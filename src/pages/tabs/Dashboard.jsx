@@ -53,7 +53,7 @@ const PLATFORM_COLORS = {
 export default function Dashboard({
   trendsLang, isMobile,
   animatedStats, stats, projects, liveFeed, timelineData, growthData,
-  firstName, setTab,
+  firstName, displayName, setTab,
 }) {
 
   // ── Accroche contextuelle ─────────────────────────────────────────────────
@@ -67,7 +67,7 @@ export default function Dashboard({
     return { msg: `${stats?.streak || 0} ${tr(trendsLang,"ui.insightStreak")}`, cta:null };
   };
   const insight = getInsight();
-  const name = firstName ? ` ${firstName}` : "";
+  const name = displayName ? ` ${displayName}` : firstName ? ` ${firstName}` : "";
 
   // ── KPI config ────────────────────────────────────────────────────────────
   const KPIS = [

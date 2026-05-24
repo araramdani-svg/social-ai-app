@@ -365,11 +365,11 @@ router.delete("/delete-account", authenticateToken, async (req, res) => {
 
 // ─── POST /auth/save-profile ──────────────────────────────────────────────────
 router.post("/save-profile", authenticateToken, async (req, res) => {
-  const { first_name, last_name } = req.body;
+  const { first_name, last_name, display_name } = req.body;
   try {
     await db.query(
-      "UPDATE users SET first_name=$1, last_name=$2 WHERE id=$3",
-      [first_name?.trim() || null, last_name?.trim() || null, req.user.id]
+      "UPDATE users SET first_name=$1, last_name=$2, display_name=$3 WHERE id=$4",
+      [first_name?.trim() || null, last_name?.trim() || null, display_name?.trim() || null, req.user.id]
     );
     res.json({ success: true });
   } catch (err) {
@@ -557,7 +557,7 @@ router.post("/resend-verification", async (req, res) => {
 router.get("/me", authenticateToken, async (req, res) => {
   try {
     const result = await db.query(
-      "SELECT id, email, plan, onboarding_done, first_name, last_name, is_admin FROM users WHERE id=$1",
+      "SELECT id, email, plan, onboarding_done, first_name, last_name, display_name, is_admin FROM users WHERE id=$1",
       [req.user.id]
     );
     if (!result.rows.length) return res.status(404).json({ message: "User not found" });

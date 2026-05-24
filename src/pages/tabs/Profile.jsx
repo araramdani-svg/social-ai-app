@@ -13,6 +13,7 @@ export default function Profile({
   newEmail, setNewEmail,
   firstName, setFirstName,
   lastName, setLastName,
+  displayName, setDisplayName,
   userPlan, projects, stats, workspace,
   changePassword, changeEmailAddress, deleteAccount, saveProfile,
   setPage, showToast
@@ -151,7 +152,23 @@ export default function Profile({
                     <input type="text" value={lastName || ""} onChange={e => setLastName(e.target.value)} placeholder={tr(trendsLang,"profile.lastName")} style={{ ...st.input, maxWidth:"100%", marginBottom:0 }} />
                   </div>
                 </div>
-                <button style={{ ...st.button, margin:0, fontSize:12, padding:"10px 18px", opacity: profileLoading ? 0.6 : 1 }} onClick={() => { saveProfile(); logUserAction("update_profile", { fields: ["firstName", "lastName"] }); }} disabled={profileLoading}>
+
+                {/* DisplayName */}
+                <div style={{ marginBottom:10 }}>
+                  <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px", marginBottom:6 }}>{tr(trendsLang,"profile.displayName") || "DISPLAY NAME"}</div>
+                  <input
+                    type="text"
+                    value={displayName || ""}
+                    onChange={e => setDisplayName(e.target.value)}
+                    placeholder={tr(trendsLang,"profile.displayNamePlaceholder") || "Name shown in GrowthPILOT"}
+                    style={{ ...st.input, maxWidth:"100%", marginBottom:0 }}
+                  />
+                  <div style={{ color:"#334155", fontSize:10, marginTop:4 }}>
+                    {tr(trendsLang,"profile.displayNameHint") || "This name will appear on your Home and Dashboard"}
+                  </div>
+                </div>
+
+                <button style={{ ...st.button, margin:0, fontSize:12, padding:"10px 18px", opacity: profileLoading ? 0.6 : 1 }} onClick={() => { saveProfile(); logUserAction("update_profile", { fields: ["firstName", "lastName", "displayName"] }); }} disabled={profileLoading}>
                   {profileLoading ? tr(trendsLang, "profile.updating") : tr(trendsLang,"profile.saveName")}
                 </button>
               </div>

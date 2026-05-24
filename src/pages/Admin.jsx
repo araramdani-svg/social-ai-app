@@ -358,6 +358,15 @@ function UserLogsTab({ token }) {
   const [loading, setLoading] = useState(false);
   const [filterAction, setFilterAction] = useState("");
   const [filterUser, setFilterUser] = useState("");
+  const [usersList, setUsersList] = useState([]);
+
+  // Charger la liste des users pour le filtre
+  useEffect(() => {
+    fetch(`${API}/admin/users?page=1`, { headers:{ Authorization:`Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => setUsersList(d.users || []))
+      .catch(() => {});
+  }, [token]);
 
   const fetchLogs = useCallback(async (p = 1) => {
     setLoading(true);
@@ -376,9 +385,20 @@ function UserLogsTab({ token }) {
     <div>
       <div style={{ display:"flex", gap:8, marginBottom:12, flexWrap:"wrap" }}>
         <input style={{ ...s.input, flex:1, minWidth:160, fontSize:12 }} placeholder="🔍 Filtrer par action..." value={filterAction} onChange={e => setFilterAction(e.target.value)} />
-        <input style={{ ...s.input, width:120, fontSize:12 }} placeholder="User ID" value={filterUser} onChange={e => setFilterUser(e.target.value)} />
+        <select
+          style={{ background:"#0f172a", border:"1px solid rgba(220,38,38,0.2)", borderRadius:8, color:"white", fontSize:11, padding:"7px 10px", cursor:"pointer", maxWidth:200 }}
+          value={filterUser}
+          onChange={e => setFilterUser(e.target.value)}
+        >
+          <option value="">👤 Tous les users</option>
+          {usersList.map(u => (
+            <option key={u.id} value={u.id}>
+              {u.display_name || [u.first_name, u.last_name].filter(Boolean).join(" ") || u.email}
+            </option>
+          ))}
+        </select>
         <button style={{ ...s.btnSm, padding:"0 14px", background:"rgba(220,38,38,0.1)", border:"1px solid rgba(220,38,38,0.3)", color:"#ef4444" }} onClick={() => fetchLogs(1)}>🔍</button>
-        <button style={{ ...s.btnSm, padding:"0 14px" }} onClick={() => { setFilterAction(""); setFilterUser(""); }}>✕</button>
+        <button style={{ ...s.btnSm, padding:"0 14px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.1)", color:"#64748b" }} onClick={() => { setFilterAction(""); setFilterUser(""); }}>✕</button>
       </div>
       <div style={{ ...s.card, padding:0, overflow:"hidden" }}>
         <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
@@ -906,7 +926,7 @@ export default function Admin({ token, logout }) {
                 <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
                   <thead>
                     <tr style={{ background:"rgba(255,255,255,0.03)" }}>
-                      {["ID","EMAIL","PLAN","GÉNÉRATIONS","POSTS","STRIPE","STATUT","VÉRIFIÉ","ACTIONS"].map(h => (
+                      {["ID","EMAIL","NOM","PLAN","GÉNÉRATIONS","POSTS","STRIPE","STATUT","VÉRIFIÉ","ACTIONS"].map(h => (
                         <th key={h} style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"14px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)", whiteSpace:"nowrap" }}>{h}</th>
                       ))}
                     </tr>
@@ -923,6 +943,13 @@ export default function Admin({ token, logout }) {
                           {u.banned && <div style={{ color:"#ef4444", fontSize:10, fontWeight:700 }}>🚫 SUSPENDU</div>}
                         </td>
                         <td style={{ padding:"12px 16px" }}>
+                          {(u.first_name || u.last_name) ? (
+                            <div>
+                              <div style={{ color:"#e2e8f0", fontSize:12 }}>{[u.first_name, u.last_name].filter(Boolean).join(" ")}</div>
+                              {u.display_name && <div style={{ color:"#64748b", fontSize:10 }}>@{u.display_name}</div>}
+                            </div>
+                          ) : <span style={{ color:"#334155" }}>—</span>}
+                        </td>
                           <span style={s.badge(u.plan)}>{u.plan}</span>
                         </td>
                         <td style={{ padding:"12px 16px", color:"#94a3b8" }}>{u.generations_count || 0}</td>

@@ -165,7 +165,7 @@ router.get("/users", adminAuth, async (req, res) => {
       db.query(
         `SELECT u.id, u.email, u.plan, u.generations_count, u.quota_reset_date,
                 u.linkedin_name, u.stripe_customer_id, u.stripe_subscription_id,
-                u.banned, u.email_verified,
+                u.banned, u.email_verified, u.first_name, u.last_name, u.display_name,
                 (SELECT COUNT(*)::int FROM posts p WHERE p.user_id = u.id) AS post_count
          FROM users u
          WHERE ${where}

@@ -36,10 +36,10 @@ const MODULES = [
   { key:"integrations", icon:"🔗" },
 ];
 
-export default function Home({ trendsLang, isMobile, setTab, stats, userPlan, firstName }) {
+export default function Home({ trendsLang, isMobile, setTab, stats, userPlan, firstName, displayName }) {
 
   const greeting = GREETING(trendsLang);
-  const name = firstName ? `, ${firstName}` : "";
+  const name = displayName ? `, ${displayName}` : firstName ? `, ${firstName}` : "";
   const plan = userPlan?.plan || "Free";
 
   const planColor = plan === "Business" ? "#a855f7" : plan === "Pro" ? "#ef4444" : "#475569";
