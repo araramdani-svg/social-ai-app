@@ -41,16 +41,13 @@ export default function Profile({
       });
       const d = await r.json();
       if (r.ok) {
-        // Mettre à jour le parent seulement après succès
         setFirstName(localFirstName);
         setLastName(localLastName);
         setDisplayName(localDisplayName);
-        showToast("✅ Profile updated");
         setProfileMsg({ type:"success", text:"✅ Profile saved successfully" });
         setTimeout(() => setProfileMsg(null), 3000);
         logUserAction("update_profile", { fields: ["firstName", "lastName", "displayName"] });
       } else {
-        showToast("❌ " + (d.message || "Failed to update profile"));
         setProfileMsg({ type:"error", text: d.message || "Failed to update profile" });
       }
     } catch {
