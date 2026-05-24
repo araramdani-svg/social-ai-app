@@ -282,7 +282,22 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   const analyze        = async () => { if(!post) return; try{ setLoading(true); const d=await api("analyze",{ text:post, lang:trendsLang }); if(d?.error==="quota_exceeded"){ showToast(`⚠️ ${d.message}`); setTimeout(()=>setPage&&setPage("pricing"),2000); return; } setAnalysis(d); setTab("analyze"); showToast(tr(trendsLang,"messages.analysisComplete")); logUserAction("analyze_post", { lang: trendsLang }); } catch{ showToast(tr(trendsLang,"messages.analysisFailed")); } finally{ setLoading(false); setAiStep(0); } };
   const exportPost     = () => { if(!post) return; const b=new Blob([post],{ type:"text/plain" }); const u=URL.createObjectURL(b); const a=document.createElement("a"); a.href=u; a.download=`${projectTitle||"post"}.txt`; a.click(); URL.revokeObjectURL(u); };
   const copyPost       = async () => { if(!post) return; await navigator.clipboard.writeText(post); showToast(tr(trendsLang,"messages.copied")); logUserAction("copy_post"); };
-  const publish        = (dest) => { showToast(tr(trendsLang,"messages.published")); setPublishLog(p=>[{ dest,date:new Date().toLocaleString() },...p]); };
+  const publish = async (dest) => {
+    if (!post) return showToast("⚠️ No content to publish — generate a post first");
+    if (dest === "LINKEDIN") {
+      if (!linkedinStatus?.connected) return showToast("⚠️ LinkedIn not connected — go to Integrations");
+      const ok = await postToLinkedin();
+      if (ok) setPublishLog(p => [{ dest, date: new Date().toLocaleString() }, ...p]);
+    } else if (dest === "TWITTER") {
+      if (!twitterStatus?.connected) return showToast("⚠️ X/Twitter not connected — go to Integrations");
+      const ok = await postToTwitter();
+      if (ok) setPublishLog(p => [{ dest, date: new Date().toLocaleString() }, ...p]);
+    } else if (dest === "FACEBOOK") {
+      if (!facebookStatus?.connected) return showToast("⚠️ Facebook not connected — go to Integrations");
+      const ok = await postToFacebook();
+      if (ok) setPublishLog(p => [{ dest, date: new Date().toLocaleString() }, ...p]);
+    }
+  };
   const generatePlanner= () => { setPlanner(Array.from({ length:30 },(_,i)=>`Day ${i+1} — ${campaign} / ${topic}`)); setTab("planner"); };
   const schedulePost   = () => { if(!scheduleDate||!scheduleTime||!post) return; setScheduledPosts(p=>[{ content:post.slice(0,80)+"...",date:scheduleDate,time:scheduleTime },...p]); };
   const autoPublish    = () => { if(!post) return; setAutoPosts(p=>[{ platform:autoPlatform,content:post.slice(0,80)+"...",status:"Scheduled",date:new Date().toLocaleString() },...p]); setTimeout(()=>setAutoPosts(p=>p.map((x,i)=>i===0?{ ...x,status:Math.random()>0.2?"Sent":"Failed" }:x)),4000); };
@@ -293,7 +308,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   const postToTiktok       = async () => { if(!post) return; setTiktokPosting(true); try{ const r=await fetch(`${API}/tiktok/post`,{ method:"POST",headers:{ "Content-Type":"application/json",Authorization:`Bearer ${token}` },body:JSON.stringify({ caption:post }) }); const d=await r.json(); if(d.code==="video_required"){ showToast("⚠️ TikTok requires a video URL"); } else if(d.success){ showToast("✓ Published on TikTok!"); } else showToast("❌ TikTok post failed"); } catch{ showToast("❌ TikTok post failed"); } finally{ setTiktokPosting(false); } };
   const connectFacebook    = () => { window.location.href=`${API}/facebook/connect?token=${encodeURIComponent(token)}`; };
   const disconnectFacebook = async () => { await fetch(`${API}/facebook/disconnect`,{ method:"DELETE",headers:{ Authorization:`Bearer ${token}` } }); setFacebookStatus({ connected:false, userName:null, pageName:null }); };
-  const postToFacebook     = async () => { if(!post) return; setFacebookPosting(true); try{ const r=await fetch(`${API}/facebook/post`,{ method:"POST",headers:{ "Content-Type":"application/json",Authorization:`Bearer ${token}` },body:JSON.stringify({ message:post }) }); const d=await r.json(); if(d.success){ showToast("✓ Published on Facebook!"); } else showToast("❌ Facebook post failed"); } catch{ showToast("❌ Facebook post failed"); } finally{ setFacebookPosting(false); } };
+  const postToFacebook     = async () => { if(!post) return false; setFacebookPosting(true); try{ const r=await fetch(`${API}/facebook/post`,{ method:"POST",headers:{ "Content-Type":"application/json",Authorization:`Bearer ${token}` },body:JSON.stringify({ message:post }) }); const d=await r.json(); if(d.success){ showToast("✓ Published on Facebook!"); return true; } else { showToast("❌ Facebook post failed"); return false; } } catch{ showToast("❌ Facebook post failed"); return false; } finally{ setFacebookPosting(false); } };
   const connectInstagram    = () => { window.location.href=`${API}/instagram/connect?token=${encodeURIComponent(token)}`; };
   const disconnectInstagram = async () => { await fetch(`${API}/instagram/disconnect`,{ method:"DELETE",headers:{ Authorization:`Bearer ${token}` } }); setInstagramStatus({ connected:false, username:null }); };
   const postToInstagram     = async () => {
@@ -310,10 +325,10 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   };
   const connectTwitter     = () => { window.location.href=`${API}/twitter/connect?token=${encodeURIComponent(token)}`; };
   const disconnectTwitter  = async () => { await fetch(`${API}/twitter/disconnect`,{ method:"DELETE",headers:{ Authorization:`Bearer ${token}` } }); setTwitterStatus({ connected:false, username:null }); };
-  const postToTwitter      = async () => { if(!post) return; setTwitterPosting(true); try{ const r=await fetch(`${API}/twitter/post`,{ method:"POST",headers:{ "Content-Type":"application/json",Authorization:`Bearer ${token}` },body:JSON.stringify({ text:post }) }); const d=await r.json(); if(d.success){ showToast(tr(trendsLang,"messages.publishedTwitter")); } else showToast(tr(trendsLang,"messages.twitterFailed")); } catch{ showToast(tr(trendsLang,"messages.twitterFailed")); } finally{ setTwitterPosting(false); } };
+  const postToTwitter      = async () => { if(!post) return false; setTwitterPosting(true); try{ const r=await fetch(`${API}/twitter/post`,{ method:"POST",headers:{ "Content-Type":"application/json",Authorization:`Bearer ${token}` },body:JSON.stringify({ text:post }) }); const d=await r.json(); if(d.success){ showToast(tr(trendsLang,"messages.publishedTwitter")); return true; } else { showToast(tr(trendsLang,"messages.twitterFailed")); return false; } } catch{ showToast(tr(trendsLang,"messages.twitterFailed")); return false; } finally{ setTwitterPosting(false); } };
   const connectLinkedin    = () => { window.location.href=`${API}/linkedin/connect?token=${encodeURIComponent(token)}`; };
   const disconnectLinkedin = async () => { await fetch(`${API}/linkedin/disconnect`,{ method:"DELETE",headers:{ Authorization:`Bearer ${token}` } }); setLinkedinStatus({ connected:false,name:null }); };
-  const postToLinkedin     = async () => { if(!post) return; setLinkedinPosting(true); try{ const r=await fetch(`${API}/linkedin/post`,{ method:"POST",headers:{ "Content-Type":"application/json",Authorization:`Bearer ${token}` },body:JSON.stringify({ text:post, postDbId:currentPostDbId||null }) }); const d=await r.json(); if(d.success){ setCurrentPostDbId(null); showToast(tr(trendsLang,"messages.publishedLinkedin")); } else showToast(tr(trendsLang,"messages.linkedinFailed")); } catch{ showToast(tr(trendsLang,"messages.linkedinFailed")); } finally{ setLinkedinPosting(false); } };
+  const postToLinkedin     = async () => { if(!post) return false; setLinkedinPosting(true); try{ const r=await fetch(`${API}/linkedin/post`,{ method:"POST",headers:{ "Content-Type":"application/json",Authorization:`Bearer ${token}` },body:JSON.stringify({ text:post, postDbId:currentPostDbId||null }) }); const d=await r.json(); if(d.success){ setCurrentPostDbId(null); showToast(tr(trendsLang,"messages.publishedLinkedin")); return true; } else { showToast(tr(trendsLang,"messages.linkedinFailed")); return false; } } catch{ showToast(tr(trendsLang,"messages.linkedinFailed")); return false; } finally{ setLinkedinPosting(false); } };
   const connectThreads    = () => { window.location.href=`${API}/threads/connect?token=${encodeURIComponent(token)}`; };
   const disconnectThreads = async () => { await fetch(`${API}/threads/disconnect`,{ method:"DELETE",headers:{ Authorization:`Bearer ${token}` } }); setThreadsStatus({ connected:false,username:null }); };
   const postToThreads     = async () => { if(!post) return; setThreadsPosting(true); try{ const r=await fetch(`${API}/threads/post`,{ method:"POST",headers:{ "Content-Type":"application/json",Authorization:`Bearer ${token}` },body:JSON.stringify({ text:post }) }); const d=await r.json(); showToast(d.success?tr(trendsLang,"buttons.publishedThreads"):tr(trendsLang,"messages.threadsFailed")); } catch{ showToast(tr(trendsLang,"messages.threadsFailed")); } finally{ setThreadsPosting(false); } };
