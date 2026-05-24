@@ -46,9 +46,12 @@ export default function Profile({
         setLastName(localLastName);
         setDisplayName(localDisplayName);
         showToast("✅ Profile updated");
+        setProfileMsg({ type:"success", text:"✅ Profile saved successfully" });
+        setTimeout(() => setProfileMsg(null), 3000);
         logUserAction("update_profile", { fields: ["firstName", "lastName", "displayName"] });
       } else {
         showToast("❌ " + (d.message || "Failed to update profile"));
+        setProfileMsg({ type:"error", text: d.message || "Failed to update profile" });
       }
     } catch {
       showToast("❌ Server error");
