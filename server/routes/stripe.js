@@ -110,14 +110,6 @@ router.get("/status", authenticateToken, async (req, res) => {
   );
   const user = result.rows[0];
 
-  // ── Bypass comptes test — accès Pro permanent ──
-  const TEST_ACCOUNTS = [
-    "test@test.com", // remplace par ton email de test réel
-  ];
-  if (TEST_ACCOUNTS.includes(user?.email)) {
-    return res.json({ plan: "Pro", interval: "month" });
-  }
-
   res.json({
     plan: user?.plan || "Free",
     interval: user?.plan_interval || null,
