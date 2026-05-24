@@ -736,6 +736,28 @@ router.delete("/posts/:id", authenticateToken, async (req, res) => {
   }
 });
 
+// ─── GET /auth/user-actions — Actions de l'user connecté ─────────────────────
+router.get("/user-actions", authenticateToken, async (req, res) => {
+  const { page = 1, action } = req.query;
+  const limit  = 30;
+  const offset = (page - 1) * limit;
+  try {
+    const conditions = ["user_id = $1"];
+    const values     = [req.user.id];
+    let i = 2;
+    if (action) { conditions.push(`action = $${i++}`); values.push(action); }
+    const where = `WHERE ${conditions.join(" AND ")}`;
+    const [logsRes, countRes] = await Promise.all([
+      db.query(`SELECT * FROM user_logs ${where} ORDER BY created_at DESC LIMIT $${i} OFFSET $${i+1}`, [...values, limit, offset]),
+      db.query(`SELECT COUNT(*)::int AS total FROM user_logs ${where}`, values),
+    ]);
+    res.json({ logs: logsRes.rows, total: countRes.rows[0].total, pages: Math.ceil(countRes.rows[0].total / limit) });
+  } catch (err) {
+    console.error("user-actions error:", err.message);
+    res.status(500).json({ error: "Failed to fetch actions" });
+  }
+});
+
 // ─── POST /auth/user-log — Logger une action utilisateur ─────────────────────
 router.post("/user-log", authenticateToken, async (req, res) => {
   const { action, details } = req.body;

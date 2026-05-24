@@ -7,6 +7,56 @@ const API = "https://social-ai-app-production.up.railway.app";
 
 export default function History({ trendsLang, isMobile, history, projects, loadHistory, setPost, setTab, token }) {
 
+  const [activeTab,    setActiveTab]    = useState("posts");
+  const [userActions,  setUserActions]  = useState([]);
+  const [actionsPage,  setActionsPage]  = useState(1);
+  const [actionsPages, setActionsPages] = useState(1);
+  const [actionsLoading, setActionsLoading] = useState(false);
+  const [filterAction, setFilterAction] = useState("");
+
+  const USER_ACTION_LABELS = {
+    generate_post:        { label:"✍️ Génération",     color:"#ef4444" },
+    save_post:            { label:"💾 Sauvegarde",      color:"#22c55e" },
+    copy_post:            { label:"📋 Copie",           color:"#64748b" },
+    rewrite_post:         { label:"🔄 Réécriture",      color:"#f59e0b" },
+    analyze_post:         { label:"🔍 Analyse",         color:"#8b5cf6" },
+    create_project:       { label:"📁 Projet créé",     color:"#3b82f6" },
+    delete_project:       { label:"🗑️ Projet supprimé", color:"#ef4444" },
+    rename_project:       { label:"✏️ Projet renommé",  color:"#f59e0b" },
+    calendar_add_card:    { label:"📅 Cal. Ajout",      color:"#22c55e" },
+    calendar_delete_card: { label:"📅 Cal. Supprim.",   color:"#ef4444" },
+    calendar_move_card:   { label:"📅 Cal. Déplace",    color:"#f59e0b" },
+    calendar_edit_card:   { label:"📅 Cal. Édition",    color:"#64748b" },
+    calendar_import_post: { label:"📅 Cal. Import",     color:"#8b5cf6" },
+    update_profile:       { label:"👤 Profil modifié",  color:"#3b82f6" },
+    change_password:      { label:"🔑 Mdp changé",      color:"#f97316" },
+    change_email:         { label:"📧 Email changé",    color:"#f97316" },
+    generate_image:       { label:"🖼️ Image générée",   color:"#8b5cf6" },
+    attach_media:         { label:"📎 Média attaché",   color:"#38bdf8" },
+    watch_search:         { label:"🌍 Veille",          color:"#22c55e" },
+    cancel_subscription:  { label:"❌ Abonnement annulé", color:"#ef4444" },
+  };
+
+  const loadUserActions = async (p = 1) => {
+    setActionsLoading(true);
+    try {
+      const params = new URLSearchParams({ page: p });
+      if (filterAction) params.append("action", filterAction);
+      const r = await fetch(`${API}/auth/user-actions?${params}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const d = await r.json();
+      setUserActions(d.logs || []);
+      setActionsPages(d.pages || 1);
+      setActionsPage(p);
+    } catch {}
+    setActionsLoading(false);
+  };
+
+  useEffect(() => {
+    if (activeTab === "actions") loadUserActions(1);
+  }, [activeTab, filterAction]);
+
   const [search,       setSearch]       = useState("");
   const [filterPeriod, setFilterPeriod] = useState("all");
   const [filterProject,setFilterProject]= useState("all");
@@ -127,6 +177,95 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
   return (
     <>
       <PageHeader tabKey="history" trendsLang={trendsLang} isMobile={isMobile} />
+
+      {/* ── Onglets ── */}
+      <div style={{ display:"flex", gap:4, marginBottom:14, borderBottom:"1px solid rgba(255,255,255,0.06)" }}>
+        <button
+          style={{ padding:"10px 20px", background:"none", border:"none", borderBottom: activeTab==="posts" ? "2px solid #ef4444" : "2px solid transparent", color: activeTab==="posts" ? "#ef4444" : "#475569", fontWeight:700, fontSize:12, cursor:"pointer", letterSpacing:"0.5px" }}
+          onClick={() => setActiveTab("posts")}
+        >✍️ Mes Posts</button>
+        <button
+          style={{ padding:"10px 20px", background:"none", border:"none", borderBottom: activeTab==="actions" ? "2px solid #8b5cf6" : "2px solid transparent", color: activeTab==="actions" ? "#8b5cf6" : "#475569", fontWeight:700, fontSize:12, cursor:"pointer", letterSpacing:"0.5px" }}
+          onClick={() => setActiveTab("actions")}
+        >📊 Mes Actions</button>
+      </div>
+
+      {/* ── Onglet Mes Actions ── */}
+      {activeTab === "actions" && (
+        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+          <div style={{ display:"flex", gap:8 }}>
+            <select
+              style={{ background:"#0f172a", border:"1px solid rgba(220,38,38,0.2)", borderRadius:8, color:"white", fontSize:11, padding:"8px 12px", cursor:"pointer", flex:1 }}
+              value={filterAction}
+              onChange={e => setFilterAction(e.target.value)}
+            >
+              <option value="">🔍 Toutes les actions</option>
+              {Object.entries(USER_ACTION_LABELS).map(([key, {label}]) => (
+                <option key={key} value={key}>{label}</option>
+              ))}
+            </select>
+            <button
+              style={{ padding:"8px 14px", borderRadius:8, border:"1px solid rgba(255,255,255,0.1)", background:"rgba(255,255,255,0.04)", color:"#64748b", fontSize:11, cursor:"pointer" }}
+              onClick={() => loadUserActions(1)}
+            >🔄</button>
+          </div>
+
+          <div style={{ ...st.card, marginTop:0, padding:0, overflow:"hidden" }}>
+            {actionsLoading ? (
+              <div style={{ textAlign:"center", padding:40, color:"#475569" }}>Chargement...</div>
+            ) : userActions.length === 0 ? (
+              <div style={{ textAlign:"center", padding:40 }}>
+                <div style={{ fontSize:32, marginBottom:8 }}>📭</div>
+                <div style={{ color:"#475569", fontSize:13 }}>Aucune action enregistrée</div>
+              </div>
+            ) : (
+              <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+                <thead>
+                  <tr style={{ background:"rgba(255,255,255,0.03)" }}>
+                    {["DATE","ACTION","DÉTAILS"].map(h => (
+                      <th key={h} style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"12px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {userActions.map(log => {
+                    const cfg = USER_ACTION_LABELS[log.action] || { label: log.action, color:"#94a3b8" };
+                    return (
+                      <tr key={log.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+                        <td style={{ padding:"12px 16px", color:"#475569", fontSize:11, whiteSpace:"nowrap" }}>
+                          {new Date(log.created_at).toLocaleString("fr-FR")}
+                        </td>
+                        <td style={{ padding:"12px 16px" }}>
+                          <span style={{ background:`${cfg.color}15`, border:`1px solid ${cfg.color}40`, borderRadius:20, padding:"3px 10px", fontSize:10, fontWeight:700, color:cfg.color }}>
+                            {cfg.label}
+                          </span>
+                        </td>
+                        <td style={{ padding:"12px 16px", color:"#64748b", fontSize:11 }}>
+                          {log.details ? (() => { try { const d = typeof log.details === "string" ? JSON.parse(log.details) : log.details; return JSON.stringify(d).slice(0, 80); } catch { return String(log.details).slice(0, 80); } })() : "—"}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {actionsPages > 1 && (
+            <div style={{ display:"flex", justifyContent:"center", gap:6 }}>
+              {Array.from({ length: actionsPages }, (_, i) => i + 1).map(p => (
+                <button key={p}
+                  style={{ width:32, height:32, borderRadius:8, border:`1px solid ${actionsPage===p?"rgba(139,92,246,0.4)":"rgba(255,255,255,0.1)"}`, background: actionsPage===p?"rgba(139,92,246,0.15)":"rgba(255,255,255,0.04)", color: actionsPage===p?"#a78bfa":"#64748b", fontSize:12, cursor:"pointer" }}
+                  onClick={() => loadUserActions(p)}
+                >{p}</button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Onglet Mes Posts ── */}
+      {activeTab === "posts" && (<>
 
       {/* ── KPIs ── */}
       <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap:10, marginBottom:14 }}>
@@ -324,6 +463,7 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
           })
         )}
       </div>
+      </>)}
     </>
   );
 }
