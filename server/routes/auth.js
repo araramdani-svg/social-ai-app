@@ -200,7 +200,7 @@ const validateEmailPassword = (email, password) => {
 
 // ─── Auth routes (publiques) ───────────────────────────────────────────────────
 router.post("/register", async (req, res) => {
-  const { email, password, first_name, last_name } = req.body;
+  const { email, password, first_name, last_name, display_name } = req.body;
 
   const validationError = validateEmailPassword(email, password);
   if (validationError) return res.status(400).json({ message: validationError });
@@ -222,8 +222,8 @@ router.post("/register", async (req, res) => {
 
   try {
     const result = await db.query(
-      "INSERT INTO users(email,password,plan,generations_count,email_verified,verification_token,first_name,last_name) VALUES($1,$2,'Free',0,false,$3,$4,$5) RETURNING id",
-      [email, hashed, verificationToken, first_name || null, last_name || null]
+      "INSERT INTO users(email,password,plan,generations_count,email_verified,verification_token,first_name,last_name,display_name) VALUES($1,$2,'Free',0,false,$3,$4,$5,$6) RETURNING id",
+      [email, hashed, verificationToken, first_name || null, last_name || null, display_name || null]
     );
 
     // Envoyer email de vérification

@@ -9,6 +9,7 @@ export default function Auth({ loginSuccess, initialMode = "login" }) {
   const [error, setError]     = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName]   = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [pendingEmail, setPendingEmail] = useState(""); // email en attente de vérification
   const [resendSent, setResendSent]     = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
@@ -43,7 +44,7 @@ export default function Auth({ loginSuccess, initialMode = "login" }) {
       const res  = await fetch(route, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, ...(mode === "register" && { first_name: firstName, last_name: lastName }) }),
+        body: JSON.stringify({ email, password, ...(mode === "register" && { first_name: firstName, last_name: lastName, display_name: displayName }) }),
       });
       const data = await res.json();
 
@@ -175,6 +176,18 @@ export default function Auth({ loginSuccess, initialMode = "login" }) {
               onKeyDown={e => e.key === "Enter" && submit()}
             />
           </div>
+        )}
+
+        {mode === "register" && (
+          <input
+            style={styles.input}
+            placeholder="Display name (shown in app)"
+            value={displayName}
+            type="text"
+            autoComplete="off"
+            onChange={e => setDisplayName(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && submit()}
+          />
         )}
 
         <input
