@@ -31,13 +31,28 @@ export default function Profile({
   useEffect(() => { setLocalLastName(lastName     || ""); }, [lastName]);
   useEffect(() => { setLocalDisplayName(displayName || ""); }, [displayName]);
 
-  // Sauvegarder + mettre à jour le parent seulement après succès
+  // Sauvegarder directement depuis Profile sans dépendre du parent
   const handleSaveName = async () => {
-    setFirstName(localFirstName);
-    setLastName(localLastName);
-    setDisplayName(localDisplayName);
-    await saveProfile();
-    logUserAction("update_profile", { fields: ["firstName", "lastName", "displayName"] });
+    try {
+      const r = await fetch(`${API}/auth/save-profile`, {
+        method: "POST",
+        headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+        body: JSON.stringify({ first_name: localFirstName, last_name: localLastName, display_name: localDisplayName }),
+      });
+      const d = await r.json();
+      if (r.ok) {
+        // Mettre à jour le parent seulement après succès
+        setFirstName(localFirstName);
+        setLastName(localLastName);
+        setDisplayName(localDisplayName);
+        showToast("✅ Profile updated");
+        logUserAction("update_profile", { fields: ["firstName", "lastName", "displayName"] });
+      } else {
+        showToast("❌ " + (d.message || "Failed to update profile"));
+      }
+    } catch {
+      showToast("❌ Server error");
+    }
   };
 
   const API = "https://social-ai-app-production.up.railway.app";
