@@ -1,7 +1,7 @@
 // GrowthPILOT — Service Worker PWA
 // Stratégie : Cache First pour assets statiques, Network First pour API
 
-const CACHE_NAME    = "growthpilot-v1";
+const CACHE_NAME    = "growthpilot-v2";
 const API_ORIGIN    = "https://social-ai-app-production.up.railway.app";
 
 // Assets à mettre en cache immédiatement
