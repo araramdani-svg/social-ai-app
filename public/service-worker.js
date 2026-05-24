@@ -1,7 +1,7 @@
 // GrowthPILOT — Service Worker PWA
 // Stratégie : Cache First pour assets statiques, Network First pour API
 
-const CACHE_NAME    = "growthpilot-v2";
+const CACHE_NAME    = "growthpilot-v3";
 const API_ORIGIN    = "https://social-ai-app-production.up.railway.app";
 
 // Assets à mettre en cache immédiatement
@@ -40,6 +40,17 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  // 0. Toujours ignorer — laisser passer sans interception
+  if (
+    url.pathname === "/manifest.json" ||
+    url.pathname.includes("service-worker") ||
+    request.mode === "navigate" ||
+    url.pathname.match(/\.(jsx?|tsx?|mjs)$/)
+  ) {
+    event.respondWith(fetch(request));
+    return;
+  }
+
   // 1. Requêtes API Railway → Network First (toujours fresh)
   if (url.origin === API_ORIGIN) {
     event.respondWith(
@@ -52,12 +63,10 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 2. Assets statiques (JS, CSS, images) → Cache First
+  // 2. Assets statiques (CSS, images, fonts) → Cache First
   if (
     request.method === "GET" &&
-    (url.pathname.match(/\.(js|css|png|jpg|jpeg|svg|ico|woff2?)$/) ||
-     url.pathname === "/" ||
-     url.pathname === "/index.html")
+    url.pathname.match(/\.(css|png|jpg|jpeg|svg|ico|woff2?)$/)
   ) {
     event.respondWith(
       caches.match(request).then((cached) => {
