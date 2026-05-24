@@ -950,6 +950,7 @@ export default function Admin({ token, logout }) {
                             </div>
                           ) : <span style={{ color:"#334155" }}>—</span>}
                         </td>
+                        <td style={{ padding:"12px 16px" }}>
                           <span style={s.badge(u.plan)}>{u.plan}</span>
                         </td>
                         <td style={{ padding:"12px 16px", color:"#94a3b8" }}>{u.generations_count || 0}</td>
