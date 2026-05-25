@@ -237,12 +237,19 @@ router.post("/users/:id/reset-quota", adminAuth, async (req, res) => {
 
 // ─── DELETE /admin/users/:id ──────────────────────────────────────────────────
 router.delete("/users/:id", adminAuth, async (req, res) => {
+  const id = req.params.id;
   try {
-    await db.query("DELETE FROM posts WHERE user_id=$1", [req.params.id]);
-    await db.query("DELETE FROM team_members WHERE owner_id=$1 OR member_id=$1", [req.params.id]);
-    await db.query("DELETE FROM agency_clients WHERE agency_id=$1", [req.params.id]);
-    await db.query("DELETE FROM users WHERE id=$1", [req.params.id]);
-    await logAction(req.user.id, "delete_user", req.params.id);
+    // Supprimer dans l'ordre pour respecter les contraintes FK
+    await db.query("DELETE FROM publish_log    WHERE user_id=$1", [id]);
+    await db.query("DELETE FROM calendar_cards WHERE user_id=$1", [id]);
+    await db.query("DELETE FROM user_logs      WHERE user_id=$1", [id]);
+    await db.query("DELETE FROM brand_memory   WHERE user_id=$1", [id]);
+    await db.query("DELETE FROM posts          WHERE user_id=$1", [id]);
+    await db.query("DELETE FROM projects       WHERE user_id=$1", [id]);
+    await db.query("DELETE FROM team_members   WHERE owner_id=$1 OR member_id=$1", [id]);
+    await db.query("DELETE FROM agency_clients WHERE agency_id=$1", [id]);
+    await db.query("DELETE FROM users          WHERE id=$1", [id]);
+    await logAction(req.user.id, "delete_user", id);
     res.json({ success: true });
   } catch (err) {
     console.error("Admin delete user error:", err.message);
