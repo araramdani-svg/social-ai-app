@@ -226,6 +226,19 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
   const [activeTab, setActiveTab]   = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  // ── Vérification email via lien ───────────────────────────────────────────
+  const [verifyToken,   setVerifyToken]   = useState(() => new URLSearchParams(window.location.search).get("verify"));
+  const [verifyStatus,  setVerifyStatus]  = useState(null); // null | "success" | "error"
+
+  useEffect(() => {
+    if (!verifyToken) return;
+    window.history.replaceState({}, "", "/");
+    fetch(`https://social-ai-app-production.up.railway.app/auth/verify-email/${verifyToken}`)
+      .then(r => r.json())
+      .then(d => setVerifyStatus(d.success ? "success" : "error"))
+      .catch(() => setVerifyStatus("error"));
+  }, [verifyToken]);
+
   // ── Reset password via lien email ─────────────────────────────────────────
   const [resetToken,    setResetToken]    = useState(() => new URLSearchParams(window.location.search).get("reset"));
   const [resetPassword, setResetPassword] = useState("");
@@ -318,6 +331,39 @@ export default function Index({ openApp, openLogin, openPricing, lang: propLang,
     <div style={{ minHeight:"100vh", background:"#050a14", color:"#e2e8f0", fontFamily:"'Inter', sans-serif", overflowX:"clip" }}>
 
       {/* ── Modale Reset Password ─────────────────────────────────────────── */}
+      {/* ── MODALE VÉRIFICATION EMAIL ── */}
+      {verifyStatus && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+          <div style={{ background:"linear-gradient(145deg,#1a2235,#111827)", border:"1px solid rgba(220,38,38,0.2)", borderLeft:`3px solid ${verifyStatus === "success" ? "#22c55e" : "#ef4444"}`, borderRadius:16, padding:32, width:"100%", maxWidth:420, color:"white", textAlign:"center" }}>
+            <div style={{ fontSize:48, marginBottom:16 }}>{verifyStatus === "success" ? "✅" : "❌"}</div>
+            <h2 style={{ margin:"0 0 12px", fontSize:22, fontFamily:"'Syne', sans-serif" }}>
+              {tr(activeLang, "messages.emailVerifiedTitle")}
+            </h2>
+            <p style={{ color:"#64748b", fontSize:14, marginBottom:28, lineHeight:1.6 }}>
+              {verifyStatus === "success"
+                ? tr(activeLang, "messages.emailVerifiedDesc")
+                : tr(activeLang, "messages.emailVerifiedError")}
+            </p>
+            {verifyStatus === "success" && (
+              <button
+                onClick={() => { setVerifyStatus(null); setVerifyToken(null); openLogin(); }}
+                style={{ padding:"14px 32px", background:"linear-gradient(135deg,#22c55e,#16a34a)", border:"none", borderRadius:10, color:"white", fontWeight:800, fontSize:14, cursor:"pointer" }}
+              >
+                {tr(activeLang, "messages.emailVerifiedBtn")}
+              </button>
+            )}
+            {verifyStatus === "error" && (
+              <button
+                onClick={() => { setVerifyStatus(null); setVerifyToken(null); }}
+                style={{ padding:"14px 32px", background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.12)", borderRadius:10, color:"#94a3b8", fontWeight:700, fontSize:14, cursor:"pointer" }}
+              >
+                ← Retour
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {resetToken && (
         <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
           <div style={{ background:"linear-gradient(145deg,#1a2235,#111827)", border:"1px solid rgba(220,38,38,0.2)", borderLeft:"3px solid #ef4444", borderRadius:16, padding:32, width:"100%", maxWidth:420, color:"white" }}>

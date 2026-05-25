@@ -328,6 +328,10 @@ const translations = {
       instagramFailed: "Instagram post failed.",
       instagramImageRequired: "Instagram requires an image to publish.",
       linkedinDisconnected: "LinkedIn disconnected",
+      emailVerifiedTitle: "Email verified! ✅",
+      emailVerifiedDesc: "Your account is now active. You can log in.",
+      emailVerifiedBtn: "Log in →",
+      emailVerifiedError: "This verification link is invalid or has already been used.",
     },
     // Landing
     landing: {
@@ -782,6 +786,10 @@ const translations = {
       instagramFailed: "Échec de la publication sur Instagram.",
       instagramImageRequired: "Instagram nécessite une image pour publier.",
       linkedinDisconnected: "LinkedIn déconnecté",
+      emailVerifiedTitle: "Email vérifié ! ✅",
+      emailVerifiedDesc: "Votre compte est maintenant actif. Vous pouvez vous connecter.",
+      emailVerifiedBtn: "Se connecter →",
+      emailVerifiedError: "Ce lien de vérification est invalide ou a déjà été utilisé.",
     },
     landing: {
       badge: "⚡ PLATEFORME DE CONTENU IA",
@@ -2269,6 +2277,10 @@ const translations = {
       projectSaved: "✓ Projeto salvo", brandMemoryUpdated: "✓ Memória da marca atualizada",
       contentGenerated: "✓ Conteúdo gerado", publishedLinkedin: "✓ Publicado no LinkedIn!",
       linkedinConnected: "✓ LinkedIn conectado!", linkedinDisconnected: "LinkedIn desconectado",
+      emailVerifiedTitle: "Email verificado! ✅",
+      emailVerifiedDesc: "Sua conta está ativa. Você pode fazer login.",
+      emailVerifiedBtn: "Fazer login →",
+      emailVerifiedError: "Este link de verificação é inválido ou já foi utilizado.",
       publishedTwitter: "✓ Publicado no X!",
       twitterFailed: "Publicação no X falhou.",
       publishedInstagram: "✓ Publicado no Instagram!",
