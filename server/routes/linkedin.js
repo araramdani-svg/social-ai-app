@@ -173,6 +173,14 @@ router.post("/post", authenticateToken, async (req, res) => {
       // On ne bloque pas — le post est publié sur LinkedIn
     }
 
+    // ── Sauvegarder dans publish_log ─────────────────────────────────────────
+    try {
+      await db.query(
+        "INSERT INTO publish_log (user_id, platform, post_id, status) VALUES ($1, $2, $3, 'published')",
+        [req.user.id, "linkedin", linkedinPostId]
+      );
+    } catch (logErr) { console.error("publish_log error:", logErr.message); }
+
     res.json({ success: true, postId: linkedinPostId });
   } catch (err) {
     console.error("LinkedIn post error:", err);

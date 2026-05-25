@@ -218,6 +218,10 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
       fetch(`${API}/instagram/status`, { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setInstagramStatus).catch(()=>{});
       fetch(`${API}/facebook/status`,  { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setFacebookStatus).catch(()=>{});
       fetch(`${API}/tiktok/status`,    { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setTiktokStatus).catch(()=>{});
+      fetch(`${API}/auth/publish-log`, { headers:{ Authorization:`Bearer ${token}` } })
+        .then(r=>r.json())
+        .then(data => setPublishLog(data.map(p => ({ dest: p.platform.toUpperCase(), date: new Date(p.created_at).toLocaleString() }))))
+        .catch(()=>{});
     }
     const params = new URLSearchParams(window.location.search);
     if (params.get("reset")) { const resetToken = params.get("reset"); localStorage.removeItem("token"); window.location.href = `/?reset=${resetToken}`; return; }

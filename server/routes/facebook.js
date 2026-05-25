@@ -180,6 +180,14 @@ router.post("/post", auth, async (req, res) => {
 
     if (!postData.id) return res.status(500).json({ message: "Failed to publish on Facebook", detail: postData });
 
+    // ── Sauvegarder dans publish_log ─────────────────────────────────────────
+    try {
+      await db.query(
+        "INSERT INTO publish_log (user_id, platform, post_id, status) VALUES ($1, $2, $3, 'published')",
+        [req.user.id, "facebook", postData.id]
+      );
+    } catch (logErr) { console.error("publish_log error:", logErr.message); }
+
     res.json({ success: true, postId: postData.id });
   } catch (err) {
     console.error("Facebook post error:", err.message);

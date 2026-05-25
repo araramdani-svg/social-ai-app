@@ -205,6 +205,13 @@ router.post("/post", authenticateToken, async (req, res) => {
       const truncated = text.length > 280 ? text.slice(0, 277) + "..." : text;
       const data = await postTweet(truncated);
       if (!data.data?.id) return res.status(500).json({ message: "Tweet failed", detail: data });
+      // ── Sauvegarder dans publish_log ───────────────────────────────────────
+      try {
+        await db.query(
+          "INSERT INTO publish_log (user_id, platform, post_id, status) VALUES ($1, $2, $3, 'published')",
+          [req.user.id, "twitter", data.data.id]
+        );
+      } catch (logErr) { console.error("publish_log error:", logErr.message); }
       return res.json({ success: true, tweetId: data.data.id });
     }
 
@@ -226,6 +233,13 @@ router.post("/post", authenticateToken, async (req, res) => {
       }
     }
 
+    // ── Sauvegarder dans publish_log ─────────────────────────────────────────
+    try {
+      await db.query(
+        "INSERT INTO publish_log (user_id, platform, post_id, status) VALUES ($1, $2, $3, 'published')",
+        [req.user.id, "twitter", postedIds[0]]
+      );
+    } catch (logErr) { console.error("publish_log error:", logErr.message); }
     res.json({ success: true, threadIds: postedIds, firstTweetId: postedIds[0] });
   } catch (err) {
     console.error("Twitter post error:", err.message);

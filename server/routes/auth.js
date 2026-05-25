@@ -774,4 +774,18 @@ router.post("/user-log", authenticateToken, async (req, res) => {
   }
 });
 
+// ─── GET /auth/publish-log ────────────────────────────────────────────────────
+router.get("/publish-log", authenticateToken, async (req, res) => {
+  try {
+    const r = await db.query(
+      "SELECT platform, post_id, status, created_at FROM publish_log WHERE user_id=$1 ORDER BY created_at DESC LIMIT 50",
+      [req.user.id]
+    );
+    res.json(r.rows);
+  } catch (err) {
+    console.error("publish-log error:", err.message);
+    res.json([]);
+  }
+});
+
 export default router;
