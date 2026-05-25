@@ -6,7 +6,7 @@ export default function Autopost({
   post, autoPlatform, setAutoPlatform, autoPosts, publishLog,
   linkedinStatus, threadsStatus, twitterStatus, facebookStatus,
   autoPublish, postToTwitter, twitterPosting, postToFacebook, facebookPosting,
-  showToast
+  attachedMedia, showToast
 }) {
   const copyAndOpen = (url) => {
     if (post) { navigator.clipboard.writeText(post); showToast(tr(trendsLang,"messages.copied")); }
@@ -72,6 +72,15 @@ export default function Autopost({
             </div>
           )}
 
+          {attachedMedia && (
+            <div style={{ display:"flex", alignItems:"center", gap:8, background:"rgba(56,189,248,0.07)", border:"1px solid rgba(56,189,248,0.2)", borderRadius:8, padding:"8px 10px" }}>
+              <img src={attachedMedia.media_url} alt="media" style={{ width:32, height:32, objectFit:"cover", borderRadius:6, flexShrink:0 }} />
+              <div>
+                <div style={{ color:"#38bdf8", fontSize:10, fontWeight:700 }}>🖼️ MEDIA ATTACHÉ</div>
+                <div style={{ color:"#475569", fontSize:9 }}>{attachedMedia.media_source} · {attachedMedia.media_type}</div>
+              </div>
+            </div>
+          )}
           <button
             style={{ ...st.button, margin:0, alignSelf:"flex-start", opacity: (autoPlatform === "X" && !twitterStatus?.connected) ? 0.4 : 1 }}
             onClick={handleAutoPublish}

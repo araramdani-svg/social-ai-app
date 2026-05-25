@@ -6,7 +6,7 @@ export default function Publish({
   post, publishLog, autoPosts, publishStatus,
   linkedinStatus, twitterStatus, facebookStatus,
   publish, postToTwitter, postToFacebook, twitterPosting, facebookPosting,
-  showToast
+  attachedMedia, showToast
 }) {
   const copyAndOpen = (url) => {
     if (post) { navigator.clipboard.writeText(post); showToast(tr(trendsLang, "messages.copied")); }
@@ -73,6 +73,15 @@ export default function Publish({
 
           <div style={{ ...st.card, marginTop:0 }}>
             <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px", marginBottom:12 }}>{tr(trendsLang, "ui.postPreview")}</h3>
+            {attachedMedia && (
+              <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10, background:"rgba(56,189,248,0.07)", border:"1px solid rgba(56,189,248,0.2)", borderRadius:8, padding:"8px 10px" }}>
+                <img src={attachedMedia.media_url} alt="media" style={{ width:36, height:36, objectFit:"cover", borderRadius:6, flexShrink:0 }} />
+                <div>
+                  <div style={{ color:"#38bdf8", fontSize:10, fontWeight:700 }}>🖼️ MEDIA ATTACHÉ</div>
+                  <div style={{ color:"#475569", fontSize:9 }}>{attachedMedia.media_source} · {attachedMedia.media_type}</div>
+                </div>
+              </div>
+            )}
             <p style={{ color: post ? "#94a3b8" : "#334155", fontSize:13, lineHeight:1.6 }}>
               {post ? post.slice(0,300)+(post.length>300?"...":"") : tr(trendsLang, "ui.noContentGenerated")}
             </p>
