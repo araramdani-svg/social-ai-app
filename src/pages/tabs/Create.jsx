@@ -10,7 +10,7 @@ const PRED_COLOR  = { VIRAL:"#22c55e", HIGH:"#60a5fa", MEDIUM:"#f59e0b", LOW:"#e
 
 export default function Create({
   trendsLang, isMobile, token, plan,
-  post, setPost, topic, setTopic, projectTitle, setProjectTitle,
+  post, setPost, attachedMedia, setAttachedMedia, topic, setTopic, projectTitle, setProjectTitle,
   searchProject, setSearchProject, selectedProject, filteredProjects,
   renameValue, setRenameValue, saveStatus, loading,
   postMetrics,
@@ -68,7 +68,6 @@ export default function Create({
   const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   // Média attaché au post — persiste jusqu'à sauvegarde ou détachement
-  const [attachedMedia, setAttachedMedia] = useState(null);
   const [attaching,     setAttaching]     = useState(false);
 
   // Attacher un média : upload sur Cloudinary pour avoir une URL permanente
