@@ -128,14 +128,15 @@ export default function AutoRepost({
         continue;
       }
       try {
+        const mediaUrl = p.media_url || null;
         let fn = null;
-        if (platform === "linkedin")  fn = postToLinkedin;
-        if (platform === "threads")   fn = postToThreads;
-        if (platform === "twitter")   fn = postToTwitter;
-        if (platform === "facebook")  fn = postToFacebook;
-        if (platform === "instagram") fn = postToInstagram;
+        if (platform === "linkedin")  fn = () => postToLinkedin(text, mediaUrl);
+        if (platform === "threads")   fn = () => postToThreads(text);
+        if (platform === "twitter")   fn = () => postToTwitter(text);
+        if (platform === "facebook")  fn = () => postToFacebook(text, mediaUrl);
+        if (platform === "instagram") fn = () => postToInstagram(text, mediaUrl);
         if (platform === "copy")      { navigator.clipboard.writeText(text); log.push({ platform, title, status: tr(trendsLang,"ui.statusCopied") }); continue; }
-        if (fn) { await fn(text); log.push({ platform, title, status: tr(trendsLang,"ui.statusPublished") }); }
+        if (fn) { await fn(); log.push({ platform, title, status: tr(trendsLang,"ui.statusPublished") }); }
         else log.push({ platform, title, status: tr(trendsLang,"ui.statusNotConnected") });
       } catch {
         log.push({ platform, title, status: tr(trendsLang,"ui.statusFailed") });
