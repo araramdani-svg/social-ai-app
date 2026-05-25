@@ -769,26 +769,42 @@ export default function Admin({ token, logout }) {
 
   const deleteUser = (id, email) => {
     setConfirm({ message: `Supprimer définitivement ${email} ?`, onConfirm: async () => {
-      await fetch(`${API}/admin/users/${id}`, { method:"DELETE", headers });
-      await logAction("delete_user", id, { email });
-      fetchUsers(page);
-      fetchStats();
-      setConfirm(null);
+      try {
+        const r = await fetch(`${API}/admin/users/${id}`, { method:"DELETE", headers });
+        if (r.ok) {
+          await logAction("delete_user", id, { email });
+          fetchUsers(page);
+          fetchStats();
+          setConfirm({ message: `✅ Utilisateur ${email} supprimé`, onConfirm: () => setConfirm(null) });
+        } else {
+          setConfirm({ message: `❌ Erreur lors de la suppression de ${email}`, onConfirm: () => setConfirm(null) });
+        }
+      } catch {
+        setConfirm({ message: `❌ Erreur serveur — suppression échouée`, onConfirm: () => setConfirm(null) });
+      }
     }});
   };
 
   const toggleBan = (u) => {
     const action = u.banned ? "débannir" : "bannir";
     setConfirm({ message: `Voulez-vous ${action} ${u.email} ?`, onConfirm: async () => {
-      await fetch(`${API}/admin/users/${u.id}`, {
-        method: "PATCH",
-        headers: { ...headers, "Content-Type":"application/json" },
-        body: JSON.stringify({ banned: !u.banned }),
-      });
-      await logAction(u.banned ? "unban_user" : "ban_user", u.id, { email: u.email });
-      fetchUsers(page);
-      fetchStats();
-      setConfirm(null);
+      try {
+        const r = await fetch(`${API}/admin/users/${u.id}`, {
+          method: "PATCH",
+          headers: { ...headers, "Content-Type":"application/json" },
+          body: JSON.stringify({ banned: !u.banned }),
+        });
+        if (r.ok) {
+          await logAction(u.banned ? "unban_user" : "ban_user", u.id, { email: u.email });
+          fetchUsers(page);
+          fetchStats();
+          setConfirm({ message: `✅ ${u.email} ${u.banned ? "débanni" : "banni"} avec succès`, onConfirm: () => setConfirm(null) });
+        } else {
+          setConfirm({ message: `❌ Erreur lors de l'action sur ${u.email}`, onConfirm: () => setConfirm(null) });
+        }
+      } catch {
+        setConfirm({ message: `❌ Erreur serveur`, onConfirm: () => setConfirm(null) });
+      }
     }});
   };
 
@@ -801,11 +817,14 @@ export default function Admin({ token, logout }) {
       });
       const d = await r.json();
       if (d.user) {
-        logAction("verify_email", u.id, { email: u.email }); // non-bloquant
+        logAction("verify_email", u.id, { email: u.email });
         fetchUsers(page);
+        setConfirm({ message: `✅ Email de ${u.email} vérifié`, onConfirm: () => setConfirm(null) });
+      } else {
+        setConfirm({ message: `❌ Erreur lors de la vérification`, onConfirm: () => setConfirm(null) });
       }
-    } catch (err) {
-      console.error("verifyEmail error:", err);
+    } catch {
+      setConfirm({ message: `❌ Erreur serveur`, onConfirm: () => setConfirm(null) });
     }
   };
 
@@ -838,9 +857,18 @@ export default function Admin({ token, logout }) {
   };
 
   const resetQuota = async (id) => {
-    await fetch(`${API}/admin/users/${id}/reset-quota`, { method:"POST", headers });
-    await logAction("reset_quota", id);
-    fetchUsers(page);
+    try {
+      const r = await fetch(`${API}/admin/users/${id}/reset-quota`, { method:"POST", headers });
+      if (r.ok) {
+        await logAction("reset_quota", id);
+        fetchUsers(page);
+        setConfirm({ message: `✅ Quota réinitialisé`, onConfirm: () => setConfirm(null) });
+      } else {
+        setConfirm({ message: `❌ Erreur lors du reset quota`, onConfirm: () => setConfirm(null) });
+      }
+    } catch {
+      setConfirm({ message: `❌ Erreur serveur`, onConfirm: () => setConfirm(null) });
+    }
   };
 
   return (
