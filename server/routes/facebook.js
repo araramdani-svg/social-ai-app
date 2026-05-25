@@ -167,26 +167,29 @@ router.post("/post", auth, async (req, res) => {
     const targetId = u.facebook_page_id   || u.facebook_user_id;
     const endpoint = `https://graph.facebook.com/v19.0/${targetId}/feed`;
 
-    const body = { message, access_token: token };
-    if (imageUrl) body.picture = imageUrl;
-    if (link)     body.link    = link;
-
-    const postRes  = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    let postRes;
+    if (imageUrl && !link) {
+      // Poster une image via /photos (ne nécessite pas de link)
+      const photoEndpoint = `https://graph.facebook.com/v19.0/${targetId}/photos`;
+      const photoBody = { caption: message, url: imageUrl, access_token: token };
+      postRes = await fetch(photoEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(photoBody),
+      });
+    } else {
+      const body = { message, access_token: token };
+      if (imageUrl) body.picture = imageUrl;
+      if (link)     body.link    = link;
+      postRes = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+    }
     const postData = await postRes.json();
 
     if (!postData.id) return res.status(500).json({ message: "Failed to publish on Facebook", detail: postData });
-
-    // ── Sauvegarder dans publish_log ─────────────────────────────────────────
-    try {
-      await db.query(
-        "INSERT INTO publish_log (user_id, platform, post_id, status) VALUES ($1, $2, $3, 'published')",
-        [req.user.id, "facebook", postData.id]
-      );
-    } catch (logErr) { console.error("publish_log error:", logErr.message); }
 
     res.json({ success: true, postId: postData.id });
   } catch (err) {
