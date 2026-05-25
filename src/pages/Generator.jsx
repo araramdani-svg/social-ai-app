@@ -81,6 +81,11 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
     const t = setTimeout(() => setAutoSaveLabel("✓ Saved"), 1600);
     return () => clearTimeout(t);
   }, [post]);
+  useEffect(() => {
+    if (attachedMedia) localStorage.setItem("gp_attachedMedia", JSON.stringify(attachedMedia));
+    else localStorage.removeItem("gp_attachedMedia");
+  }, [attachedMedia]);
+
   const [topic,           setTopic]           = useState("");
   const [projectTitle,    setProjectTitle]    = useState("");
   const [selectedProject, setSelectedProject] = useState("");
@@ -102,7 +107,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   const [projects,       setProjects]       = useState([]);
   const [planner,        setPlanner]        = useState([]);
   const [publishLog,     setPublishLog]     = useState([]);
-  const [attachedMedia,  setAttachedMedia]  = useState(null);
+  const [attachedMedia,  setAttachedMedia]  = useState(() => { try { return JSON.parse(localStorage.getItem("gp_attachedMedia") || "null"); } catch { return null; } });
   const [scheduledPosts, setScheduledPosts] = useState([]);
   const [autoPosts,      setAutoPosts]      = useState([]);
   const [autoPlatform,   setAutoPlatform]   = useState("LINKEDIN");
