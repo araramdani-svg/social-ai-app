@@ -241,7 +241,6 @@ router.delete("/users/:id", adminAuth, async (req, res) => {
   try {
     // Supprimer dans l'ordre pour respecter les contraintes FK
     await db.query("DELETE FROM publish_log    WHERE user_id=$1", [id]);
-    await db.query("DELETE FROM calendar_cards WHERE user_id=$1", [id]);
     await db.query("DELETE FROM calendar_posts WHERE user_id=$1", [id]);
     await db.query("DELETE FROM user_logs      WHERE user_id=$1", [id]);
     await db.query("DELETE FROM brand_memory WHERE project_name IN (SELECT name FROM projects WHERE user_id=$1)", [id]);
