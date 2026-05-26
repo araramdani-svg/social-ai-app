@@ -15,26 +15,41 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
   const [filterAction, setFilterAction] = useState("");
 
   const USER_ACTION_LABELS = {
-    generate_post:        { label:"✍️ Génération",     color:"#ef4444" },
-    save_post:            { label:"💾 Sauvegarde",      color:"#22c55e" },
-    copy_post:            { label:"📋 Copie",           color:"#64748b" },
-    rewrite_post:         { label:"🔄 Réécriture",      color:"#f59e0b" },
-    analyze_post:         { label:"🔍 Analyse",         color:"#8b5cf6" },
-    create_project:       { label:"📁 Projet créé",     color:"#3b82f6" },
-    delete_project:       { label:"🗑️ Projet supprimé", color:"#ef4444" },
-    rename_project:       { label:"✏️ Projet renommé",  color:"#f59e0b" },
-    calendar_add_card:    { label:"📅 Cal. Ajout",      color:"#22c55e" },
-    calendar_delete_card: { label:"📅 Cal. Supprim.",   color:"#ef4444" },
-    calendar_move_card:   { label:"📅 Cal. Déplace",    color:"#f59e0b" },
-    calendar_edit_card:   { label:"📅 Cal. Édition",    color:"#64748b" },
-    calendar_import_post: { label:"📅 Cal. Import",     color:"#8b5cf6" },
-    update_profile:       { label:"👤 Profil modifié",  color:"#3b82f6" },
-    change_password:      { label:"🔑 Mdp changé",      color:"#f97316" },
-    change_email:         { label:"📧 Email changé",    color:"#f97316" },
-    generate_image:       { label:"🖼️ Image générée",   color:"#8b5cf6" },
-    attach_media:         { label:"📎 Média attaché",   color:"#38bdf8" },
-    watch_search:         { label:"🌍 Veille",          color:"#22c55e" },
-    cancel_subscription:  { label:"❌ Abonnement annulé", color:"#ef4444" },
+    // Auth
+    register:             { label:"🆕 Inscription",        color:"#22c55e" },
+    login:                { label:"🔓 Connexion",           color:"#3b82f6" },
+    verify_email:         { label:"✅ Email vérifié",       color:"#22c55e" },
+    onboarding_done:      { label:"🚀 Onboarding",          color:"#8b5cf6" },
+    reset_password:       { label:"🔑 Reset mot de passe",  color:"#f97316" },
+    change_password:      { label:"🔑 Mdp changé",          color:"#f97316" },
+    change_email_request: { label:"📧 Demande email",       color:"#f59e0b" },
+    change_email:         { label:"📧 Email changé",        color:"#f97316" },
+    delete_account:       { label:"💀 Compte supprimé",     color:"#ef4444" },
+    // Posts
+    generate_post:        { label:"✍️ Génération",          color:"#ef4444" },
+    save_post:            { label:"💾 Sauvegarde",           color:"#22c55e" },
+    delete_post:          { label:"🗑️ Post supprimé",       color:"#ef4444" },
+    copy_post:            { label:"📋 Copie",                color:"#64748b" },
+    rewrite_post:         { label:"🔄 Réécriture",           color:"#f59e0b" },
+    analyze_post:         { label:"🔍 Analyse",              color:"#8b5cf6" },
+    generate_image:       { label:"🖼️ Image générée",        color:"#8b5cf6" },
+    attach_media:         { label:"📎 Média attaché",        color:"#38bdf8" },
+    // Projets
+    create_project:       { label:"📁 Projet créé",          color:"#3b82f6" },
+    delete_project:       { label:"🗑️ Projet supprimé",      color:"#ef4444" },
+    rename_project:       { label:"✏️ Projet renommé",       color:"#f59e0b" },
+    save_brand_memory:    { label:"🧠 Brand Memory",         color:"#8b5cf6" },
+    // Calendrier
+    calendar_add_card:    { label:"📅 Cal. Ajout",           color:"#22c55e" },
+    calendar_delete_card: { label:"📅 Cal. Supprim.",        color:"#ef4444" },
+    calendar_move_card:   { label:"📅 Cal. Déplace",         color:"#f59e0b" },
+    calendar_edit_card:   { label:"📅 Cal. Édition",         color:"#64748b" },
+    calendar_import_post: { label:"📅 Cal. Import",          color:"#8b5cf6" },
+    // Profil
+    update_profile:       { label:"👤 Profil modifié",       color:"#3b82f6" },
+    // Veille & Abonnement
+    watch_search:         { label:"🌍 Veille",               color:"#22c55e" },
+    cancel_subscription:  { label:"❌ Abonnement annulé",    color:"#ef4444" },
   };
 
   const loadUserActions = async (p = 1) => {
@@ -156,6 +171,14 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
+      // Log la suppression
+      try {
+        await fetch(`${API}/auth/user-log`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ action: "delete_post", details: { post_id: id } }),
+        });
+      } catch {}
       loadHistory();
     } catch {}
     setDeletingId(null);
