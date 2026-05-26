@@ -88,14 +88,30 @@ router.post("/webhook", express.raw({ type: "application/json" }), async (req, r
        WHERE id=$4`,
       [plan.name, session.subscription, plan.interval, userId]
     );
+    // Log plan_upgrade
+    try {
+      await db.query(
+        `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+        [userId, "plan_upgrade", JSON.stringify({ plan: plan.name, interval: plan.interval, planKey })]
+      );
+    } catch {}
   }
 
   if (event.type === "customer.subscription.deleted") {
     const subscription = event.data.object;
-    await db.query(
-      "UPDATE users SET plan='Free', stripe_subscription_id=NULL WHERE stripe_subscription_id=$1",
+    const result = await db.query(
+      "UPDATE users SET plan='Free', stripe_subscription_id=NULL WHERE stripe_subscription_id=$1 RETURNING id",
       [subscription.id]
     );
+    // Log cancel_subscription
+    if (result.rows.length) {
+      try {
+        await db.query(
+          `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+          [result.rows[0].id, "cancel_subscription", JSON.stringify({ subscription_id: subscription.id })]
+        );
+      } catch {}
+    }
   }
 
   res.json({ received: true });
@@ -127,6 +143,13 @@ router.post("/cancel", authenticateToken, async (req, res) => {
   if (!subId) return res.status(400).json({ message: "No active subscription" });
 
   await stripe.subscriptions.update(subId, { cancel_at_period_end: true });
+  // Log l'annulation
+  try {
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+      [req.user.id, "cancel_subscription", JSON.stringify({ subscription_id: subId })]
+    );
+  } catch {}
   res.json({ success: true, message: "Subscription will cancel at period end" });
 });
 

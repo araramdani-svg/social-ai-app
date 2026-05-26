@@ -50,6 +50,8 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
     // Veille & Abonnement
     watch_search:         { label:"🌍 Veille",               color:"#22c55e" },
     cancel_subscription:  { label:"❌ Abonnement annulé",    color:"#ef4444" },
+    plan_upgrade:         { label:"⬆️ Plan upgradé",          color:"#22c55e" },
+    plan_downgrade:       { label:"⬇️ Plan downgradé",        color:"#f59e0b" },
   };
 
   const loadUserActions = async (p = 1) => {
