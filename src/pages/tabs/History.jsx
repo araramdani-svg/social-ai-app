@@ -14,40 +14,29 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
   const [actionsLoading, setActionsLoading] = useState(false);
   const [filterAction, setFilterAction] = useState("");
 
-  const fr = trendsLang === "fr";
-  const USER_ACTION_LABELS = {
-    register:             { label: fr?"🆕 Inscription"          :"🆕 Register",              color:"#22c55e" },
-    login:                { label: fr?"🔓 Connexion"             :"🔓 Login",                  color:"#3b82f6" },
-    verify_email:         { label: fr?"✅ Email vérifié"         :"✅ Email verified",          color:"#22c55e" },
-    onboarding_done:      { label: fr?"🚀 Onboarding"            :"🚀 Onboarding",              color:"#8b5cf6" },
-    reset_password:       { label: fr?"🔑 Reset mot de passe"    :"🔑 Password reset",          color:"#f97316" },
-    change_password:      { label: fr?"🔑 Mdp changé"            :"🔑 Password changed",        color:"#f97316" },
-    change_email_request: { label: fr?"📧 Demande email"         :"📧 Email change request",    color:"#f59e0b" },
-    change_email:         { label: fr?"📧 Email changé"          :"📧 Email changed",            color:"#f97316" },
-    delete_account:       { label: fr?"💀 Compte supprimé"       :"💀 Account deleted",          color:"#ef4444" },
-    generate_post:        { label: fr?"✍️ Génération"            :"✍️ Generation",               color:"#ef4444" },
-    save_post:            { label: fr?"💾 Sauvegarde"             :"💾 Save",                    color:"#22c55e" },
-    delete_post:          { label: fr?"🗑️ Post supprimé"         :"🗑️ Post deleted",             color:"#ef4444" },
-    copy_post:            { label: fr?"📋 Copie"                  :"📋 Copy",                    color:"#64748b" },
-    rewrite_post:         { label: fr?"🔄 Réécriture"             :"🔄 Rewrite",                 color:"#f59e0b" },
-    analyze_post:         { label: fr?"🔍 Analyse"                :"🔍 Analysis",                color:"#8b5cf6" },
-    generate_image:       { label: fr?"🖼️ Image générée"          :"🖼️ Image generated",         color:"#8b5cf6" },
-    attach_media:         { label: fr?"📎 Média attaché"          :"📎 Media attached",           color:"#38bdf8" },
-    create_project:       { label: fr?"📁 Projet créé"            :"📁 Project created",          color:"#3b82f6" },
-    delete_project:       { label: fr?"🗑️ Projet supprimé"        :"🗑️ Project deleted",          color:"#ef4444" },
-    rename_project:       { label: fr?"✏️ Projet renommé"         :"✏️ Project renamed",          color:"#f59e0b" },
-    save_brand_memory:    { label: fr?"🧠 Brand Memory"           :"🧠 Brand Memory",             color:"#8b5cf6" },
-    calendar_add_card:    { label: fr?"📅 Cal. Ajout"             :"📅 Cal. Added",               color:"#22c55e" },
-    calendar_delete_card: { label: fr?"📅 Cal. Supprim."          :"📅 Cal. Deleted",             color:"#ef4444" },
-    calendar_move_card:   { label: fr?"📅 Cal. Déplace"           :"📅 Cal. Moved",               color:"#f59e0b" },
-    calendar_edit_card:   { label: fr?"📅 Cal. Édition"           :"📅 Cal. Edited",              color:"#64748b" },
-    calendar_import_post: { label: fr?"📅 Cal. Import"            :"📅 Cal. Import",              color:"#8b5cf6" },
-    update_profile:       { label: fr?"👤 Profil modifié"         :"👤 Profile updated",          color:"#3b82f6" },
-    watch_search:         { label: fr?"🌍 Veille"                 :"🌍 Watch",                    color:"#22c55e" },
-    cancel_subscription:  { label: fr?"❌ Abonnement annulé"      :"❌ Subscription cancelled",   color:"#ef4444" },
-    plan_upgrade:         { label: fr?"⬆️ Plan upgradé"            :"⬆️ Plan upgraded",            color:"#22c55e" },
-    plan_downgrade:       { label: fr?"⬇️ Plan downgradé"          :"⬇️ Plan downgraded",          color:"#f59e0b" },
+  const ACTION_COLORS = {
+    register: "#22c55e", login: "#3b82f6", verify_email: "#22c55e",
+    onboarding_done: "#8b5cf6", reset_password: "#f97316", change_password: "#f97316",
+    change_email_request: "#f59e0b", change_email: "#f97316", delete_account: "#ef4444",
+    generate_post: "#ef4444", save_post: "#22c55e", delete_post: "#ef4444",
+    copy_post: "#64748b", rewrite_post: "#f59e0b", analyze_post: "#8b5cf6",
+    generate_image: "#8b5cf6", attach_media: "#38bdf8",
+    create_project: "#3b82f6", delete_project: "#ef4444",
+    rename_project: "#f59e0b", save_brand_memory: "#8b5cf6",
+    calendar_add_card: "#22c55e", calendar_delete_card: "#ef4444",
+    calendar_move_card: "#f59e0b", calendar_edit_card: "#64748b",
+    calendar_import_post: "#8b5cf6", update_profile: "#3b82f6",
+    watch_search: "#22c55e", cancel_subscription: "#ef4444",
+    plan_upgrade: "#22c55e", plan_downgrade: "#f59e0b",
   };
+
+  const getActionLabel = (action) => tr(trendsLang, `ui.actionLabels.${action}`) || action;
+  const getActionColor = (action) => ACTION_COLORS[action] || "#94a3b8";
+
+  // Compatibilité avec le filtre dropdown
+  const USER_ACTION_LABELS = Object.fromEntries(
+    Object.keys(ACTION_COLORS).map(key => [key, { label: getActionLabel(key), color: getActionColor(key) }])
+  );
 
   const loadUserActions = async (p = 1) => {
     setActionsLoading(true);
