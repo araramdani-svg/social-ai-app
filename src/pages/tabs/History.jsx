@@ -14,44 +14,39 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
   const [actionsLoading, setActionsLoading] = useState(false);
   const [filterAction, setFilterAction] = useState("");
 
+  const fr = trendsLang === "fr";
   const USER_ACTION_LABELS = {
-    // Auth
-    register:             { label:"🆕 Inscription",        color:"#22c55e" },
-    login:                { label:"🔓 Connexion",           color:"#3b82f6" },
-    verify_email:         { label:"✅ Email vérifié",       color:"#22c55e" },
-    onboarding_done:      { label:"🚀 Onboarding",          color:"#8b5cf6" },
-    reset_password:       { label:"🔑 Reset mot de passe",  color:"#f97316" },
-    change_password:      { label:"🔑 Mdp changé",          color:"#f97316" },
-    change_email_request: { label:"📧 Demande email",       color:"#f59e0b" },
-    change_email:         { label:"📧 Email changé",        color:"#f97316" },
-    delete_account:       { label:"💀 Compte supprimé",     color:"#ef4444" },
-    // Posts
-    generate_post:        { label:"✍️ Génération",          color:"#ef4444" },
-    save_post:            { label:"💾 Sauvegarde",           color:"#22c55e" },
-    delete_post:          { label:"🗑️ Post supprimé",       color:"#ef4444" },
-    copy_post:            { label:"📋 Copie",                color:"#64748b" },
-    rewrite_post:         { label:"🔄 Réécriture",           color:"#f59e0b" },
-    analyze_post:         { label:"🔍 Analyse",              color:"#8b5cf6" },
-    generate_image:       { label:"🖼️ Image générée",        color:"#8b5cf6" },
-    attach_media:         { label:"📎 Média attaché",        color:"#38bdf8" },
-    // Projets
-    create_project:       { label:"📁 Projet créé",          color:"#3b82f6" },
-    delete_project:       { label:"🗑️ Projet supprimé",      color:"#ef4444" },
-    rename_project:       { label:"✏️ Projet renommé",       color:"#f59e0b" },
-    save_brand_memory:    { label:"🧠 Brand Memory",         color:"#8b5cf6" },
-    // Calendrier
-    calendar_add_card:    { label:"📅 Cal. Ajout",           color:"#22c55e" },
-    calendar_delete_card: { label:"📅 Cal. Supprim.",        color:"#ef4444" },
-    calendar_move_card:   { label:"📅 Cal. Déplace",         color:"#f59e0b" },
-    calendar_edit_card:   { label:"📅 Cal. Édition",         color:"#64748b" },
-    calendar_import_post: { label:"📅 Cal. Import",          color:"#8b5cf6" },
-    // Profil
-    update_profile:       { label:"👤 Profil modifié",       color:"#3b82f6" },
-    // Veille & Abonnement
-    watch_search:         { label:"🌍 Veille",               color:"#22c55e" },
-    cancel_subscription:  { label:"❌ Abonnement annulé",    color:"#ef4444" },
-    plan_upgrade:         { label:"⬆️ Plan upgradé",          color:"#22c55e" },
-    plan_downgrade:       { label:"⬇️ Plan downgradé",        color:"#f59e0b" },
+    register:             { label: fr?"🆕 Inscription"          :"🆕 Register",              color:"#22c55e" },
+    login:                { label: fr?"🔓 Connexion"             :"🔓 Login",                  color:"#3b82f6" },
+    verify_email:         { label: fr?"✅ Email vérifié"         :"✅ Email verified",          color:"#22c55e" },
+    onboarding_done:      { label: fr?"🚀 Onboarding"            :"🚀 Onboarding",              color:"#8b5cf6" },
+    reset_password:       { label: fr?"🔑 Reset mot de passe"    :"🔑 Password reset",          color:"#f97316" },
+    change_password:      { label: fr?"🔑 Mdp changé"            :"🔑 Password changed",        color:"#f97316" },
+    change_email_request: { label: fr?"📧 Demande email"         :"📧 Email change request",    color:"#f59e0b" },
+    change_email:         { label: fr?"📧 Email changé"          :"📧 Email changed",            color:"#f97316" },
+    delete_account:       { label: fr?"💀 Compte supprimé"       :"💀 Account deleted",          color:"#ef4444" },
+    generate_post:        { label: fr?"✍️ Génération"            :"✍️ Generation",               color:"#ef4444" },
+    save_post:            { label: fr?"💾 Sauvegarde"             :"💾 Save",                    color:"#22c55e" },
+    delete_post:          { label: fr?"🗑️ Post supprimé"         :"🗑️ Post deleted",             color:"#ef4444" },
+    copy_post:            { label: fr?"📋 Copie"                  :"📋 Copy",                    color:"#64748b" },
+    rewrite_post:         { label: fr?"🔄 Réécriture"             :"🔄 Rewrite",                 color:"#f59e0b" },
+    analyze_post:         { label: fr?"🔍 Analyse"                :"🔍 Analysis",                color:"#8b5cf6" },
+    generate_image:       { label: fr?"🖼️ Image générée"          :"🖼️ Image generated",         color:"#8b5cf6" },
+    attach_media:         { label: fr?"📎 Média attaché"          :"📎 Media attached",           color:"#38bdf8" },
+    create_project:       { label: fr?"📁 Projet créé"            :"📁 Project created",          color:"#3b82f6" },
+    delete_project:       { label: fr?"🗑️ Projet supprimé"        :"🗑️ Project deleted",          color:"#ef4444" },
+    rename_project:       { label: fr?"✏️ Projet renommé"         :"✏️ Project renamed",          color:"#f59e0b" },
+    save_brand_memory:    { label: fr?"🧠 Brand Memory"           :"🧠 Brand Memory",             color:"#8b5cf6" },
+    calendar_add_card:    { label: fr?"📅 Cal. Ajout"             :"📅 Cal. Added",               color:"#22c55e" },
+    calendar_delete_card: { label: fr?"📅 Cal. Supprim."          :"📅 Cal. Deleted",             color:"#ef4444" },
+    calendar_move_card:   { label: fr?"📅 Cal. Déplace"           :"📅 Cal. Moved",               color:"#f59e0b" },
+    calendar_edit_card:   { label: fr?"📅 Cal. Édition"           :"📅 Cal. Edited",              color:"#64748b" },
+    calendar_import_post: { label: fr?"📅 Cal. Import"            :"📅 Cal. Import",              color:"#8b5cf6" },
+    update_profile:       { label: fr?"👤 Profil modifié"         :"👤 Profile updated",          color:"#3b82f6" },
+    watch_search:         { label: fr?"🌍 Veille"                 :"🌍 Watch",                    color:"#22c55e" },
+    cancel_subscription:  { label: fr?"❌ Abonnement annulé"      :"❌ Subscription cancelled",   color:"#ef4444" },
+    plan_upgrade:         { label: fr?"⬆️ Plan upgradé"            :"⬆️ Plan upgraded",            color:"#22c55e" },
+    plan_downgrade:       { label: fr?"⬇️ Plan downgradé"          :"⬇️ Plan downgraded",          color:"#f59e0b" },
   };
 
   const loadUserActions = async (p = 1) => {
@@ -173,7 +168,6 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-      // Log la suppression
       try {
         await fetch(`${API}/auth/user-log`, {
           method: "POST",
