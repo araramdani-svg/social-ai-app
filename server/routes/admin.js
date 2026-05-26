@@ -209,10 +209,25 @@ router.patch("/users/:id", adminAuth, async (req, res) => {
       values
     );
     if (!result.rows.length) return res.status(404).json({ error: "User not found" });
-    await logAction(req.user.id, 
-      banned !== undefined ? (banned ? "ban_user" : "unban_user") : 
-      email_verified !== undefined ? "verify_email" : "edit_user", 
-      req.params.id, { plan, generations_count, banned, email_verified });
+
+    // Log admin_logs
+    const adminAction = 
+      banned !== undefined         ? (banned ? "ban_user" : "unban_user") :
+      email_verified !== undefined ? "verify_email" :
+      plan !== undefined           ? "edit_user_plan" :
+      "edit_user";
+    await logAction(req.user.id, adminAction, req.params.id, { plan, generations_count, banned, email_verified });
+
+    // Log user_logs si changement de plan
+    if (plan !== undefined) {
+      try {
+        await db.query(
+          `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+          [req.params.id, "plan_upgrade", JSON.stringify({ plan, changed_by: "admin" })]
+        );
+      } catch {}
+    }
+
     res.json({ user: result.rows[0] });
   } catch (err) {
     console.error("Admin patch user error:", err.message);
