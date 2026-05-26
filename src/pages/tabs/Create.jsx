@@ -345,7 +345,7 @@ export default function Create({
           </AnimatePresence>
 
           {/* ── Panneau génération ─────────────────────────────────────────── */}
-          <div style={{ ...st.card, marginTop:0, padding:0, overflow:"hidden" }}>
+          <div style={{ ...st.card, marginTop:0, padding:0, overflow:"visible" }}>
             <div style={{ display:"flex", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>
               <button style={chip(activePanel==="generate")}  onClick={() => setActivePanel("generate")}>✍️ {tr(trendsLang,"ui.panelGenerate")}</button>
               <button style={chip(activePanel==="repurpose")} onClick={() => setActivePanel("repurpose")}>🔗 {tr(trendsLang,"ui.panelRepurpose")}</button>
@@ -428,7 +428,7 @@ export default function Create({
                     {hooksLoading ? `⏳ ${tr(trendsLang,"ui.generating")}...` : `⚡ ${tr(trendsLang,"ui.generate5hooksBtn")}`}
                   </button>
                   {hooks.length > 0 && (
-                    <div style={{ display:"flex", flexDirection:"column", gap:6, marginTop:2 }}>
+                    <div style={{ display:"flex", flexDirection:"column", gap:6, marginTop:2, maxHeight:320, overflowY:"auto", paddingRight:4 }}>
                       {hooks.map((h, i) => (
                         <motion.div key={i} whileHover={{ borderColor:"rgba(220,38,38,0.3)" }}
                           style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:8, padding:"10px 12px", cursor:"pointer" }}
