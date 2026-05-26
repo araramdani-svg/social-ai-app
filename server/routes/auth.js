@@ -234,6 +234,14 @@ router.post("/register", async (req, res) => {
       // On crée quand même le compte mais on avertit
     }
 
+    // Log l'inscription
+    try {
+      await db.query(
+        `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+        [result.rows[0].id, "register", JSON.stringify({ email })]
+      );
+    } catch {}
+
     res.json({ success: true, message: "Account created. Please check your email to verify your account." });
   } catch {
     res.status(400).json({ message: "User already exists" });
@@ -254,6 +262,13 @@ router.post("/login", async (req, res) => {
   const valid = await bcrypt.compare(password, user.password);
   if (!valid) return res.status(400).json({ message: "Invalid password" });
   const token = jwt.sign({ id: user.id, email }, JWT_SECRET, { expiresIn: "7d" });
+  // Log le login
+  try {
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+      [user.id, "login", JSON.stringify({ email })]
+    );
+  } catch {}
   res.json({ token });
 });
 
@@ -323,6 +338,12 @@ router.post("/create-project", authenticateToken, async (req, res) => {
     "INSERT INTO projects(name,workspace,campaign,user_id) VALUES($1,$2,$3,$4) RETURNING id",
     [name, workspace, campaign, req.user.id]
   );
+  try {
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+      [req.user.id, "create_project", JSON.stringify({ name })]
+    );
+  } catch {}
   res.json({ success: true, id: result.rows[0].id });
 });
 
@@ -333,12 +354,24 @@ router.get("/projects", authenticateToken, async (req, res) => {
 
 router.delete("/delete-project/:name", authenticateToken, async (req, res) => {
   await db.query("DELETE FROM projects WHERE name=$1 AND user_id=$2", [req.params.name, req.user.id]);
+  try {
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+      [req.user.id, "delete_project", JSON.stringify({ name: req.params.name })]
+    );
+  } catch {}
   res.json({ success: true });
 });
 
 router.post("/rename-project", authenticateToken, async (req, res) => {
   const { oldName, newName } = req.body;
   await db.query("UPDATE projects SET name=$1 WHERE name=$2 AND user_id=$3", [newName, oldName, req.user.id]);
+  try {
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+      [req.user.id, "rename_project", JSON.stringify({ oldName, newName })]
+    );
+  } catch {}
   res.json({ success: true });
 });
 
@@ -350,6 +383,12 @@ router.post("/save-brand-memory", authenticateToken, async (req, res) => {
      ON CONFLICT(project_name) DO UPDATE SET niche=$2,audience=$3,tone=$4,cta=$5,banned_words=$6`,
     [project_name, niche, audience, tone, cta, banned_words]
   );
+  try {
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+      [req.user.id, "save_brand_memory", JSON.stringify({ project_name })]
+    );
+  } catch {}
   res.json({ success: true });
 });
 
@@ -359,6 +398,12 @@ router.get("/brand-memory/:project", authenticateToken, async (req, res) => {
 });
 
 router.delete("/delete-account", authenticateToken, async (req, res) => {
+  try {
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+      [req.user.id, "delete_account", null]
+    );
+  } catch {}
   await db.query("DELETE FROM users WHERE id=$1", [req.user.id]);
   res.json({ success: true });
 });
@@ -371,6 +416,12 @@ router.post("/save-profile", authenticateToken, async (req, res) => {
       "UPDATE users SET first_name=$1, last_name=$2, display_name=$3 WHERE id=$4",
       [first_name?.trim() || null, last_name?.trim() || null, display_name?.trim() || null, req.user.id]
     );
+    try {
+      await db.query(
+        `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+        [req.user.id, "update_profile", JSON.stringify({ first_name, last_name, display_name })]
+      );
+    } catch {}
     res.json({ success: true });
   } catch (err) {
     console.error("Save profile error:", err);
@@ -394,6 +445,12 @@ router.post("/change-password", authenticateToken, async (req, res) => {
 
     const hashed = await bcrypt.hash(newPassword, 10);
     await db.query("UPDATE users SET password=$1 WHERE id=$2", [hashed, req.user.id]);
+    try {
+      await db.query(
+        `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+        [req.user.id, "change_password", null]
+      );
+    } catch {}
     res.json({ success: true });
   } catch (err) {
     console.error("Change password error:", err);
@@ -461,7 +518,13 @@ router.post("/change-email/request", authenticateToken, async (req, res) => {
     } catch (alertErr) {
       console.error("Email change alert error:", alertErr.message);
     }
-
+    // Log la demande de changement d'email
+    try {
+      await db.query(
+        `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+        [req.user.id, "change_email_request", JSON.stringify({ newEmail })]
+      );
+    } catch {}
     res.json({ success: true, message: "A confirmation link has been sent to your new email address. It expires in 24 hours." });
   } catch (err) {
     console.error("Change email request error:", err);
@@ -508,7 +571,13 @@ router.get("/change-email/confirm/:token", async (req, res) => {
        WHERE id=$2`,
       [user.pending_email, user.id]
     );
-
+    // Log le changement d'email effectif
+    try {
+      await db.query(
+        `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+        [user.id, "change_email", JSON.stringify({ oldEmail: user.email, newEmail: user.pending_email })]
+      );
+    } catch {}
     res.json({ success: true, message: "Email address updated successfully. Please log in again with your new email." });
   } catch (err) {
     console.error("Change email confirm error:", err);
@@ -526,6 +595,13 @@ router.get("/verify-email/:token", async (req, res) => {
     if (!result.rows.length) {
       return res.status(400).json({ message: "Invalid or expired verification link." });
     }
+    // Log la vérification email
+    try {
+      await db.query(
+        `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+        [result.rows[0].id, "verify_email", JSON.stringify({ email: result.rows[0].email })]
+      );
+    } catch {}
     res.json({ success: true, email: result.rows[0].email });
   } catch (err) {
     console.error("Verify email error:", err.message);
@@ -572,6 +648,13 @@ router.get("/me", authenticateToken, async (req, res) => {
 router.post("/onboarding-done", authenticateToken, async (req, res) => {
   try {
     await db.query("UPDATE users SET onboarding_done=true WHERE id=$1", [req.user.id]);
+    // Log l'onboarding
+    try {
+      await db.query(
+        `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+        [req.user.id, "onboarding_done", null]
+      );
+    } catch {}
     res.json({ success: true });
   } catch (err) {
     console.error("Onboarding done error:", err.message);
@@ -604,7 +687,13 @@ router.post("/reset-password", async (req, res) => {
       "UPDATE users SET password=$1, password_reset_token=NULL, password_reset_expires=NULL WHERE id=$2",
       [hashed, decoded.id]
     );
-
+    // Log le reset password
+    try {
+      await db.query(
+        `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+        [decoded.id, "reset_password", null]
+      );
+    } catch {}
     res.json({ success: true, message: "Mot de passe mis à jour avec succès" });
   } catch (err) {
     if (err.name === "TokenExpiredError") return res.status(400).json({ message: "Lien expiré. Demandez un nouveau reset." });
