@@ -17,6 +17,9 @@ export default function Create({
   savePost, copyPost, exportPost, analyze, generatePlanner,
   generate, rewrite, createProject, duplicateProject, renameProject, deleteProject, selectProject,
   projectPosts,
+  imgResult, setImgResult, imgFormat, setImgFormat, imgType, setImgType, imgTab, setImgTab,
+  mediaResult, setMediaResult, selectedMedia, setSelectedMedia,
+  watchContext, setWatchContext, voiceStyle, setVoiceStyle,
 }) {
   const [activePanel,   setActivePanel]   = useState("generate");
   const [showHistory,   setShowHistory]   = useState(false);
@@ -28,25 +31,17 @@ export default function Create({
   const [hooksLoading,  setHooksLoading]  = useState(false);
   const [viralScore,    setViralScore]    = useState(null);
   const [scoring,       setScoring]       = useState(false);
-  const [voiceStyle,    setVoiceStyle]    = useState(null);
   const [voiceLoaded,   setVoiceLoaded]   = useState(false);
   const [multiLoading,  setMultiLoading]  = useState(false);
   const [multiResult,   setMultiResult]   = useState(null);
   const [multiTab,      setMultiTab]      = useState("thread");
   const [copiedIdx,     setCopiedIdx]     = useState(null);
   const [imgLoading,    setImgLoading]    = useState(false);
-  const [imgResult,     setImgResult]     = useState(null);
-  const [imgFormat,     setImgFormat]     = useState("square");
-  const [imgType,       setImgType]       = useState("illustrative");
-  const [imgTab,        setImgTab]        = useState("illustrative");
   const [mediaLoading,  setMediaLoading]  = useState(false);
-  const [mediaResult,   setMediaResult]   = useState(null);
   const [mediaTab,      setMediaTab]      = useState("photo");
-  const [selectedMedia, setSelectedMedia] = useState(null);
   const [fullscreenImg, setFullscreenImg] = useState(null);
   const [mediaCount,    setMediaCount]    = useState(6);
   const [watchLoading,  setWatchLoading]  = useState(false);
-  const [watchContext,  setWatchContext]  = useState(null);
 
   const searchWatchContext = async () => {
     if (!post || post.length < 30) return;
@@ -346,7 +341,7 @@ export default function Create({
 
           {/* ── Panneau génération ─────────────────────────────────────────── */}
           <div style={{ ...st.card, marginTop:0, padding:0, overflow:"visible" }}>
-            <div style={{ display:"flex", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>
+            <div style={{ display:"flex", borderBottom:"1px solid rgba(255,255,255,0.06)", borderRadius:"10px 10px 0 0", overflow:"hidden" }}>
               <button style={chip(activePanel==="generate")}  onClick={() => setActivePanel("generate")}>✍️ {tr(trendsLang,"ui.panelGenerate")}</button>
               <button style={chip(activePanel==="repurpose")} onClick={() => setActivePanel("repurpose")}>🔗 {tr(trendsLang,"ui.panelRepurpose")}</button>
               <button style={chip(activePanel==="hooks")}     onClick={() => setActivePanel("hooks")}>⚡ {tr(trendsLang,"ui.panelHooks")}</button>
