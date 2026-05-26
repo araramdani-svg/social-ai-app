@@ -246,8 +246,7 @@ Write the LinkedIn post now.`;
       try {
         await db.query(
           `INSERT INTO posts (user_id, project_name, topic, template, content, created_at)
-           VALUES ($1, $2, $3, $4, $5, NOW())
-           ON CONFLICT DO NOTHING`,
+           VALUES ($1, $2, $3, $4, $5, NOW())`,
           [req.user.id, project || null, topic, template, text]
         );
       } catch (err) { console.error("Insert post error:", err.message); }
@@ -257,6 +256,13 @@ Write the LinkedIn post now.`;
           [req.user.id]
         );
       } catch (err) { console.error("Increment quota error:", err.message); }
+      // Log generate_post
+      try {
+        await db.query(
+          `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+          [req.user.id, "generate_post", JSON.stringify({ topic, template, project: project || null, lang })]
+        );
+      } catch {}
     }
 
     res.json({
@@ -327,8 +333,26 @@ Return ONLY the JSON, no explanation.`
 // ─── POST /generate/repurpose ─────────────────────────────────────────────────
 // Transforme une URL (article, YouTube, PDF text) en post LinkedIn
 router.post("/repurpose", authenticateToken, checkGenerationQuota, async (req, res) => {
-  const { url, text: pastedText, lang = "en", voiceStyle } = req.body;
+  const { url, text: pastedText, lang = "en", voiceStyle, project } = req.body;
   if (!url && !pastedText) return res.status(400).json({ error: "URL or text required" });
+
+  // Récupérer la brand memory si un projet est sélectionné
+  let brandMemory = null;
+  if (project && req.user?.id) {
+    try {
+      const result = await db.query("SELECT * FROM brand_memory WHERE project_name=$1", [project]);
+      brandMemory = result.rows[0] || null;
+    } catch {}
+  }
+
+  const brandContext = brandMemory ? `
+BRAND CONTEXT:
+- Niche: ${brandMemory.niche || "not specified"}
+- Target audience: ${brandMemory.audience || "not specified"}
+- Tone of voice: ${brandMemory.tone || "professional"}
+- Default CTA: ${brandMemory.cta || "not specified"}
+- Banned words: ${brandMemory.banned_words || "none"}
+` : "";
 
   let sourceContent = pastedText || "";
 
@@ -375,6 +399,7 @@ router.post("/repurpose", authenticateToken, checkGenerationQuota, async (req, r
           role: "system",
           content: `You are an elite LinkedIn content strategist. Transform the provided content into a high-performing LinkedIn post.
 Extract the 3-5 most valuable insights. Write a strong hook. Make it actionable and shareable.
+${brandContext}
 ${styleInstruction}
 ${langInstruction}
 RULES: No hashtags. No corporate jargon. Strong first line. End with a question or CTA. 150-250 words.`
@@ -399,6 +424,13 @@ RULES: No hashtags. No corporate jargon. Strong first line. End with a question 
           [req.user.id, url || "repurposed", "repurpose", text]
         );
         await db.query("UPDATE users SET generations_count=generations_count+1 WHERE id=$1", [req.user.id]);
+      } catch {}
+      // Log repurpose_post
+      try {
+        await db.query(
+          `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+          [req.user.id, "generate_post", JSON.stringify({ template: "repurpose", source: url || "pasted", project: project || null, lang })]
+        );
       } catch {}
     }
 
@@ -442,6 +474,13 @@ ${styleHint} ${langInstruction}`
     const raw = completion.choices[0]?.message?.content?.trim();
     const clean = raw.replace(/```json|```/g, "").trim();
     const hooks = JSON.parse(clean);
+    // Log generate_hooks
+    try {
+      await db.query(
+        `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+        [req.user.id, "generate_post", JSON.stringify({ template: "hooks", topic, lang })]
+      );
+    } catch {}
     res.json({ hooks: Array.isArray(hooks) ? hooks : [] });
   } catch (err) {
     console.error("Hooks error:", err.message);
@@ -768,6 +807,13 @@ router.post("/image", authenticateToken, requirePro, async (req, res) => {
         [cloudUrl, post_id, req.user.id]
       ).catch(e => console.error("DB media save error:", e.message));
     }
+    // Log generate_image
+    try {
+      await db.query(
+        `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+        [req.user.id, "generate_image", JSON.stringify({ format, style, post_id: post_id || null })]
+      );
+    } catch {}
 
     res.json({ imageUrl: cloudUrl, originalUrl: imageUrl, prompt, coreIdea, format, style, saved: !!post_id });
   } catch (err) {
