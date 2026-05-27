@@ -28,6 +28,7 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
     calendar_import_post: "#8b5cf6", update_profile: "#3b82f6",
     watch_search: "#22c55e", cancel_subscription: "#ef4444",
     plan_upgrade: "#22c55e", plan_downgrade: "#f59e0b",
+    publish_post: "#3b82f6",
   };
 
   const getActionLabel = (action) => tr(trendsLang, `ui.actionLabels.${action}`) || action;
@@ -191,11 +192,11 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
         <button
           style={{ padding:"10px 20px", background:"none", border:"none", borderBottom: activeTab==="posts" ? "2px solid #ef4444" : "2px solid transparent", color: activeTab==="posts" ? "#ef4444" : "#475569", fontWeight:700, fontSize:12, cursor:"pointer", letterSpacing:"0.5px" }}
           onClick={() => setActiveTab("posts")}
-        >✍️ Mes Posts</button>
+        >✍️ {tr(trendsLang,"ui.myPosts")}</button>
         <button
           style={{ padding:"10px 20px", background:"none", border:"none", borderBottom: activeTab==="actions" ? "2px solid #8b5cf6" : "2px solid transparent", color: activeTab==="actions" ? "#8b5cf6" : "#475569", fontWeight:700, fontSize:12, cursor:"pointer", letterSpacing:"0.5px" }}
           onClick={() => setActiveTab("actions")}
-        >📊 Mes Actions</button>
+        >📊 {tr(trendsLang,"ui.myActions")}</button>
       </div>
 
       {/* ── Onglet Mes Actions ── */}
@@ -207,7 +208,7 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
               value={filterAction}
               onChange={e => setFilterAction(e.target.value)}
             >
-              <option value="">🔍 Toutes les actions</option>
+              <option value="">🔍 {tr(trendsLang,"ui.allActions")}</option>
               {Object.entries(USER_ACTION_LABELS).map(([key, {label}]) => (
                 <option key={key} value={key}>{label}</option>
               ))}
@@ -220,17 +221,17 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
 
           <div style={{ ...st.card, marginTop:0, padding:0, overflow:"hidden" }}>
             {actionsLoading ? (
-              <div style={{ textAlign:"center", padding:40, color:"#475569" }}>Chargement...</div>
+              <div style={{ textAlign:"center", padding:40, color:"#475569" }}>{tr(trendsLang,"ui.loading")}</div>
             ) : userActions.length === 0 ? (
               <div style={{ textAlign:"center", padding:40 }}>
                 <div style={{ fontSize:32, marginBottom:8 }}>📭</div>
-                <div style={{ color:"#475569", fontSize:13 }}>Aucune action enregistrée</div>
+                <div style={{ color:"#475569", fontSize:13 }}>{tr(trendsLang,"ui.noActions")}</div>
               </div>
             ) : (
               <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
                 <thead>
                   <tr style={{ background:"rgba(255,255,255,0.03)" }}>
-                    {["DATE","ACTION","DÉTAILS"].map(h => (
+                    {[tr(trendsLang,"ui.date"), tr(trendsLang,"ui.action"), tr(trendsLang,"ui.details")].map(h => (
                       <th key={h} style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"12px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>{h}</th>
                     ))}
                   </tr>
@@ -241,7 +242,7 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
                     return (
                       <tr key={log.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
                         <td style={{ padding:"12px 16px", color:"#475569", fontSize:11, whiteSpace:"nowrap" }}>
-                          {new Date(log.created_at).toLocaleString("fr-FR")}
+                          {new Date(log.created_at).toLocaleString(trendsLang === "fr" ? "fr-FR" : trendsLang === "de" ? "de-DE" : trendsLang === "es" ? "es-ES" : trendsLang === "it" ? "it-IT" : trendsLang === "pt" ? "pt-PT" : "en-GB")}
                         </td>
                         <td style={{ padding:"12px 16px" }}>
                           <span style={{ background:`${cfg.color}15`, border:`1px solid ${cfg.color}40`, borderRadius:20, padding:"3px 10px", fontSize:10, fontWeight:700, color:cfg.color }}>
@@ -308,7 +309,7 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
             style={{ padding:"8px 14px", borderRadius:8, border:`1px solid ${hasActiveFilters ? "rgba(220,38,38,0.4)" : "rgba(255,255,255,0.1)"}`, background: hasActiveFilters ? "rgba(220,38,38,0.1)" : "rgba(255,255,255,0.04)", color: hasActiveFilters ? "#ef4444" : "#64748b", fontSize:11, fontWeight:700, cursor:"pointer", whiteSpace:"nowrap", flexShrink:0 }}
             onClick={() => setShowFilters(!showFilters)}
           >
-            ⚙️ Filtres {hasActiveFilters && "●"}
+            ⚙️ {tr(trendsLang,"ui.filters")} {hasActiveFilters && "●"}
           </button>
           <button
             style={{ padding:"8px 12px", borderRadius:8, border:"1px solid rgba(255,255,255,0.08)", background:"rgba(255,255,255,0.03)", color:"#64748b", fontSize:11, cursor:"pointer", flexShrink:0 }}
