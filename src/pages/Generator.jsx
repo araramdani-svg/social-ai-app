@@ -102,7 +102,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   const [projects,       setProjects]       = useState([]);
   const [planner,        setPlanner]        = useState([]);
   const [publishLog,     setPublishLog]     = useState([]);
-  const [attachedMedia,  setAttachedMedia]  = useState(null);
+  const [attachedMedia,  setAttachedMedia]  = useState(() => { try { const v = localStorage.getItem("gp_attachedMedia"); return v ? JSON.parse(v) : null; } catch { return null; } });
   const [scheduledPosts, setScheduledPosts] = useState([]);
   const [autoPosts,      setAutoPosts]      = useState([]);
   const [autoPlatform,   setAutoPlatform]   = useState("LINKEDIN");
@@ -113,14 +113,14 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   const [liveFeed,       setLiveFeed]       = useState([]);
 
   // ── States médias persistants (remontés depuis Create) ───────────────────
-  const [imgResult,     setImgResult]     = useState(null);
-  const [imgFormat,     setImgFormat]     = useState("square");
-  const [imgType,       setImgType]       = useState("illustrative");
-  const [imgTab,        setImgTab]        = useState("illustrative");
+  const [imgResult,     setImgResult]     = useState(() => { try { const v = localStorage.getItem("gp_imgResult"); return v ? JSON.parse(v) : null; } catch { return null; } });
+  const [imgFormat,     setImgFormat]     = useState(() => localStorage.getItem("gp_imgFormat") || "square");
+  const [imgType,       setImgType]       = useState(() => localStorage.getItem("gp_imgType") || "illustrative");
+  const [imgTab,        setImgTab]        = useState(() => localStorage.getItem("gp_imgTab") || "illustrative");
   const [mediaResult,   setMediaResult]   = useState(null);
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [watchContext,  setWatchContext]  = useState(null);
-  const [voiceStyle,    setVoiceStyle]    = useState(null);
+  const [voiceStyle,    setVoiceStyle]    = useState(() => { try { const v = localStorage.getItem("gp_voiceStyle"); return v ? JSON.parse(v) : null; } catch { return null; } });
 
   /* ── Stats ── */
   const [stats,         setStats]         = useState({ posts:0, projects:0, published:0, avgScore:0, streak:0 });
@@ -265,6 +265,14 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
 
   const isFirstRender = useRef(true); useEffect(() => { if (isFirstRender.current) { isFirstRender.current = false; return; } const key=selectedProject||"default"; if(key !== "default") { setPost(localStorage.getItem(`gp_post_${key}`)||""); setTopic(localStorage.getItem(`gp_topic_${key}`)||""); setProjectTitle(localStorage.getItem(`gp_title_${key}`)||""); } else { setPost(""); } }, [selectedProject]);
   useEffect(() => { const key=selectedProject||projectTitle||"default"; localStorage.setItem(`gp_post_${key}`,post); localStorage.setItem(`gp_topic_${key}`,topic); localStorage.setItem(`gp_title_${key}`,projectTitle); }, [post,topic,projectTitle,selectedProject]);
+
+  // ── Persistence médias ────────────────────────────────────────────────────
+  useEffect(() => { try { if (imgResult) localStorage.setItem("gp_imgResult", JSON.stringify(imgResult)); else localStorage.removeItem("gp_imgResult"); } catch {} }, [imgResult]);
+  useEffect(() => { localStorage.setItem("gp_imgFormat", imgFormat); }, [imgFormat]);
+  useEffect(() => { localStorage.setItem("gp_imgType", imgType); }, [imgType]);
+  useEffect(() => { localStorage.setItem("gp_imgTab", imgTab); }, [imgTab]);
+  useEffect(() => { try { if (voiceStyle) localStorage.setItem("gp_voiceStyle", JSON.stringify(voiceStyle)); else localStorage.removeItem("gp_voiceStyle"); } catch {} }, [voiceStyle]);
+  useEffect(() => { try { if (attachedMedia) localStorage.setItem("gp_attachedMedia", JSON.stringify(attachedMedia)); else localStorage.removeItem("gp_attachedMedia"); } catch {} }, [attachedMedia]);
 
   useEffect(() => {
     const h=history||[], p=projects||[];
