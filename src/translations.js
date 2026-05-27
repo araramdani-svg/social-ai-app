@@ -165,7 +165,7 @@ const translations = {
       noActions: "No actions recorded", filters: "Filters",
       date: "DATE", action: "ACTION", details: "DETAILS",
       findArticles: "🌍 Find articles related to this post",
-      publishing: "Publishing...", publishPost: "📤 Publish", confirmDelete: "Delete this post?",
+      publishing: "Publishing...", publishPost: "📤 Publish", confirmDelete: "Delete this post?", history: "HISTORY",
       actionLabels: {
         register: "🆕 Register", login: "🔓 Login", verify_email: "✅ Email verified",
         onboarding_done: "🚀 Onboarding", reset_password: "🔑 Password reset",
@@ -648,7 +648,7 @@ const translations = {
       noActions: "Aucune action enregistrée", filters: "Filtres",
       date: "DATE", action: "ACTION", details: "DÉTAILS",
       findArticles: "🌍 Trouver des articles liés à ce post",
-      publishing: "Publication...", publishPost: "📤 Publier", confirmDelete: "Supprimer ce post ?",
+      publishing: "Publication...", publishPost: "📤 Publier", confirmDelete: "Supprimer ce post ?", history: "HISTORIQUE",
       actionLabels: {
         register: "🆕 Inscription", login: "🔓 Connexion", verify_email: "✅ Email vérifié",
         onboarding_done: "🚀 Onboarding", reset_password: "🔑 Reset mot de passe",
@@ -1099,7 +1099,7 @@ const translations = {
       noActions: "No hay acciones registradas", filters: "Filtros",
       date: "FECHA", action: "ACCIÓN", details: "DETALLES",
       findArticles: "🌍 Encontrar artículos relacionados con este post",
-      publishing: "Publicando...", publishPost: "📤 Publicar",
+      publishing: "Publicando...", publishPost: "📤 Publicar", history: "HISTÓRICO",
       actionLabels: {
         register: "🆕 Registro",
         login: "🔓 Inicio de sesión",
@@ -1504,7 +1504,7 @@ const translations = {
       noActions: "Keine Aktionen aufgezeichnet", filters: "Filter",
       date: "DATUM", action: "AKTION", details: "DETAILS",
       findArticles: "🌍 Artikel zu diesem Post finden",
-      publishing: "Veröffentlichen...", publishPost: "📤 Veröffentlichen",
+      publishing: "Veröffentlichen...", publishPost: "📤 Veröffentlichen", history: "VERLAUF",
       actionLabels: {
         register: "🆕 Registrierung",
         login: "🔓 Anmeldung",
@@ -1911,7 +1911,7 @@ const translations = {
       noActions: "Nessuna azione registrata", filters: "Filtri",
       date: "DATA", action: "AZIONE", details: "DETTAGLI",
       findArticles: "🌍 Trova articoli correlati a questo post",
-      publishing: "Pubblicazione...", publishPost: "📤 Pubblica",
+      publishing: "Pubblicazione...", publishPost: "📤 Pubblica", history: "CRONOLOGIA",
       actionLabels: {
         register: "🆕 Registrazione",
         login: "🔓 Accesso",
