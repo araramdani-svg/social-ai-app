@@ -151,7 +151,7 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
   const loadInCreate = (content) => { setPost(content); setTab("create"); };
 
   const deletePost = async (id) => {
-    if (!window.confirm("Supprimer ce post ?")) return;
+    if (!window.confirm(tr(trendsLang,"ui.confirmDelete") || "Delete this post?")) return;
     setDeletingId(id);
     try {
       await fetch(`${API}/auth/posts/${id}`, {
