@@ -122,6 +122,7 @@ export default function Dashboard({
       <div style={{ display:"grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(5,1fr)", gap:10 }}>
         {KPIS.map((kpi, i) => {
           const { label, value, icon, color, hint } = kpi;
+          return (
           <motion.div
             key={i}
             initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }}
@@ -158,7 +159,7 @@ export default function Dashboard({
               </div>
             )}
           </motion.div>
-        );
+          );
         })}
       </div>
 
