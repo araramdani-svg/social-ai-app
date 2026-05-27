@@ -112,16 +112,6 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   const [memory,         setMemory]         = useState({ niche:"", audience:"", tone:"", cta:"", banned_words:"" });
   const [liveFeed,       setLiveFeed]       = useState([]);
 
-  // ── States médias persistants (remontés depuis Create) ───────────────────
-  const [imgResult,     setImgResult]     = useState(null);
-  const [imgFormat,     setImgFormat]     = useState("square");
-  const [imgType,       setImgType]       = useState("illustrative");
-  const [imgTab,        setImgTab]        = useState("illustrative");
-  const [mediaResult,   setMediaResult]   = useState(null);
-  const [selectedMedia, setSelectedMedia] = useState(null);
-  const [watchContext,  setWatchContext]  = useState(null);
-  const [voiceStyle,    setVoiceStyle]    = useState(null);
-
   /* ── Stats ── */
   const [stats,         setStats]         = useState({ posts:0, projects:0, published:0, avgScore:0, streak:0 });
   const [animatedStats, setAnimatedStats] = useState({ posts:0, projects:0, published:0, avgScore:0, streak:0 });
@@ -216,7 +206,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   /* ── Effects ── */
   useEffect(() => {
     if (token && token !== "guest") {
-      loadProjects(); loadHistory();
+      loadProjects(); loadHistory(); loadPublishLog();
       // Vérifier onboarding_done en DB (multi-device)
       fetch(`${API}/auth/me`, { headers:{ Authorization:`Bearer ${token}` } })
         .then(r => r.json())
@@ -281,6 +271,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   /* ── API functions ── */
   const loadProjects   = async () => { const d=await api("auth/projects",{},"GET"); setProjects(Array.isArray(d)?d:[]); };
   const loadHistory    = async () => { try { const d=await api("auth/posts",{},"GET"); setHistory(Array.isArray(d)?d:[]); } catch { setHistory([]); } };
+  const loadPublishLog = async () => { try { const d=await api("auth/publish-log",{},"GET"); setPublishLog(Array.isArray(d)?d.map(p=>({ dest:p.platform, date:new Date(p.created_at).toLocaleString() })):[]); } catch { setPublishLog([]); } };
   const selectProject  = async (n) => { setSelectedProject(n); setCompareDraft(null); const d=await api(`auth/project/${n}`,{},"GET"); if(d){ setMemory(d.memory||{ niche:"",audience:"",tone:"",cta:"",banned_words:"" }); setDrafts(d.drafts||[]); setHistory(d.posts||[]); setProjectTitle(n); } try{ const posts=await fetch(`${API}/auth/posts/by-project/${encodeURIComponent(n)}`,{headers:{Authorization:`Bearer ${token}`}}).then(r=>r.json()); if(Array.isArray(posts)) setProjectPosts(posts); } catch{} };
   const createProject  = async () => { if(!projectTitle) return; await api("auth/create-project",{ name:projectTitle,workspace,campaign }); await loadProjects(); await selectProject(projectTitle); showToast(tr(trendsLang,"messages.projectSaved")); logUserAction("create_project", { name: projectTitle }); };
   const deleteProject  = async (n) => { await api(`auth/delete-project/${n}`,{},"DELETE"); showToast(tr(trendsLang,"messages.projectDeleted")); await loadProjects(); if(selectedProject===n){ setSelectedProject(""); setProjectTitle(""); setPost(""); setDrafts([]); setHistory([]); } logUserAction("delete_project", { name: n }); };
@@ -298,15 +289,15 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
     if (dest === "LINKEDIN") {
       if (!linkedinStatus?.connected) return showToast("⚠️ LinkedIn not connected — go to Integrations");
       const ok = await postToLinkedin();
-      if (ok) setPublishLog(p => [{ dest, date: new Date().toLocaleString() }, ...p]);
+      if (ok) { setPublishLog(p => [{ dest, date: new Date().toLocaleString() }, ...p]); loadPublishLog(); }
     } else if (dest === "TWITTER") {
       if (!twitterStatus?.connected) return showToast("⚠️ X/Twitter not connected — go to Integrations");
       const ok = await postToTwitter();
-      if (ok) setPublishLog(p => [{ dest, date: new Date().toLocaleString() }, ...p]);
+      if (ok) { setPublishLog(p => [{ dest, date: new Date().toLocaleString() }, ...p]); loadPublishLog(); }
     } else if (dest === "FACEBOOK") {
       if (!facebookStatus?.connected) return showToast("⚠️ Facebook not connected — go to Integrations");
       const ok = await postToFacebook();
-      if (ok) setPublishLog(p => [{ dest, date: new Date().toLocaleString() }, ...p]);
+      if (ok) { setPublishLog(p => [{ dest, date: new Date().toLocaleString() }, ...p]); loadPublishLog(); }
     }
   };
   const generatePlanner= () => { setPlanner(Array.from({ length:30 },(_,i)=>`Day ${i+1} — ${campaign} / ${topic}`)); setTab("planner"); };
@@ -431,7 +422,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
           <motion.div key={tab} initial={pageTransition.initial} animate={pageTransition.animate} exit={pageTransition.exit} transition={pageTransition.transition}>
             {tab==="home"         && <Home         {...shared} setTab={setTab} stats={stats} userPlan={userPlan} firstName={firstName} displayName={displayName} />}
             {tab==="dashboard"    && <Dashboard    {...shared} animatedStats={animatedStats} stats={stats} projects={projects} liveFeed={liveFeed} timelineData={timelineData} growthData={growthData} firstName={firstName} displayName={displayName} setTab={setTab} />}
-            {tab==="create"       && <Create       {...shared} token={token} plan={userPlan?.plan || "Free"} post={post} setPost={setPost} attachedMedia={attachedMedia} setAttachedMedia={setAttachedMedia} topic={topic} setTopic={setTopic} projectTitle={projectTitle} setProjectTitle={setProjectTitle} searchProject={searchProject} setSearchProject={setSearchProject} selectedProject={selectedProject} filteredProjects={filteredProjects} renameValue={renameValue} setRenameValue={setRenameValue} saveStatus={saveStatus} loading={loading} postMetrics={postMetrics} savePost={savePost} copyPost={copyPost} exportPost={exportPost} analyze={analyze} generatePlanner={generatePlanner} generate={generate} rewrite={rewrite} createProject={createProject} duplicateProject={duplicateProject} renameProject={renameProject} deleteProject={deleteProject} selectProject={selectProject} projectPosts={projectPosts} imgResult={imgResult} setImgResult={setImgResult} imgFormat={imgFormat} setImgFormat={setImgFormat} imgType={imgType} setImgType={setImgType} imgTab={imgTab} setImgTab={setImgTab} mediaResult={mediaResult} setMediaResult={setMediaResult} selectedMedia={selectedMedia} setSelectedMedia={setSelectedMedia} watchContext={watchContext} setWatchContext={setWatchContext} voiceStyle={voiceStyle} setVoiceStyle={setVoiceStyle} />}
+            {tab==="create"       && <Create       {...shared} token={token} plan={userPlan?.plan || "Free"} post={post} setPost={setPost} attachedMedia={attachedMedia} setAttachedMedia={setAttachedMedia} topic={topic} setTopic={setTopic} projectTitle={projectTitle} setProjectTitle={setProjectTitle} searchProject={searchProject} setSearchProject={setSearchProject} selectedProject={selectedProject} filteredProjects={filteredProjects} renameValue={renameValue} setRenameValue={setRenameValue} saveStatus={saveStatus} loading={loading} postMetrics={postMetrics} savePost={savePost} copyPost={copyPost} exportPost={exportPost} analyze={analyze} generatePlanner={generatePlanner} generate={generate} rewrite={rewrite} createProject={createProject} duplicateProject={duplicateProject} renameProject={renameProject} deleteProject={deleteProject} selectProject={selectProject} projectPosts={projectPosts} />}
             {tab==="memory"       && <Memory       {...shared} memory={memory} setMemory={setMemory} saveBrandMemory={saveBrandMemory} />}
             {tab==="carousel"     && <Carousel     {...shared} post={post} topic={topic} memory={memory} showToast={showToast} />}
             {tab==="ghostwrite"   && <GhostWrite   {...shared} post={post} setPost={setPost} setTab={setTab} memory={memory} showToast={showToast} />}

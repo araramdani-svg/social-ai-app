@@ -191,6 +191,22 @@ router.post("/post", auth, async (req, res) => {
 
     if (!postData.id) return res.status(500).json({ message: "Failed to publish on Facebook", detail: postData });
 
+    // Log publish_log
+    try {
+      await db.query(
+        "INSERT INTO publish_log (user_id, platform, post_id, status, created_at) VALUES ($1, $2, $3, 'published', NOW())",
+        [req.user.id, "facebook", postData.id]
+      );
+    } catch (logErr) { console.error("publish_log error:", logErr.message); }
+
+    // Log user_logs
+    try {
+      await db.query(
+        `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+        [req.user.id, "publish_post", JSON.stringify({ platform: "facebook", post_id: postData.id })]
+      );
+    } catch {}
+
     res.json({ success: true, postId: postData.id });
   } catch (err) {
     console.error("Facebook post error:", err.message);
