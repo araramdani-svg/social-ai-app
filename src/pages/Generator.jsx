@@ -117,8 +117,8 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   const [imgFormat,     setImgFormat]     = useState(() => localStorage.getItem("gp_imgFormat") || "square");
   const [imgType,       setImgType]       = useState(() => localStorage.getItem("gp_imgType") || "illustrative");
   const [imgTab,        setImgTab]        = useState(() => localStorage.getItem("gp_imgTab") || "illustrative");
-  const [mediaResult,   setMediaResult]   = useState(null);
-  const [selectedMedia, setSelectedMedia] = useState(null);
+  const [mediaResult,   setMediaResult]   = useState(() => { try { const v = localStorage.getItem("gp_mediaResult"); return v ? JSON.parse(v) : null; } catch { return null; } });
+  const [selectedMedia, setSelectedMedia] = useState(() => { try { const v = localStorage.getItem("gp_selectedMedia"); return v ? JSON.parse(v) : null; } catch { return null; } });
   const [watchContext,  setWatchContext]  = useState(null);
   const [voiceStyle,    setVoiceStyle]    = useState(() => { try { const v = localStorage.getItem("gp_voiceStyle"); return v ? JSON.parse(v) : null; } catch { return null; } });
 
@@ -273,6 +273,8 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   useEffect(() => { localStorage.setItem("gp_imgTab", imgTab); }, [imgTab]);
   useEffect(() => { try { if (voiceStyle) localStorage.setItem("gp_voiceStyle", JSON.stringify(voiceStyle)); else localStorage.removeItem("gp_voiceStyle"); } catch {} }, [voiceStyle]);
   useEffect(() => { try { if (attachedMedia) localStorage.setItem("gp_attachedMedia", JSON.stringify(attachedMedia)); else localStorage.removeItem("gp_attachedMedia"); } catch {} }, [attachedMedia]);
+  useEffect(() => { try { if (mediaResult) localStorage.setItem("gp_mediaResult", JSON.stringify(mediaResult)); else localStorage.removeItem("gp_mediaResult"); } catch {} }, [mediaResult]);
+  useEffect(() => { try { if (selectedMedia) localStorage.setItem("gp_selectedMedia", JSON.stringify(selectedMedia)); else localStorage.removeItem("gp_selectedMedia"); } catch {} }, [selectedMedia]);
 
   useEffect(() => {
     const h=history||[], p=projects||[];
