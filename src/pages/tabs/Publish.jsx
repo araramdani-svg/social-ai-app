@@ -54,7 +54,7 @@ export default function Publish({
                 <button key={p.label} style={{ ...st.buttonSecondary, margin:0, display:"flex", alignItems:"center", gap:8, justifyContent:"space-between" }}
                   onClick={() => copyAndOpen(p.url)}>
                   <span>{p.icon} {p.label}</span>
-                  <span style={{ fontSize:11, color:"#64748b" }}>Copy & Open →</span>
+                  <span style={{ fontSize:11, color:"#64748b" }}>{tr(trendsLang,"ui.copyAndOpen") || "Copy & Open"} →</span>
                 </button>
               ))}
             </div>
@@ -77,7 +77,7 @@ export default function Publish({
               <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10, background:"rgba(56,189,248,0.07)", border:"1px solid rgba(56,189,248,0.2)", borderRadius:8, padding:"8px 10px" }}>
                 <img src={attachedMedia.media_url} alt="media" style={{ width:36, height:36, objectFit:"cover", borderRadius:6, flexShrink:0 }} />
                 <div>
-                  <div style={{ color:"#38bdf8", fontSize:10, fontWeight:700 }}>🖼️ MEDIA ATTACHÉ</div>
+                  <div style={{ color:"#38bdf8", fontSize:10, fontWeight:700 }}>🖼️ {tr(trendsLang,"ui.mediaAttached")}</div>
                   <div style={{ color:"#475569", fontSize:9 }}>{attachedMedia.media_source} · {attachedMedia.media_type}</div>
                 </div>
               </div>

@@ -13,6 +13,7 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
   const [actionsPages, setActionsPages] = useState(1);
   const [actionsLoading, setActionsLoading] = useState(false);
   const [filterAction, setFilterAction] = useState("");
+  const [deleteModal,  setDeleteModal]  = useState(null); // post id à supprimer
 
   const ACTION_COLORS = {
     register: "#22c55e", login: "#3b82f6", verify_email: "#22c55e",
@@ -150,8 +151,12 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
 
   const loadInCreate = (content) => { setPost(content); setTab("create"); };
 
-  const deletePost = async (id) => {
-    if (!window.confirm(tr(trendsLang,"ui.confirmDelete") || "Delete this post?")) return;
+  const confirmDelete = (id) => setDeleteModal(id);
+
+  const deletePost = async () => {
+    if (!deleteModal) return;
+    const id = deleteModal;
+    setDeleteModal(null);
     setDeletingId(id);
     try {
       await fetch(`${API}/auth/posts/${id}`, {
@@ -185,6 +190,38 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
 
   return (
     <>
+      {/* ── Modale confirmation suppression ── */}
+      {deleteModal && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", backdropFilter:"blur(4px)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:9999 }}>
+          <div style={{ background:"#0f172a", border:"1px solid rgba(239,68,68,0.3)", borderRadius:16, padding:"32px 28px", maxWidth:380, width:"90%", boxShadow:"0 25px 50px rgba(0,0,0,0.5)" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
+              <div style={{ width:40, height:40, borderRadius:10, background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18 }}>🗑️</div>
+              <div>
+                <div style={{ color:"white", fontWeight:700, fontSize:15 }}>Delete Post</div>
+                <div style={{ color:"#64748b", fontSize:11, marginTop:2 }}>This action cannot be undone</div>
+              </div>
+            </div>
+            <p style={{ color:"#94a3b8", fontSize:13, lineHeight:1.6, marginBottom:24 }}>
+              This post will be permanently deleted. Continue?
+            </p>
+            <div style={{ display:"flex", gap:10 }}>
+              <button
+                onClick={() => setDeleteModal(null)}
+                style={{ flex:1, padding:"11px 0", borderRadius:10, border:"1px solid rgba(255,255,255,0.1)", background:"rgba(255,255,255,0.05)", color:"#94a3b8", fontSize:13, fontWeight:600, cursor:"pointer" }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={deletePost}
+                style={{ flex:1, padding:"11px 0", borderRadius:10, border:"none", background:"linear-gradient(135deg,#dc2626,#b91c1c)", color:"white", fontSize:13, fontWeight:700, cursor:"pointer", boxShadow:"0 4px 12px rgba(220,38,38,0.3)" }}
+              >
+                Delete permanently
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <PageHeader tabKey="history" trendsLang={trendsLang} isMobile={isMobile} />
 
       {/* ── Onglets ── */}
@@ -455,7 +492,7 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
                               </motion.button>
                               <motion.button whileHover={{ scale:1.05 }} whileTap={{ scale:0.95 }}
                                 style={{ padding:"4px 8px", borderRadius:6, border:"1px solid rgba(239,68,68,0.15)", background:"rgba(239,68,68,0.05)", color:"#475569", fontSize:10, cursor:"pointer", opacity: deletingId===h.id ? 0.5 : 1 }}
-                                onClick={() => deletePost(h.id)}
+                                onClick={() => confirmDelete(h.id)}
                                 disabled={deletingId===h.id}
                               >
                                 🗑️

@@ -106,7 +106,7 @@ router.get("/status", authenticateToken, async (req, res) => {
 });
 
 router.post("/post", authenticateToken, async (req, res) => {
-  const { text, postDbId } = req.body;
+  const { text, postDbId, imageUrl } = req.body;
   if (!text) return res.status(400).json({ message: "Text is required" });
 
   try {
@@ -118,6 +118,50 @@ router.post("/post", authenticateToken, async (req, res) => {
 
     if (!user?.linkedin_access_token) {
       return res.status(400).json({ message: "LinkedIn not connected" });
+    }
+
+    let shareMediaCategory = "NONE";
+    let media = undefined;
+
+    // ── Upload image si fournie ───────────────────────────────────────────────
+    if (imageUrl) {
+      try {
+        // 1. Initialiser l'upload
+        const registerRes = await fetch("https://api.linkedin.com/v2/assets?action=registerUpload", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${user.linkedin_access_token}`,
+            "Content-Type": "application/json",
+            "X-Restli-Protocol-Version": "2.0.0",
+          },
+          body: JSON.stringify({
+            registerUploadRequest: {
+              recipes: ["urn:li:digitalmediaRecipe:feedshare-image"],
+              owner: `urn:li:person:${user.linkedin_user_id}`,
+              serviceRelationships: [{ relationshipType: "OWNER", identifier: "urn:li:userGeneratedContent" }],
+            },
+          }),
+        });
+        const registerData = await registerRes.json();
+        const uploadUrl = registerData.value?.uploadMechanism?.["com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest"]?.uploadUrl;
+        const asset = registerData.value?.asset;
+
+        if (uploadUrl && asset) {
+          // 2. Télécharger l'image depuis l'URL et l'uploader
+          const imgRes = await fetch(imageUrl);
+          const imgBuffer = await imgRes.arrayBuffer();
+          await fetch(uploadUrl, {
+            method: "PUT",
+            headers: { Authorization: `Bearer ${user.linkedin_access_token}`, "Content-Type": "image/jpeg" },
+            body: imgBuffer,
+          });
+          shareMediaCategory = "IMAGE";
+          media = [{ status: "READY", description: { text: "" }, media: asset, title: { text: "" } }];
+        }
+      } catch (imgErr) {
+        console.error("LinkedIn image upload error:", imgErr.message);
+        // On continue sans image si l'upload échoue
+      }
     }
 
     const postRes = await fetch("https://api.linkedin.com/v2/ugcPosts", {
@@ -133,7 +177,8 @@ router.post("/post", authenticateToken, async (req, res) => {
         specificContent: {
           "com.linkedin.ugc.ShareContent": {
             shareCommentary:   { text },
-            shareMediaCategory: "NONE",
+            shareMediaCategory,
+            ...(media ? { media } : {}),
           },
         },
         visibility: {
@@ -149,37 +194,38 @@ router.post("/post", authenticateToken, async (req, res) => {
     }
 
     const postData      = await postRes.json();
-    const linkedinPostId = postData.id; // ex: "urn:li:ugcPost:1234567890"
+    const linkedinPostId = postData.id;
 
-    // ── Sauvegarder le linkedin_post_id + user_id en DB ──────────────────────
+    // ── Sauvegarder le linkedin_post_id en DB ─────────────────────────────────
     try {
       if (postDbId) {
-        // Le post existe déjà en DB (généré via /generate) → on met à jour
         await db.query(
-          `UPDATE posts SET linkedin_post_id=$1, user_id=$2, platform='linkedin'
-           WHERE id=$3`,
+          `UPDATE posts SET linkedin_post_id=$1, user_id=$2, platform='linkedin' WHERE id=$3`,
           [linkedinPostId, req.user.id, postDbId]
         );
       } else {
-        // Post créé directement → on l'insère
         await db.query(
-          `INSERT INTO posts (user_id, content, linkedin_post_id, platform, created_at)
-           VALUES ($1, $2, $3, 'linkedin', NOW())`,
+          `INSERT INTO posts (user_id, content, linkedin_post_id, platform, created_at) VALUES ($1, $2, $3, 'linkedin', NOW())`,
           [req.user.id, text, linkedinPostId]
         );
       }
-    } catch (dbErr) {
-      console.error("Save linkedin_post_id error:", dbErr.message);
-      // On ne bloque pas — le post est publié sur LinkedIn
-    }
+    } catch (dbErr) { console.error("Save linkedin_post_id error:", dbErr.message); }
 
-    // ── Sauvegarder dans publish_log ─────────────────────────────────────────
+    // ── publish_log ───────────────────────────────────────────────────────────
     try {
       await db.query(
-        "INSERT INTO publish_log (user_id, platform, post_id, status) VALUES ($1, $2, $3, 'published')",
+        "INSERT INTO publish_log (user_id, platform, post_id, status, created_at) VALUES ($1, $2, $3, 'published', NOW())",
         [req.user.id, "linkedin", linkedinPostId]
       );
     } catch (logErr) { console.error("publish_log error:", logErr.message); }
+
+    // ── user_logs ─────────────────────────────────────────────────────────────
+    try {
+      await db.query(
+        `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+        [req.user.id, "publish_post", JSON.stringify({ platform: "linkedin", post_id: linkedinPostId, has_image: !!imageUrl })]
+      );
+    } catch {}
 
     res.json({ success: true, postId: linkedinPostId });
   } catch (err) {
