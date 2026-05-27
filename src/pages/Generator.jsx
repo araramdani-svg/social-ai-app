@@ -117,8 +117,8 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   const [imgFormat,     setImgFormat]     = useState(() => localStorage.getItem("gp_imgFormat") || "square");
   const [imgType,       setImgType]       = useState(() => localStorage.getItem("gp_imgType") || "illustrative");
   const [imgTab,        setImgTab]        = useState(() => localStorage.getItem("gp_imgTab") || "illustrative");
-  const [mediaResult,   setMediaResult]   = useState(() => { try { const v = localStorage.getItem("gp_mediaResult"); return v ? JSON.parse(v) : null; } catch { return null; } });
-  const [selectedMedia, setSelectedMedia] = useState(() => { try { const v = localStorage.getItem("gp_selectedMedia"); return v ? JSON.parse(v) : null; } catch { return null; } });
+  const [mediaResult,   setMediaResult]   = useState(null);
+  const [selectedMedia, setSelectedMedia] = useState(null);
   const [watchContext,  setWatchContext]  = useState(null);
   const [voiceStyle,    setVoiceStyle]    = useState(() => { try { const v = localStorage.getItem("gp_voiceStyle"); return v ? JSON.parse(v) : null; } catch { return null; } });
 
@@ -273,8 +273,6 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   useEffect(() => { localStorage.setItem("gp_imgTab", imgTab); }, [imgTab]);
   useEffect(() => { try { if (voiceStyle) localStorage.setItem("gp_voiceStyle", JSON.stringify(voiceStyle)); else localStorage.removeItem("gp_voiceStyle"); } catch {} }, [voiceStyle]);
   useEffect(() => { try { if (attachedMedia) localStorage.setItem("gp_attachedMedia", JSON.stringify(attachedMedia)); else localStorage.removeItem("gp_attachedMedia"); } catch {} }, [attachedMedia]);
-  useEffect(() => { try { if (mediaResult) localStorage.setItem("gp_mediaResult", JSON.stringify(mediaResult)); else localStorage.removeItem("gp_mediaResult"); } catch {} }, [mediaResult]);
-  useEffect(() => { try { if (selectedMedia) localStorage.setItem("gp_selectedMedia", JSON.stringify(selectedMedia)); else localStorage.removeItem("gp_selectedMedia"); } catch {} }, [selectedMedia]);
 
   useEffect(() => {
     const h=history||[], p=projects||[];
@@ -441,7 +439,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
         <AnimatePresence mode="wait">
           <motion.div key={tab} initial={pageTransition.initial} animate={pageTransition.animate} exit={pageTransition.exit} transition={pageTransition.transition}>
             {tab==="home"         && <Home         {...shared} setTab={setTab} stats={stats} userPlan={userPlan} firstName={firstName} displayName={displayName} />}
-            {tab==="dashboard"    && <Dashboard    {...shared} animatedStats={animatedStats} stats={stats} projects={projects} liveFeed={liveFeed} timelineData={timelineData} growthData={growthData} firstName={firstName} displayName={displayName} setTab={setTab} />}
+            {tab==="dashboard"    && <Dashboard    {...shared} animatedStats={animatedStats} stats={stats} projects={projects} liveFeed={liveFeed} timelineData={timelineData} growthData={growthData} firstName={firstName} displayName={displayName} setTab={setTab} userPlan={userPlan} />}
             {tab==="create"       && <Create       {...shared} token={token} plan={userPlan?.plan || "Free"} post={post} setPost={setPost} attachedMedia={attachedMedia} setAttachedMedia={setAttachedMedia} topic={topic} setTopic={setTopic} projectTitle={projectTitle} setProjectTitle={setProjectTitle} searchProject={searchProject} setSearchProject={setSearchProject} selectedProject={selectedProject} filteredProjects={filteredProjects} renameValue={renameValue} setRenameValue={setRenameValue} saveStatus={saveStatus} loading={loading} postMetrics={postMetrics} savePost={savePost} copyPost={copyPost} exportPost={exportPost} analyze={analyze} generatePlanner={generatePlanner} generate={generate} rewrite={rewrite} createProject={createProject} duplicateProject={duplicateProject} renameProject={renameProject} deleteProject={deleteProject} selectProject={selectProject} projectPosts={projectPosts} imgResult={imgResult} setImgResult={setImgResult} imgFormat={imgFormat} setImgFormat={setImgFormat} imgType={imgType} setImgType={setImgType} imgTab={imgTab} setImgTab={setImgTab} mediaResult={mediaResult} setMediaResult={setMediaResult} selectedMedia={selectedMedia} setSelectedMedia={setSelectedMedia} watchContext={watchContext} setWatchContext={setWatchContext} voiceStyle={voiceStyle} setVoiceStyle={setVoiceStyle} />}
             {tab==="memory"       && <Memory       {...shared} memory={memory} setMemory={setMemory} saveBrandMemory={saveBrandMemory} />}
             {tab==="carousel"     && <Carousel     {...shared} post={post} topic={topic} memory={memory} showToast={showToast} />}

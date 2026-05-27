@@ -9,6 +9,8 @@ const API = "https://social-ai-app-production.up.railway.app";
 
 const PLANS = ["Free", "Pro", "Business", "Agency"];
 const PLAN_COLORS = { Free:"#64748b", Pro:"#3b82f6", Business:"#f59e0b", Agency:"#8b5cf6" };
+const PLAN_LIMITS = { Free: 5, Pro: 100, Business: Infinity, Agency: Infinity };
+const planLimit = (plan) => { const l = PLAN_LIMITS[plan] ?? 5; return l === Infinity ? "∞" : l; };
 
 const ACTION_LABELS = {
   edit_user:             { label:"✏️ Édition user",       color:"#3b82f6" },
@@ -203,7 +205,7 @@ function EditUserModal({ user, token, onClose, onSave }) {
           ))}
         </div>
 
-        <span style={s.label}>GÉNÉRATIONS UTILISÉES</span>
+        <span style={s.label}>GÉNÉRATIONS UTILISÉES <span style={{ color:"#475569", fontWeight:400 }}>/ {planLimit(plan)}</span></span>
         <div style={{ display:"flex", gap:8, marginBottom:20 }}>
           <input style={{ ...s.input, flex:1 }} type="number" value={quota} onChange={e=>setQuota(parseInt(e.target.value)||0)} />
           <button style={{ ...s.btnSm, background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.3)", color:"#22c55e", padding:"9px 14px" }} onClick={resetQuota}>Reset à 0</button>
@@ -982,7 +984,12 @@ export default function Admin({ token, logout }) {
                         <td style={{ padding:"12px 16px" }}>
                           <span style={s.badge(u.plan)}>{u.plan}</span>
                         </td>
-                        <td style={{ padding:"12px 16px", color:"#94a3b8" }}>{u.generations_count || 0}</td>
+                        <td style={{ padding:"12px 16px", color:"#94a3b8" }}>
+                          <span style={{ color: planLimit(u.plan) !== "∞" && (u.generations_count || 0) >= PLAN_LIMITS[u.plan] ? "#ef4444" : "#94a3b8", fontWeight:700 }}>
+                            {u.generations_count || 0}
+                          </span>
+                          <span style={{ color:"#475569" }}> / {planLimit(u.plan)}</span>
+                        </td>
                         <td style={{ padding:"12px 16px", color:"#94a3b8" }}>{u.post_count || 0}</td>
                         <td style={{ padding:"12px 16px" }}>
                           {u.stripe_subscription_id

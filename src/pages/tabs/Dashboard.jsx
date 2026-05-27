@@ -53,8 +53,15 @@ const PLATFORM_COLORS = {
 export default function Dashboard({
   trendsLang, isMobile,
   animatedStats, stats, projects, liveFeed, timelineData, growthData,
-  firstName, displayName, setTab,
+  firstName, displayName, setTab, userPlan,
 }) {
+
+  const PLAN_LIMITS = { Free: 5, Pro: 100, Business: Infinity, Agency: Infinity };
+  const plan = userPlan?.plan || "Free";
+  const genLimit = PLAN_LIMITS[plan] ?? 5;
+  const genUsed = stats?.posts || 0;
+  const genPercent = genLimit === Infinity ? 0 : Math.min(100, Math.round((genUsed / genLimit) * 100));
+  const isUnlimited = genLimit === Infinity;
 
   // ── Accroche contextuelle ─────────────────────────────────────────────────
   const getInsight = () => {
@@ -71,7 +78,7 @@ export default function Dashboard({
 
   // ── KPI config ────────────────────────────────────────────────────────────
   const KPIS = [
-    { label: tr(trendsLang, "ui.statPosts"),     value: animatedStats.posts,     icon:"✍️", color:"#ef4444", hint: tr(trendsLang, "ui.hintTotalGenerated") },
+    { label: tr(trendsLang, "ui.statPosts"),     value: animatedStats.posts,     icon:"✍️", color:"#ef4444", hint: tr(trendsLang, "ui.hintTotalGenerated"), quota: true },
     { label: tr(trendsLang, "ui.statProjects"),  value: animatedStats.projects,  icon:"📁", color:"#8b5cf6", hint: tr(trendsLang, "ui.hintActiveProjects") },
     { label: tr(trendsLang, "ui.statPublished"), value: animatedStats.published, icon:"📤", color:"#22c55e", hint: tr(trendsLang, "ui.hintPublishedPosts") },
     { label: tr(trendsLang, "ui.statAvgScore"),  value: animatedStats.avgScore,  icon:"⭐", color:"#f59e0b", hint: tr(trendsLang, "ui.hintAvgViralScore") },
@@ -113,7 +120,8 @@ export default function Dashboard({
 
       {/* ── KPIs ─────────────────────────────────────────────────────────────── */}
       <div style={{ display:"grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(5,1fr)", gap:10 }}>
-        {KPIS.map(({ label, value, icon, color, hint }, i) => (
+        {KPIS.map((kpi, i) => {
+          const { label, value, icon, color, hint } = kpi;
           <motion.div
             key={i}
             initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }}
@@ -136,8 +144,22 @@ export default function Dashboard({
             </div>
             <div style={{ color, fontSize: isMobile ? 28 : 34, fontWeight:900, lineHeight:1 }}>{value}</div>
             <div style={{ color:"#334155", fontSize:10, marginTop:6, letterSpacing:"0.5px" }}>{hint}</div>
+            {kpi.quota && (
+              <div style={{ marginTop:8 }}>
+                <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
+                  <span style={{ color:"#475569", fontSize:9 }}>{genUsed} / {isUnlimited ? "∞" : genLimit}</span>
+                  {!isUnlimited && <span style={{ color: genPercent >= 80 ? "#ef4444" : "#475569", fontSize:9, fontWeight:700 }}>{genPercent}%</span>}
+                </div>
+                {!isUnlimited && (
+                  <div style={{ height:3, background:"rgba(255,255,255,0.06)", borderRadius:2, overflow:"hidden" }}>
+                    <div style={{ height:"100%", width:`${genPercent}%`, background: genPercent >= 80 ? "#ef4444" : genPercent >= 50 ? "#f59e0b" : "#22c55e", borderRadius:2, transition:"width 0.6s ease" }} />
+                  </div>
+                )}
+              </div>
+            )}
           </motion.div>
-        ))}
+        );
+        })}
       </div>
 
       {/* ── Live feed + Timeline ─────────────────────────────────────────────── */}
