@@ -2318,8 +2318,7 @@ const translations = {
       noActions: "Nenhuma ação registrada", filters: "Filtros",
       date: "DATA", action: "AÇÃO", details: "DETALHES",
       findArticles: "🌍 Encontrar artigos relacionados a este post",
-      publishing: "Publicando...", publishPost: "📤 Publicar",
-      actionLabels: {
+      publishing: "Publicando...", publishPost: "📤 Publicar", history: "HISTÓRICO",      actionLabels: {
         register: "🆕 Registro",
         login: "🔓 Login",
         verify_email: "✅ Email verificado",

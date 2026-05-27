@@ -302,7 +302,7 @@ export default function Create({
                   style={{ width:"100%", padding:"12px 16px", background:"transparent", border:"none", display:"flex", alignItems:"center", justifyContent:"space-between", cursor:"pointer" }}>
                   <div style={{ display:"flex", alignItems:"center", gap:8 }}>
                     <span style={{ fontSize:13 }}>📋</span>
-                    <span style={{ color:"#64748b", fontSize:9, fontWeight:700, letterSpacing:"2px" }}>{tr(trendsLang,"ui.history") || "HISTORY"}</span>
+                    <span style={{ color:"#64748b", fontSize:9, fontWeight:700, letterSpacing:"2px" }}>{tr(trendsLang,"ui.history") !== "ui.history" ? tr(trendsLang,"ui.history") : "HISTORY"}</span>
                     <span style={{ background:"rgba(220,38,38,0.15)", color:"#ef4444", fontSize:9, fontWeight:700, padding:"2px 7px", borderRadius:10 }}>
                       {projectPosts.length}
                     </span>
