@@ -56,7 +56,7 @@ router.get("/connect", authenticateToken, (req, res) => {
     code_challenge_method: "S256",
   });
 
-  const authUrl = `https://twitter.com/i/oauth2/authorize?${params.toString()}`;
+  const authUrl = `https://twitter.com/i/oauth2/authorize?${params.toString().replace(/\+/g, "%20")}`;
 
   // Redirect direct si token en query (lien <a href>), sinon JSON
   if (req.query.token) {
