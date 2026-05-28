@@ -11,6 +11,7 @@ export default function Scheduler({
   history,
 }) {
   const [selectedPostId, setSelectedPostId] = useState("");
+  const [selectedPlatform, setSelectedPlatform] = useState("LinkedIn");
   const [dbPosts,        setDbPosts]        = useState([]);
   const [loading,        setLoading]        = useState(false);
   const [deleting,       setDeleting]       = useState(null);
@@ -54,7 +55,7 @@ export default function Scheduler({
           title:    selectedPost?.title || selectedPost?.content?.slice(0, 60) || "Post",
           content:  selectedPost?.content || "",
           col:      "scheduled",
-          platform: "LinkedIn",
+          platform: selectedPlatform,
           media_url: selectedPost?.media_url || null,
           scheduled_at: `${scheduleDate}T${scheduleTime}:00`,
         }),
@@ -153,7 +154,17 @@ export default function Scheduler({
             <p style={{ color:"#64748b", fontSize:11, marginBottom:4 }}>{tr(trendsLang,"ui.selectDate")}</p>
             <input style={{ ...st.input, marginBottom:8 }} type="date" value={scheduleDate} onChange={e => setScheduleDate(e.target.value)} />
             <p style={{ color:"#64748b", fontSize:11, marginBottom:4 }}>{tr(trendsLang,"ui.selectTime")}</p>
-            <input style={{ ...st.input, marginBottom:0 }} type="time" value={scheduleTime} onChange={e => setScheduleTime(e.target.value)} />
+            <input style={{ ...st.input, marginBottom:8 }} type="time" value={scheduleTime} onChange={e => setScheduleTime(e.target.value)} />
+            <p style={{ color:"#64748b", fontSize:11, marginBottom:4 }}>{tr(trendsLang,"autorepost.platformLabel") || "PLATFORM"}</p>
+            <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+              {["LinkedIn","Facebook","Threads","X"].map(p => (
+                <button key={p} onClick={() => setSelectedPlatform(p)} style={{
+                  padding:"6px 12px", borderRadius:20, border:"none", fontSize:11, fontWeight:700, cursor:"pointer",
+                  background: selectedPlatform === p ? "linear-gradient(135deg,#ef4444,#dc2626)" : "rgba(255,255,255,0.05)",
+                  color: selectedPlatform === p ? "white" : "#64748b",
+                }}>{p}</button>
+              ))}
+            </div>
           </div>
 
           <button
@@ -213,6 +224,7 @@ export default function Scheduler({
                     <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
                       <span style={{ color:"#ef4444", fontSize:11, fontWeight:700 }}>
                         {p.date ? new Date(p.date + "T00:00:00").toLocaleDateString() : p.created_at?.slice(0,10)}
+                        {p.platform ? ` · ${p.platform}` : ""}
                       </span>
                       <button
                         onClick={() => handleDelete(p.id)}

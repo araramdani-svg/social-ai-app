@@ -406,3 +406,92 @@ const sendWeeklySummaryEmail = async (user) => {
 };
 
 scheduleWeeklyEmail();
+
+// ─── Cron : publication automatique des posts planifiés (toutes les minutes) ──
+const publishScheduledPosts = async () => {
+  try {
+    const now = new Date().toISOString().split("T")[0]; // date du jour
+    const result = await db.query(`
+      SELECT cp.*, u.linkedin_access_token, u.linkedin_user_id,
+             u.facebook_page_token, u.facebook_page_id,
+             u.x_access_token, u.threads_access_token
+      FROM calendar_posts cp
+      JOIN users u ON u.id = cp.user_id
+      WHERE cp.col = 'scheduled'
+        AND cp.scheduled_date <= $1
+        AND cp.published_at IS NULL
+    `, [now]);
+
+    if (result.rows.length === 0) return;
+
+    logger.info(`📅 Auto-publish: ${result.rows.length} post(s) à publier`);
+
+    for (const post of result.rows) {
+      try {
+        const text = post.content || post.title;
+        const platform = (post.platform || "LinkedIn").toUpperCase();
+        let success = false;
+
+        if (platform === "LINKEDIN" && post.linkedin_access_token) {
+          const r = await fetch("https://api.linkedin.com/v2/ugcPosts", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${post.linkedin_access_token}`,
+              "Content-Type": "application/json",
+              "X-Restli-Protocol-Version": "2.0.0",
+            },
+            body: JSON.stringify({
+              author: `urn:li:person:${post.linkedin_user_id}`,
+              lifecycleState: "PUBLISHED",
+              specificContent: {
+                "com.linkedin.ugc.ShareContent": {
+                  shareCommentary: { text },
+                  shareMediaCategory: "NONE",
+                },
+              },
+              visibility: { "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC" },
+            }),
+          });
+          success = r.ok;
+        } else if (platform === "FACEBOOK" && post.facebook_page_token) {
+          const r = await fetch(`https://graph.facebook.com/v19.0/${post.facebook_page_id}/feed`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: text, access_token: post.facebook_page_token }),
+          });
+          const d = await r.json();
+          success = !!d.id;
+        }
+
+        if (success) {
+          // Marquer comme publié
+          await db.query(
+            "UPDATE calendar_posts SET col='published', published_at=NOW() WHERE id=$1",
+            [post.id]
+          );
+          // Log publish_log
+          await db.query(
+            "INSERT INTO publish_log (user_id, platform, post_id, status, created_at) VALUES ($1,$2,$3,'published',NOW())",
+            [post.user_id, platform.toLowerCase(), post.id]
+          );
+          // Log user_logs
+          await db.query(
+            "INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,'publish_post',$2,NOW())",
+            [post.user_id, JSON.stringify({ platform, post_id: post.id, auto: true })]
+          );
+          logger.info(`✅ Auto-published post ${post.id} on ${platform} for user ${post.user_id}`);
+        }
+      } catch (err) {
+        logger.error(`❌ Auto-publish failed for post ${post.id}`, { error: err.message });
+      }
+    }
+  } catch (err) {
+    logger.error("❌ Auto-publish cron error", { error: err.message });
+  }
+};
+
+// Lancer toutes les minutes
+setInterval(publishScheduledPosts, 60 * 1000);
+// Et au démarrage
+publishScheduledPosts();
+logger.info("⏰ Auto-publish cron started (every 60s)");
