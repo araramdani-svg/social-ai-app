@@ -147,13 +147,25 @@ export default function Dashboard({
             <div style={{ color:"#334155", fontSize:10, marginTop:6, letterSpacing:"0.5px" }}>{hint}</div>
             {kpi.quota && (
               <div style={{ marginTop:8 }}>
-                <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
-                  <span style={{ color:"#475569", fontSize:9 }}>{genUsed} / {isUnlimited ? "\u221E" : genLimit}</span>
-                  {!isUnlimited && <span style={{ color: genPercent >= 80 ? "#ef4444" : "#475569", fontSize:9, fontWeight:700 }}>{genPercent}%</span>}
-                </div>
-                {!isUnlimited && (
-                  <div style={{ height:3, background:"rgba(255,255,255,0.06)", borderRadius:2, overflow:"hidden" }}>
-                    <div style={{ height:"100%", width:`${genPercent}%`, background: genPercent >= 80 ? "#ef4444" : genPercent >= 50 ? "#f59e0b" : "#22c55e", borderRadius:2, transition:"width 0.6s ease" }} />
+                {isUnlimited ? (
+                  <div style={{ height:16, background:"linear-gradient(90deg,#22c55e,#16a34a)", borderRadius:20, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                    <span style={{ color:"white", fontSize:9, fontWeight:800, letterSpacing:"0.5px" }}>
+                      {tr(trendsLang,"ui.unlimited") || "UNLIMITED"}
+                    </span>
+                  </div>
+                ) : (
+                  <div style={{ position:"relative", height:16, background:"rgba(255,255,255,0.06)", borderRadius:20, overflow:"hidden" }}>
+                    <div style={{
+                      position:"absolute", left:0, top:0, height:"100%",
+                      width:`${genPercent}%`,
+                      background: genPercent >= 80 ? "linear-gradient(90deg,#ef4444,#dc2626)" : genPercent >= 50 ? "linear-gradient(90deg,#f59e0b,#d97706)" : "linear-gradient(90deg,#22c55e,#16a34a)",
+                      borderRadius:20, transition:"width 0.6s ease",
+                    }} />
+                    <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                      <span style={{ color:"white", fontSize:9, fontWeight:800, letterSpacing:"0.5px", textShadow:"0 1px 2px rgba(0,0,0,0.5)" }}>
+                        {genUsed} / {genLimit} &nbsp;({genPercent}%)
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>
