@@ -365,7 +365,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
     setTab("create");
   };
 
-  const NAV_TABS   = ["home","dashboard","insights","create","memory","carousel","ghostwrite","autorepost","templates","calendar","scheduler","analyze","planner","history","publish","team","integrations","trends"];
+  const NAV_TABS   = ["home","dashboard","insights","create","memory","carousel","ghostwrite","autorepost","templates","calendar","scheduler","analyze","history","publish","team","integrations","trends"];
   const BOTTOM_NAV = [{ key:"home",icon:"🏠" },{ key:"create",icon:"✍️" },{ key:"trends",icon:"🌍" },{ key:"analyze",icon:"📊" },{ key:"profile",icon:"👤" }];
   const shared     = { trendsLang, isMobile, token };
 
@@ -447,9 +447,8 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
             {tab==="autorepost"   && <AutoRepost   {...shared} history={history} setPost={setPost} setTab={setTab} linkedinStatus={linkedinStatus} threadsStatus={threadsStatus} twitterStatus={twitterStatus} facebookStatus={facebookStatus} instagramStatus={instagramStatus} tiktokStatus={tiktokStatus} postToLinkedin={postToLinkedin} postToThreads={postToThreads} postToTwitter={postToTwitter} postToFacebook={postToFacebook} postToInstagram={postToInstagram} postToTiktok={postToTiktok} showToast={showToast} />}
             {tab==="analyze"      && <Analyze      {...shared} analysis={analysis} platformData={platformData} />}
             {tab==="insights"     && <Insights     {...shared} insights={insights} stats={stats} linkedinStatus={linkedinStatus} threadsStatus={threadsStatus} />}
-            {tab==="scheduler"    && <Scheduler    {...shared} scheduleDate={scheduleDate} setScheduleDate={setScheduleDate} scheduleTime={scheduleTime} setScheduleTime={setScheduleTime} scheduledPosts={scheduledPosts} publishLog={publishLog} schedulePost={schedulePost} />}
+            {tab==="scheduler"    && <Scheduler    {...shared} scheduleDate={scheduleDate} setScheduleDate={setScheduleDate} scheduleTime={scheduleTime} setScheduleTime={setScheduleTime} scheduledPosts={scheduledPosts} setScheduledPosts={setScheduledPosts} publishLog={publishLog} schedulePost={schedulePost} history={history} token={token} />}
             {tab==="publish"      && <Publish      {...shared} post={post} publishLog={publishLog} autoPosts={autoPosts} publishStatus={publishStatus} linkedinStatus={linkedinStatus} twitterStatus={twitterStatus} facebookStatus={facebookStatus} publish={publish} postToTwitter={postToTwitter} postToFacebook={postToFacebook} twitterPosting={twitterPosting} facebookPosting={facebookPosting} attachedMedia={attachedMedia} showToast={showToast} />}
-            {tab==="planner"      && <Planner      {...shared} planner={planner} scheduledPosts={scheduledPosts} generatePlanner={generatePlanner} />}
             {tab==="history"      && <History      {...shared} history={history} projects={projects} loadHistory={loadHistory} setPost={setPost} setTab={setTab} token={token} />}
             {tab==="team"         && <Team         {...shared} token={token} userPlan={userPlan?.plan || "Free"} setPage={setPage} projects={projects} autoPosts={autoPosts} scheduledPosts={scheduledPosts} workspace={workspace} />}
             {tab==="trends"       && <Trends       {...shared} trends={trends} trendsNiche={trendsNiche} setTrendsNiche={setTrendsNiche} trendsLoading={trendsLoading} trendsSources={trendsSources} fetchTrends={fetchTrends} useAsTopic={useAsTopic} />}

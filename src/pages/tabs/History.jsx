@@ -30,6 +30,7 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
     watch_search: "#22c55e", cancel_subscription: "#ef4444",
     plan_upgrade: "#22c55e", plan_downgrade: "#f59e0b",
     publish_post: "#3b82f6",
+    scheduler_add: "#8b5cf6", scheduler_delete: "#ef4444",
   };
 
   const getActionLabel = (action) => tr(trendsLang, `ui.actionLabels.${action}`) || action;
@@ -246,36 +247,9 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
               onChange={e => setFilterAction(e.target.value)}
             >
               <option value="">🔍 {tr(trendsLang,"ui.allActions")}</option>
-              <optgroup label="── Auth ──">
-                {["register","login","verify_email","onboarding_done","reset_password","change_password","change_email_request","change_email","delete_account"].map(key => (
-                  <option key={key} value={key}>{USER_ACTION_LABELS[key]?.label || key}</option>
-                ))}
-              </optgroup>
-              <optgroup label="── Posts ──">
-                {["generate_post","save_post","delete_post","copy_post","rewrite_post","analyze_post","generate_image","attach_media"].map(key => (
-                  <option key={key} value={key}>{USER_ACTION_LABELS[key]?.label || key}</option>
-                ))}
-              </optgroup>
-              <optgroup label="── Publication ──">
-                {["publish_post"].map(key => (
-                  <option key={key} value={key}>{USER_ACTION_LABELS[key]?.label || key}</option>
-                ))}
-              </optgroup>
-              <optgroup label="── Projets ──">
-                {["create_project","delete_project","rename_project","save_brand_memory"].map(key => (
-                  <option key={key} value={key}>{USER_ACTION_LABELS[key]?.label || key}</option>
-                ))}
-              </optgroup>
-              <optgroup label="── Calendrier ──">
-                {["calendar_add_card","calendar_delete_card","calendar_move_card","calendar_edit_card","calendar_import_post"].map(key => (
-                  <option key={key} value={key}>{USER_ACTION_LABELS[key]?.label || key}</option>
-                ))}
-              </optgroup>
-              <optgroup label="── Profil & Abonnement ──">
-                {["update_profile","watch_search","cancel_subscription","plan_upgrade","plan_downgrade"].map(key => (
-                  <option key={key} value={key}>{USER_ACTION_LABELS[key]?.label || key}</option>
-                ))}
-              </optgroup>
+              {Object.entries(USER_ACTION_LABELS).map(([key, {label}]) => (
+                <option key={key} value={key}>{label}</option>
+              ))}
             </select>
             <button
               style={{ padding:"8px 14px", borderRadius:8, border:"1px solid rgba(255,255,255,0.1)", background:"rgba(255,255,255,0.04)", color:"#64748b", fontSize:11, cursor:"pointer" }}
