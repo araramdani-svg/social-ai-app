@@ -163,6 +163,7 @@ export default function Calendar({ trendsLang, isMobile, post, setPost, setTab, 
 
   // ─── Move card (drag & drop ou boutons) ───────────────────────────────────
   const moveCard = async (id, newCol) => {
+    const card = cards.find(c => c.id === id);
     setCards(prev => prev.map(c => c.id === id ? { ...c, col: newCol } : c));
     try {
       await fetch(`${API}/calendar/${id}`, {
@@ -170,6 +171,7 @@ export default function Calendar({ trendsLang, isMobile, post, setPost, setTab, 
         headers: authHeaders(),
         body: JSON.stringify({ col: newCol }),
       });
+      logUserAction("calendar_move_card", { id, from: card?.col, to: newCol, title: card?.title });
     } catch (err) { console.error(err); }
   };
 
