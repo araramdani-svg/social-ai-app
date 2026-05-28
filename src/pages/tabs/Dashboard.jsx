@@ -148,7 +148,7 @@ export default function Dashboard({
             {kpi.quota && (
               <div style={{ marginTop:8 }}>
                 <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
-                  <span style={{ color:"#475569", fontSize:9 }}>{genUsed} / {isUnlimited ? "∞" : genLimit}</span>
+                  <span style={{ color:"#475569", fontSize:9 }}>{genUsed} / {isUnlimited ? "\u221E" : genLimit}</span>
                   {!isUnlimited && <span style={{ color: genPercent >= 80 ? "#ef4444" : "#475569", fontSize:9, fontWeight:700 }}>{genPercent}%</span>}
                 </div>
                 {!isUnlimited && (
