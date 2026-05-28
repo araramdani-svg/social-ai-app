@@ -11,7 +11,6 @@ import Memory       from "./tabs/Memory.jsx";
 import Analyze      from "./tabs/Analyze.jsx";
 import Insights     from "./tabs/Insights.jsx";
 import Scheduler    from "./tabs/Scheduler.jsx";
-import Autopost     from "./tabs/Autopost.jsx";
 import Publish      from "./tabs/Publish.jsx";
 import Planner      from "./tabs/Planner.jsx";
 import History      from "./tabs/History.jsx";
@@ -105,7 +104,6 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   const [attachedMedia,  setAttachedMedia]  = useState(() => { try { const v = localStorage.getItem("gp_attachedMedia"); return v ? JSON.parse(v) : null; } catch { return null; } });
   const [scheduledPosts, setScheduledPosts] = useState([]);
   const [autoPosts,      setAutoPosts]      = useState([]);
-  const [autoPlatform,   setAutoPlatform]   = useState("LINKEDIN");
   const [scheduleDate,   setScheduleDate]   = useState("");
   const [scheduleTime,   setScheduleTime]   = useState("");
   const [analysis,       setAnalysis]       = useState(null);
@@ -320,7 +318,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   };
   const generatePlanner= () => { setPlanner(Array.from({ length:30 },(_,i)=>`Day ${i+1} — ${campaign} / ${topic}`)); setTab("planner"); };
   const schedulePost   = () => { if(!scheduleDate||!scheduleTime||!post) return; setScheduledPosts(p=>[{ content:post.slice(0,80)+"...",date:scheduleDate,time:scheduleTime },...p]); };
-  const autoPublish    = () => { if(!post) return; setAutoPosts(p=>[{ platform:autoPlatform,content:post.slice(0,80)+"...",status:"Scheduled",date:new Date().toLocaleString() },...p]); setTimeout(()=>setAutoPosts(p=>p.map((x,i)=>i===0?{ ...x,status:Math.random()>0.2?"Sent":"Failed" }:x)),4000); };
+  // autoPublish removed - feature deprecated
   const fetchTrends    = async (niche,lang) => { const sl=lang||trendsLang; setTrendsLoading(true); try{ const r=await fetch(`${API}/scraping/trends?niche=${niche}&lang=${sl}`,{ headers:{ Authorization:`Bearer ${token}` } }); const d=await r.json(); setTrends(d.trends||[]); setTrendsSources(d.sources||{}); } catch{ showToast(tr(trendsLang,"messages.fetchTrendsFailed")); } finally{ setTrendsLoading(false); } };
   const useAsTopic     = (title) => { setTab("create"); setTopic(title.slice(0,80)); showToast(tr(trendsLang,"messages.topicImported")); };
   const connectTiktok      = () => { window.location.href=`${API}/tiktok/connect?token=${encodeURIComponent(token)}`; };
@@ -367,7 +365,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
     setTab("create");
   };
 
-  const NAV_TABS   = ["home","dashboard","insights","create","memory","carousel","ghostwrite","autorepost","templates","calendar","scheduler","autopost","analyze","planner","history","publish","team","integrations","trends"];
+  const NAV_TABS   = ["home","dashboard","insights","create","memory","carousel","ghostwrite","autorepost","templates","calendar","scheduler","analyze","planner","history","publish","team","integrations","trends"];
   const BOTTOM_NAV = [{ key:"home",icon:"🏠" },{ key:"create",icon:"✍️" },{ key:"trends",icon:"🌍" },{ key:"analyze",icon:"📊" },{ key:"profile",icon:"👤" }];
   const shared     = { trendsLang, isMobile, token };
 
@@ -450,7 +448,6 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
             {tab==="analyze"      && <Analyze      {...shared} analysis={analysis} platformData={platformData} />}
             {tab==="insights"     && <Insights     {...shared} insights={insights} stats={stats} linkedinStatus={linkedinStatus} threadsStatus={threadsStatus} />}
             {tab==="scheduler"    && <Scheduler    {...shared} scheduleDate={scheduleDate} setScheduleDate={setScheduleDate} scheduleTime={scheduleTime} setScheduleTime={setScheduleTime} scheduledPosts={scheduledPosts} publishLog={publishLog} schedulePost={schedulePost} />}
-            {tab==="autopost"     && <Autopost     {...shared} post={post} autoPlatform={autoPlatform} setAutoPlatform={setAutoPlatform} autoPosts={autoPosts} publishLog={publishLog} linkedinStatus={linkedinStatus} threadsStatus={threadsStatus} twitterStatus={twitterStatus} facebookStatus={facebookStatus} autoPublish={autoPublish} postToTwitter={postToTwitter} twitterPosting={twitterPosting} postToFacebook={postToFacebook} facebookPosting={facebookPosting} attachedMedia={attachedMedia} showToast={showToast} />}
             {tab==="publish"      && <Publish      {...shared} post={post} publishLog={publishLog} autoPosts={autoPosts} publishStatus={publishStatus} linkedinStatus={linkedinStatus} twitterStatus={twitterStatus} facebookStatus={facebookStatus} publish={publish} postToTwitter={postToTwitter} postToFacebook={postToFacebook} twitterPosting={twitterPosting} facebookPosting={facebookPosting} attachedMedia={attachedMedia} showToast={showToast} />}
             {tab==="planner"      && <Planner      {...shared} planner={planner} scheduledPosts={scheduledPosts} generatePlanner={generatePlanner} />}
             {tab==="history"      && <History      {...shared} history={history} projects={projects} loadHistory={loadHistory} setPost={setPost} setTab={setTab} token={token} />}
