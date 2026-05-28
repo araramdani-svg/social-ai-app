@@ -158,9 +158,9 @@ function LinkedInAnalytics({ token, isMobile, trendsLang }) {
             {summary.topPost.content}
           </div>
           <div style={{ display: "flex", gap: 16 }}>
-            <span style={s.badge("52,211,153")}>❤️ {summary.topPost.likes} likes</span>
-            <span style={s.badge("96,165,250")}>💬 {summary.topPost.comments} comments</span>
-            <span style={s.badge("251,191,36")}>🔁 {summary.topPost.shares} shares</span>
+            <span style={s.badge("52,211,153")}>❤️ {summary.topPost.likes} {tr(trendsLang,"analyze.likes")}</span>
+            <span style={s.badge("96,165,250")}>💬 {summary.topPost.comments} {tr(trendsLang,"analyze.comments")}</span>
+            <span style={s.badge("251,191,36")}>🔁 {summary.topPost.shares} {tr(trendsLang,"analyze.shares")}</span>
           </div>
         </div>
       )}
@@ -339,7 +339,7 @@ export default function Analyze({ trendsLang, isMobile, analysis, platformData, 
           {/* Header résultats */}
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
             <div style={{ color:"#475569", fontSize:9, fontWeight:700, letterSpacing:"2px" }}>
-              {watchResults ? `🔍 ${watchResults.total} RÉSULTATS` : tr(trendsLang,"analyze.watchTrending") || "🔥 TENDANCES DU MOMENT"}
+              {watchResults ? `🔍 ${watchResults.total} ${tr(trendsLang,"analyze.watchResults") || "RESULTS"}` : tr(trendsLang,"analyze.watchTrending") || "🔥 TRENDING NOW"}
             </div>
             {watchResults && (
               <button style={{ background:"none", border:"none", color:"#475569", fontSize:10, cursor:"pointer" }} onClick={() => setWatchResults(null)}>
