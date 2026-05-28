@@ -176,12 +176,12 @@ export default function AutoRepost({
               <div style={{ display:"flex", gap:6 }}>
                 {SORT_OPTIONS.map(opt => (
                   <button key={opt} style={sortBtn(sortBy===opt)} onClick={() => setSortBy(opt)}>
-                    {opt.toUpperCase()}
+                    {tr(trendsLang, `autorepost.sort_${opt}`) || opt.toUpperCase()}
                   </button>
                 ))}
               </div>
               <div style={{ display:"flex", gap:6, alignItems:"center" }}>
-                <span style={{ color:"#475569", fontSize:11 }}>Min:</span>
+                <span style={{ color:"#475569", fontSize:11 }}>{tr(trendsLang,"autorepost.min") || "Min"}:</span>
                 {[0,50,65,75].map(v => (
                   <button key={v} style={delayBtn(minScore===v)} onClick={() => setMinScore(v)}>
                     {v === 0 ? tr(trendsLang,"autorepost.all") || "All" : `>${v}`}
@@ -200,7 +200,7 @@ export default function AutoRepost({
               <button style={btnGhost} onClick={() => setSelected(new Set())}>{tr(trendsLang,"autorepost.deselect") || "Deselect all"}</button>
               {selected.size > 0 && (
                 <span style={{ color:"#ef4444", fontSize:11, fontWeight:700, marginLeft:"auto" }}>
-                  {selected.size} selected
+                  {selected.size} {tr(trendsLang,"autorepost.selected") || "selected"}
                 </span>
               )}
             </div>
@@ -248,7 +248,7 @@ export default function AutoRepost({
                       <div style={{ display:"flex", gap:8, marginTop:6, alignItems:"center" }}>
                         <span style={{ color:"#334155", fontSize:10 }}>{timeAgo(p.created_at || p.createdAt, trendsLang)}</span>
                         <span style={{ color:"#334155", fontSize:10 }}>·</span>
-                        <span style={{ color:"#334155", fontSize:10 }}>{text.trim().split(/\s+/).length} words</span>
+                        <span style={{ color:"#334155", fontSize:10 }}>{text.trim().split(/\s+/).length} {tr(trendsLang,"autorepost.words") || "words"}</span>
                         {p.project_name && <span style={{ color:"#7c3aed", fontSize:10 }}>· 📁 {p.project_name}</span>}
                         {p.media_url && <span style={{ color:"#38bdf8", fontSize:10 }}>· 🖼️</span>}
                       </div>
@@ -302,7 +302,7 @@ export default function AutoRepost({
               <div style={{ display:"flex", gap:10, color:"#334155", fontSize:10, marginBottom:16, flexWrap:"wrap" }}>
                 <span>{timeAgo(previewPost.created_at || previewPost.createdAt, trendsLang)}</span>
                 <span>·</span>
-                <span>{(previewPost.content || previewPost.text || "").trim().split(/\s+/).length} words</span>
+                <span>{(previewPost.content || previewPost.text || "").trim().split(/\s+/).length} {tr(trendsLang,"autorepost.words") || "words"}</span>
                 {previewPost.project_name && <><span>·</span><span style={{ color:"#a78bfa" }}>📁 {previewPost.project_name}</span></>}
               </div>
 
