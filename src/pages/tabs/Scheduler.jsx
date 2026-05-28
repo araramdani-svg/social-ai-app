@@ -33,9 +33,9 @@ export default function Scheduler({
   // Charger les posts planifiés depuis DB
   const loadScheduled = useCallback(async () => {
     try {
-      const r = await fetch(`${API}/calendar/scheduled`, { headers: authHeaders() });
+      const r = await fetch(`${API}/calendar?col=scheduled`, { headers: authHeaders() });
       const d = await r.json();
-      if (Array.isArray(d)) setDbPosts(d);
+      if (Array.isArray(d.cards)) setDbPosts(d.cards);
     } catch {}
   }, [authHeaders]);
 
@@ -212,7 +212,7 @@ export default function Scheduler({
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
                       <span style={{ color:"#ef4444", fontSize:11, fontWeight:700 }}>
-                        {p.scheduled_at ? new Date(p.scheduled_at).toLocaleString() : p.created_at?.slice(0,16)}
+                        {p.date ? new Date(p.date + "T00:00:00").toLocaleDateString() : p.created_at?.slice(0,10)}
                       </span>
                       <button
                         onClick={() => handleDelete(p.id)}

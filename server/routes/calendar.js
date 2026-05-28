@@ -19,14 +19,15 @@ const authenticateToken = (req, res, next) => {
 
 // ─── GET /calendar — récupère toutes les cards de l'utilisateur ───────────────
 router.get("/", authenticateToken, async (req, res) => {
+  const { col } = req.query;
   try {
     const result = await db.query(
-      `SELECT id, title, content, col, platform,
+      `SELECT id, title, content, col, platform, media_url,
               scheduled_date AS date, created_at, updated_at
        FROM calendar_posts
-       WHERE user_id = $1
+       WHERE user_id = $1 ${col ? "AND col = $2" : ""}
        ORDER BY created_at ASC`,
-      [req.user.id]
+      col ? [req.user.id, col] : [req.user.id]
     );
     res.json({ cards: result.rows });
   } catch (err) {
@@ -37,15 +38,18 @@ router.get("/", authenticateToken, async (req, res) => {
 
 // ─── POST /calendar — crée une nouvelle card ──────────────────────────────────
 router.post("/", authenticateToken, async (req, res) => {
-  const { title, content = "", col = "ideas", platform = "LinkedIn", date } = req.body;
+  const { title, content = "", col = "ideas", platform = "LinkedIn", date, scheduled_at, media_url } = req.body;
   if (!title?.trim()) return res.status(400).json({ error: "Title is required" });
+
+  // scheduled_at override date si fourni
+  const finalDate = scheduled_at ? scheduled_at.split("T")[0] : date || null;
 
   try {
     const result = await db.query(
-      `INSERT INTO calendar_posts (user_id, title, content, col, platform, scheduled_date)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING id, title, content, col, platform, scheduled_date AS date, created_at`,
-      [req.user.id, title.trim(), content, col, platform, date || null]
+      `INSERT INTO calendar_posts (user_id, title, content, col, platform, scheduled_date, media_url)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING id, title, content, col, platform, scheduled_date AS date, media_url, created_at`,
+      [req.user.id, title.trim(), content, col, platform, finalDate, media_url || null]
     );
     res.status(201).json({ card: result.rows[0] });
   } catch (err) {
