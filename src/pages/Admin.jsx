@@ -265,7 +265,7 @@ function AdminLogsTab({ token }) {
                   <td style={{ padding:"12px 16px", color:"#475569", whiteSpace:"nowrap", fontSize:11 }}>{new Date(log.created_at).toLocaleString("fr-FR")}</td>
                   <td style={{ padding:"12px 16px" }}><span style={{ background:`${cfg.color}15`, border:`1px solid ${cfg.color}40`, borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:700, color:cfg.color }}>{cfg.label}</span></td>
                   <td style={{ padding:"12px 16px", color:"#94a3b8" }}>{log.target_email || `#${log.target_user_id}` || "—"}</td>
-                  <td style={{ padding:"12px 16px", color:"#64748b", fontSize:11 }}>{log.details ? (() => { try { const d = typeof log.details === "string" ? JSON.parse(log.details) : log.details; return JSON.stringify(d, null, 0).slice(0, 80); } catch { return String(log.details).slice(0, 80); } })() : "—"}</td>
+                  <td style={{ padding:"12px 16px", color:"#64748b", fontSize:11, maxWidth:300, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", cursor:"help" }} title={log.details ? (() => { try { return JSON.stringify(typeof log.details === "string" ? JSON.parse(log.details) : log.details, null, 0); } catch { return String(log.details); } })() : ""}>{log.details ? (() => { try { const d = typeof log.details === "string" ? JSON.parse(log.details) : log.details; return JSON.stringify(d, null, 0).slice(0, 150); } catch { return String(log.details).slice(0, 150); } })() : "—"}</td>
                 </tr>
               );
             })}
@@ -318,7 +318,7 @@ function UsersActionsTab({ token }) {
                   <td style={{ padding:"12px 16px", color:"#475569", whiteSpace:"nowrap", fontSize:11 }}>{new Date(log.created_at).toLocaleString("fr-FR")}</td>
                   <td style={{ padding:"12px 16px" }}><span style={{ background:`${cfg.color}15`, border:`1px solid ${cfg.color}40`, borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:700, color:cfg.color }}>{cfg.label}</span></td>
                   <td style={{ padding:"12px 16px", color:"#94a3b8" }}>{log.target_email || `#${log.target_user_id}` || "—"}</td>
-                  <td style={{ padding:"12px 16px", color:"#64748b", fontSize:11 }}>{log.details ? (() => { try { const d = typeof log.details === "string" ? JSON.parse(log.details) : log.details; return JSON.stringify(d, null, 0).slice(0, 80); } catch { return String(log.details).slice(0, 80); } })() : "—"}</td>
+                  <td style={{ padding:"12px 16px", color:"#64748b", fontSize:11, maxWidth:300, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", cursor:"help" }} title={log.details ? (() => { try { return JSON.stringify(typeof log.details === "string" ? JSON.parse(log.details) : log.details, null, 0); } catch { return String(log.details); } })() : ""}>{log.details ? (() => { try { const d = typeof log.details === "string" ? JSON.parse(log.details) : log.details; return JSON.stringify(d, null, 0).slice(0, 150); } catch { return String(log.details).slice(0, 150); } })() : "—"}</td>
                 </tr>
               );
             })}
@@ -418,7 +418,7 @@ function UserLogsTab({ token }) {
                   <td style={{ padding:"12px 16px", color:"#94a3b8", fontSize:11 }}>{log.user_email || `#${log.user_id}`}</td>
                   <td style={{ padding:"12px 16px" }}>{log.user_plan && <span style={{ background:"rgba(139,92,246,0.1)", border:"1px solid rgba(139,92,246,0.3)", borderRadius:10, padding:"2px 8px", fontSize:9, fontWeight:700, color:"#a78bfa" }}>{log.user_plan}</span>}</td>
                   <td style={{ padding:"12px 16px" }}><span style={{ background:`${cfg.color}15`, border:`1px solid ${cfg.color}40`, borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:700, color:cfg.color }}>{cfg.label}</span></td>
-                  <td style={{ padding:"12px 16px", color:"#64748b", fontSize:11 }}>{log.details ? (() => { try { const d = typeof log.details === "string" ? JSON.parse(log.details) : log.details; return JSON.stringify(d, null, 0).slice(0, 80); } catch { return String(log.details).slice(0, 80); } })() : "—"}</td>
+                  <td style={{ padding:"12px 16px", color:"#64748b", fontSize:11, maxWidth:300, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", cursor:"help" }} title={log.details ? (() => { try { return JSON.stringify(typeof log.details === "string" ? JSON.parse(log.details) : log.details, null, 0); } catch { return String(log.details); } })() : ""}>{log.details ? (() => { try { const d = typeof log.details === "string" ? JSON.parse(log.details) : log.details; return JSON.stringify(d, null, 0).slice(0, 150); } catch { return String(log.details).slice(0, 150); } })() : "—"}</td>
                 </tr>
               );
             })}
