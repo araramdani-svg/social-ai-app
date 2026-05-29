@@ -326,12 +326,6 @@ router.post("/logs", adminAuth, async (req, res) => {
     res.status(500).json({ error: "Failed to log action" });
   }
 });
-    res.json({ success: true });
-  } catch (err) {
-    console.error("Post log error:", err.message);
-    res.status(500).json({ error: "Log failed" });
-  }
-});
 
 // ─── GET /admin/logs ──────────────────────────────────────────────────────────
 router.get("/logs", adminAuth, async (req, res) => {
