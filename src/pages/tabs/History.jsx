@@ -31,6 +31,9 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
     plan_upgrade: "#22c55e", plan_downgrade: "#f59e0b",
     publish_post: "#3b82f6",
     scheduler_add: "#8b5cf6", scheduler_delete: "#ef4444",
+    account_banned: "#ef4444", account_unbanned: "#22c55e",
+    quota_reset: "#f59e0b",
+    team_update_plan: "#8b5cf6", team_view_logs: "#64748b",
   };
 
   const getActionLabel = (action) => tr(trendsLang, `ui.actionLabels.${action}`) || action;

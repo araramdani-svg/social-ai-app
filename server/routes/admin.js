@@ -218,15 +218,33 @@ router.patch("/users/:id", adminAuth, async (req, res) => {
       "edit_user";
     await logAction(req.user.id, adminAction, req.params.id, { plan, generations_count, banned, email_verified });
 
-    // Log user_logs si changement de plan
-    if (plan !== undefined) {
-      try {
+    // Log user_logs pour toutes les actions impactant le user
+    try {
+      if (plan !== undefined) {
         await db.query(
           `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
           [req.params.id, "plan_upgrade", JSON.stringify({ plan, changed_by: "admin" })]
         );
-      } catch {}
-    }
+      }
+      if (banned === true) {
+        await db.query(
+          `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+          [req.params.id, "account_banned", JSON.stringify({ by: "admin" })]
+        );
+      }
+      if (banned === false) {
+        await db.query(
+          `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+          [req.params.id, "account_unbanned", JSON.stringify({ by: "admin" })]
+        );
+      }
+      if (email_verified === true) {
+        await db.query(
+          `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+          [req.params.id, "verify_email", JSON.stringify({ by: "admin" })]
+        );
+      }
+    } catch {}
 
     res.json({ user: result.rows[0] });
   } catch (err) {
@@ -243,6 +261,12 @@ router.post("/users/:id/reset-quota", adminAuth, async (req, res) => {
       [req.params.id]
     );
     await logAction(req.user.id, "reset_quota", req.params.id);
+    try {
+      await db.query(
+        `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+        [req.params.id, "quota_reset", JSON.stringify({ by: "admin", reset_to: 0 })]
+      );
+    } catch {}
     res.json({ success: true });
   } catch (err) {
     console.error("Reset quota error:", err.message);
@@ -278,6 +302,30 @@ router.post("/logs", adminAuth, async (req, res) => {
   if (!action) return res.status(400).json({ error: "action required" });
   try {
     await logAction(req.user.id, action, target_user_id || null, details ? JSON.parse(details) : null);
+
+    // Sync dans user_logs pour les actions impactant le user
+    const userImpactActions = {
+      "force_password_reset": "reset_password",
+      "send_password_reset":  "reset_password",
+      "resend_verification":  "verify_email",
+      "ban_user":             "account_banned",
+      "unban_user":           "account_unbanned",
+    };
+    if (target_user_id && userImpactActions[action]) {
+      try {
+        await db.query(
+          `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
+          [target_user_id, userImpactActions[action], JSON.stringify({ by: "admin", admin_action: action })]
+        );
+      } catch {}
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Admin log error:", err.message);
+    res.status(500).json({ error: "Failed to log action" });
+  }
+});
     res.json({ success: true });
   } catch (err) {
     console.error("Post log error:", err.message);
