@@ -319,17 +319,21 @@ export default function Team({ trendsLang, isMobile, token, userPlan, projects, 
   const [members,     setMembers]     = useState([]);
   const [clients,     setClients]     = useState([]);
   const [activity,    setActivity]    = useState([]);
+  const [teamLogs,    setTeamLogs]    = useState([]);
   const [loading,     setLoading]     = useState(false);
+  const [logsLoading, setLogsLoading] = useState(false);
   const [showInvite,  setShowInvite]  = useState(false);
   const [showClient,  setShowClient]  = useState(false);
   const [editClient,  setEditClient]  = useState(null);
   const [ownerInfo,   setOwnerInfo]   = useState(null);
   const [activeTab,   setActiveTab]   = useState("members");
-  const [mainTab,     setMainTab]     = useState("team"); // team | agency
-  const [confirm,     setConfirm]     = useState(null); // { message, onConfirm }
+  const [mainTab,     setMainTab]     = useState("team");
+  const [confirm,     setConfirm]     = useState(null);
+  const [planUpdating,setPlanUpdating]= useState(null);
 
   const isBusiness = userPlan === "Business" || userPlan === "Agency";
   const isAgency   = userPlan === "Agency";
+  const isOwner    = isBusiness; // l'owner est celui qui a le plan Business/Agency
   const MAX_MEMBERS = isAgency ? MAX_MEMBERS_AGENCY : MAX_MEMBERS_BUSINESS;
 
   const headers = { "Content-Type":"application/json", Authorization:`Bearer ${token}` };
@@ -376,12 +380,40 @@ export default function Team({ trendsLang, isMobile, token, userPlan, projects, 
     fetchTeamData();
   };
 
+  const fetchTeamLogs = async () => {
+    setLogsLoading(true);
+    try {
+      const r = await fetch(`${API}/team/logs`, { headers });
+      const d = await r.json();
+      setTeamLogs(d.logs || []);
+    } catch {}
+    setLogsLoading(false);
+  };
+
+  const updateMemberPlan = async (memberId, plan) => {
+    setPlanUpdating(memberId);
+    try {
+      await fetch(`${API}/team/members/${memberId}/plan`, {
+        method: "PATCH", headers,
+        body: JSON.stringify({ plan }),
+      });
+      fetchTeamData();
+    } catch {}
+    setPlanUpdating(null);
+  };
+
   const used      = members.length;
   const remaining = MAX_MEMBERS - used;
 
   return (
     <>
       <PageHeader tabKey="team" trendsLang={trendsLang} isMobile={isMobile} />
+      <div style={{ display:"inline-flex", alignItems:"center", gap:8, marginBottom:8 }}>
+        <span style={{ background:"rgba(139,92,246,0.15)", border:"1px solid rgba(139,92,246,0.3)", borderRadius:20, padding:"3px 10px", fontSize:10, fontWeight:700, color:"#8b5cf6", letterSpacing:"1px" }}>
+          🧪 BETA
+        </span>
+        <span style={{ color:"#334155", fontSize:11 }}>Full collaboration features coming soon</span>
+      </div>
 
       {/* Stats */}
       <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap:10, marginBottom:16 }}>
@@ -419,6 +451,8 @@ export default function Team({ trendsLang, isMobile, token, userPlan, projects, 
                   <button style={s.tabBtn(activeTab==="members")}  onClick={()=>setActiveTab("members")}>👥 MEMBERS</button>
                   <button style={s.tabBtn(activeTab==="activity")} onClick={()=>setActiveTab("activity")}>📊 ACTIVITY</button>
                   <button style={s.tabBtn(activeTab==="perms")}    onClick={()=>setActiveTab("perms")}>🔐 ROLES</button>
+                  {isOwner && <button style={s.tabBtn(activeTab==="logs")}  onClick={()=>{ setActiveTab("logs"); fetchTeamLogs(); }}>📋 HISTORIQUE</button>}
+                  {isOwner && <button style={s.tabBtn(activeTab==="plans")} onClick={()=>setActiveTab("plans")}>💳 PLANS</button>}
                 </div>
 
                 {/* Members */}
@@ -542,6 +576,90 @@ export default function Team({ trendsLang, isMobile, token, userPlan, projects, 
                         </tbody>
                       </table>
                     </div>
+                  </div>
+                )}
+
+                {/* ── Onglet Historique ── */}
+                {activeTab === "logs" && isOwner && (
+                  <div style={s.card}>
+                    <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:4 }}>📋 Team History</div>
+                    <div style={{ color:"#475569", fontSize:12, marginBottom:16 }}>All actions by team members</div>
+                    {logsLoading ? (
+                      <div style={{ textAlign:"center", color:"#475569", padding:20 }}>Loading...</div>
+                    ) : teamLogs.length === 0 ? (
+                      <div style={{ textAlign:"center", color:"#334155", padding:20 }}>No activity yet</div>
+                    ) : (
+                      <div style={{ overflowY:"auto", maxHeight:400 }}>
+                        <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+                          <thead>
+                            <tr style={{ background:"rgba(255,255,255,0.03)" }}>
+                              {["DATE","MEMBER","ACTION","DETAILS"].map(h => (
+                                <th key={h} style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"10px 12px", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {teamLogs.map(log => (
+                              <tr key={log.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+                                <td style={{ padding:"10px 12px", color:"#475569", fontSize:10, whiteSpace:"nowrap" }}>
+                                  {new Date(log.created_at).toLocaleString()}
+                                </td>
+                                <td style={{ padding:"10px 12px", color:"#94a3b8", fontSize:11 }}>
+                                  {log.display_name || log.first_name || log.email?.split("@")[0]}
+                                </td>
+                                <td style={{ padding:"10px 12px" }}>
+                                  <span style={{ background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:20, padding:"2px 8px", fontSize:10, fontWeight:700, color:"#ef4444" }}>
+                                    {log.action}
+                                  </span>
+                                </td>
+                                <td style={{ padding:"10px 12px", color:"#475569", fontSize:11, maxWidth:200, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}
+                                  title={typeof log.details === "string" ? log.details : JSON.stringify(log.details)}>
+                                  {typeof log.details === "string" ? log.details.slice(0,80) : JSON.stringify(log.details).slice(0,80)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* ── Onglet Plans ── */}
+                {activeTab === "plans" && isOwner && (
+                  <div style={s.card}>
+                    <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:4 }}>💳 Member Plans</div>
+                    <div style={{ color:"#475569", fontSize:12, marginBottom:16 }}>Manage plans for your team members</div>
+                    {members.filter(m => m.status === "active" && m.member_id).length === 0 ? (
+                      <div style={{ textAlign:"center", color:"#334155", padding:20 }}>No active members yet</div>
+                    ) : (
+                      <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                        {members.filter(m => m.status === "active").map(m => (
+                          <div key={m.id} style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 14px", background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:10 }}>
+                            <div style={{ width:32, height:32, borderRadius:"50%", background:"rgba(239,68,68,0.15)", display:"flex", alignItems:"center", justifyContent:"center", color:"#ef4444", fontWeight:800, fontSize:12, flexShrink:0 }}>
+                              {(m.member_name || m.member_email || "?")[0].toUpperCase()}
+                            </div>
+                            <div style={{ flex:1, minWidth:0 }}>
+                              <div style={{ color:"#e2e8f0", fontSize:12, fontWeight:600, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                                {m.member_name || m.member_email}
+                              </div>
+                              <div style={{ color:"#475569", fontSize:10 }}>{m.role}</div>
+                            </div>
+                            <select
+                              value={m.current_plan || "Free"}
+                              onChange={e => updateMemberPlan(m.id, e.target.value)}
+                              disabled={planUpdating === m.id}
+                              style={{ background:"#0f172a", border:"1px solid rgba(220,38,38,0.2)", borderRadius:6, color:"white", fontSize:11, padding:"6px 10px", cursor:"pointer" }}
+                            >
+                              {["Free","Pro","Business","Agency"].map(p => (
+                                <option key={p} value={p}>{p}</option>
+                              ))}
+                            </select>
+                            {planUpdating === m.id && <span style={{ color:"#64748b", fontSize:10 }}>⏳</span>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

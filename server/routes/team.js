@@ -51,44 +51,70 @@ async function sendInviteEmail({ to, ownerName, ownerEmail, role, inviteUrl }) {
   }
 
   const roleLabels = { admin: "Admin", editor: "Editor", publisher: "Publisher" };
-  const roleLabel  = roleLabels[role] || "Editor";
-  const roleDesc   = role === "admin"     ? "Full access — manage team, generate, publish & analyze" :
-                     role === "editor"    ? "Generate content, analyze posts & access brand memory" :
-                     "Publish content across all connected platforms";
+  const roleLabel = roleLabels[role] || "Editor";
 
-  const html = `<!DOCTYPE html>
+  const html = `
+<!DOCTYPE html>
 <html>
-<body style="margin:0;padding:0;background:#050a14;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-  <div style="max-width:560px;margin:40px auto;background:#0d1626;border:1px solid rgba(220,38,38,0.2);border-radius:16px;overflow:hidden;">
-    <div style="background:linear-gradient(135deg,#dc2626,#991b1b);padding:32px;text-align:center;">
-      <h1 style="color:#fff;margin:0;font-size:24px;font-weight:900;letter-spacing:-0.5px;">Growth<span style="opacity:0.8">PILOT</span></h1>
-      <p style="color:rgba(255,255,255,0.7);margin:8px 0 0;font-size:14px;">AI Content Command Center</p>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background:#020617;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <div style="max-width:560px;margin:0 auto;padding:40px 20px;">
+
+    <!-- Header -->
+    <div style="text-align:center;margin-bottom:32px;">
+      <div style="font-size:28px;font-weight:900;font-style:italic;color:#000;-webkit-text-stroke:1px white;text-shadow:1px 1px 0 #ef4444;letter-spacing:1px;">
+        GrowthPILOT
+      </div>
+      <div style="color:#475569;font-size:12px;letter-spacing:2px;margin-top:4px;">AI CONTENT OS</div>
     </div>
-    <div style="padding:40px 32px;">
+
+    <!-- Card -->
+    <div style="background:linear-gradient(145deg,#1a2235,#111827);border-radius:20px;border:1px solid rgba(220,38,38,0.25);border-left:3px solid #ef4444;padding:36px;box-shadow:0 20px 60px rgba(0,0,0,0.4);">
+
       <div style="display:inline-block;background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.3);border-radius:20px;padding:4px 14px;font-size:11px;font-weight:700;color:#ef4444;letter-spacing:1.5px;margin-bottom:24px;">
         👥 TEAM INVITATION
       </div>
-      <h2 style="color:#e2e8f0;font-size:20px;font-weight:800;margin:0 0 12px;">You've been invited to join a team</h2>
-      <p style="color:#64748b;font-size:14px;line-height:1.7;margin:0 0 24px;">
+
+      <h1 style="color:#fff;font-size:24px;font-weight:800;margin:0 0 12px;line-height:1.3;">
+        You've been invited to join a team
+      </h1>
+
+      <p style="color:#94a3b8;font-size:15px;line-height:1.7;margin:0 0 24px;">
         <strong style="color:#e2e8f0;">${ownerName || ownerEmail}</strong> has invited you to collaborate on GrowthPILOT as a <strong style="color:#ef4444;">${roleLabel}</strong>.
       </p>
+
+      <!-- Role badge -->
       <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px 20px;margin-bottom:28px;">
         <div style="color:#64748b;font-size:11px;letter-spacing:1.5px;margin-bottom:8px;">YOUR ROLE</div>
         <div style="display:flex;align-items:center;gap:10px;">
-          <div style="width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0;"></div>
+          <div style="width:8px;height:8px;border-radius:50%;background:#ef4444;"></div>
           <span style="color:#ef4444;font-size:16px;font-weight:800;letter-spacing:1px;">${roleLabel.toUpperCase()}</span>
         </div>
-        <div style="color:#475569;font-size:12px;margin-top:6px;">${roleDesc}</div>
+        <div style="color:#475569;font-size:12px;margin-top:6px;">
+          ${role === "admin" ? "Full access — manage team, generate, publish & analyze" :
+            role === "editor" ? "Generate content, analyze posts & access brand memory" :
+            "Publish content across all connected platforms"}
+        </div>
       </div>
-      <a href="${inviteUrl}" style="display:block;background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;text-decoration:none;text-align:center;padding:16px 32px;border-radius:10px;font-weight:800;font-size:15px;letter-spacing:0.5px;margin-bottom:20px;">
+
+      <!-- CTA Button -->
+      <a href="${inviteUrl}" style="display:block;text-align:center;background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;text-decoration:none;font-weight:800;font-size:15px;letter-spacing:0.5px;padding:16px 32px;border-radius:12px;box-shadow:0 4px 20px rgba(220,38,38,0.35);margin-bottom:20px;">
         ⚡ Accept Invitation &amp; Create Account →
       </a>
+
       <p style="color:#334155;font-size:12px;text-align:center;margin:0;">
         This invitation expires in 7 days. If you didn't expect this, ignore this email.
       </p>
     </div>
-    <div style="border-top:1px solid rgba(255,255,255,0.05);padding:20px 32px;text-align:center;">
-      <p style="color:#1e293b;font-size:11px;margin:0;">© 2026 GrowthPILOT · <a href="https://www.aigrowthpilot.app" style="color:#334155;">aigrowthpilot.app</a></p>
+
+    <!-- Footer -->
+    <div style="text-align:center;margin-top:28px;">
+      <p style="color:#1e293b;font-size:12px;">
+        © 2026 GrowthPILOT · <a href="https://www.aigrowthpilot.app" style="color:#334155;">aigrowthpilot.app</a>
+      </p>
     </div>
   </div>
 </body>
@@ -375,6 +401,113 @@ router.get("/my-teams", auth, async (req, res) => {
     res.json({ teams: result.rows });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch teams" });
+  }
+});
+
+// ─── Middleware : vérifier le rôle du membre dans une équipe ──────────────────
+const requireTeamRole = (roles) => async (req, res, next) => {
+  try {
+    // L'owner a toujours accès
+    const ownerCheck = await db.query(
+      "SELECT plan FROM users WHERE id=$1",
+      [req.user.id]
+    );
+    const plan = ownerCheck.rows[0]?.plan || "Free";
+    if (plan === "Business" || plan === "Agency") return next();
+
+    // Vérifier le rôle du membre
+    const memberCheck = await db.query(
+      "SELECT role FROM team_members WHERE member_id=$1 AND status='active'",
+      [req.user.id]
+    );
+    const role = memberCheck.rows[0]?.role;
+    if (!role || !roles.includes(role)) {
+      return res.status(403).json({ error: "Insufficient permissions" });
+    }
+    req.memberRole = role;
+    next();
+  } catch (err) {
+    console.error("requireTeamRole error:", err.message);
+    res.status(500).json({ error: "Permission check failed" });
+  }
+};
+
+// ─── GET /team/logs — historique des actions de tous les membres ──────────────
+router.get("/logs", auth, requireBusiness, async (req, res) => {
+  try {
+    // Récupérer tous les member_ids de cette équipe
+    const membersResult = await db.query(
+      "SELECT member_id FROM team_members WHERE owner_id=$1 AND status='active'",
+      [req.user.id]
+    );
+    const memberIds = membersResult.rows.map(r => r.member_id).filter(Boolean);
+    const allIds = [req.user.id, ...memberIds];
+
+    const result = await db.query(
+      `SELECT ul.id, ul.user_id, ul.action, ul.details, ul.created_at,
+              u.email, u.first_name, u.last_name, u.display_name
+       FROM user_logs ul
+       JOIN users u ON u.id = ul.user_id
+       WHERE ul.user_id = ANY($1)
+       ORDER BY ul.created_at DESC
+       LIMIT 100`,
+      [allIds]
+    );
+
+    // Log l'accès aux logs
+    await db.query(
+      "INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())",
+      [req.user.id, "team_view_logs", JSON.stringify({ members: memberIds.length })]
+    );
+
+    res.json({ logs: result.rows });
+  } catch (err) {
+    console.error("GET /team/logs:", err.message);
+    res.status(500).json({ error: "Failed to fetch logs" });
+  }
+});
+
+// ─── PATCH /team/members/:id/plan — modifier le plan d'un membre ─────────────
+router.patch("/members/:id/plan", auth, requireBusiness, async (req, res) => {
+  const { plan } = req.body;
+  const VALID_PLANS = ["Free", "Pro", "Business", "Agency"];
+  if (!plan || !VALID_PLANS.includes(plan)) {
+    return res.status(400).json({ error: "Invalid plan" });
+  }
+
+  try {
+    // Vérifier que le membre appartient bien à cette équipe
+    const memberCheck = await db.query(
+      "SELECT member_id, member_email FROM team_members WHERE id=$1 AND owner_id=$2",
+      [req.params.id, req.user.id]
+    );
+    if (!memberCheck.rows.length) {
+      return res.status(404).json({ error: "Member not found" });
+    }
+
+    const { member_id, member_email } = memberCheck.rows[0];
+    if (!member_id) {
+      return res.status(400).json({ error: "Member has not joined yet" });
+    }
+
+    // Modifier le plan
+    await db.query("UPDATE users SET plan=$1 WHERE id=$2", [plan, member_id]);
+
+    // Log admin
+    await db.query(
+      "INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())",
+      [req.user.id, "team_update_plan", JSON.stringify({ member_id, member_email, plan })]
+    );
+    // Log member
+    await db.query(
+      "INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())",
+      [member_id, "plan_upgrade", JSON.stringify({ plan, changed_by: "team_admin" })]
+    );
+
+    res.json({ success: true, plan });
+  } catch (err) {
+    console.error("PATCH /team/members/:id/plan:", err.message);
+    res.status(500).json({ error: "Failed to update plan" });
   }
 });
 
