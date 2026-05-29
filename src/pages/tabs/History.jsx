@@ -34,6 +34,7 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
     account_banned: "#ef4444", account_unbanned: "#22c55e",
     quota_reset: "#f59e0b",
     team_update_plan: "#8b5cf6", team_view_logs: "#64748b",
+    team_role_updated: "#8b5cf6", team_removed: "#ef4444", team_joined: "#22c55e",
   };
 
   const getActionLabel = (action) => tr(trendsLang, `ui.actionLabels.${action}`) || action;

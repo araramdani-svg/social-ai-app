@@ -321,6 +321,12 @@ router.post("/accept", auth, async (req, res) => {
       [result.rows[0].owner_id, req.user.id]
     );
 
+    // Log user_logs
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,$2,$3,NOW())`,
+      [req.user.id, "team_joined", JSON.stringify({ role: result.rows[0].role, owner_id: result.rows[0].owner_id })]
+    ).catch(() => {});
+
     res.json({ success: true, role: result.rows[0].role });
   } catch (err) {
     console.error("POST /team/accept:", err.message);
@@ -342,10 +348,25 @@ router.patch("/members/:id", auth, requireBusiness, async (req, res) => {
     if (!updates.length) return res.status(400).json({ error: "Nothing to update" });
 
     values.push(req.params.id, req.user.id);
-    await db.query(
-      `UPDATE team_members SET ${updates.join(",")} WHERE id=$${i} AND owner_id=$${i+1}`,
+    const result = await db.query(
+      `UPDATE team_members SET ${updates.join(",")} WHERE id=$${i} AND owner_id=$${i+1} RETURNING member_id, member_email`,
       values
     );
+
+    // Log admin_logs
+    await db.query(
+      `INSERT INTO admin_logs (admin_id, action, target_user_id, details, created_at) VALUES ($1,$2,$3,$4,NOW())`,
+      [req.user.id, "team_update_role", result.rows[0]?.member_id || null, JSON.stringify({ role, member_email: result.rows[0]?.member_email })]
+    ).catch(() => {});
+
+    // Log user_logs du membre concerné
+    if (result.rows[0]?.member_id) {
+      await db.query(
+        `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,$2,$3,NOW())`,
+        [result.rows[0].member_id, "team_role_updated", JSON.stringify({ role, by: "team_admin" })]
+      ).catch(() => {});
+    }
+
     res.json({ success: true });
   } catch (err) {
     console.error("PATCH /team/members:", err.message);
@@ -356,10 +377,28 @@ router.patch("/members/:id", auth, requireBusiness, async (req, res) => {
 // ─── DELETE /team/members/:id — remove member ─────────────────────────────────
 router.delete("/members/:id", auth, requireBusiness, async (req, res) => {
   try {
-    await db.query(
-      "DELETE FROM team_members WHERE id=$1 AND owner_id=$2",
+    const result = await db.query(
+      "DELETE FROM team_members WHERE id=$1 AND owner_id=$2 RETURNING member_id, member_email",
       [req.params.id, req.user.id]
     );
+    // Log admin_logs
+    await db.query(
+      `INSERT INTO admin_logs (admin_id, action, target_user_id, details, created_at) VALUES ($1,$2,$3,$4,NOW())`,
+      [req.user.id, "team_remove_member", result.rows[0]?.member_id || null, JSON.stringify({ member_email: result.rows[0]?.member_email })]
+    ).catch(() => {});
+    // Log user_logs du membre
+    if (result.rows[0]?.member_id) {
+      await db.query(
+        `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,$2,$3,NOW())`,
+        [result.rows[0].member_id, "team_removed", JSON.stringify({ by: "team_admin" })]
+      ).catch(() => {});
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error("DELETE /team/members:", err.message);
+    res.status(500).json({ error: "Remove failed" });
+  }
+});
     res.json({ success: true });
   } catch (err) {
     console.error("DELETE /team/members:", err.message);
