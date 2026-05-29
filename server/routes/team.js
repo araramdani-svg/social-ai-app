@@ -8,7 +8,9 @@ const router = express.Router();
 const API_URL = process.env.FRONTEND_URL || "https://www.aigrowthpilot.app";
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const FROM_EMAIL = "GrowthPILOT <team@aigrowthpilot.app>";
-const MAX_MEMBERS = 5; // Business plan limit
+const MAX_MEMBERS_BUSINESS = 5;
+const MAX_MEMBERS_AGENCY   = 20;
+const MAX_MEMBERS = 5; // default fallback
 
 // ─── Auth middleware ──────────────────────────────────────────────────────────
 const auth = (req, res, next) => {
@@ -26,13 +28,14 @@ const requireBusiness = async (req, res, next) => {
   try {
     const result = await db.query("SELECT plan FROM users WHERE id=$1", [req.user.id]);
     const plan = result.rows[0]?.plan || "Free";
-    if (plan !== "Business") {
+    if (plan !== "Business" && plan !== "Agency") {
       return res.status(403).json({
         error: "business_required",
-        message: "Team Console is available on the Business plan only.",
+        message: "Team Console is available on the Business plan and above.",
       });
     }
     req.userPlan = plan;
+    req.maxMembers = plan === "Agency" ? MAX_MEMBERS_AGENCY : MAX_MEMBERS_BUSINESS;
     next();
   } catch (err) {
     console.error("Business check error:", err.message);
@@ -164,8 +167,8 @@ router.get("/members", auth, requireBusiness, async (req, res) => {
     res.json({
       members: result.rows,
       owner: { email: owner.email, name: owner.linkedin_name || owner.email },
-      maxMembers: MAX_MEMBERS,
-      remaining: MAX_MEMBERS - result.rows.length,
+      maxMembers: req.maxMembers || MAX_MEMBERS,
+      remaining: (req.maxMembers || MAX_MEMBERS) - result.rows.length,
     });
   } catch (err) {
     console.error("GET /team/members:", err.message);
@@ -184,10 +187,10 @@ router.post("/invite", auth, requireBusiness, async (req, res) => {
       "SELECT COUNT(*) FROM team_members WHERE owner_id=$1",
       [req.user.id]
     );
-    if (parseInt(countResult.rows[0].count) >= MAX_MEMBERS) {
+    if (parseInt(countResult.rows[0].count) >= (req.maxMembers || MAX_MEMBERS)) {
       return res.status(403).json({
         error: "member_limit",
-        message: `Business plan allows up to ${MAX_MEMBERS} team members.`,
+        message: `Your plan allows up to ${req.maxMembers || MAX_MEMBERS} team members.`,
       });
     }
 
