@@ -10,7 +10,7 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const FROM_EMAIL = "GrowthPILOT <team@aigrowthpilot.app>";
 const MAX_MEMBERS_BUSINESS = 5;
 const MAX_MEMBERS_AGENCY   = 20;
-const MAX_MEMBERS = 5; // default fallback
+const MAX_MEMBERS = 5;
 
 // ─── Auth middleware ──────────────────────────────────────────────────────────
 const auth = (req, res, next) => {
@@ -51,70 +51,44 @@ async function sendInviteEmail({ to, ownerName, ownerEmail, role, inviteUrl }) {
   }
 
   const roleLabels = { admin: "Admin", editor: "Editor", publisher: "Publisher" };
-  const roleLabel = roleLabels[role] || "Editor";
+  const roleLabel  = roleLabels[role] || "Editor";
+  const roleDesc   = role === "admin"     ? "Full access — manage team, generate, publish & analyze" :
+                     role === "editor"    ? "Generate content, analyze posts & access brand memory" :
+                     "Publish content across all connected platforms";
 
-  const html = `
-<!DOCTYPE html>
+  const html = `<!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin:0;padding:0;background:#020617;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-  <div style="max-width:560px;margin:0 auto;padding:40px 20px;">
-
-    <!-- Header -->
-    <div style="text-align:center;margin-bottom:32px;">
-      <div style="font-size:28px;font-weight:900;font-style:italic;color:#000;-webkit-text-stroke:1px white;text-shadow:1px 1px 0 #ef4444;letter-spacing:1px;">
-        GrowthPILOT
-      </div>
-      <div style="color:#475569;font-size:12px;letter-spacing:2px;margin-top:4px;">AI CONTENT OS</div>
+<body style="margin:0;padding:0;background:#050a14;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <div style="max-width:560px;margin:40px auto;background:#0d1626;border:1px solid rgba(220,38,38,0.2);border-radius:16px;overflow:hidden;">
+    <div style="background:linear-gradient(135deg,#dc2626,#991b1b);padding:32px;text-align:center;">
+      <h1 style="color:#fff;margin:0;font-size:24px;font-weight:900;letter-spacing:-0.5px;">Growth<span style="opacity:0.8">PILOT</span></h1>
+      <p style="color:rgba(255,255,255,0.7);margin:8px 0 0;font-size:14px;">AI Content Command Center</p>
     </div>
-
-    <!-- Card -->
-    <div style="background:linear-gradient(145deg,#1a2235,#111827);border-radius:20px;border:1px solid rgba(220,38,38,0.25);border-left:3px solid #ef4444;padding:36px;box-shadow:0 20px 60px rgba(0,0,0,0.4);">
-
+    <div style="padding:40px 32px;">
       <div style="display:inline-block;background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.3);border-radius:20px;padding:4px 14px;font-size:11px;font-weight:700;color:#ef4444;letter-spacing:1.5px;margin-bottom:24px;">
         👥 TEAM INVITATION
       </div>
-
-      <h1 style="color:#fff;font-size:24px;font-weight:800;margin:0 0 12px;line-height:1.3;">
-        You've been invited to join a team
-      </h1>
-
-      <p style="color:#94a3b8;font-size:15px;line-height:1.7;margin:0 0 24px;">
+      <h2 style="color:#e2e8f0;font-size:20px;font-weight:800;margin:0 0 12px;">You've been invited to join a team</h2>
+      <p style="color:#64748b;font-size:14px;line-height:1.7;margin:0 0 24px;">
         <strong style="color:#e2e8f0;">${ownerName || ownerEmail}</strong> has invited you to collaborate on GrowthPILOT as a <strong style="color:#ef4444;">${roleLabel}</strong>.
       </p>
-
-      <!-- Role badge -->
       <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px 20px;margin-bottom:28px;">
         <div style="color:#64748b;font-size:11px;letter-spacing:1.5px;margin-bottom:8px;">YOUR ROLE</div>
         <div style="display:flex;align-items:center;gap:10px;">
-          <div style="width:8px;height:8px;border-radius:50%;background:#ef4444;"></div>
+          <div style="width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0;"></div>
           <span style="color:#ef4444;font-size:16px;font-weight:800;letter-spacing:1px;">${roleLabel.toUpperCase()}</span>
         </div>
-        <div style="color:#475569;font-size:12px;margin-top:6px;">
-          ${role === "admin" ? "Full access — manage team, generate, publish & analyze" :
-            role === "editor" ? "Generate content, analyze posts & access brand memory" :
-            "Publish content across all connected platforms"}
-        </div>
+        <div style="color:#475569;font-size:12px;margin-top:6px;">${roleDesc}</div>
       </div>
-
-      <!-- CTA Button -->
-      <a href="${inviteUrl}" style="display:block;text-align:center;background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;text-decoration:none;font-weight:800;font-size:15px;letter-spacing:0.5px;padding:16px 32px;border-radius:12px;box-shadow:0 4px 20px rgba(220,38,38,0.35);margin-bottom:20px;">
+      <a href="${inviteUrl}" style="display:block;background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;text-decoration:none;text-align:center;padding:16px 32px;border-radius:10px;font-weight:800;font-size:15px;letter-spacing:0.5px;margin-bottom:20px;">
         ⚡ Accept Invitation &amp; Create Account →
       </a>
-
       <p style="color:#334155;font-size:12px;text-align:center;margin:0;">
         This invitation expires in 7 days. If you didn't expect this, ignore this email.
       </p>
     </div>
-
-    <!-- Footer -->
-    <div style="text-align:center;margin-top:28px;">
-      <p style="color:#1e293b;font-size:12px;">
-        © 2026 GrowthPILOT · <a href="https://www.aigrowthpilot.app" style="color:#334155;">aigrowthpilot.app</a>
-      </p>
+    <div style="border-top:1px solid rgba(255,255,255,0.05);padding:20px 32px;text-align:center;">
+      <p style="color:#1e293b;font-size:11px;margin:0;">© 2026 GrowthPILOT · <a href="https://www.aigrowthpilot.app" style="color:#334155;">aigrowthpilot.app</a></p>
     </div>
   </div>
 </body>
@@ -190,7 +164,7 @@ router.post("/invite", auth, requireBusiness, async (req, res) => {
     if (parseInt(countResult.rows[0].count) >= (req.maxMembers || MAX_MEMBERS)) {
       return res.status(403).json({
         error: "member_limit",
-        message: `Your plan allows up to ${req.maxMembers || MAX_MEMBERS} team members.`,
+        message: `Business plan allows up to ${MAX_MEMBERS} team members.`,
       });
     }
 
