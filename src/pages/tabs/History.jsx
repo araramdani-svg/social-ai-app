@@ -35,7 +35,7 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
     quota_reset: "#f59e0b",
     team_update_plan: "#8b5cf6", team_view_logs: "#64748b",
     team_role_updated: "#8b5cf6", team_removed: "#ef4444", team_joined: "#22c55e",
-    team_invite: "#3b82f6",
+    team_invite: "#3b82f6", team_member_joined: "#22c55e", quota_exceeded: "#ef4444",
   };
 
   const getActionLabel = (action) => tr(trendsLang, `ui.actionLabels.${action}`) || action;
@@ -292,9 +292,8 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
                             {cfg.label}
                           </span>
                         </td>
-                        <td style={{ padding:"12px 16px", color:"#64748b", fontSize:11, maxWidth:300, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", cursor:"help" }}
-                          title={log.details ? (() => { try { return JSON.stringify(typeof log.details === "string" ? JSON.parse(log.details) : log.details, null, 2); } catch { return String(log.details); } })() : ""}>
-                          {log.details ? (() => { try { const d = typeof log.details === "string" ? JSON.parse(log.details) : log.details; return JSON.stringify(d).slice(0, 150); } catch { return String(log.details).slice(0, 150); } })() : "—"}
+                        <td style={{ padding:"12px 16px", color:"#64748b", fontSize:11 }}>
+                          {log.details ? (() => { try { const d = typeof log.details === "string" ? JSON.parse(log.details) : log.details; return JSON.stringify(d).slice(0, 80); } catch { return String(log.details).slice(0, 80); } })() : "—"}
                         </td>
                       </tr>
                     );

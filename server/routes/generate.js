@@ -59,12 +59,55 @@ const checkGenerationQuota = async (req, res, next) => {
   if (!req.user?.id) return next();
   try {
     const result = await db.query(
-      "SELECT plan, generations_count, quota_reset_date FROM users WHERE id=$1",
+      "SELECT plan, generations_count, quota_reset_date, team_owner_id, email FROM users WHERE id=$1",
       [req.user.id]
     );
     const user = result.rows[0];
     if (!user) return next();
 
+    // Bypass comptes test
+    const TEST_ACCOUNTS = ["test@aigrowthpilot.app"];
+    if (TEST_ACCOUNTS.includes(user.email)) return next();
+
+    // ── Plan Member : utiliser le quota de l'owner ────────────────────────────
+    if (user.plan === "Member" && user.team_owner_id) {
+      const ownerResult = await db.query(
+        "SELECT plan, generations_count, quota_reset_date FROM users WHERE id=$1",
+        [user.team_owner_id]
+      );
+      const owner = ownerResult.rows[0];
+      if (!owner) return next();
+
+      // Reset mensuel owner
+      const today = new Date().toISOString().split("T")[0];
+      const resetMonth = owner.quota_reset_date?.toISOString?.()?.split("T")[0]?.slice(0,7) || null;
+      if (resetMonth !== today.slice(0,7)) {
+        await db.query("UPDATE users SET generations_count=0, quota_reset_date=$1 WHERE id=$2", [today, user.team_owner_id]);
+        owner.generations_count = 0;
+      }
+
+      const ownerPlan = owner.plan || "Agency";
+      const limit = PLAN_LIMITS[ownerPlan]?.generations ?? Infinity;
+
+      if (limit !== Infinity && owner.generations_count >= limit) {
+        // Log quota dépassé
+        await db.query(
+          `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,'quota_exceeded',$2,NOW())`,
+          [req.user.id, JSON.stringify({ plan: "Member", owner_id: user.team_owner_id, limit, current: owner.generations_count })]
+        ).catch(() => {});
+        return res.status(403).json({
+          error: "quota_exceeded",
+          message: `Your team's generation pool (${limit}/month) is full.`,
+          current: owner.generations_count, limit, plan: "Member",
+        });
+      }
+
+      req.userPlan = "Member";
+      req.teamOwnerId = user.team_owner_id; // Pour incrémenter le bon compteur
+      return next();
+    }
+
+    // ── Plans normaux ─────────────────────────────────────────────────────────
     // Reset mensuel automatique
     const today = new Date().toISOString().split("T")[0];
     const resetDate = user.quota_reset_date?.toISOString?.()?.split("T")[0] || user.quota_reset_date;
@@ -82,18 +125,16 @@ const checkGenerationQuota = async (req, res, next) => {
     const plan = user.plan || "Free";
     const limit = PLAN_LIMITS[plan]?.generations ?? 5;
 
-    // Comptes test — bypass
-    const testResult = await db.query("SELECT email FROM users WHERE id=$1", [req.user.id]);
-    const TEST_ACCOUNTS = ["test@aigrowthpilot.app"];
-    if (TEST_ACCOUNTS.includes(testResult.rows[0]?.email)) return next();
-
     if (limit !== Infinity && user.generations_count >= limit) {
+      // Log quota dépassé
+      await db.query(
+        `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,'quota_exceeded',$2,NOW())`,
+        [req.user.id, JSON.stringify({ plan, limit, current: user.generations_count })]
+      ).catch(() => {});
       return res.status(403).json({
         error: "quota_exceeded",
         message: `You've reached your ${limit} generations/month limit on the ${plan} plan.`,
-        current: user.generations_count,
-        limit,
-        plan,
+        current: user.generations_count, limit, plan,
         upgrade: plan === "Free" ? "pro" : "business",
       });
     }
@@ -102,7 +143,7 @@ const checkGenerationQuota = async (req, res, next) => {
     next();
   } catch (err) {
     console.error("Quota check error:", err.message);
-    next(); // En cas d'erreur, on laisse passer
+    next();
   }
 };
 
@@ -251,10 +292,19 @@ Write the LinkedIn post now.`;
         );
       } catch (err) { console.error("Insert post error:", err.message); }
       try {
+        // Si Member, incrémenter le compteur de l'owner
+        const targetId = req.teamOwnerId || req.user.id;
         await db.query(
           "UPDATE users SET generations_count = generations_count + 1 WHERE id=$1",
-          [req.user.id]
+          [targetId]
         );
+        // Log quota si Member
+        if (req.teamOwnerId) {
+          await db.query(
+            `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,'generate_post',$2,NOW())`,
+            [req.user.id, JSON.stringify({ topic, template, project: project || null, lang, pooled_from: req.teamOwnerId })]
+          ).catch(() => {});
+        }
       } catch (err) { console.error("Increment quota error:", err.message); }
       // Log generate_post
       try {
@@ -423,7 +473,8 @@ RULES: No hashtags. No corporate jargon. Strong first line. End with a question 
           "INSERT INTO posts (user_id, topic, template, content, created_at) VALUES ($1,$2,$3,$4,NOW())",
           [req.user.id, url || "repurposed", "repurpose", text]
         );
-        await db.query("UPDATE users SET generations_count=generations_count+1 WHERE id=$1", [req.user.id]);
+        const targetId476 = req.teamOwnerId || req.user.id;
+          await db.query("UPDATE users SET generations_count=generations_count+1 WHERE id=$1", [targetId476]);
       } catch {}
       // Log repurpose_post
       try {
@@ -673,7 +724,7 @@ Language: ${langName}.${styleInstruction}`,
         );
         await db.query(
           "UPDATE users SET generations_count=generations_count+1 WHERE id=$1",
-          [req.user.id]
+          [req.teamOwnerId || req.user.id]
         );
       } catch {}
     }

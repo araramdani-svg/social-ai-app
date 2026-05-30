@@ -320,17 +320,35 @@ router.post("/accept", auth, async (req, res) => {
       [req.user.id, token]
     );
 
-    // Log activity
+    // Set plan Member + team_owner_id sur le user
+    await db.query(
+      "UPDATE users SET plan='Member', team_owner_id=$1, plan_managed_by='team' WHERE id=$2",
+      [result.rows[0].owner_id, req.user.id]
+    );
+
+    // Log team_activity
     await db.query(
       `INSERT INTO team_activity (team_owner_id, user_id, action, resource)
        VALUES ($1, $2, 'joined_team', 'team')`,
       [result.rows[0].owner_id, req.user.id]
     );
 
-    // Log user_logs
+    // Log user_logs du membre
     await db.query(
       `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,$2,$3,NOW())`,
-      [req.user.id, "team_joined", JSON.stringify({ role: result.rows[0].role, owner_id: result.rows[0].owner_id })]
+      [req.user.id, "team_joined", JSON.stringify({ role: result.rows[0].role, owner_id: result.rows[0].owner_id, plan: "Member" })]
+    ).catch(() => {});
+
+    // Log user_logs de l'owner
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,$2,$3,NOW())`,
+      [result.rows[0].owner_id, "team_member_joined", JSON.stringify({ member_id: req.user.id, role: result.rows[0].role })]
+    ).catch(() => {});
+
+    // Log admin_logs
+    await db.query(
+      `INSERT INTO admin_logs (admin_id, action, target_user_id, details, created_at) VALUES ($1,$2,$3,$4,NOW())`,
+      [result.rows[0].owner_id, "team_member_joined", req.user.id, JSON.stringify({ role: result.rows[0].role })]
     ).catch(() => {});
 
     res.json({ success: true, role: result.rows[0].role });
