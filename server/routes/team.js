@@ -239,6 +239,12 @@ router.post("/invite", auth, requireBusiness, async (req, res) => {
       inviteUrl,
     });
 
+    // Log user_logs de l'owner
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,$2,$3,NOW())`,
+      [req.user.id, "team_invite", JSON.stringify({ email, role, emailSent })]
+    ).catch(() => {});
+
     res.json({
       success: true,
       inviteUrl,
@@ -393,12 +399,6 @@ router.delete("/members/:id", auth, requireBusiness, async (req, res) => {
         [result.rows[0].member_id, "team_removed", JSON.stringify({ by: "team_admin" })]
       ).catch(() => {});
     }
-    res.json({ success: true });
-  } catch (err) {
-    console.error("DELETE /team/members:", err.message);
-    res.status(500).json({ error: "Remove failed" });
-  }
-});
     res.json({ success: true });
   } catch (err) {
     console.error("DELETE /team/members:", err.message);
