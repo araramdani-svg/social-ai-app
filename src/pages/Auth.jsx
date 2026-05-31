@@ -60,6 +60,8 @@ export default function Auth({ loginSuccess, initialMode = "login" }) {
 
       // Register → afficher écran "vérifiez votre email"
       if (mode === "register") {
+        // Sauvegarder le token d'invitation pour l'accepter après vérification email
+        if (inviteToken) localStorage.setItem("pendingInviteToken", inviteToken);
         setPendingEmail(email);
         return;
       }
@@ -67,13 +69,16 @@ export default function Auth({ loginSuccess, initialMode = "login" }) {
       // Login OK
       localStorage.setItem("token", data.token);
 
-      if (inviteToken && mode === "register") {
+      // Accepter l'invitation en attente (depuis register ou lien direct)
+      const pendingInvite = inviteToken || localStorage.getItem("pendingInviteToken");
+      if (pendingInvite) {
         try {
           await fetch(`${API}/team/accept`, {
             method: "POST",
-            headers: { "Content-Type":"application/json", Authorization:`Bearer ${data.token}` },
-            body: JSON.stringify({ token: inviteToken }),
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.token}` },
+            body: JSON.stringify({ token: pendingInvite }),
           });
+          localStorage.removeItem("pendingInviteToken");
           window.history.replaceState({}, "", "/");
         } catch {}
       }
