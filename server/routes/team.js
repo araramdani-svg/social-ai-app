@@ -809,7 +809,7 @@ router.get("/my-team-view", auth, async (req, res) => {
               u.linkedin_name as member_name
        FROM team_members tm
        LEFT JOIN users u ON u.id = tm.member_id
-       WHERE tm.owner_id=$1 AND tm.member_id != $2
+       WHERE tm.owner_id=$1 AND (tm.member_id != $2 OR tm.member_id IS NULL)
        ORDER BY tm.joined_at ASC`,
       [myTeam.owner_id, req.user.id]
     );
