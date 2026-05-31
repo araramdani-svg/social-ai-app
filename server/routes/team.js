@@ -192,9 +192,11 @@ async function sendInviteEmail({ to, ownerName, ownerEmail, role, inviteUrl }) {
 router.get("/members", auth, requireBusiness, async (req, res) => {
   try {
     const result = await db.query(
-      `SELECT tm.id, tm.member_email, tm.role, tm.status, tm.permissions,
+      `SELECT tm.id, tm.member_id, tm.member_email, tm.role, tm.status, tm.permissions,
               tm.invited_at, tm.joined_at,
-              u.linkedin_name as member_name
+              u.linkedin_name as member_name,
+              u.plan as current_plan,
+              u.generations_count
        FROM team_members tm
        LEFT JOIN users u ON u.id = tm.member_id
        WHERE tm.owner_id = $1
@@ -643,44 +645,185 @@ router.get("/logs", auth, requireBusiness, async (req, res) => {
 // ─── PATCH /team/members/:id/plan — modifier le plan d'un membre ─────────────
 router.patch("/members/:id/plan", auth, requireBusiness, async (req, res) => {
   const { plan } = req.body;
-  const VALID_PLANS = ["Free", "Pro", "Business", "Agency"];
+  const VALID_PLANS = ["Free", "Pro"]; // Business/Agency non disponibles pour les membres
   if (!plan || !VALID_PLANS.includes(plan)) {
-    return res.status(400).json({ error: "Invalid plan" });
+    return res.status(400).json({ error: "Invalid plan. Members can only have Free or Pro plans." });
   }
 
   try {
-    // Vérifier que le membre appartient bien à cette équipe
     const memberCheck = await db.query(
-      "SELECT member_id, member_email FROM team_members WHERE id=$1 AND owner_id=$2",
+      "SELECT tm.member_id, tm.member_email, u.plan as current_plan FROM team_members tm LEFT JOIN users u ON u.id = tm.member_id WHERE tm.id=$1 AND tm.owner_id=$2",
       [req.params.id, req.user.id]
     );
-    if (!memberCheck.rows.length) {
-      return res.status(404).json({ error: "Member not found" });
+    if (!memberCheck.rows.length) return res.status(404).json({ error: "Member not found" });
+
+    const { member_id, member_email, current_plan } = memberCheck.rows[0];
+    if (!member_id) return res.status(400).json({ error: "Member has not joined yet" });
+    if (current_plan === plan) return res.json({ success: true, plan, message: "No change needed" });
+
+    // Si upgrade vers Pro → facturer 5€/mois sur le Stripe de l'owner
+    let stripeInfo = null;
+    if (plan === "Pro") {
+      const ownerResult = await db.query(
+        "SELECT stripe_customer_id, stripe_subscription_id FROM users WHERE id=$1",
+        [req.user.id]
+      );
+      const owner = ownerResult.rows[0];
+      if (owner?.stripe_subscription_id && process.env.STRIPE_MEMBER_SEAT_PRICE_ID) {
+        try {
+          const Stripe = (await import("stripe")).default;
+          const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+          // Ajouter un siège 5€/mois à l'abonnement de l'owner
+          const subscription = await stripe.subscriptions.retrieve(owner.stripe_subscription_id);
+          const existingItem = subscription.items.data.find(
+            i => i.price.id === process.env.STRIPE_MEMBER_SEAT_PRICE_ID
+          );
+          if (existingItem) {
+            await stripe.subscriptionItems.update(existingItem.id, {
+              quantity: existingItem.quantity + 1,
+            });
+          } else {
+            await stripe.subscriptionItems.create({
+              subscription: owner.stripe_subscription_id,
+              price: process.env.STRIPE_MEMBER_SEAT_PRICE_ID,
+              quantity: 1,
+            });
+          }
+          stripeInfo = { seat_added: true, price: "5€/month" };
+        } catch (stripeErr) {
+          console.error("Stripe seat billing error:", stripeErr.message);
+          stripeInfo = { seat_added: false, error: stripeErr.message };
+        }
+      }
     }
 
-    const { member_id, member_email } = memberCheck.rows[0];
-    if (!member_id) {
-      return res.status(400).json({ error: "Member has not joined yet" });
+    // Si downgrade vers Free → retirer un siège Stripe
+    if (plan === "Free" && current_plan === "Pro") {
+      const ownerResult = await db.query(
+        "SELECT stripe_subscription_id FROM users WHERE id=$1",
+        [req.user.id]
+      );
+      const owner = ownerResult.rows[0];
+      if (owner?.stripe_subscription_id && process.env.STRIPE_MEMBER_SEAT_PRICE_ID) {
+        try {
+          const Stripe = (await import("stripe")).default;
+          const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+          const subscription = await stripe.subscriptions.retrieve(owner.stripe_subscription_id);
+          const existingItem = subscription.items.data.find(
+            i => i.price.id === process.env.STRIPE_MEMBER_SEAT_PRICE_ID
+          );
+          if (existingItem) {
+            if (existingItem.quantity > 1) {
+              await stripe.subscriptionItems.update(existingItem.id, {
+                quantity: existingItem.quantity - 1,
+              });
+            } else {
+              await stripe.subscriptionItems.del(existingItem.id);
+            }
+          }
+        } catch (stripeErr) {
+          console.error("Stripe seat remove error:", stripeErr.message);
+        }
+      }
     }
 
-    // Modifier le plan
+    // Mettre à jour le plan en DB
     await db.query("UPDATE users SET plan=$1 WHERE id=$2", [plan, member_id]);
 
-    // Log admin
+    // Logs
     await db.query(
-      "INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())",
-      [req.user.id, "team_update_plan", JSON.stringify({ member_id, member_email, plan })]
-    );
-    // Log member
+      "INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,$2,$3,NOW())",
+      [req.user.id, "team_update_plan", JSON.stringify({ member_id, member_email, plan, previous_plan: current_plan, stripe: stripeInfo })]
+    ).catch(() => {});
     await db.query(
-      "INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())",
-      [member_id, "plan_upgrade", JSON.stringify({ plan, changed_by: "team_admin" })]
-    );
+      "INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,$2,$3,NOW())",
+      [member_id, "plan_upgrade", JSON.stringify({ plan, previous_plan: current_plan, changed_by: "team_admin" })]
+    ).catch(() => {});
+    await db.query(
+      "INSERT INTO admin_logs (admin_id, action, target_user_id, details, created_at) VALUES ($1,$2,$3,$4,NOW())",
+      [req.user.id, "team_update_plan", member_id, JSON.stringify({ plan, previous_plan: current_plan, member_email, stripe: stripeInfo })]
+    ).catch(() => {});
 
-    res.json({ success: true, plan });
+    res.json({ success: true, plan, stripe: stripeInfo });
   } catch (err) {
     console.error("PATCH /team/members/:id/plan:", err.message);
     res.status(500).json({ error: "Failed to update plan" });
+  }
+});
+
+// ─── POST /team/members/:id/reset-quota — reset generations_count ─────────────
+router.post("/members/:id/reset-quota", auth, requireBusiness, async (req, res) => {
+  try {
+    const memberCheck = await db.query(
+      "SELECT tm.member_id, tm.member_email, u.generations_count FROM team_members tm LEFT JOIN users u ON u.id = tm.member_id WHERE tm.id=$1 AND tm.owner_id=$2",
+      [req.params.id, req.user.id]
+    );
+    if (!memberCheck.rows.length) return res.status(404).json({ error: "Member not found" });
+
+    const { member_id, member_email, generations_count } = memberCheck.rows[0];
+    if (!member_id) return res.status(400).json({ error: "Member has not joined yet" });
+
+    await db.query("UPDATE users SET generations_count=0 WHERE id=$1", [member_id]);
+
+    // Logs
+    await db.query(
+      "INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,$2,$3,NOW())",
+      [req.user.id, "team_reset_quota", JSON.stringify({ member_id, member_email, previous_count: generations_count })]
+    ).catch(() => {});
+    await db.query(
+      "INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,$2,$3,NOW())",
+      [member_id, "quota_reset", JSON.stringify({ reset_by: "team_admin", previous_count: generations_count })]
+    ).catch(() => {});
+    await db.query(
+      "INSERT INTO admin_logs (admin_id, action, target_user_id, details, created_at) VALUES ($1,$2,$3,$4,NOW())",
+      [req.user.id, "team_reset_quota", member_id, JSON.stringify({ member_email, previous_count: generations_count })]
+    ).catch(() => {});
+
+    res.json({ success: true, message: `Quota reset for ${member_email}` });
+  } catch (err) {
+    console.error("POST /team/members/:id/reset-quota:", err.message);
+    res.status(500).json({ error: "Failed to reset quota" });
+  }
+});
+
+// ─── GET /team/my-team-view — vue lecture seule pour les membres ──────────────
+router.get("/my-team-view", auth, async (req, res) => {
+  try {
+    // Trouver l'équipe du membre
+    const memberResult = await db.query(
+      `SELECT tm.role, tm.joined_at, tm.permissions,
+              u.email as owner_email, u.linkedin_name as owner_name, u.id as owner_id
+       FROM team_members tm
+       JOIN users u ON u.id = tm.owner_id
+       WHERE tm.member_id=$1 AND tm.status='active'
+       LIMIT 1`,
+      [req.user.id]
+    );
+    if (!memberResult.rows.length) return res.status(404).json({ error: "Not a team member" });
+
+    const myTeam = memberResult.rows[0];
+
+    // Récupérer les collègues (lecture seule — email + rôle uniquement)
+    const colleaguesResult = await db.query(
+      `SELECT tm.member_email, tm.role, tm.status,
+              u.linkedin_name as member_name
+       FROM team_members tm
+       LEFT JOIN users u ON u.id = tm.member_id
+       WHERE tm.owner_id=$1 AND tm.member_id != $2
+       ORDER BY tm.joined_at ASC`,
+      [myTeam.owner_id, req.user.id]
+    );
+
+    res.json({
+      myRole: myTeam.role,
+      joinedAt: myTeam.joined_at,
+      permissions: myTeam.permissions,
+      owner: { email: myTeam.owner_email, name: myTeam.owner_name || myTeam.owner_email },
+      colleagues: colleaguesResult.rows,
+    });
+  } catch (err) {
+    console.error("GET /team/my-team-view:", err.message);
+    res.status(500).json({ error: "Failed to fetch team view" });
   }
 });
 

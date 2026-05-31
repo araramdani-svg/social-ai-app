@@ -331,6 +331,8 @@ export default function Team({ trendsLang, isMobile, token, userPlan, projects, 
   const [confirm,     setConfirm]     = useState(null);
   const [planUpdating,setPlanUpdating]= useState(null);
   const [resending,   setResending]   = useState(null);
+  const [quotaResetting, setQuotaResetting] = useState(null);
+  const [myTeamView,  setMyTeamView]  = useState(null);
 
   const isBusiness = userPlan === "Business" || userPlan === "Agency";
   const isAgency   = userPlan === "Agency";
@@ -355,6 +357,16 @@ export default function Team({ trendsLang, isMobile, token, userPlan, projects, 
     } catch {}
     setLoading(false);
   }, [token, isBusiness]);
+
+  // Vue lecture seule pour les membres
+  useEffect(() => {
+    if (token && userPlan === "Member") {
+      fetch(`${API}/team/my-team-view`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(r => r.json())
+        .then(d => { if (d.myRole) setMyTeamView(d); })
+        .catch(() => {});
+    }
+  }, [token, userPlan]);
 
   const fetchClients = useCallback(async () => {
     if (!token || !isAgency) return;
@@ -394,13 +406,30 @@ export default function Team({ trendsLang, isMobile, token, userPlan, projects, 
   const updateMemberPlan = async (memberId, plan) => {
     setPlanUpdating(memberId);
     try {
-      await fetch(`${API}/team/members/${memberId}/plan`, {
+      const r = await fetch(`${API}/team/members/${memberId}/plan`, {
         method: "PATCH", headers,
         body: JSON.stringify({ plan }),
       });
+      const d = await r.json();
+      if (!d.success) setConfirm({ message: `⚠️ ${d.error || "Failed to update plan"}`, onConfirm: () => setConfirm(null) });
       fetchTeamData();
     } catch {}
     setPlanUpdating(null);
+  };
+
+  const resetMemberQuota = async (memberId) => {
+    setQuotaResetting(memberId);
+    try {
+      const r = await fetch(`${API}/team/members/${memberId}/reset-quota`, { method: "POST", headers });
+      const d = await r.json();
+      if (d.success) {
+        setConfirm({ message: "✅ Quota reset successfully", onConfirm: () => setConfirm(null) });
+        fetchTeamData();
+      } else {
+        setConfirm({ message: `⚠️ ${d.error}`, onConfirm: () => setConfirm(null) });
+      }
+    } catch {}
+    setQuotaResetting(null);
   };
 
   const resendInvite = async (id, email) => {
@@ -452,6 +481,54 @@ export default function Team({ trendsLang, isMobile, token, userPlan, projects, 
           </div>
         ))}
       </div>
+
+      {/* Vue membre lecture seule */}
+      {userPlan === "Member" && myTeamView && (
+        <div style={{ padding:"0 0 24px" }}>
+          <div style={{ ...s.card, marginBottom:12 }}>
+            <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:12 }}>👥 My Team</div>
+            {/* Owner */}
+            <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 0", borderBottom:"1px solid rgba(255,255,255,0.05)", marginBottom:10 }}>
+              <div style={{ width:32, height:32, borderRadius:"50%", background:"rgba(239,68,68,0.15)", display:"flex", alignItems:"center", justifyContent:"center", color:"#ef4444", fontWeight:800, fontSize:12 }}>
+                {(myTeamView.owner.name || myTeamView.owner.email)[0].toUpperCase()}
+              </div>
+              <div>
+                <div style={{ color:"#e2e8f0", fontSize:12, fontWeight:600 }}>{myTeamView.owner.name || myTeamView.owner.email}</div>
+                <div style={{ color:"#475569", fontSize:10 }}>Owner</div>
+              </div>
+              <div style={{ marginLeft:"auto", background:"rgba(239,68,68,0.1)", border:"1px solid #ef444433", borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:700, color:"#ef4444" }}>OWNER</div>
+            </div>
+            {/* Mon rôle */}
+            <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:8, padding:"10px 14px", marginBottom:10 }}>
+              <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px", marginBottom:4 }}>MY ROLE</div>
+              <div style={{ color:"#f59e0b", fontWeight:800, fontSize:13 }}>{myTeamView.myRole?.toUpperCase()}</div>
+              <div style={{ color:"#475569", fontSize:11, marginTop:2 }}>
+                Joined {myTeamView.joinedAt ? new Date(myTeamView.joinedAt).toLocaleDateString() : "—"}
+              </div>
+            </div>
+            {/* Collègues */}
+            {myTeamView.colleagues?.length > 0 && (
+              <div>
+                <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px", marginBottom:8 }}>TEAM MEMBERS</div>
+                {myTeamView.colleagues.map((c, i) => (
+                  <div key={i} style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 0", borderBottom:"1px solid rgba(255,255,255,0.03)" }}>
+                    <div style={{ width:26, height:26, borderRadius:"50%", background:"rgba(255,255,255,0.05)", display:"flex", alignItems:"center", justifyContent:"center", color:"#94a3b8", fontWeight:800, fontSize:10 }}>
+                      {(c.member_name || c.member_email || "?")[0].toUpperCase()}
+                    </div>
+                    <div style={{ flex:1 }}>
+                      <div style={{ color:"#e2e8f0", fontSize:11 }}>{c.member_name || c.member_email}</div>
+                      <div style={{ color:"#475569", fontSize:10 }}>{c.role}</div>
+                    </div>
+                    <div style={{ fontSize:10, color: c.status === "active" ? "#22c55e" : "#f59e0b", fontWeight:700 }}>
+                      {c.status?.toUpperCase()}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Gate */}
       {!isBusiness ? <BusinessGate setPage={setPage} /> : (
@@ -661,35 +738,53 @@ export default function Team({ trendsLang, isMobile, token, userPlan, projects, 
                 {activeTab === "plans" && isOwner && (
                   <div style={s.card}>
                     <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:4 }}>💳 Member Plans</div>
-                    <div style={{ color:"#475569", fontSize:12, marginBottom:16 }}>Manage plans for your team members</div>
+                    <div style={{ color:"#475569", fontSize:12, marginBottom:16 }}>Manage plans for your team members · Pro seats billed at <strong style={{color:"#22c55e"}}>5€/month</strong> on your account</div>
                     {members.filter(m => m.status === "active").length === 0 ? (
                       <div style={{ textAlign:"center", color:"#334155", padding:20 }}>No active members yet</div>
                     ) : (
-                      <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-                        {members.filter(m => m.status === "active").map(m => (
-                          <div key={m.id} style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 14px", background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:10 }}>
-                            <div style={{ width:32, height:32, borderRadius:"50%", background:"rgba(239,68,68,0.15)", display:"flex", alignItems:"center", justifyContent:"center", color:"#ef4444", fontWeight:800, fontSize:12, flexShrink:0 }}>
-                              {(m.member_name || m.member_email || "?")[0].toUpperCase()}
-                            </div>
-                            <div style={{ flex:1, minWidth:0 }}>
-                              <div style={{ color:"#e2e8f0", fontSize:12, fontWeight:600, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                                {m.member_name || m.member_email}
+                      <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+                        {members.filter(m => m.status === "active").map(m => {
+                          const currentPlan = m.current_plan || "Free";
+                          const genCount = m.generations_count ?? 0;
+                          return (
+                            <div key={m.id} style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:10, padding:"14px 16px" }}>
+                              {/* Header membre */}
+                              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
+                                <div style={{ width:32, height:32, borderRadius:"50%", background:"rgba(239,68,68,0.15)", display:"flex", alignItems:"center", justifyContent:"center", color:"#ef4444", fontWeight:800, fontSize:12, flexShrink:0 }}>
+                                  {(m.member_name || m.member_email || "?")[0].toUpperCase()}
+                                </div>
+                                <div style={{ flex:1 }}>
+                                  <div style={{ color:"#e2e8f0", fontSize:12, fontWeight:600 }}>{m.member_name || m.member_email}</div>
+                                  <div style={{ color:"#475569", fontSize:10 }}>{m.role} · {genCount} generation{genCount !== 1 ? "s" : ""} used</div>
+                                </div>
                               </div>
-                              <div style={{ color:"#475569", fontSize:10 }}>{m.role}</div>
+                              {/* Boutons plan style Admin */}
+                              <div style={{ display:"flex", gap:8, marginBottom:10 }}>
+                                {["Free", "Pro"].map(p => (
+                                  <button
+                                    key={p}
+                                    onClick={() => currentPlan !== p && updateMemberPlan(m.id, p)}
+                                    disabled={planUpdating === m.id}
+                                    style={{
+                                      padding:"6px 18px", borderRadius:6, fontSize:11, fontWeight:700, cursor: currentPlan === p ? "default" : "pointer",
+                                      background: currentPlan === p ? (p === "Pro" ? "rgba(245,158,11,0.15)" : "rgba(100,116,139,0.15)") : "rgba(255,255,255,0.03)",
+                                      border: currentPlan === p ? `1px solid ${p === "Pro" ? "#f59e0b" : "#64748b"}` : "1px solid rgba(255,255,255,0.08)",
+                                      color: currentPlan === p ? (p === "Pro" ? "#f59e0b" : "#94a3b8") : "#475569",
+                                    }}
+                                  >{p}{planUpdating === m.id && currentPlan !== p ? " ⏳" : ""}</button>
+                                ))}
+                                {/* Reset quota */}
+                                <button
+                                  onClick={() => setConfirm({ message: `Reset quota for ${m.member_name || m.member_email}?`, onConfirm: async () => { setConfirm(null); await resetMemberQuota(m.id); } })}
+                                  disabled={quotaResetting === m.id || genCount === 0}
+                                  style={{ marginLeft:"auto", padding:"6px 14px", borderRadius:6, fontSize:11, fontWeight:700, cursor: genCount === 0 ? "default" : "pointer", background:"rgba(34,197,94,0.08)", border:"1px solid rgba(34,197,94,0.2)", color: genCount === 0 ? "#334155" : "#22c55e", opacity: quotaResetting === m.id ? 0.6 : 1 }}
+                                >
+                                  {quotaResetting === m.id ? "⏳" : "Reset à 0"}
+                                </button>
+                              </div>
                             </div>
-                            <select
-                              value={m.current_plan || "Free"}
-                              onChange={e => updateMemberPlan(m.id, e.target.value)}
-                              disabled={planUpdating === m.id}
-                              style={{ background:"#0f172a", border:"1px solid rgba(220,38,38,0.2)", borderRadius:6, color:"white", fontSize:11, padding:"6px 10px", cursor:"pointer" }}
-                            >
-                              {["Free","Pro","Business","Agency"].map(p => (
-                                <option key={p} value={p}>{p}</option>
-                              ))}
-                            </select>
-                            {planUpdating === m.id && <span style={{ color:"#64748b", fontSize:10 }}>⏳</span>}
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>
