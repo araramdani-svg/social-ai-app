@@ -53,70 +53,115 @@ async function sendInviteEmail({ to, ownerName, ownerEmail, role, inviteUrl }) {
   const roleLabels = { admin: "Admin", editor: "Editor", publisher: "Publisher" };
   const roleLabel = roleLabels[role] || "Editor";
 
+  const roleDescription = role === "admin"
+    ? "Full access — manage team, generate, publish &amp; analyze"
+    : role === "editor"
+    ? "Generate content, analyze posts &amp; access brand memory"
+    : "Publish content across all connected platforms";
+
   const html = `
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Invitation — GrowthPILOT</title>
 </head>
-<body style="margin:0;padding:0;background:#020617;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-  <div style="max-width:560px;margin:0 auto;padding:40px 20px;">
+<body style="margin:0;padding:0;background-color:#020617;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#020617;">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
+        <table width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;">
 
-    <!-- Header -->
-    <div style="text-align:center;margin-bottom:32px;">
-      <div style="font-size:28px;font-weight:900;font-style:italic;color:#000;-webkit-text-stroke:1px white;text-shadow:1px 1px 0 #ef4444;letter-spacing:1px;">
-        GrowthPILOT
-      </div>
-      <div style="color:#475569;font-size:12px;letter-spacing:2px;margin-top:4px;">AI CONTENT OS</div>
-    </div>
+          <!-- Header / Logo -->
+          <tr>
+            <td align="center" style="padding-bottom:32px;">
+              <table cellpadding="0" cellspacing="0" border="0" style="background-color:#111827;border-radius:12px;padding:16px 28px;">
+                <tr>
+                  <td>
+                    <div style="font-size:26px;font-weight:900;font-style:italic;color:#ffffff;letter-spacing:1px;text-shadow:2px 2px 0 #ef4444;">
+                      Growth<span style="color:#ef4444;">PILOT</span>
+                    </div>
+                    <div style="color:#475569;font-size:11px;letter-spacing:3px;margin-top:4px;text-align:center;">AI CONTENT COMMAND CENTER</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
 
-    <!-- Card -->
-    <div style="background:linear-gradient(145deg,#1a2235,#111827);border-radius:20px;border:1px solid rgba(220,38,38,0.25);border-left:3px solid #ef4444;padding:36px;box-shadow:0 20px 60px rgba(0,0,0,0.4);">
+          <!-- Main Card -->
+          <tr>
+            <td style="background-color:#111827;border-radius:20px;border:1px solid #1e3a5f;border-left:4px solid #ef4444;padding:36px;">
 
-      <div style="display:inline-block;background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.3);border-radius:20px;padding:4px 14px;font-size:11px;font-weight:700;color:#ef4444;letter-spacing:1.5px;margin-bottom:24px;">
-        👥 TEAM INVITATION
-      </div>
+              <!-- Badge -->
+              <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+                <tr>
+                  <td style="background-color:#1f1418;border:1px solid #7f1d1d;border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;color:#ef4444;letter-spacing:1.5px;">
+                    👥 TEAM INVITATION
+                  </td>
+                </tr>
+              </table>
 
-      <h1 style="color:#fff;font-size:24px;font-weight:800;margin:0 0 12px;line-height:1.3;">
-        You've been invited to join a team
-      </h1>
+              <!-- Title -->
+              <p style="color:#ffffff;font-size:22px;font-weight:800;margin:0 0 14px;line-height:1.3;">
+                You've been invited to join a team
+              </p>
 
-      <p style="color:#94a3b8;font-size:15px;line-height:1.7;margin:0 0 24px;">
-        <strong style="color:#e2e8f0;">${ownerName || ownerEmail}</strong> has invited you to collaborate on GrowthPILOT as a <strong style="color:#ef4444;">${roleLabel}</strong>.
-      </p>
+              <!-- Body -->
+              <p style="color:#94a3b8;font-size:15px;line-height:1.7;margin:0 0 28px;">
+                <strong style="color:#e2e8f0;">${ownerName || ownerEmail}</strong>
+                has invited you to collaborate on GrowthPILOT as a
+                <strong style="color:#ef4444;">${roleLabel}</strong>.
+              </p>
 
-      <!-- Role badge -->
-      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px 20px;margin-bottom:28px;">
-        <div style="color:#64748b;font-size:11px;letter-spacing:1.5px;margin-bottom:8px;">YOUR ROLE</div>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <div style="width:8px;height:8px;border-radius:50%;background:#ef4444;"></div>
-          <span style="color:#ef4444;font-size:16px;font-weight:800;letter-spacing:1px;">${roleLabel.toUpperCase()}</span>
-        </div>
-        <div style="color:#475569;font-size:12px;margin-top:6px;">
-          ${role === "admin" ? "Full access — manage team, generate, publish & analyze" :
-            role === "editor" ? "Generate content, analyze posts & access brand memory" :
-            "Publish content across all connected platforms"}
-        </div>
-      </div>
+              <!-- Role badge -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#1e293b;border:1px solid #334155;border-radius:12px;margin-bottom:28px;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <p style="color:#64748b;font-size:11px;letter-spacing:1.5px;margin:0 0 10px;">YOUR ROLE</p>
+                    <p style="margin:0 0 6px;">
+                      <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background-color:#ef4444;margin-right:8px;vertical-align:middle;"></span>
+                      <span style="color:#ef4444;font-size:16px;font-weight:800;letter-spacing:1px;vertical-align:middle;">${roleLabel.toUpperCase()}</span>
+                    </p>
+                    <p style="color:#64748b;font-size:12px;margin:0;">${roleDescription}</p>
+                  </td>
+                </tr>
+              </table>
 
-      <!-- CTA Button -->
-      <a href="${inviteUrl}" style="display:block;text-align:center;background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;text-decoration:none;font-weight:800;font-size:15px;letter-spacing:0.5px;padding:16px 32px;border-radius:12px;box-shadow:0 4px 20px rgba(220,38,38,0.35);margin-bottom:20px;">
-        ⚡ Accept Invitation &amp; Create Account →
-      </a>
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+                <tr>
+                  <td align="center">
+                    <a href="${inviteUrl}"
+                       style="display:inline-block;background-color:#dc2626;color:#ffffff;text-decoration:none;font-weight:800;font-size:15px;letter-spacing:0.5px;padding:16px 40px;border-radius:12px;border:none;">
+                      ⚡ Accept Invitation &amp; Create Account →
+                    </a>
+                  </td>
+                </tr>
+              </table>
 
-      <p style="color:#334155;font-size:12px;text-align:center;margin:0;">
-        This invitation expires in 7 days. If you didn't expect this, ignore this email.
-      </p>
-    </div>
+              <!-- Expiry note -->
+              <p style="color:#475569;font-size:12px;text-align:center;margin:0;">
+                This invitation expires in 7 days. If you didn't expect this, ignore this email.
+              </p>
 
-    <!-- Footer -->
-    <div style="text-align:center;margin-top:28px;">
-      <p style="color:#1e293b;font-size:12px;">
-        © 2026 GrowthPILOT · <a href="https://www.aigrowthpilot.app" style="color:#334155;">aigrowthpilot.app</a>
-      </p>
-    </div>
-  </div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding-top:28px;">
+              <p style="color:#334155;font-size:12px;margin:0;">
+                © 2026 GrowthPILOT ·
+                <a href="https://www.aigrowthpilot.app" style="color:#475569;text-decoration:none;">aigrowthpilot.app</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>`;
 
