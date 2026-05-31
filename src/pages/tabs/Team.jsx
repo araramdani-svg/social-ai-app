@@ -531,7 +531,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, projects, 
       )}
 
       {/* Gate */}
-      {!isBusiness ? <BusinessGate setPage={setPage} /> : (
+      {userPlan !== "Member" && !isBusiness ? <BusinessGate setPage={setPage} /> : (
         <>
           {/* Main tabs — Agency uniquement */}
           {isAgency && (
