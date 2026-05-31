@@ -662,7 +662,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, projects, 
                   <div style={s.card}>
                     <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:4 }}>💳 Member Plans</div>
                     <div style={{ color:"#475569", fontSize:12, marginBottom:16 }}>Manage plans for your team members</div>
-                    {members.filter(m => m.status === "active" && m.member_id).length === 0 ? (
+                    {members.filter(m => m.status === "active").length === 0 ? (
                       <div style={{ textAlign:"center", color:"#334155", padding:20 }}>No active members yet</div>
                     ) : (
                       <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
