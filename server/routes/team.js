@@ -206,14 +206,14 @@ router.get("/members", auth, requireBusiness, async (req, res) => {
 
     // Owner info
     const ownerResult = await db.query(
-      "SELECT email, linkedin_name FROM users WHERE id=$1",
+      "SELECT email, linkedin_name, team_name FROM users WHERE id=$1",
       [req.user.id]
     );
     const owner = ownerResult.rows[0];
 
     res.json({
       members: result.rows,
-      owner: { email: owner.email, name: owner.linkedin_name || owner.email },
+      owner: { email: owner.email, name: owner.linkedin_name || owner.email, teamName: owner.team_name || "" },
       maxMembers: req.maxMembers || MAX_MEMBERS,
       remaining: (req.maxMembers || MAX_MEMBERS) - result.rows.length,
     });
@@ -792,7 +792,7 @@ router.get("/my-team-view", auth, async (req, res) => {
     // Trouver l'équipe du membre
     const memberResult = await db.query(
       `SELECT tm.role, tm.joined_at, tm.permissions,
-              u.email as owner_email, u.linkedin_name as owner_name, u.id as owner_id
+              u.email as owner_email, u.linkedin_name as owner_name, u.id as owner_id, u.team_name
        FROM team_members tm
        JOIN users u ON u.id = tm.owner_id
        WHERE tm.member_id=$1 AND tm.status='active'
@@ -818,12 +818,38 @@ router.get("/my-team-view", auth, async (req, res) => {
       myRole: myTeam.role,
       joinedAt: myTeam.joined_at,
       permissions: myTeam.permissions,
+      teamName: myTeam.team_name || null,
       owner: { email: myTeam.owner_email, name: myTeam.owner_name || myTeam.owner_email },
       colleagues: colleaguesResult.rows,
     });
   } catch (err) {
     console.error("GET /team/my-team-view:", err.message);
     res.status(500).json({ error: "Failed to fetch team view" });
+  }
+});
+
+// ─── PATCH /team/name — définir le nom de l'équipe ───────────────────────────
+router.patch("/name", auth, requireBusiness, async (req, res) => {
+  const { teamName } = req.body;
+  if (typeof teamName !== "string") return res.status(400).json({ error: "teamName required" });
+  const name = teamName.trim().slice(0, 50); // max 50 chars
+
+  try {
+    await db.query("UPDATE users SET team_name=$1 WHERE id=$2", [name || null, req.user.id]);
+
+    await db.query(
+      "INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,$2,$3,NOW())",
+      [req.user.id, "team_name_updated", JSON.stringify({ team_name: name })]
+    ).catch(() => {});
+    await db.query(
+      "INSERT INTO admin_logs (admin_id, action, target_user_id, details, created_at) VALUES ($1,$2,$3,$4,NOW())",
+      [req.user.id, "team_name_updated", req.user.id, JSON.stringify({ team_name: name })]
+    ).catch(() => {});
+
+    res.json({ success: true, teamName: name });
+  } catch (err) {
+    console.error("PATCH /team/name:", err.message);
+    res.status(500).json({ error: "Failed to update team name" });
   }
 });
 

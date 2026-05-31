@@ -16,7 +16,8 @@ export default function Profile({
   displayName, setDisplayName,
   userPlan, projects, stats, workspace,
   changePassword, changeEmailAddress, deleteAccount, saveProfile,
-  setPage, showToast
+  setPage, showToast,
+  planManagedBy, managedByTeamName, managedByOwnerEmail,
 }) {
   const [confirm, setConfirm] = useState(null);
   const [emailCurrentPassword, setEmailCurrentPassword] = useState("");
@@ -210,6 +211,17 @@ export default function Profile({
 
               {/* Infos lecture seule */}
               <div style={{ display:"grid", gap:12 }}>
+                {planManagedBy === "team" && (
+                  <div style={{ padding:"12px 18px", background:"rgba(139,92,246,0.08)", borderRadius:10, border:"1px solid rgba(139,92,246,0.2)", borderLeft:"3px solid #8b5cf6" }}>
+                    <div style={{ color:"#8b5cf6", fontSize:10, letterSpacing:"1.5px", marginBottom:5 }}>MANAGED ACCOUNT</div>
+                    <div style={{ color:"#e2e8f0", fontSize:13, fontWeight:600 }}>
+                      {managedByTeamName ? `Team: ${managedByTeamName}` : "Agency Team"}
+                    </div>
+                    <div style={{ color:"#64748b", fontSize:11, marginTop:2 }}>
+                      Managed by {managedByOwnerEmail || "your agency"}
+                    </div>
+                  </div>
+                )}
                 {[
                   { label: tr(trendsLang, "profile.fieldEmail"),     value: token && token !== "guest" ? getEmail() : "—" },
                   { label: tr(trendsLang, "profile.fieldWorkspace"), value: workspace || tr(trendsLang,"profile.personalWorkspace") },

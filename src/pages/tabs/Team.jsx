@@ -326,6 +326,8 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
   const [showClient,  setShowClient]  = useState(false);
   const [editClient,  setEditClient]  = useState(null);
   const [ownerInfo,   setOwnerInfo]   = useState(null);
+  const [teamName,    setTeamName]    = useState("");
+  const [teamNameSaving, setTeamNameSaving] = useState(false);
   const [activeTab,   setActiveTab]   = useState("members");
   const [mainTab,     setMainTab]     = useState("team");
   const [confirm,     setConfirm]     = useState(null);
@@ -353,6 +355,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
       const aData = await aRes.json();
       setMembers(mData.members || []);
       setOwnerInfo(mData.owner || null);
+      if (mData.owner?.teamName) setTeamName(mData.owner.teamName);
       setActivity(aData.activity || []);
     } catch {}
     setLoading(false);
@@ -379,6 +382,16 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
 
   useEffect(() => { fetchTeamData(); }, [fetchTeamData]);
   useEffect(() => { if (isAgency) fetchClients(); }, [fetchClients]);
+
+  const saveTeamName = async () => {
+    setTeamNameSaving(true);
+    try {
+      const r = await fetch(`${API}/team/name`, { method: "PATCH", headers, body: JSON.stringify({ teamName }) });
+      const d = await r.json();
+      if (!d.success) setConfirm({ message: `⚠️ ${d.error}`, onConfirm: () => setConfirm(null) });
+    } catch {}
+    setTeamNameSaving(false);
+  };
 
   const removeMember = (id) => {
     setConfirm({ message: "Remove this member from your team?", onConfirm: async () => {
@@ -563,7 +576,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                         <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13 }}>Team Members</div>
                         <div style={{ color:"#475569", fontSize:11, marginTop:2 }}>{used}/{MAX_MEMBERS} slots used</div>
                       </div>
-                      {remaining > 0 && <button style={s.btn} onClick={()=>setShowInvite(true)}>+ Invite</button>}
+                      {isOwner && remaining > 0 && <button style={s.btn} onClick={()=>setShowInvite(true)}>+ Invite</button>}
                     </div>
                     <div style={{ height:3, background:"rgba(255,255,255,0.06)", borderRadius:2, marginBottom:16 }}>
                       <div style={{ width:`${(used/MAX_MEMBERS)*100}%`, height:"100%", background:"linear-gradient(90deg,#ef4444,#f97316)", borderRadius:2, transition:"width 0.4s" }} />
@@ -584,7 +597,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                       <div style={{ textAlign:"center", padding:"28px 0" }}>
                         <div style={{ fontSize:28, marginBottom:8 }}>👥</div>
                         <div style={{ color:"#475569", fontSize:13, marginBottom:16 }}>No members yet.</div>
-                        <button style={s.btn} onClick={()=>setShowInvite(true)}>+ Invite your first member</button>
+                        {isOwner && <button style={s.btn} onClick={()=>setShowInvite(true)}>+ Invite your first member</button>}
                       </div>
                     )}
                     {members.map(m => {
@@ -624,9 +637,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                       );
                     })}
                     {!loading && members.length > 0 && remaining > 0 && (
-                      <button style={{ ...s.btn, width:"100%", marginTop:12 }} onClick={()=>setShowInvite(true)}>
-                        + Invite Another ({remaining} slot{remaining!==1?"s":""} left)
-                      </button>
+                      {isOwner && <button style={{ ...s.btn, width:"100%", marginTop:12 }} onClick={()=>setShowInvite(true)}>+ Invite Another ({remaining} slot{remaining!==1?"s":""} left)</button>}
                     )}
                   </div>
                 )}
@@ -797,6 +808,23 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                   <span style={s.label}>WORKSPACE</span>
                   <div style={{ color:"#ef4444", fontSize:18, fontWeight:800 }}>{workspace||"PERSONAL"}</div>
                   <div style={s.divider} />
+                  {/* Team Name */}
+                  <span style={s.label}>TEAM NAME</span>
+                  <div style={{ display:"flex", gap:6, alignItems:"center", marginBottom:4 }}>
+                    <input
+                      value={teamName}
+                      onChange={e => setTeamName(e.target.value)}
+                      placeholder="My Agency Team"
+                      maxLength={50}
+                      style={{ flex:1, background:"#0f172a", border:"1px solid rgba(220,38,38,0.2)", borderRadius:6, color:"#e2e8f0", fontSize:12, padding:"6px 10px", outline:"none" }}
+                    />
+                    <button
+                      onClick={saveTeamName}
+                      disabled={teamNameSaving}
+                      style={{ background:"linear-gradient(135deg,#ef4444,#dc2626)", border:"none", borderRadius:6, color:"#fff", fontSize:11, fontWeight:700, padding:"6px 12px", cursor:"pointer", opacity: teamNameSaving ? 0.6 : 1 }}
+                    >{teamNameSaving ? "..." : "Save"}</button>
+                  </div>
+                  <div style={s.divider} />
                   <span style={s.label}>PLAN</span>
                   <div style={{ display:"flex", alignItems:"center", gap:8 }}>
                     <span style={{ color: isAgency?"#8b5cf6":"#f97316", fontSize:14, fontWeight:800 }}>{isAgency?"🏢 AGENCY":"💎 BUSINESS"}</span>
@@ -822,7 +850,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                     <div style={{ fontSize:28, marginBottom:10 }}>👋</div>
                     <div style={{ color:"#e2e8f0", fontWeight:700, marginBottom:6 }}>Invite your team</div>
                     <div style={{ color:"#475569", fontSize:12, marginBottom:16, lineHeight:1.6 }}>{remaining} invitation slot{remaining!==1?"s":""} remaining</div>
-                    <button style={{ ...s.btn, width:"100%", padding:"12px" }} onClick={()=>setShowInvite(true)}>+ Send Invitation</button>
+                    {isOwner && <button style={{ ...s.btn, width:"100%", padding:"12px" }} onClick={()=>setShowInvite(true)}>+ Send Invitation</button>}
                   </div>
                 )}
 
