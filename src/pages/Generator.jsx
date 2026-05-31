@@ -236,6 +236,18 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
     if (params.get("facebook")  ==="connected") { window.history.replaceState({},"", "/"); fetch(`${API}/facebook/status`,  { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setFacebookStatus).catch(()=>{}); }
     if (params.get("tiktok")    ==="connected") { window.history.replaceState({},"", "/"); fetch(`${API}/tiktok/status`,    { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setTiktokStatus).catch(()=>{}); }
     if (params.get("threads") ==="connected") { window.history.replaceState({},""," /"); fetch(`${API}/threads/status`, { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setThreadsStatus).catch(()=>{}); }
+    // Accepter une invitation team si l'user est deja connecte
+    const inviteToken = params.get("invite") || localStorage.getItem("pendingInviteToken");
+    if (inviteToken && token && token !== "guest") {
+      fetch(`${API}/team/accept`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ token: inviteToken }),
+      })
+        .then(r => r.json())
+        .then(d => { if (d.success) { localStorage.removeItem("pendingInviteToken"); window.history.replaceState({}, "", "/"); } })
+        .catch(() => {});
+    }
     const handleOAuth = (e) => {
       if (e.detail==="linkedin") fetch(`${API}/linkedin/status`,{ headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setLinkedinStatus).catch(()=>{});
       if (e.detail==="threads")  fetch(`${API}/threads/status`, { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setThreadsStatus).catch(()=>{});
