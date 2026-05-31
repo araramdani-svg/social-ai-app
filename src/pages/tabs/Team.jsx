@@ -314,7 +314,7 @@ function AgencyDashboard({ token, clients, onAddClient, onEditClient, onDeleteCl
 }
 
 /* ── Main ─────────────────────────────────────────────────────────────────── */
-export default function Team({ trendsLang, isMobile, token, userPlan, projects, autoPosts, scheduledPosts, workspace, setPage }) {
+export default function Team({ trendsLang, isMobile, token, userPlan, planManagedBy, projects, autoPosts, scheduledPosts, workspace, setPage }) {
 
   const [members,     setMembers]     = useState([]);
   const [clients,     setClients]     = useState([]);
@@ -360,7 +360,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, projects, 
 
   // Vue lecture seule pour les membres
   useEffect(() => {
-    if (token && userPlan === "Member") {
+    if (token && planManagedBy === "team") {
       fetch(`${API}/team/my-team-view`, { headers: { Authorization: `Bearer ${token}` } })
         .then(r => r.json())
         .then(d => { if (d.myRole) setMyTeamView(d); })
@@ -483,7 +483,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, projects, 
       </div>
 
       {/* Vue membre lecture seule */}
-      {userPlan === "Member" && myTeamView && (
+      {planManagedBy === "team" && myTeamView && (
         <div style={{ padding:"0 0 24px" }}>
           <div style={{ ...s.card, marginBottom:12 }}>
             <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:12 }}>👥 My Team</div>
@@ -531,7 +531,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, projects, 
       )}
 
       {/* Gate */}
-      {userPlan !== "Member" && !isBusiness ? <BusinessGate setPage={setPage} /> : (
+      {planManagedBy !== "team" && !isBusiness ? <BusinessGate setPage={setPage} /> : (
         <>
           {/* Main tabs — Agency uniquement */}
           {isAgency && (
