@@ -304,6 +304,77 @@ router.post("/invite", auth, requireBusiness, async (req, res) => {
   }
 });
 
+// ─── POST /team/resend/:id — resend invitation email ─────────────────────────
+router.post("/resend/:id", auth, requireBusiness, async (req, res) => {
+  try {
+    // Vérifier que le membre appartient à cet owner et est encore pending
+    const result = await db.query(
+      `SELECT tm.id, tm.member_email, tm.role, tm.invite_token, tm.status
+       FROM team_members tm
+       WHERE tm.id=$1 AND tm.owner_id=$2`,
+      [req.params.id, req.user.id]
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({ error: "Member not found" });
+    }
+
+    const member = result.rows[0];
+
+    if (member.status !== "pending") {
+      return res.status(400).json({ error: "Member has already joined the team" });
+    }
+
+    // Récupérer les infos de l'owner
+    const ownerResult = await db.query(
+      "SELECT email, linkedin_name FROM users WHERE id=$1",
+      [req.user.id]
+    );
+    const owner = ownerResult.rows[0];
+    const inviteUrl = `${API_URL}?invite=${member.invite_token}`;
+
+    const emailSent = await sendInviteEmail({
+      to: member.member_email,
+      ownerName: owner.linkedin_name || owner.email,
+      ownerEmail: owner.email,
+      role: member.role,
+      inviteUrl,
+    });
+
+    // Log user_logs de l'owner
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,$2,$3,NOW())`,
+      [req.user.id, "team_invite_resent", JSON.stringify({
+        email: member.member_email,
+        role: member.role,
+        emailSent,
+        member_id: req.params.id,
+      })]
+    ).catch(() => {});
+
+    // Log admin_logs
+    await db.query(
+      `INSERT INTO admin_logs (admin_id, action, target_user_id, details, created_at) VALUES ($1,$2,$3,$4,NOW())`,
+      [req.user.id, "team_invite_resent", null, JSON.stringify({
+        email: member.member_email,
+        role: member.role,
+        emailSent,
+      })]
+    ).catch(() => {});
+
+    res.json({
+      success: true,
+      emailSent,
+      message: emailSent
+        ? `Invitation resent to ${member.member_email}`
+        : `Email not sent (check RESEND_API_KEY). Share this link: ${inviteUrl}`,
+    });
+  } catch (err) {
+    console.error("POST /team/resend:", err.message);
+    res.status(500).json({ error: "Failed to resend invitation" });
+  }
+});
+
 // ─── GET /team/invite/:token — validate token (public) ───────────────────────
 router.get("/invite/:token", async (req, res) => {
   try {

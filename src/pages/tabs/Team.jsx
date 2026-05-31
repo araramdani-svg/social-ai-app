@@ -330,6 +330,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, projects, 
   const [mainTab,     setMainTab]     = useState("team");
   const [confirm,     setConfirm]     = useState(null);
   const [planUpdating,setPlanUpdating]= useState(null);
+  const [resending,   setResending]   = useState(null);
 
   const isBusiness = userPlan === "Business" || userPlan === "Agency";
   const isAgency   = userPlan === "Agency";
@@ -400,6 +401,28 @@ export default function Team({ trendsLang, isMobile, token, userPlan, projects, 
       fetchTeamData();
     } catch {}
     setPlanUpdating(null);
+  };
+
+  const resendInvite = async (id, email) => {
+    setResending(id);
+    try {
+      const r = await fetch(`${API}/team/resend/${id}`, { method: "POST", headers });
+      const d = await r.json();
+      if (d.success) {
+        setConfirm({
+          message: `✅ Invitation resent to ${email}`,
+          onConfirm: () => setConfirm(null),
+        });
+      } else {
+        setConfirm({
+          message: `⚠️ ${d.message || "Failed to resend invitation"}`,
+          onConfirm: () => setConfirm(null),
+        });
+      }
+    } catch {
+      setConfirm({ message: "⚠️ Network error", onConfirm: () => setConfirm(null) });
+    }
+    setResending(null);
   };
 
   const used      = members.length;
@@ -510,6 +533,15 @@ export default function Team({ trendsLang, isMobile, token, userPlan, projects, 
                               {ROLES.map(r=><option key={r.id} value={r.id}>{r.label}</option>)}
                             </select>
                             <button style={s.btnDanger} onClick={()=>removeMember(m.id)}>Remove</button>
+                            {m.status === "pending" && (
+                              <button
+                                style={{ ...s.btn, background:"linear-gradient(135deg,#3b82f6,#2563eb)", fontSize:10, padding:"7px 12px", opacity: resending===m.id ? 0.6 : 1 }}
+                                onClick={() => resendInvite(m.id, m.member_email)}
+                                disabled={resending === m.id}
+                              >
+                                {resending === m.id ? "Sending..." : "↩ Resend invite"}
+                              </button>
+                            )}
                           </div>
                         </div>
                       );
