@@ -853,7 +853,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                   <div style={{ ...s.card, background:"rgba(239,68,68,0.04)", border:"1px solid rgba(239,68,68,0.15)", textAlign:"center", padding:24 }}>
                     <div style={{ fontSize:28, marginBottom:10 }}>👋</div>
                     <div style={{ color:"#e2e8f0", fontWeight:700, marginBottom:6 }}>{tr(trendsLang,"ui.team.inviteYourTeam")}</div>
-                    <div style={{ color:"#475569", fontSize:12, marginBottom:16, lineHeight:1.6 }}>{remaining} invitation slot{remaining!==1?"s":""} remaining</div>
+                    <div style={{ color:"#475569", fontSize:12, marginBottom:16, lineHeight:1.6 }}>{remaining} {tr(trendsLang,"ui.team.slotsRemaining")}</div>
                     {isOwner && <button style={{ ...s.btn, width:"100%", padding:"12px" }} onClick={()=>setShowInvite(true)}>+ {tr(trendsLang,"ui.team.sendInvitation")}</button>}
                   </div>
                 )}
