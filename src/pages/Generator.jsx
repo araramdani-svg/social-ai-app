@@ -139,6 +139,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   const [tiktokStatus,    setTiktokStatus]    = useState({ connected:false, username:null });
   const [tiktokPosting,   setTiktokPosting]   = useState(false);
   const [userPlan,        setUserPlan]        = useState({ plan:"Free", interval:null });
+  const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
   const [planManagedBy,   setPlanManagedBy]   = useState("self");
   const [managedByTeamName,   setManagedByTeamName]   = useState(null);
   const [managedByOwnerEmail, setManagedByOwnerEmail] = useState(null);
@@ -223,7 +224,16 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
         .then(r => r.json())
         .then(d => { if (d.onboarding_done === false) setShowOnboarding(true); if (d.first_name) setFirstName(d.first_name); if (d.last_name) setLastName(d.last_name); if (d.display_name) setDisplayName(d.display_name); if (d.plan_managed_by) setPlanManagedBy(d.plan_managed_by); if (d.plan_managed_by === "team") { fetch(`${API}/team/my-team-view`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).then(td => { if (td.teamName) setManagedByTeamName(td.teamName); if (td.owner?.email) setManagedByOwnerEmail(td.owner.email); }).catch(() => {}); } })
         .catch(() => {});
-      fetch(`${API}/stripe/status`,   { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setUserPlan).catch(()=>{});
+      fetch(`${API}/stripe/status`,   { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(d => {
+        setUserPlan(d);
+        // Fetch pending approvals count si Business/Agency
+        if (d?.plan === "Business" || d?.plan === "Agency") {
+          fetch(`${API}/team/approvals`, { headers:{ Authorization:`Bearer ${token}` } })
+            .then(r=>r.json())
+            .then(a => { setPendingApprovalsCount(a.posts?.length || 0); })
+            .catch(()=>{});
+        }
+      }).catch(()=>{});
       fetch(`${API}/linkedin/status`, { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setLinkedinStatus).catch(()=>{});
       fetch(`${API}/threads/status`,  { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setThreadsStatus).catch(()=>{});
       fetch(`${API}/twitter/status`,    { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).then(setTwitterStatus).catch(()=>{});
@@ -396,8 +406,13 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
             <h2 style={st.brandMini}>GrowthPILOT</h2>
           </div>
           {NAV_TABS.map(k=>(
-            <button key={k} style={{ ...st.nav,background:tab===k?"rgba(220,38,38,0.1)":"transparent",border:"none",borderRadius:8,color:tab===k?"#ef4444":"#64748b",borderLeft:tab===k?"3px solid #ef4444":"3px solid transparent",boxShadow:tab===k?"0 0 16px rgba(220,38,38,0.12)":"none",textShadow:"none" }} onClick={()=>setTab(k)}>
+            <button key={k} style={{ ...st.nav,background:tab===k?"rgba(220,38,38,0.1)":"transparent",border:"none",borderRadius:8,color:tab===k?"#ef4444":"#64748b",borderLeft:tab===k?"3px solid #ef4444":"3px solid transparent",boxShadow:tab===k?"0 0 16px rgba(220,38,38,0.12)":"none",textShadow:"none", position:"relative" }} onClick={()=>setTab(k)}>
               {tr(trendsLang,`nav.${k}`)}
+              {k === "team" && pendingApprovalsCount > 0 && (
+                <span style={{ position:"absolute", top:6, right:8, background:"#ef4444", color:"#fff", borderRadius:"50%", minWidth:16, height:16, fontSize:9, fontWeight:800, display:"flex", alignItems:"center", justifyContent:"center", padding:"0 3px", lineHeight:1 }}>
+                  {pendingApprovalsCount}
+                </span>
+              )}
             </button>
           ))}
         </aside>
@@ -413,8 +428,13 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
               <button style={{ background:"transparent",border:"none",color:"#ef4444",fontSize:22,cursor:"pointer",padding:"4px 8px" }} onClick={()=>setSidebarOpen(false)}>✕</button>
             </div>
             {[...NAV_TABS,"profile"].map(k=>(
-              <button key={k} style={{ ...st.nav,background:tab===k?"rgba(220,38,38,0.1)":"transparent",border:"none",borderRadius:8,color:tab===k?"#ef4444":"#64748b",borderLeft:tab===k?"3px solid #ef4444":"3px solid transparent",textShadow:"none",fontSize:14,padding:"14px 16px" }} onClick={()=>navigate(k)}>
+              <button key={k} style={{ ...st.nav,background:tab===k?"rgba(220,38,38,0.1)":"transparent",border:"none",borderRadius:8,color:tab===k?"#ef4444":"#64748b",borderLeft:tab===k?"3px solid #ef4444":"3px solid transparent",textShadow:"none",fontSize:14,padding:"14px 16px", position:"relative" }} onClick={()=>navigate(k)}>
                 {tr(trendsLang,`nav.${k}`)}
+                {k === "team" && pendingApprovalsCount > 0 && (
+                  <span style={{ position:"absolute", top:10, right:12, background:"#ef4444", color:"#fff", borderRadius:"50%", minWidth:18, height:18, fontSize:10, fontWeight:800, display:"flex", alignItems:"center", justifyContent:"center", padding:"0 4px", lineHeight:1 }}>
+                    {pendingApprovalsCount}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -465,7 +485,7 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
             {tab==="scheduler"    && <Scheduler    {...shared} scheduleDate={scheduleDate} setScheduleDate={setScheduleDate} scheduleTime={scheduleTime} setScheduleTime={setScheduleTime} scheduledPosts={scheduledPosts} setScheduledPosts={setScheduledPosts} publishLog={publishLog} schedulePost={schedulePost} history={history} token={token} />}
             {tab==="publish"      && <Publish      {...shared} post={post} publishLog={publishLog} autoPosts={autoPosts} publishStatus={publishStatus} linkedinStatus={linkedinStatus} twitterStatus={twitterStatus} facebookStatus={facebookStatus} publish={publish} postToTwitter={postToTwitter} postToFacebook={postToFacebook} twitterPosting={twitterPosting} facebookPosting={facebookPosting} attachedMedia={attachedMedia} showToast={showToast} />}
             {tab==="history"      && <History      {...shared} history={history} projects={projects} loadHistory={loadHistory} setPost={setPost} setTab={setTab} token={token} />}
-            {tab==="team"         && <Team         {...shared} token={token} userPlan={userPlan?.plan || "Free"} planManagedBy={planManagedBy} setPage={setPage} projects={projects} autoPosts={autoPosts} scheduledPosts={scheduledPosts} workspace={workspace} />}
+            {tab==="team"         && <Team         {...shared} token={token} userPlan={userPlan?.plan || "Free"} planManagedBy={planManagedBy} setPage={setPage} projects={projects} autoPosts={autoPosts} scheduledPosts={scheduledPosts} workspace={workspace} onApprovalsCount={setPendingApprovalsCount} />}
             {tab==="trends"       && <Trends       {...shared} trends={trends} trendsNiche={trendsNiche} setTrendsNiche={setTrendsNiche} trendsLoading={trendsLoading} trendsSources={trendsSources} fetchTrends={fetchTrends} useAsTopic={useAsTopic} />}
             {tab==="integrations" && <Integrations {...shared} token={token} post={post} openLogin={() => setPage && setPage("auth")} linkedinStatus={linkedinStatus} threadsStatus={threadsStatus} twitterStatus={twitterStatus} instagramStatus={instagramStatus} facebookStatus={facebookStatus} tiktokStatus={tiktokStatus} linkedinPosting={linkedinPosting} threadsPosting={threadsPosting} twitterPosting={twitterPosting} instagramPosting={instagramPosting} facebookPosting={facebookPosting} tiktokPosting={tiktokPosting} connectLinkedin={connectLinkedin} disconnectLinkedin={disconnectLinkedin} postToLinkedin={postToLinkedin} connectThreads={connectThreads} disconnectThreads={disconnectThreads} postToThreads={postToThreads} connectTwitter={connectTwitter} disconnectTwitter={disconnectTwitter} postToTwitter={postToTwitter} connectInstagram={connectInstagram} disconnectInstagram={disconnectInstagram} postToInstagram={postToInstagram} connectFacebook={connectFacebook} disconnectFacebook={disconnectFacebook} postToFacebook={postToFacebook} connectTiktok={connectTiktok} disconnectTiktok={disconnectTiktok} postToTiktok={postToTiktok} showToast={showToast} />}
             {tab==="profile"      && <Profile      {...shared} token={token} profileSection={profileSection} setProfileSection={setProfileSection} profileMsg={profileMsg} setProfileMsg={setProfileMsg} profileLoading={profileLoading} currentPassword={currentPassword} setCurrentPassword={setCurrentPassword} newPassword={newPassword} setNewPassword={setNewPassword} confirmPassword={confirmPassword} setConfirmPassword={setConfirmPassword} newEmail={newEmail} setNewEmail={setNewEmail} firstName={firstName} setFirstName={setFirstName} lastName={lastName} setLastName={setLastName} displayName={displayName} setDisplayName={setDisplayName} userPlan={userPlan} projects={projects} stats={stats} workspace={workspace} changePassword={changePassword} changeEmailAddress={changeEmailAddress} deleteAccount={deleteAccount} saveProfile={saveProfile} setPage={setPage} showToast={showToast} onShowOnboarding={() => setShowOnboarding(true)} planManagedBy={planManagedBy} managedByTeamName={managedByTeamName} managedByOwnerEmail={managedByOwnerEmail} />}

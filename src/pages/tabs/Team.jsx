@@ -327,7 +327,7 @@ function AgencyDashboard({ token, trendsLang, clients, onAddClient, onEditClient
 }
 
 /* ── Main ─────────────────────────────────────────────────────────────────── */
-export default function Team({ trendsLang, isMobile, token, userPlan, planManagedBy, projects, autoPosts, scheduledPosts, workspace, setPage }) {
+export default function Team({ trendsLang, isMobile, token, userPlan, planManagedBy, projects, autoPosts, scheduledPosts, workspace, setPage, onApprovalsCount }) {
 
   const [members,     setMembers]     = useState([]);
   const [clients,     setClients]     = useState([]);
@@ -437,7 +437,9 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
     try {
       const r = await fetch(`${API}/team/approvals`, { headers });
       const d = await r.json();
-      setApprovals(d.posts || []);
+      const posts = d.posts || [];
+      setApprovals(posts);
+      onApprovalsCount?.(posts.length); // notifier la sidebar
     } catch {}
     setApprovalsLoading(false);
   };
