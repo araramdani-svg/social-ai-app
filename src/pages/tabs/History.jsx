@@ -14,6 +14,9 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
   const [actionsLoading, setActionsLoading] = useState(false);
   const [filterAction, setFilterAction] = useState("");
   const [deleteModal,  setDeleteModal]  = useState(null); // post id à supprimer
+  const [assignedPosts,    setAssignedPosts]    = useState([]);
+  const [assignedLoading,  setAssignedLoading]  = useState(false);
+  const [assignedLoaded,   setAssignedLoaded]   = useState(false);
 
   const ACTION_COLORS = {
     register: "#22c55e", login: "#3b82f6", verify_email: "#22c55e",
@@ -36,6 +39,7 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
     team_update_plan: "#8b5cf6", team_view_logs: "#64748b",
     team_role_updated: "#8b5cf6", team_removed: "#ef4444", team_joined: "#22c55e",
     team_invite: "#3b82f6", team_member_joined: "#22c55e", quota_exceeded: "#ef4444",
+    post_assigned: "#60a5fa", post_assigned_to_me: "#60a5fa", team_view_assigned_posts: "#64748b",
   };
 
   const getActionLabel = (action) => tr(trendsLang, `ui.actionLabels.${action}`) || action;
@@ -45,6 +49,22 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
   const USER_ACTION_LABELS = Object.fromEntries(
     Object.keys(ACTION_COLORS).map(key => [key, { label: getActionLabel(key), color: getActionColor(key) }])
   );
+
+  const fetchAssignedPosts = async () => {
+    setAssignedLoading(true);
+    try {
+      const r = await fetch(`${API}/team/my-assigned-posts`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const d = await r.json();
+      setAssignedPosts(d.posts || []);
+      setAssignedLoaded(true);
+      console.log(`[History] fetchAssignedPosts → ${d.posts?.length || 0} posts`);
+    } catch (err) {
+      console.error("[History] fetchAssignedPosts error:", err.message);
+    }
+    setAssignedLoading(false);
+  };
 
   const loadUserActions = async (p = 1) => {
     setActionsLoading(true);
@@ -64,6 +84,7 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
 
   useEffect(() => {
     if (activeTab === "actions") loadUserActions(1);
+    if (activeTab === "team" && !assignedLoaded) fetchAssignedPosts();
   }, [activeTab, filterAction]);
 
   const [search,       setSearch]       = useState("");
@@ -240,6 +261,15 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
           style={{ padding:"10px 20px", background:"none", border:"none", borderBottom: activeTab==="actions" ? "2px solid #8b5cf6" : "2px solid transparent", color: activeTab==="actions" ? "#8b5cf6" : "#475569", fontWeight:700, fontSize:12, cursor:"pointer", letterSpacing:"0.5px" }}
           onClick={() => setActiveTab("actions")}
         >📊 {tr(trendsLang,"ui.myActions")}</button>
+        <button
+          style={{ padding:"10px 20px", background:"none", border:"none", borderBottom: activeTab==="team" ? "2px solid #60a5fa" : "2px solid transparent", color: activeTab==="team" ? "#60a5fa" : "#475569", fontWeight:700, fontSize:12, cursor:"pointer", letterSpacing:"0.5px", display:"flex", alignItems:"center", gap:6 }}
+          onClick={() => setActiveTab("team")}
+        >
+          🎯 {tr(trendsLang,"ui.team.tabMyTeamPosts") || "TEAM"}
+          {assignedPosts.length > 0 && (
+            <span style={{ background:"#60a5fa", color:"#fff", borderRadius:"50%", padding:"1px 5px", fontSize:9, fontWeight:800 }}>{assignedPosts.length}</span>
+          )}
+        </button>
       </div>
 
       {/* ── Onglet Mes Actions ── */}
@@ -516,6 +546,108 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
         )}
       </div>
       </>)}
+      {/* ── Onglet Team (posts assignés au membre) ── */}
+      {activeTab === "team" && (
+        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+          {/* Header */}
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+            <div>
+              <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:14 }}>🎯 {tr(trendsLang,"ui.team.myAssignedPosts") || "Posts assigned to me"}</div>
+              <div style={{ color:"#475569", fontSize:12, marginTop:2 }}>{tr(trendsLang,"ui.team.myAssignedDesc") || "Posts your team owner assigned to you for review"}</div>
+            </div>
+            <button
+              onClick={fetchAssignedPosts}
+              style={{ padding:"7px 12px", borderRadius:8, border:"1px solid rgba(255,255,255,0.08)", background:"rgba(255,255,255,0.03)", color:"#64748b", fontSize:11, cursor:"pointer" }}
+            >🔄</button>
+          </div>
+
+          {assignedLoading ? (
+            <div style={{ textAlign:"center", padding:40, color:"#475569" }}>{tr(trendsLang,"ui.loading") || "Loading..."}</div>
+          ) : assignedPosts.length === 0 ? (
+            <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:12, padding:"48px 24px", textAlign:"center" }}>
+              <div style={{ fontSize:40, marginBottom:12 }}>📭</div>
+              <div style={{ color:"#475569", fontSize:14, fontWeight:700, marginBottom:6 }}>{tr(trendsLang,"ui.team.noAssignedPosts") || "No posts assigned yet"}</div>
+              <div style={{ color:"#334155", fontSize:12 }}>{tr(trendsLang,"ui.team.noAssignedDesc") || "Your team owner will assign posts here for you to review."}</div>
+            </div>
+          ) : (
+            <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+              {assignedPosts.map(p => {
+                const statusColors = {
+                  pending_approval: "#f59e0b",
+                  approved: "#22c55e",
+                  rejected: "#ef4444",
+                };
+                const statusColor = statusColors[p.approval_status] || "#64748b";
+                const statusEmoji = {
+                  pending_approval: "⏳",
+                  approved: "✅",
+                  rejected: "❌",
+                }[p.approval_status] || "📄";
+                return (
+                  <div key={p.id} style={{
+                    background:"rgba(96,165,250,0.04)",
+                    border:"1px solid rgba(96,165,250,0.15)",
+                    borderLeft:`3px solid #60a5fa`,
+                    borderRadius:10,
+                    padding:"14px 16px",
+                  }}>
+                    {/* Header card */}
+                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:10 }}>
+                      <div>
+                        <div style={{ color:"#e2e8f0", fontSize:12, fontWeight:700, marginBottom:2 }}>
+                          {p.title || p.content?.split(" ").slice(0,6).join(" ") + "..."}
+                        </div>
+                        <div style={{ color:"#64748b", fontSize:10 }}>
+                          {tr(trendsLang,"ui.team.by") || "by"} {p.author_name || p.author_email}
+                          {p.project_name && <span style={{ marginLeft:6, background:"rgba(139,92,246,0.12)", color:"#a78bfa", fontSize:9, fontWeight:700, padding:"2px 6px", borderRadius:6 }}>📁 {p.project_name}</span>}
+                        </div>
+                      </div>
+                      <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4 }}>
+                        <span style={{ background:`${statusColor}15`, border:`1px solid ${statusColor}40`, borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:700, color:statusColor }}>
+                          {statusEmoji} {(p.approval_status || "draft").toUpperCase().replace("_", " ")}
+                        </span>
+                        {p.viral_score > 0 && (
+                          <span style={{ fontSize:10, color: p.viral_score >= 70 ? "#22c55e" : p.viral_score >= 50 ? "#f59e0b" : "#ef4444", fontWeight:700 }}>
+                            ⚡ {p.viral_score}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Media */}
+                    {p.media_url && (
+                      <img src={p.media_url} alt="" style={{ width:"100%", maxHeight:100, objectFit:"cover", borderRadius:6, marginBottom:8 }} />
+                    )}
+
+                    {/* Contenu */}
+                    <p style={{ color:"#94a3b8", fontSize:12, lineHeight:1.5, margin:"0 0 10px", overflow:"hidden", display:"-webkit-box", WebkitLineClamp:3, WebkitBoxOrient:"vertical" }}>
+                      {p.content?.slice(0, 280)}{p.content?.length > 280 ? "..." : ""}
+                    </p>
+
+                    {/* Actions */}
+                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                      <span style={{ color:"#334155", fontSize:10 }}>
+                        {new Date(p.updated_at || p.created_at).toLocaleDateString()}
+                      </span>
+                      <div style={{ display:"flex", gap:6 }}>
+                        <button
+                          onClick={() => { navigator.clipboard.writeText(p.content || ""); }}
+                          style={{ padding:"5px 10px", borderRadius:6, border:"1px solid rgba(255,255,255,0.08)", background:"rgba(255,255,255,0.03)", color:"#64748b", fontSize:10, fontWeight:700, cursor:"pointer" }}
+                        >{tr(trendsLang,"ui.copyBtn") || "Copy"}</button>
+                        <button
+                          onClick={() => { setPost(p.content); setTab("create"); }}
+                          style={{ padding:"5px 10px", borderRadius:6, border:"1px solid rgba(220,38,38,0.2)", background:"rgba(220,38,38,0.08)", color:"#ef4444", fontSize:10, fontWeight:700, cursor:"pointer" }}
+                        >{tr(trendsLang,"ui.editBtn") || "Edit"} →</button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
     </>
   );
 }

@@ -343,6 +343,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
   const [resending,   setResending]   = useState(null);
   const [quotaResetting, setQuotaResetting] = useState(null);
   const [myTeamView,  setMyTeamView]  = useState(null);
+  const [assigning,   setAssigning]   = useState(null); // post_id en cours d'assignation
 
   const isBusiness = userPlan === "Business" || userPlan === "Agency";
   const isAgency   = userPlan === "Agency";
@@ -443,6 +444,29 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
       setRejectModal(null);
       fetchApprovals();
     } catch {}
+  };
+
+  const assignPost = async (postId, memberId) => {
+    setAssigning(postId);
+    try {
+      const r = await fetch(`${API}/team/approvals/${postId}/assign`, {
+        method: "PATCH", headers,
+        body: JSON.stringify({ assigned_to: memberId || null }),
+      });
+      const d = await r.json();
+      if (d.success) {
+        // Mettre à jour localement dans approvals
+        setApprovals(prev => prev.map(p =>
+          p.id === postId ? { ...p, assigned_to: memberId || null, assignee_name: d.assignee_name } : p
+        ));
+        console.log(`[Team] post ${postId} assigned to ${memberId || "nobody"}`);
+      } else {
+        console.error("[Team] assignPost error:", d.error);
+      }
+    } catch (err) {
+      console.error("[Team] assignPost fetch error:", err.message);
+    }
+    setAssigning(null);
   };
 
   const fetchTeamLogs = async () => {
@@ -761,7 +785,27 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                                 <div style={{ color:"#e2e8f0", fontSize:12, fontWeight:600 }}>{p.author_name || p.author_email}</div>
                                 <div style={{ color:"#64748b", fontSize:10 }}>{new Date(p.created_at).toLocaleString()}</div>
                               </div>
-                              <span style={{ background:"rgba(245,158,11,0.1)", border:"1px solid rgba(245,158,11,0.3)", borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:700, color:"#f59e0b" }}>⏳ PENDING</span>
+                              <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6 }}>
+                                <span style={{ background:"rgba(245,158,11,0.1)", border:"1px solid rgba(245,158,11,0.3)", borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:700, color:"#f59e0b" }}>⏳ PENDING</span>
+                                {/* Dropdown assignation — Owner + Admin seulement */}
+                                <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                                  <span style={{ color:"#475569", fontSize:10 }}>{tr(trendsLang,"ui.team.assignTo") || "Assign to"}:</span>
+                                  <select
+                                    value={p.assigned_to || ""}
+                                    disabled={assigning === p.id}
+                                    onChange={e => assignPost(p.id, e.target.value || null)}
+                                    style={{ background:"#0f172a", border:`1px solid ${p.assigned_to ? "rgba(96,165,250,0.5)" : "rgba(255,255,255,0.1)"}`, borderRadius:6, padding:"3px 8px", color: p.assigned_to ? "#60a5fa" : "#64748b", fontSize:10, outline:"none", cursor:"pointer", opacity: assigning === p.id ? 0.6 : 1 }}
+                                  >
+                                    <option value="">{tr(trendsLang,"ui.team.unassigned") || "— unassigned —"}</option>
+                                    {members.filter(m => m.status === "active").map(m => (
+                                      <option key={m.member_id || m.id} value={m.member_id}>
+                                        {m.member_name || m.member_email}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  {assigning === p.id && <span style={{ color:"#f59e0b", fontSize:10 }}>⏳</span>}
+                                </div>
+                              </div>
                             </div>
                             {p.media_url && <img src={p.media_url} alt="" style={{ width:"100%", height:80, objectFit:"cover", borderRadius:6, marginBottom:8 }} />}
                             <p style={{ color:"#94a3b8", fontSize:12, lineHeight:1.5, margin:"0 0 12px" }}>{(p.content || "").slice(0, 200)}{p.content?.length > 200 ? "..." : ""}</p>
@@ -821,7 +865,12 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                             </tr>
                           </thead>
                           <tbody>
-                            {teamLogs.map(log => (
+                            {teamLogs.map(log => {
+                              // Extraire les infos d'assignation si applicable
+                              let detailsObj = null;
+                              try { detailsObj = typeof log.details === "string" ? JSON.parse(log.details) : log.details; } catch {}
+                              const isAssignAction = log.action === "post_assigned" || log.action === "post_assigned_to_me";
+                              return (
                               <tr key={log.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
                                 <td style={{ padding:"10px 12px", color:"#475569", fontSize:10, whiteSpace:"nowrap" }}>
                                   {new Date(log.created_at).toLocaleString()}
@@ -830,16 +879,19 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                                   {log.display_name || log.first_name || log.email?.split("@")[0]}
                                 </td>
                                 <td style={{ padding:"10px 12px" }}>
-                                  <span style={{ background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:20, padding:"2px 8px", fontSize:10, fontWeight:700, color:"#ef4444" }}>
-                                    {log.action}
+                                  <span style={{ background: isAssignAction ? "rgba(96,165,250,0.1)" : "rgba(239,68,68,0.1)", border:`1px solid ${isAssignAction ? "rgba(96,165,250,0.3)" : "rgba(239,68,68,0.2)"}`, borderRadius:20, padding:"2px 8px", fontSize:10, fontWeight:700, color: isAssignAction ? "#60a5fa" : "#ef4444" }}>
+                                    {log.action === "post_assigned" ? `🎯 ${tr(trendsLang,"ui.team.assigned") || "ASSIGNED"}` : log.action === "post_assigned_to_me" ? `📥 ${tr(trendsLang,"ui.team.assignedToMe") || "ASSIGNED TO ME"}` : log.action}
                                   </span>
                                 </td>
                                 <td style={{ padding:"10px 12px", color:"#475569", fontSize:11, maxWidth:200, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}
                                   title={typeof log.details === "string" ? log.details : JSON.stringify(log.details)}>
-                                  {typeof log.details === "string" ? log.details.slice(0,80) : JSON.stringify(log.details).slice(0,80)}
+                                  {isAssignAction && detailsObj?.assignee_name
+                                    ? `→ ${detailsObj.assignee_name}`
+                                    : typeof log.details === "string" ? log.details.slice(0,80) : JSON.stringify(log.details).slice(0,80)}
                                 </td>
                               </tr>
-                            ))}
+                              );
+                            })}
                           </tbody>
                         </table>
                       </div>

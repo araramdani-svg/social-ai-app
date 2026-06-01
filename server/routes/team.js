@@ -975,4 +975,146 @@ router.post("/approvals/:id/reject", auth, requireBusiness, async (req, res) => 
   }
 });
 
+// ─── PATCH /team/approvals/:id/assign — assigner un post à un membre ──────────
+// Accessible : owner (Business/Agency) + membres admin de l'équipe
+router.patch("/approvals/:id/assign", auth, async (req, res) => {
+  const { assigned_to } = req.body; // member_id (user_id) ou null pour désassigner
+
+  try {
+    // Vérifier que le requêtant est soit owner soit admin de l'équipe
+    const callerCheck = await db.query(
+      `SELECT u.plan,
+              tm.role as member_role, tm.owner_id
+       FROM users u
+       LEFT JOIN team_members tm ON tm.member_id = u.id AND tm.status = 'active'
+       WHERE u.id = $1`,
+      [req.user.id]
+    );
+    if (!callerCheck.rows.length) return res.status(404).json({ error: "User not found" });
+
+    const caller = callerCheck.rows[0];
+    const isOwner = caller.plan === "Business" || caller.plan === "Agency";
+    const isAdmin = caller.member_role === "admin";
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ error: "Only Owner or Admin can assign posts" });
+    }
+
+    // Déterminer l'owner_id pour la vérification du post
+    const ownerIdForCheck = isOwner ? req.user.id : caller.owner_id;
+
+    // Vérifier que le post appartient à un membre de cette équipe
+    const postCheck = await db.query(
+      `SELECT p.id, p.user_id, p.approval_status,
+              u.email as author_email, u.display_name as author_name
+       FROM posts p
+       JOIN users u ON u.id = p.user_id
+       JOIN team_members tm ON tm.member_id = p.user_id AND tm.owner_id = $1
+       WHERE p.id = $2`,
+      [ownerIdForCheck, req.params.id]
+    );
+    if (!postCheck.rows.length) return res.status(404).json({ error: "Post not found or not in your team" });
+
+    const post = postCheck.rows[0];
+
+    // Si assigned_to est fourni, vérifier que c'est bien un membre actif de l'équipe
+    let assigneeName = null;
+    if (assigned_to) {
+      const assigneeCheck = await db.query(
+        `SELECT tm.member_id, tm.member_email, tm.role,
+                u.display_name, u.email
+         FROM team_members tm
+         LEFT JOIN users u ON u.id = tm.member_id
+         WHERE tm.owner_id = $1 AND tm.member_id = $2 AND tm.status = 'active'`,
+        [ownerIdForCheck, assigned_to]
+      );
+      if (!assigneeCheck.rows.length) {
+        return res.status(400).json({ error: "Assignee is not an active team member" });
+      }
+      const assignee = assigneeCheck.rows[0];
+      assigneeName = assignee.display_name || assignee.email;
+    }
+
+    // Mettre à jour l'assignation
+    await db.query(
+      `UPDATE posts SET assigned_to = $1, updated_at = NOW() WHERE id = $2`,
+      [assigned_to || null, req.params.id]
+    );
+
+    // Log user_logs du caller
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,$2,$3,NOW())`,
+      [req.user.id, "post_assigned", JSON.stringify({
+        post_id: req.params.id,
+        assigned_to: assigned_to || null,
+        assignee_name: assigneeName,
+        author_email: post.author_email,
+      })]
+    ).catch(() => {});
+
+    // Log sur le post de l'auteur si assigné
+    if (assigned_to) {
+      await db.query(
+        `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,$2,$3,NOW())`,
+        [assigned_to, "post_assigned_to_me", JSON.stringify({
+          post_id: req.params.id,
+          assigned_by: req.user.id,
+          author_email: post.author_email,
+        })]
+      ).catch(() => {});
+    }
+
+    // Admin log
+    await db.query(
+      `INSERT INTO admin_logs (admin_id, action, target_user_id, details, created_at) VALUES ($1,$2,$3,$4,NOW())`,
+      [req.user.id, "post_assigned", post.user_id, JSON.stringify({
+        post_id: req.params.id,
+        assigned_to: assigned_to || null,
+        assignee_name: assigneeName,
+      })]
+    ).catch(() => {});
+
+    console.log(`[team] PATCH /approvals/${req.params.id}/assign → assigned_to=${assigned_to || "null"} by user=${req.user.id}`);
+    res.json({ success: true, assigned_to: assigned_to || null, assignee_name: assigneeName });
+  } catch (err) {
+    console.error("PATCH /team/approvals/:id/assign:", err.message);
+    res.status(500).json({ error: "Failed to assign post" });
+  }
+});
+
+// ─── GET /team/my-assigned-posts — posts assignés au membre connecté ──────────
+router.get("/my-assigned-posts", auth, async (req, res) => {
+  try {
+    // Récupérer les posts assignés à ce membre (tous statuts sauf deleted)
+    const result = await db.query(
+      `SELECT p.id, p.title, p.content, p.media_url, p.media_type,
+              p.created_at, p.updated_at, p.approval_status, p.assigned_to,
+              p.viral_score,
+              u.email as author_email,
+              u.display_name as author_name,
+              u.first_name, u.last_name,
+              proj.name as project_name
+       FROM posts p
+       JOIN users u ON u.id = p.user_id
+       LEFT JOIN projects proj ON proj.id = p.project_id
+       WHERE p.assigned_to = $1
+       ORDER BY p.updated_at DESC
+       LIMIT 50`,
+      [req.user.id]
+    );
+
+    // Log l'accès
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,$2,$3,NOW())`,
+      [req.user.id, "team_view_assigned_posts", JSON.stringify({ count: result.rows.length })]
+    ).catch(() => {});
+
+    console.log(`[team] GET /my-assigned-posts → ${result.rows.length} posts for user=${req.user.id}`);
+    res.json({ posts: result.rows });
+  } catch (err) {
+    console.error("GET /team/my-assigned-posts:", err.message);
+    res.status(500).json({ error: "Failed to fetch assigned posts" });
+  }
+});
+
 export default router;
