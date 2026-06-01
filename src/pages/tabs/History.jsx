@@ -649,7 +649,6 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
                             </div>
                           </div>
                         )}
-                        </div>
                       </motion.div>
                     ))}
                   </AnimatePresence>
