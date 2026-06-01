@@ -140,7 +140,7 @@ function InviteModal({ token, onClose, onSuccess }) {
 }
 
 /* ── Add Client Modal ─────────────────────────────────────────────────────── */
-function AddClientModal({ token, onClose, onSuccess, editClient }) {
+function AddClientModal({ token, onClose, onSuccess, editClient, trendsLang }) {
   const [form,    setForm]    = useState({ name:"", email:"", brand:"", niche:"", notes:"", color:"#ef4444", ...editClient });
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState("");
@@ -206,7 +206,7 @@ function AddClientModal({ token, onClose, onSuccess, editClient }) {
 }
 
 /* ── Agency Dashboard ─────────────────────────────────────────────────────── */
-function AgencyDashboard({ token, trendsLang, clients, onAddClient, onEditClient, onDeleteClient, onRefresh, loading }) {
+function AgencyDashboard({ token, trendsLang, clients, onAddClient, onEditClient, onDeleteClient, onRefresh, loading, onConfirm }) {
   const [dashStats,   setDashStats]   = useState(null);
   const [activeClient,setActiveClient]= useState(null);
   const headers = { "Content-Type":"application/json", Authorization:`Bearer ${token}` };
@@ -219,11 +219,20 @@ function AgencyDashboard({ token, trendsLang, clients, onAddClient, onEditClient
   }, [clients]);
 
   const deleteClient = (id) => {
-    setConfirm({ message: tr(trendsLang,"ui.team.confirmRemoveClient"), onConfirm: async () => {
-      await fetch(`${API}/agency/clients/${id}`, { method:"DELETE", headers });
-      onRefresh();
-      setConfirm(null);
-    }});
+    if (onConfirm) {
+      onConfirm({
+        message: tr(trendsLang,"ui.team.confirmRemoveClient") || "Remove this client?",
+        onConfirm: async () => {
+          await fetch(`${API}/agency/clients/${id}`, { method:"DELETE", headers });
+          onRefresh();
+        }
+      });
+    } else {
+      // fallback natif si onConfirm non fourni
+      if (window.confirm(tr(trendsLang,"ui.team.confirmRemoveClient") || "Remove this client?")) {
+        fetch(`${API}/agency/clients/${id}`, { method:"DELETE", headers }).then(onRefresh);
+      }
+    }
   };
 
   return (
@@ -1043,6 +1052,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
               onEditClient={(c)=>{ setEditClient(c); setShowClient(true); }}
               onDeleteClient={(id)=>fetchClients()}
               onRefresh={fetchClients}
+              onConfirm={(opts) => setConfirm({ message: opts.message, onConfirm: async () => { await opts.onConfirm(); setConfirm(null); } })}
             />
           )}
         </>
@@ -1050,7 +1060,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
 
       {/* Modals */}
       {showInvite && <InviteModal token={token} onClose={()=>setShowInvite(false)} onSuccess={()=>{ fetchTeamData(); setShowInvite(false); }} />}
-      {showClient && <AddClientModal token={token} editClient={editClient} onClose={()=>{ setShowClient(false); setEditClient(null); }} onSuccess={fetchClients} />}
+      {showClient && <AddClientModal token={token} trendsLang={trendsLang} editClient={editClient} onClose={()=>{ setShowClient(false); setEditClient(null); }} onSuccess={fetchClients} />}
       {confirm && <ConfirmModal message={confirm.message} onConfirm={confirm.onConfirm} onCancel={()=>setConfirm(null)} />}
     </>
   );
