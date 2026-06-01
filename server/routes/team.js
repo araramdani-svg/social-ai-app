@@ -853,4 +853,126 @@ router.patch("/name", auth, requireBusiness, async (req, res) => {
   }
 });
 
+// ─── GET /team/approvals — posts en attente d'approbation ────────────────────
+router.get("/approvals", auth, requireBusiness, async (req, res) => {
+  try {
+    // Récupérer tous les posts pending des membres de l'équipe
+    const result = await db.query(
+      `SELECT p.id, p.title, p.content, p.media_url, p.media_type, p.created_at,
+              p.approval_status, p.assigned_to, p.approved_by, p.approved_at,
+              u.email as author_email, u.display_name as author_name,
+              u.first_name, u.last_name
+       FROM posts p
+       JOIN users u ON u.id = p.user_id
+       JOIN team_members tm ON tm.member_id = p.user_id AND tm.owner_id = $1
+       WHERE p.approval_status = 'pending_approval'
+       ORDER BY p.created_at DESC`,
+      [req.user.id]
+    );
+    res.json({ posts: result.rows });
+  } catch (err) {
+    console.error("GET /team/approvals:", err.message);
+    res.status(500).json({ error: "Failed to fetch approvals" });
+  }
+});
+
+// ─── POST /team/approvals/:id/approve ─────────────────────────────────────────
+router.post("/approvals/:id/approve", auth, requireBusiness, async (req, res) => {
+  try {
+    // Vérifier que le post appartient à un membre de l'équipe
+    const postCheck = await db.query(
+      `SELECT p.*, u.email as author_email, u.display_name as author_name
+       FROM posts p
+       JOIN team_members tm ON tm.member_id = p.user_id AND tm.owner_id = $1
+       WHERE p.id = $2`,
+      [req.user.id, req.params.id]
+    );
+    if (!postCheck.rows.length) return res.status(404).json({ error: "Post not found" });
+
+    const post = postCheck.rows[0];
+
+    // Mettre à jour le statut
+    await db.query(
+      `UPDATE posts SET approval_status='approved', approved_by=$1, approved_at=NOW() WHERE id=$2`,
+      [req.user.id, req.params.id]
+    );
+
+    // Copier dans calendar_posts (Scheduler) avec col=scheduled
+    const calResult = await db.query(
+      `INSERT INTO calendar_posts (user_id, title, content, col, platform, media_url, scheduled_date, created_at)
+       VALUES ($1, $2, $3, 'scheduled', 'LinkedIn', $4, NOW() + INTERVAL '1 day', NOW())
+       RETURNING id`,
+      [post.user_id, post.title || post.content?.slice(0, 60), post.content, post.media_url || null]
+    );
+
+    // Log owner
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,$2,$3,NOW())`,
+      [req.user.id, "post_approved", JSON.stringify({ post_id: req.params.id, author_email: post.author_email, calendar_id: calResult.rows[0].id })]
+    ).catch(() => {});
+
+    // Log auteur du post
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,$2,$3,NOW())`,
+      [post.user_id, "post_approved", JSON.stringify({ post_id: req.params.id, approved_by: req.user.id, scheduled: true })]
+    ).catch(() => {});
+
+    // Log admin
+    await db.query(
+      `INSERT INTO admin_logs (admin_id, action, target_user_id, details, created_at) VALUES ($1,$2,$3,$4,NOW())`,
+      [req.user.id, "post_approved", post.user_id, JSON.stringify({ post_id: req.params.id, calendar_id: calResult.rows[0].id })]
+    ).catch(() => {});
+
+    res.json({ success: true, calendar_id: calResult.rows[0].id });
+  } catch (err) {
+    console.error("POST /team/approvals/:id/approve:", err.message);
+    res.status(500).json({ error: "Failed to approve post" });
+  }
+});
+
+// ─── POST /team/approvals/:id/reject ──────────────────────────────────────────
+router.post("/approvals/:id/reject", auth, requireBusiness, async (req, res) => {
+  const { reason } = req.body;
+  try {
+    const postCheck = await db.query(
+      `SELECT p.*, u.email as author_email
+       FROM posts p
+       JOIN team_members tm ON tm.member_id = p.user_id AND tm.owner_id = $1
+       WHERE p.id = $2`,
+      [req.user.id, req.params.id]
+    );
+    if (!postCheck.rows.length) return res.status(404).json({ error: "Post not found" });
+
+    const post = postCheck.rows[0];
+
+    await db.query(
+      `UPDATE posts SET approval_status='rejected', approved_by=$1, approved_at=NOW() WHERE id=$2`,
+      [req.user.id, req.params.id]
+    );
+
+    // Log owner
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,$2,$3,NOW())`,
+      [req.user.id, "post_rejected", JSON.stringify({ post_id: req.params.id, author_email: post.author_email, reason: reason || null })]
+    ).catch(() => {});
+
+    // Log auteur
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,$2,$3,NOW())`,
+      [post.user_id, "post_rejected", JSON.stringify({ post_id: req.params.id, rejected_by: req.user.id, reason: reason || null })]
+    ).catch(() => {});
+
+    // Log admin
+    await db.query(
+      `INSERT INTO admin_logs (admin_id, action, target_user_id, details, created_at) VALUES ($1,$2,$3,$4,NOW())`,
+      [req.user.id, "post_rejected", post.user_id, JSON.stringify({ post_id: req.params.id, reason: reason || null })]
+    ).catch(() => {});
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("POST /team/approvals/:id/reject:", err.message);
+    res.status(500).json({ error: "Failed to reject post" });
+  }
+});
+
 export default router;

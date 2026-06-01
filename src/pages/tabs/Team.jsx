@@ -324,6 +324,10 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
   const [clients,     setClients]     = useState([]);
   const [activity,    setActivity]    = useState([]);
   const [teamLogs,    setTeamLogs]    = useState([]);
+  const [approvals,   setApprovals]   = useState([]);
+  const [approvalsLoading, setApprovalsLoading] = useState(false);
+  const [approving,   setApproving]   = useState(null);
+  const [rejectModal, setRejectModal] = useState(null); // { postId, authorName }
   const [loading,     setLoading]     = useState(false);
   const [logsLoading, setLogsLoading] = useState(false);
   const [showInvite,  setShowInvite]  = useState(false);
@@ -408,6 +412,37 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
   const updateRole = async (id, role) => {
     await fetch(`${API}/team/members/${id}`, { method:"PATCH", headers, body:JSON.stringify({ role }) });
     fetchTeamData();
+  };
+
+  const fetchApprovals = async () => {
+    setApprovalsLoading(true);
+    try {
+      const r = await fetch(`${API}/team/approvals`, { headers });
+      const d = await r.json();
+      setApprovals(d.posts || []);
+    } catch {}
+    setApprovalsLoading(false);
+  };
+
+  const approvePost = async (postId) => {
+    setApproving(postId);
+    try {
+      const r = await fetch(`${API}/team/approvals/${postId}/approve`, { method: "POST", headers });
+      const d = await r.json();
+      if (d.success) { fetchApprovals(); fetchTeamData(); }
+    } catch {}
+    setApproving(null);
+  };
+
+  const rejectPost = async (postId, reason) => {
+    try {
+      await fetch(`${API}/team/approvals/${postId}/reject`, {
+        method: "POST", headers,
+        body: JSON.stringify({ reason }),
+      });
+      setRejectModal(null);
+      fetchApprovals();
+    } catch {}
   };
 
   const fetchTeamLogs = async () => {
@@ -568,6 +603,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                   <button style={s.tabBtn(activeTab==="members")}  onClick={()=>setActiveTab("members")}>{tr(trendsLang,"ui.team.tabMembers")}</button>
                   <button style={s.tabBtn(activeTab==="activity")} onClick={()=>setActiveTab("activity")}>{tr(trendsLang,"ui.team.tabActivity")}</button>
                   <button style={s.tabBtn(activeTab==="perms")}    onClick={()=>setActiveTab("perms")}>{tr(trendsLang,"ui.team.tabRoles")}</button>
+                  {isOwner && <button style={s.tabBtn(activeTab==="approvals","#f59e0b")} onClick={()=>{ setActiveTab("approvals"); fetchApprovals(); }}>{tr(trendsLang,"ui.team.tabApprovals")} {approvals.length > 0 && <span style={{ background:"#ef4444", color:"#fff", borderRadius:"50%", padding:"1px 5px", fontSize:9, marginLeft:4 }}>{approvals.length}</span>}</button>}
                   {isOwner && <button style={s.tabBtn(activeTab==="logs")}  onClick={()=>{ setActiveTab("logs"); fetchTeamLogs(); }}>{tr(trendsLang,"ui.team.tabHistory")}</button>}
                   {isOwner && <button style={s.tabBtn(activeTab==="plans")} onClick={()=>setActiveTab("plans")}>{tr(trendsLang,"ui.team.tabPlans")}</button>}
                 </div>
@@ -704,6 +740,68 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                 )}
 
                 {/* ── Onglet Historique ── */}
+                {/* ── Onglet Approvals ── */}
+                {activeTab === "approvals" && isOwner && (
+                  <div style={s.card}>
+                    <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:4 }}>✅ {tr(trendsLang,"ui.team.approvalTitle")}</div>
+                    <div style={{ color:"#475569", fontSize:12, marginBottom:16 }}>{tr(trendsLang,"ui.team.approvalDesc")}</div>
+                    {approvalsLoading ? (
+                      <div style={{ textAlign:"center", color:"#475569", padding:20 }}>{tr(trendsLang,"ui.loading") || "Loading..."}</div>
+                    ) : approvals.length === 0 ? (
+                      <div style={{ textAlign:"center", padding:"32px 0" }}>
+                        <div style={{ fontSize:28, marginBottom:8 }}>✅</div>
+                        <div style={{ color:"#475569", fontSize:13 }}>{tr(trendsLang,"ui.team.noApprovals")}</div>
+                      </div>
+                    ) : (
+                      <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+                        {approvals.map(p => (
+                          <div key={p.id} style={{ background:"rgba(245,158,11,0.05)", border:"1px solid rgba(245,158,11,0.2)", borderLeft:"3px solid #f59e0b", borderRadius:10, padding:"14px 16px" }}>
+                            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:10 }}>
+                              <div>
+                                <div style={{ color:"#e2e8f0", fontSize:12, fontWeight:600 }}>{p.author_name || p.author_email}</div>
+                                <div style={{ color:"#64748b", fontSize:10 }}>{new Date(p.created_at).toLocaleString()}</div>
+                              </div>
+                              <span style={{ background:"rgba(245,158,11,0.1)", border:"1px solid rgba(245,158,11,0.3)", borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:700, color:"#f59e0b" }}>⏳ PENDING</span>
+                            </div>
+                            {p.media_url && <img src={p.media_url} alt="" style={{ width:"100%", height:80, objectFit:"cover", borderRadius:6, marginBottom:8 }} />}
+                            <p style={{ color:"#94a3b8", fontSize:12, lineHeight:1.5, margin:"0 0 12px" }}>{(p.content || "").slice(0, 200)}{p.content?.length > 200 ? "..." : ""}</p>
+                            <div style={{ display:"flex", gap:8 }}>
+                              <button
+                                onClick={() => approvePost(p.id)}
+                                disabled={approving === p.id}
+                                style={{ flex:1, background:"linear-gradient(135deg,#22c55e,#16a34a)", border:"none", borderRadius:8, color:"#fff", fontSize:12, fontWeight:700, padding:"10px", cursor:"pointer", opacity: approving === p.id ? 0.6 : 1 }}
+                              >{approving === p.id ? "⏳" : `✅ ${tr(trendsLang,"ui.team.approve")}`}</button>
+                              <button
+                                onClick={() => setRejectModal({ postId: p.id, authorName: p.author_name || p.author_email })}
+                                style={{ flex:1, background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:8, color:"#ef4444", fontSize:12, fontWeight:700, padding:"10px", cursor:"pointer" }}
+                              >{`❌ ${tr(trendsLang,"ui.team.reject")}`}</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Modale reject */}
+                {rejectModal && (
+                  <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+                    <div style={{ ...s.card, maxWidth:420, width:"100%", padding:24 }}>
+                      <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:15, marginBottom:8 }}>❌ {tr(trendsLang,"ui.team.rejectPost")}</div>
+                      <div style={{ color:"#64748b", fontSize:12, marginBottom:16 }}>{rejectModal.authorName}</div>
+                      <textarea
+                        placeholder={tr(trendsLang,"ui.team.rejectReason") || "Reason (optional)..."}
+                        id="rejectReason"
+                        style={{ width:"100%", background:"#0f172a", border:"1px solid rgba(220,38,38,0.2)", borderRadius:8, color:"#e2e8f0", fontSize:13, padding:"10px 12px", minHeight:80, boxSizing:"border-box", outline:"none", resize:"vertical" }}
+                      />
+                      <div style={{ display:"flex", gap:10, marginTop:14 }}>
+                        <button onClick={() => setRejectModal(null)} style={{ flex:1, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, color:"#94a3b8", fontSize:13, fontWeight:700, padding:"10px", cursor:"pointer" }}>{tr(trendsLang,"ui.cancel") || "Cancel"}</button>
+                        <button onClick={() => rejectPost(rejectModal.postId, document.getElementById("rejectReason")?.value)} style={{ flex:1, background:"linear-gradient(135deg,#ef4444,#dc2626)", border:"none", borderRadius:8, color:"#fff", fontSize:13, fontWeight:700, padding:"10px", cursor:"pointer" }}>❌ {tr(trendsLang,"ui.team.reject")}</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {activeTab === "logs" && isOwner && (
                   <div style={s.card}>
                     <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:4 }}>📋 {tr(trendsLang,"ui.team.history")}</div>

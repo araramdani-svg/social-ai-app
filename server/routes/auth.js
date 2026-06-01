@@ -276,12 +276,27 @@ router.post("/login", async (req, res) => {
 router.post("/save-post", authenticateToken, async (req, res) => {
   const { title, content, project_name, media_url, media_type, media_source } = req.body;
   try {
-    const result = await db.query(
-      `INSERT INTO posts(user_id,title,content,project_name,media_url,media_type,media_source,created_at)
-       VALUES($1,$2,$3,$4,$5,$6,$7,NOW()) RETURNING id`,
-      [req.user.id, title, content, project_name || null, media_url || null, media_type || null, media_source || null]
+    // Si le user est un membre géré par une équipe → pending_approval
+    const userResult = await db.query(
+      "SELECT plan_managed_by, team_owner_id FROM users WHERE id=$1",
+      [req.user.id]
     );
-    res.json({ success: true, id: result.rows[0].id });
+    const user = userResult.rows[0];
+    const approvalStatus = user?.plan_managed_by === "team" ? "pending_approval" : "approved";
+
+    const result = await db.query(
+      `INSERT INTO posts(user_id,title,content,project_name,media_url,media_type,media_source,approval_status,created_at)
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8,NOW()) RETURNING id`,
+      [req.user.id, title, content, project_name || null, media_url || null, media_type || null, media_source || null, approvalStatus]
+    );
+
+    // Log
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,$2,$3,NOW())`,
+      [req.user.id, "save_post", JSON.stringify({ post_id: result.rows[0].id, approval_status: approvalStatus })]
+    ).catch(() => {});
+
+    res.json({ success: true, id: result.rows[0].id, approval_status: approvalStatus });
   } catch (err) {
     console.error("save-post error:", err.message);
     res.status(500).json({ success: false, message: "Save failed" });
