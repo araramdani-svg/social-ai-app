@@ -8,9 +8,9 @@ const MAX_MEMBERS_AGENCY   = 20;
 const MAX_CLIENTS_AGENCY   = 50;
 
 const ROLES = [
-  { id:"admin",     label:"Admin",     color:"#ef4444", desc:"Full access — manage team, generate, publish & analyze" },
-  { id:"editor",    label:"Editor",    color:"#f59e0b", desc:"Generate content, analyze posts & access brand memory" },
-  { id:"publisher", label:"Publisher", color:"#60a5fa", desc:"Publish content across all connected platforms" },
+  { id:"admin",     label:"Admin",     color:"#ef4444", descKey:"roleDescAdmin" },
+  { id:"editor",    label:"Editor",    color:"#f59e0b", descKey:"roleDescEditor" },
+  { id:"publisher", label:"Publisher", color:"#60a5fa", descKey:"roleDescPublisher" },
 ];
 
 const CLIENT_COLORS = ["#ef4444","#f97316","#f59e0b","#22c55e","#06b6d4","#8b5cf6","#ec4899","#64748b"];
@@ -29,15 +29,17 @@ const s = {
   tabBtn:    (active, color="#ef4444") => ({ flex:1, padding:"10px", background:"transparent", border:"none", borderBottom: active ? `2px solid ${color}` : "2px solid transparent", color: active ? color : "#475569", fontWeight:700, fontSize:11, letterSpacing:"1px", cursor:"pointer" }),
 };
 
-function timeAgo(dateStr) {
+function timeAgo(dateStr, lang) {
   if (!dateStr) return "—";
   const diff = Date.now() - new Date(dateStr).getTime();
   const m = Math.floor(diff / 60000);
-  if (m < 1) return "just now";
-  if (m < 60) return `${m}m ago`;
+  const ago = tr(lang,"ui.timeAgoSuffix") || "ago";
+  const justNow = tr(lang,"ui.timeJustNow") || "just now";
+  if (m < 1) return justNow;
+  if (m < 60) return `${m}m ${ago}`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  return `${Math.floor(h/24)}d ago`;
+  if (h < 24) return `${h}h ${ago}`;
+  return `${Math.floor(h/24)}d ${ago}`;
 }
 
 /* ── Gate ─────────────────────────────────────────────────────────────────── */
@@ -99,7 +101,7 @@ function InviteModal({ token, onClose, onSuccess }) {
                   <div style={{ width:8, height:8, borderRadius:"50%", background:r.color, marginTop:4, flexShrink:0 }} />
                   <div style={{ flex:1 }}>
                     <div style={{ color:role===r.id?"#ef4444":"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:2 }}>{r.label}</div>
-                    <div style={{ color:"#475569", fontSize:11 }}>{r.desc}</div>
+                    <div style={{ color:"#475569", fontSize:11 }}>{tr(trendsLang, `ui.team.${r.descKey}`) || r.descKey}</div>
                   </div>
                   {role===r.id && <span style={{ color:"#ef4444", fontSize:14 }}>✓</span>}
                 </button>
@@ -202,7 +204,7 @@ function AddClientModal({ token, onClose, onSuccess, editClient }) {
 }
 
 /* ── Agency Dashboard ─────────────────────────────────────────────────────── */
-function AgencyDashboard({ token, clients, onAddClient, onEditClient, onDeleteClient, onRefresh, loading }) {
+function AgencyDashboard({ token, trendsLang, clients, onAddClient, onEditClient, onDeleteClient, onRefresh, loading }) {
   const [dashStats,   setDashStats]   = useState(null);
   const [activeClient,setActiveClient]= useState(null);
   const headers = { "Content-Type":"application/json", Authorization:`Bearer ${token}` };
@@ -229,9 +231,9 @@ function AgencyDashboard({ token, clients, onAddClient, onEditClient, onDeleteCl
       {dashStats && (
         <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:10 }}>
           {[
-            ["👥 CLIENTS",    dashStats.totalClients,    "#8b5cf6"],
-            ["📝 POSTS",      dashStats.totalPosts,      "#ef4444"],
-            ["💬 ENGAGEMENT", dashStats.totalEngagement, "#22c55e"],
+            [`👥 ${tr(trendsLang,"ui.team.agencyClients") || "CLIENTS"}`,    dashStats.totalClients,    "#8b5cf6"],
+            [`📝 ${tr(trendsLang,"ui.statPosts") || "POSTS"}`,      dashStats.totalPosts,      "#ef4444"],
+            [`💬 ${tr(trendsLang,"ui.team.agencyEngagement") || "ENGAGEMENT"}`, dashStats.totalEngagement, "#22c55e"],
           ].map(([label, val, color]) => (
             <div key={label} style={{ ...s.card, textAlign:"center", padding:16 }}>
               <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px", marginBottom:6 }}>{label}</div>
@@ -244,10 +246,10 @@ function AgencyDashboard({ token, clients, onAddClient, onEditClient, onDeleteCl
       {/* Header clients */}
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
         <div>
-          <div style={{ color:"#e2e8f0", fontWeight:800, fontSize:15 }}>Client Portfolio</div>
-          <div style={{ color:"#475569", fontSize:12, marginTop:2 }}>{clients.length} / {MAX_CLIENTS_AGENCY} clients</div>
+          <div style={{ color:"#e2e8f0", fontWeight:800, fontSize:15 }}>{tr(trendsLang,"ui.team.clientPortfolio") || "Client Portfolio"}</div>
+          <div style={{ color:"#475569", fontSize:12, marginTop:2 }}>{clients.length} / {MAX_CLIENTS_AGENCY} {tr(trendsLang,"ui.team.clientsLabel") || "clients"}</div>
         </div>
-        <button style={s.btnAgency} onClick={onAddClient}>➕ New Client</button>
+        <button style={s.btnAgency} onClick={onAddClient}>➕ {tr(trendsLang,"ui.team.newClient") || "New Client"}</button>
       </div>
 
       {/* Barre de capacité */}
@@ -256,14 +258,14 @@ function AgencyDashboard({ token, clients, onAddClient, onEditClient, onDeleteCl
       </div>
 
       {/* Liste clients */}
-      {loading && <div style={{ color:"#475569", textAlign:"center", padding:32 }}>Loading clients...</div>}
+      {loading && <div style={{ color:"#475569", textAlign:"center", padding:32 }}>{tr(trendsLang,"ui.team.loadingClients") || "Loading clients..."}</div>}
 
       {!loading && clients.length === 0 && (
         <div style={{ ...s.card, textAlign:"center", padding:"40px 24px", border:"1px dashed rgba(139,92,246,0.3)" }}>
           <div style={{ fontSize:36, marginBottom:12 }}>🏢</div>
-          <div style={{ color:"#e2e8f0", fontWeight:700, marginBottom:8 }}>No clients yet</div>
-          <div style={{ color:"#475569", fontSize:13, marginBottom:20 }}>Add your first client to start managing their content.</div>
-          <button style={s.btnAgency} onClick={onAddClient}>➕ Add First Client</button>
+          <div style={{ color:"#e2e8f0", fontWeight:700, marginBottom:8 }}>{tr(trendsLang,"ui.team.noClientsYet") || "No clients yet"}</div>
+          <div style={{ color:"#475569", fontSize:13, marginBottom:20 }}>{tr(trendsLang,"ui.team.noClientsDesc") || "Add your first client to start managing their content."}</div>
+          <button style={s.btnAgency} onClick={onAddClient}>➕ {tr(trendsLang,"ui.team.addFirstClient") || "Add First Client"}</button>
         </div>
       )}
 
@@ -477,7 +479,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
         <span style={{ background:"rgba(139,92,246,0.15)", border:"1px solid rgba(139,92,246,0.3)", borderRadius:20, padding:"3px 10px", fontSize:10, fontWeight:700, color:"#8b5cf6", letterSpacing:"1px" }}>
           🧪 BETA
         </span>
-        <span style={{ color:"#334155", fontSize:11 }}>Full collaboration features coming soon</span>
+        <span style={{ color:"#334155", fontSize:11 }}>{tr(trendsLang,"ui.team.betaDesc") || "Full collaboration features coming soon"}</span>
       </div>
 
       {/* Stats */}
@@ -614,7 +616,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                             <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:3 }}>
                               <div style={{ width:5, height:5, borderRadius:"50%", background:statusColor }} />
                               <span style={{ color:statusColor, fontSize:10, fontWeight:700 }}>{m.status.toUpperCase()}</span>
-                              <span style={{ color:"#334155", fontSize:10 }}>· {m.status==="pending"?`${tr(trendsLang,"ui.team.invited")} ${timeAgo(m.invited_at)}`:`${tr(trendsLang,"ui.team.joined")} ${timeAgo(m.joined_at)}`}</span>
+                              <span style={{ color:"#334155", fontSize:10 }}>· {m.status==="pending"?`${tr(trendsLang,"ui.team.invited")} ${timeAgo(m.invited_at, trendsLang)}`:`${tr(trendsLang,"ui.team.joined")} ${timeAgo(m.joined_at, trendsLang)}`}</span>
                             </div>
                           </div>
                           <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6, flexShrink:0 }}>
@@ -655,9 +657,9 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                         </div>
                         <div style={{ flex:1 }}>
                           <div style={{ color:"#e2e8f0", fontSize:12, fontWeight:600 }}>{a.linkedin_name||a.email}</div>
-                          <div style={{ color:"#64748b", fontSize:12 }}>{a.action.replace(/_/g," ")}</div>
+                          <div style={{ color:"#64748b", fontSize:12 }}>{tr(trendsLang,`ui.actionLabels.${a.action}`) || a.action.replace(/_/g," ")}</div>
                         </div>
-                        <div style={{ color:"#334155", fontSize:11, flexShrink:0 }}>{timeAgo(a.created_at)}</div>
+                        <div style={{ color:"#334155", fontSize:11, flexShrink:0 }}>{timeAgo(a.created_at, trendsLang)}</div>
                       </div>
                     ))}
                   </div>
@@ -861,7 +863,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                       <div style={{ width:8, height:8, borderRadius:"50%", background:r.color, marginTop:4, flexShrink:0 }} />
                       <div>
                         <div style={{ color:r.color, fontSize:12, fontWeight:700 }}>{r.label}</div>
-                        <div style={{ color:"#475569", fontSize:11, marginTop:2 }}>{r.desc}</div>
+                        <div style={{ color:"#475569", fontSize:11, marginTop:2 }}>{tr(trendsLang, `ui.team.${r.descKey}`) || r.descKey}</div>
                       </div>
                     </div>
                   ))}
