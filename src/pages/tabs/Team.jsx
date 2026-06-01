@@ -108,7 +108,7 @@ function InviteModal({ token, onClose, onSuccess }) {
             <div style={{ display:"flex", gap:10 }}>
               <button style={{ ...s.btnGhost, flex:1 }} onClick={onClose}>Cancel</button>
               <button style={{ ...s.btn, flex:2, opacity:loading||!email?0.7:1 }} disabled={loading||!email} onClick={submit}>
-                {loading ? "⏳ Sending..." : "📧 Send Invitation →"}
+                {loading ? tr(trendsLang,"team.sending") : "📧 " + tr(trendsLang,"team.sendInvitation") + " →"}
               </button>
             </div>
           </>
@@ -215,7 +215,7 @@ function AgencyDashboard({ token, clients, onAddClient, onEditClient, onDeleteCl
   }, [clients]);
 
   const deleteClient = (id) => {
-    setConfirm({ message: "Remove this client?", onConfirm: async () => {
+    setConfirm({ message: tr(trendsLang,"team.confirmRemoveClient"), onConfirm: async () => {
       await fetch(`${API}/agency/clients/${id}`, { method:"DELETE", headers });
       onRefresh();
       setConfirm(null);
@@ -394,7 +394,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
   };
 
   const removeMember = (id) => {
-    setConfirm({ message: "Remove this member from your team?", onConfirm: async () => {
+    setConfirm({ message: tr(trendsLang,"team.confirmRemoveMember"), onConfirm: async () => {
       await fetch(`${API}/team/members/${id}`, { method:"DELETE", headers });
       fetchTeamData();
       setConfirm(null);
@@ -499,7 +499,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
       {planManagedBy === "team" && myTeamView && (
         <div style={{ padding:"0 0 24px" }}>
           <div style={{ ...s.card, marginBottom:12 }}>
-            <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:12 }}>👥 My Team</div>
+            <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:12 }}>👥 {tr(trendsLang,"team.myTeam")}</div>
             {/* Owner */}
             <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 0", borderBottom:"1px solid rgba(255,255,255,0.05)", marginBottom:10 }}>
               <div style={{ width:32, height:32, borderRadius:"50%", background:"rgba(239,68,68,0.15)", display:"flex", alignItems:"center", justifyContent:"center", color:"#ef4444", fontWeight:800, fontSize:12 }}>
@@ -509,14 +509,14 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                 <div style={{ color:"#e2e8f0", fontSize:12, fontWeight:600 }}>{myTeamView.owner.name || myTeamView.owner.email}</div>
                 <div style={{ color:"#475569", fontSize:10 }}>Owner</div>
               </div>
-              <div style={{ marginLeft:"auto", background:"rgba(239,68,68,0.1)", border:"1px solid #ef444433", borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:700, color:"#ef4444" }}>OWNER</div>
+              <div style={{ marginLeft:"auto", background:"rgba(239,68,68,0.1)", border:"1px solid #ef444433", borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:700, color:"#ef4444" }}>{tr(trendsLang,"team.owner")}</div>
             </div>
             {/* Mon rôle */}
             <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:8, padding:"10px 14px", marginBottom:10 }}>
-              <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px", marginBottom:4 }}>MY ROLE</div>
+              <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px", marginBottom:4 }}>{tr(trendsLang,"team.myRole")}</div>
               <div style={{ color:"#f59e0b", fontWeight:800, fontSize:13 }}>{myTeamView.myRole?.toUpperCase()}</div>
               <div style={{ color:"#475569", fontSize:11, marginTop:2 }}>
-                Joined {myTeamView.joinedAt ? new Date(myTeamView.joinedAt).toLocaleDateString() : "—"}
+                {tr(trendsLang,"team.joined")} {myTeamView.joinedAt ? new Date(myTeamView.joinedAt).toLocaleDateString() : "—"}
               </div>
             </div>
             {/* Collègues */}
@@ -549,8 +549,8 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
           {/* Main tabs — Agency uniquement */}
           {isAgency && (
             <div style={{ display:"flex", borderBottom:"1px solid rgba(255,255,255,0.07)", marginBottom:16 }}>
-              <button style={s.tabBtn(mainTab==="team")}   onClick={()=>setMainTab("team")}>👥 TEAM</button>
-              <button style={s.tabBtn(mainTab==="agency","#8b5cf6")} onClick={()=>setMainTab("agency")}>🏢 AGENCE</button>
+              <button style={s.tabBtn(mainTab==="team")}   onClick={()=>setMainTab("team")}>{tr(trendsLang,"team.tabTeam")}</button>
+              <button style={s.tabBtn(mainTab==="agency","#8b5cf6")} onClick={()=>setMainTab("agency")}>{tr(trendsLang,"team.tabAgence")}</button>
             </div>
           )}
 
@@ -561,11 +561,11 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
               {/* Left */}
               <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
                 <div style={{ display:"flex", borderBottom:"1px solid rgba(255,255,255,0.07)" }}>
-                  <button style={s.tabBtn(activeTab==="members")}  onClick={()=>setActiveTab("members")}>👥 MEMBERS</button>
-                  <button style={s.tabBtn(activeTab==="activity")} onClick={()=>setActiveTab("activity")}>📊 ACTIVITY</button>
-                  <button style={s.tabBtn(activeTab==="perms")}    onClick={()=>setActiveTab("perms")}>🔐 ROLES</button>
-                  {isOwner && <button style={s.tabBtn(activeTab==="logs")}  onClick={()=>{ setActiveTab("logs"); fetchTeamLogs(); }}>📋 HISTORIQUE</button>}
-                  {isOwner && <button style={s.tabBtn(activeTab==="plans")} onClick={()=>setActiveTab("plans")}>💳 PLANS</button>}
+                  <button style={s.tabBtn(activeTab==="members")}  onClick={()=>setActiveTab("members")}>{tr(trendsLang,"team.tabMembers")}</button>
+                  <button style={s.tabBtn(activeTab==="activity")} onClick={()=>setActiveTab("activity")}>{tr(trendsLang,"team.tabActivity")}</button>
+                  <button style={s.tabBtn(activeTab==="perms")}    onClick={()=>setActiveTab("perms")}>{tr(trendsLang,"team.tabRoles")}</button>
+                  {isOwner && <button style={s.tabBtn(activeTab==="logs")}  onClick={()=>{ setActiveTab("logs"); fetchTeamLogs(); }}>{tr(trendsLang,"team.tabHistory")}</button>}
+                  {isOwner && <button style={s.tabBtn(activeTab==="plans")} onClick={()=>setActiveTab("plans")}>{tr(trendsLang,"team.tabPlans")}</button>}
                 </div>
 
                 {/* Members */}
@@ -573,10 +573,10 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                   <div style={s.card}>
                     <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
                       <div>
-                        <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13 }}>Team Members</div>
-                        <div style={{ color:"#475569", fontSize:11, marginTop:2 }}>{used}/{MAX_MEMBERS} slots used</div>
+                        <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13 }}>{tr(trendsLang,"team.teamMembers")}</div>
+                        <div style={{ color:"#475569", fontSize:11, marginTop:2 }}>{used}/{MAX_MEMBERS} {tr(trendsLang,"team.slotsUsed")}</div>
                       </div>
-                      {isOwner && remaining > 0 && <button style={s.btn} onClick={()=>setShowInvite(true)}>+ Invite</button>}
+                      {isOwner && remaining > 0 && <button style={s.btn} onClick={()=>setShowInvite(true)}>+  {tr(trendsLang,"team.invite")}</button>}
                     </div>
                     <div style={{ height:3, background:"rgba(255,255,255,0.06)", borderRadius:2, marginBottom:16 }}>
                       <div style={{ width:`${(used/MAX_MEMBERS)*100}%`, height:"100%", background:"linear-gradient(90deg,#ef4444,#f97316)", borderRadius:2, transition:"width 0.4s" }} />
@@ -590,14 +590,14 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                         <div style={{ color:"#e2e8f0", fontSize:13, fontWeight:600 }}>{ownerInfo?.name||ownerInfo?.email||"You"}</div>
                         <div style={{ color:"#475569", fontSize:11 }}>{ownerInfo?.email}</div>
                       </div>
-                      <div style={{ background:"rgba(239,68,68,0.12)", border:"1px solid rgba(239,68,68,0.25)", borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:700, color:"#ef4444", letterSpacing:"1px" }}>OWNER</div>
+                      <div style={{ background:"rgba(239,68,68,0.12)", border:"1px solid rgba(239,68,68,0.25)", borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:700, color:"#ef4444", letterSpacing:"1px" }}>{tr(trendsLang,"team.owner")}</div>
                     </div>
                     {loading && <div style={{ color:"#475569", textAlign:"center", padding:20 }}>Loading...</div>}
                     {!loading && members.length === 0 && (
                       <div style={{ textAlign:"center", padding:"28px 0" }}>
                         <div style={{ fontSize:28, marginBottom:8 }}>👥</div>
-                        <div style={{ color:"#475569", fontSize:13, marginBottom:16 }}>No members yet.</div>
-                        {isOwner && <button style={s.btn} onClick={()=>setShowInvite(true)}>+ Invite your first member</button>}
+                        <div style={{ color:"#475569", fontSize:13, marginBottom:16 }}>{tr(trendsLang,"team.noMembers")}</div>
+                        {isOwner && <button style={s.btn} onClick={()=>setShowInvite(true)}>+ {tr(trendsLang,"team.inviteFirst")}</button>}
                       </div>
                     )}
                     {members.map(m => {
@@ -614,7 +614,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                             <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:3 }}>
                               <div style={{ width:5, height:5, borderRadius:"50%", background:statusColor }} />
                               <span style={{ color:statusColor, fontSize:10, fontWeight:700 }}>{m.status.toUpperCase()}</span>
-                              <span style={{ color:"#334155", fontSize:10 }}>· {m.status==="pending"?`Invited ${timeAgo(m.invited_at)}`:`Joined ${timeAgo(m.joined_at)}`}</span>
+                              <span style={{ color:"#334155", fontSize:10 }}>· {m.status==="pending"?`${tr(trendsLang,"team.invited")} ${timeAgo(m.invited_at)}`:`${tr(trendsLang,"team.joined")} ${timeAgo(m.joined_at)}`}</span>
                             </div>
                           </div>
                           <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6, flexShrink:0 }}>
@@ -622,14 +622,14 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                             <select style={{ ...s.select, color:roleInfo.color }} value={m.role} onChange={e=>updateRole(m.id, e.target.value)}>
                               {ROLES.map(r=><option key={r.id} value={r.id}>{r.label}</option>)}
                             </select>
-                            <button style={s.btnDanger} onClick={()=>removeMember(m.id)}>Remove</button>
+                            <button style={s.btnDanger} onClick={()=>removeMember(m.id)}>{tr(trendsLang,"team.remove")}</button>
                             {m.status === "pending" && (
                               <button
                                 style={{ ...s.btn, background:"linear-gradient(135deg,#3b82f6,#2563eb)", fontSize:10, padding:"7px 12px", opacity: resending===m.id ? 0.6 : 1 }}
                                 onClick={() => resendInvite(m.id, m.member_email)}
                                 disabled={resending === m.id}
                               >
-                                {resending === m.id ? "Sending..." : "↩ Resend invite"}
+                                {resending === m.id ? tr(trendsLang,"team.sending") : "↩ " + tr(trendsLang,"team.resendInvite")}
                               </button>
                             )}
                           </div>
@@ -637,7 +637,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                       );
                     })}
                     {!loading && members.length > 0 && remaining > 0 && isOwner && (
-                      <button style={{ ...s.btn, width:"100%", marginTop:12 }} onClick={()=>setShowInvite(true)}>+ Invite Another ({remaining} slot{remaining!==1?"s":""} left)</button>
+                      <button style={{ ...s.btn, width:"100%", marginTop:12 }} onClick={()=>setShowInvite(true)}>+ {tr(trendsLang,"team.inviteAnother")} ({remaining} slot{remaining!==1?"s":""} left)</button>
                     )}
                   </div>
                 )}
@@ -645,9 +645,9 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                 {/* Activity */}
                 {activeTab === "activity" && (
                   <div style={s.card}>
-                    <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:14 }}>📊 Team Activity</div>
+                    <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:14 }}>📊 {tr(trendsLang,"team.activity")}</div>
                     {activity.length === 0 ? (
-                      <div style={{ color:"#475569", textAlign:"center", padding:24, fontSize:13 }}>No activity recorded yet.</div>
+                      <div style={{ color:"#475569", textAlign:"center", padding:24, fontSize:13 }}>{tr(trendsLang,"team.noActivity")}</div>
                     ) : activity.map((a,i) => (
                       <div key={i} style={{ display:"flex", gap:12, padding:"10px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
                         <div style={{ width:30, height:30, borderRadius:"50%", background:"rgba(255,255,255,0.04)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:700, color:"#64748b", flexShrink:0 }}>
@@ -666,8 +666,8 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                 {/* Permissions */}
                 {activeTab === "perms" && (
                   <div style={s.card}>
-                    <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:4 }}>🔐 Role Permissions</div>
-                    <div style={{ color:"#475569", fontSize:12, marginBottom:16 }}>Default permissions per role — customizable per member</div>
+                    <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:4 }}>🔐 {tr(trendsLang,"team.rolePerms")}</div>
+                    <div style={{ color:"#475569", fontSize:12, marginBottom:16 }}>{tr(trendsLang,"team.rolePermsDesc")}</div>
                     <div style={{ overflowX:"auto" }}>
                       <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
                         <thead>
@@ -678,13 +678,13 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                         </thead>
                         <tbody>
                           {[
-                            ["Generate content",    true,  true,  false],
-                            ["Publish posts",       true,  false, true ],
-                            ["Analyze content",     true,  true,  true ],
-                            ["View Brand Memory",   true,  true,  false],
-                            ["Manage team members", true,  false, false],
-                            ["Access all projects", true,  true,  true ],
-                            ["View analytics",      true,  true,  true ],
+                            [tr(trendsLang,"team.perm.generate"),    true,  true,  false],
+                            [tr(trendsLang,"team.perm.publish"),       true,  false, true ],
+                            [tr(trendsLang,"team.perm.analyze"),     true,  true,  true ],
+                            [tr(trendsLang,"team.perm.brandMemory"),   true,  true,  false],
+                            [tr(trendsLang,"team.perm.manageTeam"), true,  false, false],
+                            [tr(trendsLang,"team.perm.projects"), true,  true,  true ],
+                            [tr(trendsLang,"team.perm.analytics"),      true,  true,  true ],
                           ].map(([label,admin,editor,publisher]) => (
                             <tr key={label}>
                               <td style={{ color:"#94a3b8", padding:"10px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>{label}</td>
@@ -702,8 +702,8 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                 {/* ── Onglet Historique ── */}
                 {activeTab === "logs" && isOwner && (
                   <div style={s.card}>
-                    <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:4 }}>📋 Team History</div>
-                    <div style={{ color:"#475569", fontSize:12, marginBottom:16 }}>All actions by team members</div>
+                    <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:4 }}>📋 {tr(trendsLang,"team.history")}</div>
+                    <div style={{ color:"#475569", fontSize:12, marginBottom:16 }}>{tr(trendsLang,"team.historyDesc")}</div>
                     {logsLoading ? (
                       <div style={{ textAlign:"center", color:"#475569", padding:20 }}>Loading...</div>
                     ) : teamLogs.length === 0 ? (
@@ -748,10 +748,10 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                 {/* ── Onglet Plans ── */}
                 {activeTab === "plans" && isOwner && (
                   <div style={s.card}>
-                    <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:4 }}>💳 Member Plans</div>
-                    <div style={{ color:"#475569", fontSize:12, marginBottom:16 }}>Manage plans for your team members · Pro seats billed at <strong style={{color:"#22c55e"}}>5€/month</strong> on your account</div>
+                    <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:4 }}>💳 {tr(trendsLang,"team.memberPlans")}</div>
+                    <div style={{ color:"#475569", fontSize:12, marginBottom:16 }}>{tr(trendsLang,"team.plansDesc")}</div>
                     {members.filter(m => m.status === "active").length === 0 ? (
-                      <div style={{ textAlign:"center", color:"#334155", padding:20 }}>No active members yet</div>
+                      <div style={{ textAlign:"center", color:"#334155", padding:20 }}>{tr(trendsLang,"team.noActiveMembers")}</div>
                     ) : (
                       <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
                         {members.filter(m => m.status === "active").map(m => {
@@ -766,7 +766,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                                 </div>
                                 <div style={{ flex:1 }}>
                                   <div style={{ color:"#e2e8f0", fontSize:12, fontWeight:600 }}>{m.member_name || m.member_email}</div>
-                                  <div style={{ color:"#475569", fontSize:10 }}>{m.role} · {genCount} generation{genCount !== 1 ? "s" : ""} used</div>
+                                  <div style={{ color:"#475569", fontSize:10 }}>{m.role} · {genCount} {tr(trendsLang,"team.generationsUsed")}</div>
                                 </div>
                               </div>
                               {/* Boutons plan style Admin */}
@@ -790,7 +790,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                                   disabled={quotaResetting === m.id || genCount === 0}
                                   style={{ marginLeft:"auto", padding:"6px 14px", borderRadius:6, fontSize:11, fontWeight:700, cursor: genCount === 0 ? "default" : "pointer", background:"rgba(34,197,94,0.08)", border:"1px solid rgba(34,197,94,0.2)", color: genCount === 0 ? "#334155" : "#22c55e", opacity: quotaResetting === m.id ? 0.6 : 1 }}
                                 >
-                                  {quotaResetting === m.id ? "⏳" : "Reset à 0"}
+                                  {quotaResetting === m.id ? "⏳" : tr(trendsLang,"team.resetQuota")}
                                 </button>
                               </div>
                             </div>
@@ -809,7 +809,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                   <div style={{ color:"#ef4444", fontSize:18, fontWeight:800 }}>{workspace||"PERSONAL"}</div>
                   <div style={s.divider} />
                   {/* Team Name */}
-                  <span style={s.label}>TEAM NAME</span>
+                  <span style={s.label}>{tr(trendsLang,"team.teamName")}</span>
                   <div style={{ display:"flex", gap:6, alignItems:"center", marginBottom:4 }}>
                     <input
                       value={teamName}
@@ -848,9 +848,9 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                 {remaining > 0 && (
                   <div style={{ ...s.card, background:"rgba(239,68,68,0.04)", border:"1px solid rgba(239,68,68,0.15)", textAlign:"center", padding:24 }}>
                     <div style={{ fontSize:28, marginBottom:10 }}>👋</div>
-                    <div style={{ color:"#e2e8f0", fontWeight:700, marginBottom:6 }}>Invite your team</div>
+                    <div style={{ color:"#e2e8f0", fontWeight:700, marginBottom:6 }}>{tr(trendsLang,"team.inviteYourTeam")}</div>
                     <div style={{ color:"#475569", fontSize:12, marginBottom:16, lineHeight:1.6 }}>{remaining} invitation slot{remaining!==1?"s":""} remaining</div>
-                    {isOwner && <button style={{ ...s.btn, width:"100%", padding:"12px" }} onClick={()=>setShowInvite(true)}>+ Send Invitation</button>}
+                    {isOwner && <button style={{ ...s.btn, width:"100%", padding:"12px" }} onClick={()=>setShowInvite(true)}>+ {tr(trendsLang,"team.sendInvitation")}</button>}
                   </div>
                 )}
 
