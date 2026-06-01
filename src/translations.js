@@ -297,7 +297,7 @@ const translations = {
       actGenerated: "Generated post", actSavedDraft: "Saved draft",
       actScheduled: "Scheduled LinkedIn post", actPublished: "Published to Threads",
       actAnalyzed: "Analyzed post",
-      timeAgoPrefix: "", timeAgoSuffix: "ago", timeJustNow: "just now", time5min: "5 min ago",
+      timeJustNow: "just now", time5min: "5 min ago",
       time12min: "12 min ago", time1hr: "1 hr ago", time2hr: "2 hr ago",
             voiceLearningActive: "VOICE LEARNING ACTIVE",
       voiceTone: "Tone", voiceSentences: "sentences",
@@ -3238,9 +3238,9 @@ export const t = (lang, path) => {
   let val = translations[lang] || translations.en;
   for (const key of keys) {
     val = val?.[key];
-    if (!val) break;
+    if (val === undefined || val === null) break;
   }
-  return val || path;
+  return (val !== undefined && val !== null) ? val : path;
 };
 
 export default translations;
