@@ -22,7 +22,6 @@ export default function Integrations({
   const [showLoginModal, setShowLoginModal] = useState(false);
   const isGuest = !token || token === "guest";
 
-  // ── Modal login required ──────────────────────────────────────────────────
   const LoginRequiredModal = () => (
     <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
       <div style={{ ...st.card, maxWidth:420, width:"100%", background:"#111827", border:"1px solid rgba(220,38,38,0.3)", boxShadow:"0 30px 80px rgba(0,0,0,0.6)", padding:32, textAlign:"center" }}>
@@ -41,7 +40,6 @@ export default function Integrations({
     </div>
   );
 
-  // ── Helper carte intégration ──────────────────────────────────────────────
   const IntegrationCard = ({
     icon, iconBg, name, desc, status, posting,
     connectHref, connectLabel,
@@ -67,7 +65,6 @@ export default function Integrations({
           </span>
         </div>
       </div>
-
       {status?.connected ? (
         <>
           <div style={{ background:"rgba(34,197,94,0.08)", border:"1px solid rgba(34,197,94,0.2)", borderRadius:8, padding:"10px 14px", marginBottom:14, fontSize:13, color:"#22c55e" }}>
@@ -83,27 +80,20 @@ export default function Integrations({
       ) : (
         <>
           {isGuest ? (
-            <button
-              style={{ ...st.button, margin:0, width:"100%", boxSizing:"border-box" }}
-              onClick={() => setShowLoginModal(true)}
-            >
+            <button style={{ ...st.button, margin:0, width:"100%", boxSizing:"border-box" }} onClick={() => setShowLoginModal(true)}>
               {connectLabel}
             </button>
           ) : (
-            <a
-              href={connectHref}
-              style={{ ...st.button, margin:0, width:"100%", display:"block", textAlign:"center", textDecoration:"none", boxSizing:"border-box" }}
-            >
+            <a href={connectHref} style={{ ...st.button, margin:0, width:"100%", display:"block", textAlign:"center", textDecoration:"none", boxSizing:"border-box" }}>
               {connectLabel}
             </a>
           )}
-          <p style={{ color:"#475569", fontSize:11, marginTop:8, textAlign:"center" }}>✓ Works on Safari, Chrome & Firefox</p>
+          <p style={{ color:"#475569", fontSize:11, marginTop:8, textAlign:"center" }}>✓ {tr(trendsLang,"integrations.browserCompat")}</p>
         </>
       )}
     </div>
   );
 
-  // ── Coming Soon card ──────────────────────────────────────────────────────
   const ComingSoonCard = ({ icon, iconBg, name, desc }) => (
     <div style={{ ...st.card, marginTop:0, opacity:0.5 }}>
       <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
@@ -125,75 +115,12 @@ export default function Integrations({
       {showLoginModal && <LoginRequiredModal />}
       <PageHeader tabKey="integrations" trendsLang={trendsLang} isMobile={isMobile} />
       <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:20, alignContent:"start" }}>
-
-        {/* LinkedIn */}
-        <IntegrationCard
-          icon="in" iconBg="#0077b5"
-          name="LinkedIn" desc={tr(trendsLang,"ui.linkedinDesc")}
-          status={linkedinStatus} posting={linkedinPosting}
-          connectHref={`${API}/linkedin/connect?token=${encodeURIComponent(token)}`}
-          connectLabel={tr(trendsLang,"buttons.connectLinkedin")}
-          connectedAs={linkedinStatus?.name}
-          onPost={postToLinkedin} onDisconnect={disconnectLinkedin}
-        />
-
-        {/* Threads */}
-        <IntegrationCard
-          icon="🧵" iconBg="linear-gradient(135deg,#000,#333)"
-          name="Threads" desc={tr(trendsLang,"ui.linkedinDesc")}
-          status={threadsStatus} posting={threadsPosting}
-          connectHref={`${API}/threads/connect?token=${encodeURIComponent(token)}`}
-          connectLabel={tr(trendsLang,"buttons.connectThreads")}
-          connectedAs={`@${threadsStatus?.username}`}
-          onPost={postToThreads} onDisconnect={disconnectThreads}
-        />
-
-        {/* X (Twitter) */}
-        <IntegrationCard
-          icon="𝕏" iconBg="#000"
-          name="X (Twitter)" desc={tr(trendsLang,"integrations.xDesc")}
-          status={twitterStatus} posting={twitterPosting}
-          connectHref={`${API}/twitter/connect?token=${encodeURIComponent(token)}`}
-          connectLabel={tr(trendsLang,"integrations.connectX")}
-          connectedAs={`@${twitterStatus?.username}`}
-          onPost={postToTwitter} onDisconnect={disconnectTwitter}
-        />
-
-        {/* Instagram */}
-        <IntegrationCard
-          icon="📸" iconBg="linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)"
-          name="Instagram" desc={tr(trendsLang,"integrations.igDesc")}
-          status={instagramStatus} posting={instagramPosting}
-          connectHref={`${API}/instagram/connect?token=${encodeURIComponent(token)}`}
-          connectLabel={tr(trendsLang,"integrations.connectIg")}
-          connectedAs={`@${instagramStatus?.username}`}
-          onPost={postToInstagram} onDisconnect={disconnectInstagram}
-          badge="NEW"
-        />
-
-        {/* Facebook */}
-        <IntegrationCard
-          icon="f" iconBg="#1877f2"
-          name="Facebook" desc={tr(trendsLang,"ui.subFacebook")}
-          status={facebookStatus} posting={facebookPosting}
-          connectHref={`${API}/facebook/connect?token=${encodeURIComponent(token)}`}
-          connectLabel="Connect Facebook"
-          connectedAs={facebookStatus?.pageName || facebookStatus?.userName}
-          onPost={postToFacebook} onDisconnect={disconnectFacebook}
-          badge="NEW"
-        />
-
-        {/* TikTok */}
-        <IntegrationCard
-          icon="🎵" iconBg="#ff0050"
-          name="TikTok" desc={tr(trendsLang,"ui.subTikTok")}
-          status={tiktokStatus} posting={tiktokPosting}
-          connectHref={`${API}/tiktok/connect?token=${encodeURIComponent(token)}`}
-          connectLabel="Connect TikTok"
-          connectedAs={`@${tiktokStatus?.username}`}
-          onPost={postToTiktok} onDisconnect={disconnectTiktok}
-          badge="NEW"
-        />
+        <IntegrationCard icon="in" iconBg="#0077b5" name="LinkedIn" desc={tr(trendsLang,"ui.linkedinDesc")} status={linkedinStatus} posting={linkedinPosting} connectHref={`${API}/linkedin/connect?token=${encodeURIComponent(token)}`} connectLabel={tr(trendsLang,"buttons.connectLinkedin")} connectedAs={linkedinStatus?.name} onPost={postToLinkedin} onDisconnect={disconnectLinkedin} />
+        <IntegrationCard icon="🧵" iconBg="linear-gradient(135deg,#000,#333)" name="Threads" desc={tr(trendsLang,"ui.linkedinDesc")} status={threadsStatus} posting={threadsPosting} connectHref={`${API}/threads/connect?token=${encodeURIComponent(token)}`} connectLabel={tr(trendsLang,"buttons.connectThreads")} connectedAs={`@${threadsStatus?.username}`} onPost={postToThreads} onDisconnect={disconnectThreads} />
+        <IntegrationCard icon="𝕏" iconBg="#000" name="X (Twitter)" desc={tr(trendsLang,"integrations.xDesc")} status={twitterStatus} posting={twitterPosting} connectHref={`${API}/twitter/connect?token=${encodeURIComponent(token)}`} connectLabel={tr(trendsLang,"integrations.connectX")} connectedAs={`@${twitterStatus?.username}`} onPost={postToTwitter} onDisconnect={disconnectTwitter} />
+        <IntegrationCard icon="📸" iconBg="linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)" name="Instagram" desc={tr(trendsLang,"integrations.igDesc")} status={instagramStatus} posting={instagramPosting} connectHref={`${API}/instagram/connect?token=${encodeURIComponent(token)}`} connectLabel={tr(trendsLang,"integrations.connectIg")} connectedAs={`@${instagramStatus?.username}`} onPost={postToInstagram} onDisconnect={disconnectInstagram} badge="NEW" />
+        <IntegrationCard icon="f" iconBg="#1877f2" name="Facebook" desc={tr(trendsLang,"ui.subFacebook")} status={facebookStatus} posting={facebookPosting} connectHref={`${API}/facebook/connect?token=${encodeURIComponent(token)}`} connectLabel={tr(trendsLang,"buttons.connectFacebook")} connectedAs={facebookStatus?.pageName || facebookStatus?.userName} onPost={postToFacebook} onDisconnect={disconnectFacebook} badge="NEW" />
+        <IntegrationCard icon="🎵" iconBg="#ff0050" name="TikTok" desc={tr(trendsLang,"ui.subTikTok")} status={tiktokStatus} posting={tiktokPosting} connectHref={`${API}/tiktok/connect?token=${encodeURIComponent(token)}`} connectLabel={tr(trendsLang,"buttons.connectTiktok")} connectedAs={`@${tiktokStatus?.username}`} onPost={postToTiktok} onDisconnect={disconnectTiktok} badge="NEW" />
       </div>
     </>
   );
