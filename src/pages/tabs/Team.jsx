@@ -641,7 +641,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                       );
                     })}
                     {!loading && members.length > 0 && remaining > 0 && isOwner && (
-                      <button style={{ ...s.btn, width:"100%", marginTop:12 }} onClick={()=>setShowInvite(true)}>+ {tr(trendsLang,"ui.team.inviteAnother")} ({remaining} slot{remaining!==1?"s":""} left)</button>
+                      <button style={{ ...s.btn, width:"100%", marginTop:12 }} onClick={()=>setShowInvite(true)}>+ {tr(trendsLang,"ui.team.inviteAnother")} ({remaining} {tr(trendsLang,"ui.team.slotsLeft") || "slots left"})</button>
                     )}
                   </div>
                 )}
