@@ -209,6 +209,7 @@ function AddClientModal({ token, onClose, onSuccess, editClient, trendsLang }) {
 function AgencyDashboard({ token, trendsLang, clients, onAddClient, onEditClient, onDeleteClient, onRefresh, loading, onConfirm }) {
   const [dashStats,   setDashStats]   = useState(null);
   const [activeClient,setActiveClient]= useState(null);
+  const [pdfLoading,  setPdfLoading]  = useState(null);
   const headers = { "Content-Type":"application/json", Authorization:`Bearer ${token}` };
 
   useEffect(() => {
@@ -233,6 +234,181 @@ function AgencyDashboard({ token, trendsLang, clients, onAddClient, onEditClient
         fetch(`${API}/agency/clients/${id}`, { method:"DELETE", headers }).then(onRefresh);
       }
     }
+  };
+
+  const generatePDF = async (client) => {
+    setPdfLoading(client.id);
+    try {
+      // Charger jsPDF depuis CDN
+      await new Promise((resolve, reject) => {
+        if (window.jspdf) { resolve(); return; }
+        const script = document.createElement("script");
+        script.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+        script.onload = resolve; script.onerror = reject;
+        document.head.appendChild(script);
+      });
+      const { jsPDF } = window.jspdf;
+
+      // Récupérer les posts du client
+      let posts = [];
+      try {
+        const r = await fetch(`${API}/agency/clients/${client.id}/posts`, { headers });
+        const d = await r.json();
+        posts = d.posts || [];
+      } catch {}
+
+      const doc = new jsPDF({ orientation:"portrait", unit:"mm", format:"a4" });
+      const W = 210;
+      const margin = 18;
+      const contentW = W - margin * 2;
+      let y = 0;
+
+      // ── Helpers ──────────────────────────────────────────────────────
+      const hex2rgb = (hex) => {
+        const clean = (hex||"#8b5cf6").replace("#","");
+        return [parseInt(clean.slice(0,2),16), parseInt(clean.slice(2,4),16), parseInt(clean.slice(4,6),16)];
+      };
+      const clientRgb = hex2rgb(client.color);
+
+      const checkPage = (needed = 20) => {
+        if (y + needed > 272) { doc.addPage(); y = margin; }
+      };
+
+      // ── Header bande couleur ─────────────────────────────────────────
+      doc.setFillColor(...clientRgb);
+      doc.rect(0, 0, W, 38, "F");
+
+      // Initiales client
+      doc.setFillColor(255,255,255);
+      doc.roundedRect(margin, 7, 24, 24, 4, 4, "F");
+      doc.setFontSize(13); doc.setFont("helvetica","bold");
+      doc.setTextColor(...clientRgb);
+      doc.text(client.name.slice(0,2).toUpperCase(), margin + 12, 22, { align:"center" });
+
+      // Nom + brand
+      doc.setTextColor(255,255,255);
+      doc.setFontSize(18); doc.setFont("helvetica","bold");
+      doc.text(client.name, margin + 30, 18);
+      if (client.brand) {
+        doc.setFontSize(10); doc.setFont("helvetica","normal");
+        doc.text(client.brand, margin + 30, 25);
+      }
+      doc.setFontSize(8);
+      doc.text(`${tr(trendsLang,"ui.team.reportDate") || "Report"} · ${new Date().toLocaleDateString()}`, W - margin, 10, { align:"right" });
+      doc.text("GrowthPILOT", W - margin, 16, { align:"right" });
+      y = 48;
+
+      // ── Infos client ─────────────────────────────────────────────────
+      doc.setFillColor(245,245,250);
+      doc.roundedRect(margin, y, contentW, 28, 3, 3, "F");
+      const infoItems = [
+        client.email && `Email: ${client.email}`,
+        client.niche && `Niche: ${client.niche}`,
+        `Posts: ${posts.length}`,
+        `${tr(trendsLang,"ui.team.joined")||"Since"}: ${client.created_at ? new Date(client.created_at).toLocaleDateString() : "—"}`,
+      ].filter(Boolean);
+      doc.setFontSize(9); doc.setFont("helvetica","normal"); doc.setTextColor(80,80,100);
+      infoItems.forEach((item, i) => {
+        doc.text(item, margin + 6 + (i % 2) * (contentW / 2), y + 10 + Math.floor(i / 2) * 10);
+      });
+      y += 36;
+
+      // Notes client
+      if (client.notes) {
+        checkPage(20);
+        doc.setFillColor(240,240,255);
+        doc.roundedRect(margin, y, contentW, 14, 2, 2, "F");
+        doc.setFontSize(9); doc.setFont("helvetica","italic"); doc.setTextColor(80,80,120);
+        const noteLines = doc.splitTextToSize(client.notes, contentW - 8);
+        doc.text(noteLines.slice(0,2), margin + 4, y + 6);
+        y += 20;
+      }
+
+      // ── Section Posts ─────────────────────────────────────────────────
+      checkPage(16);
+      doc.setFontSize(13); doc.setFont("helvetica","bold"); doc.setTextColor(...clientRgb);
+      doc.text(tr(trendsLang,"ui.team.reportPosts") || "Posts", margin, y);
+      doc.setDrawColor(...clientRgb); doc.setLineWidth(0.5);
+      doc.line(margin, y + 2, margin + contentW, y + 2);
+      y += 10;
+
+      if (posts.length === 0) {
+        doc.setFontSize(10); doc.setFont("helvetica","italic"); doc.setTextColor(150,150,160);
+        doc.text(tr(trendsLang,"ui.team.reportNoPosts") || "No posts yet for this client.", margin, y);
+        y += 12;
+      } else {
+        posts.slice(0, 15).forEach((post, idx) => {
+          checkPage(35);
+          doc.setFillColor(250,250,255);
+          doc.setDrawColor(220,220,235); doc.setLineWidth(0.3);
+          doc.roundedRect(margin, y, contentW, 30, 2, 2, "FD");
+
+          // Numéro
+          doc.setFillColor(...clientRgb);
+          doc.roundedRect(margin + 2, y + 2, 8, 8, 1, 1, "F");
+          doc.setFontSize(7); doc.setFont("helvetica","bold"); doc.setTextColor(255,255,255);
+          doc.text(String(idx + 1), margin + 6, y + 7, { align:"center" });
+
+          // Date
+          doc.setFontSize(8); doc.setFont("helvetica","normal"); doc.setTextColor(130,130,150);
+          doc.text(post.created_at ? new Date(post.created_at).toLocaleDateString() : "", W - margin - 2, y + 7, { align:"right" });
+
+          // Titre
+          if (post.title) {
+            doc.setFontSize(10); doc.setFont("helvetica","bold"); doc.setTextColor(30,30,50);
+            doc.text(doc.splitTextToSize(post.title, contentW - 20)[0], margin + 14, y + 7);
+          }
+
+          // Extrait contenu
+          const excerpt = (post.content || "").slice(0, 220).replace(/\n/g," ");
+          doc.setFontSize(8); doc.setFont("helvetica","normal"); doc.setTextColor(80,80,100);
+          const cLines = doc.splitTextToSize(excerpt + (post.content?.length > 220 ? "…" : ""), contentW - 8);
+          doc.text(cLines.slice(0,2), margin + 4, y + 15);
+
+          // Viral score
+          if (post.viral_score > 0) {
+            const sc = post.viral_score >= 70 ? [34,197,94] : post.viral_score >= 50 ? [245,158,11] : [239,68,68];
+            doc.setFillColor(...sc);
+            doc.roundedRect(margin + 4, y + 23, 30, 5, 1, 1, "F");
+            doc.setFontSize(7); doc.setFont("helvetica","bold"); doc.setTextColor(255,255,255);
+            doc.text(`Score: ${post.viral_score}`, margin + 19, y + 26.5, { align:"center" });
+          }
+
+          // Statut
+          const stLabel = { approved:"Approved", pending_approval:"Pending", rejected:"Rejected" }[post.approval_status] || "";
+          if (stLabel) {
+            doc.setFontSize(7); doc.setFont("helvetica","normal"); doc.setTextColor(100,100,120);
+            doc.text(stLabel, W - margin - 4, y + 27, { align:"right" });
+          }
+          y += 34;
+        });
+
+        if (posts.length > 15) {
+          doc.setFontSize(9); doc.setFont("helvetica","italic"); doc.setTextColor(130,130,150);
+          doc.text(`+ ${posts.length - 15} more posts`, margin, y);
+          y += 10;
+        }
+      }
+
+      // ── Footer chaque page ────────────────────────────────────────────
+      const pageCount = doc.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(7); doc.setFont("helvetica","normal"); doc.setTextColor(170,170,190);
+        doc.text(`GrowthPILOT · ${client.name} · ${new Date().toLocaleDateString()}`, margin, 290);
+        doc.text(`${i} / ${pageCount}`, W - margin, 290, { align:"right" });
+        doc.setDrawColor(220,220,235); doc.setLineWidth(0.3);
+        doc.line(margin, 286, W - margin, 286);
+      }
+
+      const filename = `GrowthPILOT_${client.name.replace(/[^a-z0-9]/gi,"_")}_${new Date().toISOString().slice(0,10)}.pdf`;
+      doc.save(filename);
+      console.log(`[Team] PDF generated: ${filename}`);
+    } catch (err) {
+      console.error("[Team] generatePDF error:", err);
+      alert(`PDF error: ${err.message}`);
+    }
+    setPdfLoading(null);
   };
 
   return (
@@ -295,6 +471,12 @@ function AgencyDashboard({ token, trendsLang, clients, onAddClient, onEditClient
                 {client.brand && <div style={{ color:"#64748b", fontSize:11 }}>{client.brand}</div>}
               </div>
               <div style={{ display:"flex", gap:6 }}>
+                <button
+                  style={{ ...s.btnGhost, padding:"5px 8px", fontSize:10, opacity: pdfLoading === client.id ? 0.6 : 1 }}
+                  onClick={e=>{ e.stopPropagation(); generatePDF(client); }}
+                  disabled={pdfLoading === client.id}
+                  title={tr(trendsLang,"ui.team.generateReport") || "Generate PDF report"}
+                >{pdfLoading === client.id ? "⏳" : "📄"}</button>
                 <button style={{ ...s.btnGhost, padding:"5px 8px", fontSize:10 }}
                   onClick={e=>{ e.stopPropagation(); onEditClient(client); }}>✏️</button>
                 <button style={{ ...s.btnDanger, padding:"5px 8px", fontSize:10 }}
