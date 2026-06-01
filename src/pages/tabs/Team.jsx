@@ -164,7 +164,7 @@ function AddClientModal({ token, onClose, onSuccess, editClient }) {
     <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.8)", zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
       <div style={{ ...s.card, width:"100%", maxWidth:500, background:"#111827", border:"1px solid rgba(139,92,246,0.3)", boxShadow:"0 30px 80px rgba(0,0,0,0.6)", maxHeight:"90vh", overflowY:"auto" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
-          <div style={{ color:"#e2e8f0", fontWeight:800, fontSize:16 }}>🏢 {editClient?.id ? "Edit Client" : "New Client"}</div>
+          <div style={{ color:"#e2e8f0", fontWeight:800, fontSize:16 }}>🏢 {editClient?.id ? tr(trendsLang,"ui.team.editClient") || "Edit Client" : tr(trendsLang,"ui.team.newClient") || "New Client"}</div>
           <button style={{ background:"transparent", border:"none", color:"#475569", fontSize:20, cursor:"pointer" }} onClick={onClose}>✕</button>
         </div>
 
@@ -833,7 +833,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                     <div style={{ background: isAgency?"rgba(139,92,246,0.12)":"rgba(249,115,22,0.12)", border:`1px solid ${isAgency?"rgba(139,92,246,0.25)":"rgba(249,115,22,0.25)"}`, borderRadius:20, padding:"2px 9px", fontSize:10, fontWeight:700, color:isAgency?"#8b5cf6":"#f97316" }}>ACTIVE</div>
                   </div>
                   <div style={s.divider} />
-                  <span style={s.label}>CAPACITY</span>
+                  <span style={s.label}>{tr(trendsLang,"ui.team.capacity") || "CAPACITY"}</span>
                   <div style={{ color:"#e2e8f0", fontSize:13 }}>{used} / {MAX_MEMBERS} members</div>
                   <div style={{ height:4, background:"rgba(255,255,255,0.06)", borderRadius:2, marginTop:8 }}>
                     <div style={{ width:`${(used/MAX_MEMBERS)*100}%`, height:"100%", background:used===MAX_MEMBERS?"#ef4444":"linear-gradient(90deg,#22c55e,#16a34a)", borderRadius:2, transition:"width 0.4s" }} />
@@ -876,6 +876,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
           {mainTab === "agency" && isAgency && (
             <AgencyDashboard
               token={token}
+              trendsLang={trendsLang}
               clients={clients}
               loading={loading}
               onAddClient={()=>{ setEditClient(null); setShowClient(true); }}
