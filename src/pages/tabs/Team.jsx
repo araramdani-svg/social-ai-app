@@ -397,8 +397,16 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
     try {
       const r = await fetch(`${API}/team/name`, { method: "PATCH", headers, body: JSON.stringify({ teamName }) });
       const d = await r.json();
-      if (!d.success) setConfirm({ message: `⚠️ ${d.error}`, onConfirm: () => setConfirm(null) });
-    } catch {}
+      console.log("[Team] saveTeamName response:", r.status, d);
+      if (d.success) {
+        setConfirm({ message: `✅ ${tr(trendsLang,"ui.team.teamNameSaved") || "Team name saved!"}`, onConfirm: () => setConfirm(null) });
+      } else {
+        setConfirm({ message: `⚠️ ${d.error || "Failed to save team name"}`, onConfirm: () => setConfirm(null) });
+      }
+    } catch (err) {
+      console.error("[Team] saveTeamName error:", err.message);
+      setConfirm({ message: `⚠️ Network error: ${err.message}`, onConfirm: () => setConfirm(null) });
+    }
     setTeamNameSaving(false);
   };
 
