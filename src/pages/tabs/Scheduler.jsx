@@ -113,14 +113,14 @@ export default function Scheduler({
           {/* Sélection du post */}
           <div style={{ ...st.card, marginTop:0, padding:16 }}>
             <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px", marginBottom:10 }}>
-              {tr(trendsLang,"scheduler.selectPost") || "SELECT A POST"}
+              {tr(trendsLang,"ui.scheduler.selectPost") || "SELECT A POST"}
             </div>
             <select
               style={{ ...st.input, marginBottom:0, cursor:"pointer" }}
               value={selectedPostId}
               onChange={e => setSelectedPostId(e.target.value)}
             >
-              <option value="">{tr(trendsLang,"scheduler.choosePosts") || "-- Choose a post --"}</option>
+              <option value="">{tr(trendsLang,"ui.scheduler.choosePosts") || "-- Choose a post --"}</option>
               {(history || []).map(p => (
                 <option key={p.id} value={p.id}>
                   {p.title || p.content?.slice(0, 60) || "Untitled"}
@@ -149,7 +149,7 @@ export default function Scheduler({
           {/* Date & Heure */}
           <div style={{ ...st.card, marginTop:0, padding:16 }}>
             <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px", marginBottom:10 }}>
-              {tr(trendsLang,"scheduler.dateTime") || "DATE & TIME"}
+              {tr(trendsLang,"ui.scheduler.dateTime") || "DATE & TIME"}
             </div>
             <p style={{ color:"#64748b", fontSize:11, marginBottom:4 }}>{tr(trendsLang,"ui.selectDate")}</p>
             <input style={{ ...st.input, marginBottom:8 }} type="date" value={scheduleDate} onChange={e => setScheduleDate(e.target.value)} />
@@ -200,8 +200,8 @@ export default function Scheduler({
                 color: view === v ? "white" : "#64748b",
               }}>
                 {v === "list"
-                  ? (tr(trendsLang,"scheduler.viewList") || "📋 List")
-                  : (tr(trendsLang,"scheduler.view30days") || "📅 30 Days")}
+                  ? (tr(trendsLang,"ui.scheduler.viewList") || "📋 List")
+                  : (tr(trendsLang,"ui.scheduler.view30days") || "📅 30 Days")}
               </button>
             ))}
           </div>
@@ -248,7 +248,7 @@ export default function Scheduler({
           {view === "calendar" && (
             <div style={{ ...st.card, marginTop:0, display:"flex", flexDirection:"column", gap:6, overflowY:"auto", maxHeight: isMobile ? 300 : "calc(100vh - 260px)" }}>
               <h3 style={{ color:"#ef4444", fontSize:12, letterSpacing:"1.5px", marginBottom:4 }}>
-                {tr(trendsLang,"scheduler.next30days") || "NEXT 30 DAYS"}
+                {tr(trendsLang,"ui.scheduler.next30days") || "NEXT 30 DAYS"}
               </h3>
               {next30Days.map(date => {
                 const posts = postsByDate[date] || [];
