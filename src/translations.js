@@ -182,7 +182,7 @@ const translations = {
         watch_search: "🌍 Watch", cancel_subscription: "❌ Subscription cancelled",
         plan_upgrade: "⬆️ Plan upgraded", plan_downgrade: "⬇️ Plan downgraded",
         publish_post: "📤 Published",
-        team_member_joined: "👥 Member joined", quota_exceeded: "⛔ Quota exceeded",
+        team_member_joined: "👥 Member joined", joined_team: "👥 Joined team", quota_exceeded: "⛔ Quota exceeded",
         team: {
           tabTeam: "👥 TEAM",
           tabAgence: "🏢 AGENCY",
@@ -222,7 +222,7 @@ const translations = {
           confirmRemoveClient: "Remove this client?",
           myTeam: "My Team",
           myRole: "MY ROLE",
-          teamName: "TEAM NAME"
+          teamName: "TEAM NAME", save: "Save", teamNamePlaceholder: "My Agency Team"
         },
         team_invite: "📨 Team invite sent", team_invite_resent: "📨 Invite resent", team_joined: "👥 Team joined", team_role_updated: "🔄 Role updated", team_removed: "🚫 Member removed", team_view_logs: "📋 Team logs viewed", team_update_plan: "⬆️ Member plan updated", team_reset_quota: "🔄 Member quota reset", quota_reset: "🔄 Quota reset by admin", team_name_updated: "✏️ Team name updated",
         team_invite: "📨 Team invite sent", team_invite_resent: "📨 Invite resent", team_joined: "👥 Team joined", team_role_updated: "🔄 Role updated", team_removed: "🚫 Member removed", team_view_logs: "📋 Team logs viewed", team_update_plan: "⬆️ Member plan updated", team_reset_quota: "🔄 Member quota reset", quota_reset: "🔄 Quota reset by admin",
@@ -264,9 +264,9 @@ const translations = {
           slotsRemaining: "invitation slots remaining", sendInvitation: "Send Invitation",
           confirmRemoveMember: "Remove this member from your team?",
           confirmRemoveClient: "Remove this client?",
-          myTeam: "My Team", myRole: "MY ROLE", teamName: "TEAM NAME", capacity: "CAPACITY", membersLabel: "members", editClient: "Edit Client", betaDesc: "Full collaboration features coming soon", roleDescAdmin: "Full access — manage team, generate, publish & analyze", roleDescEditor: "Generate content, analyze posts & access brand memory", roleDescPublisher: "Publish content across all connected platforms", agencyClients: "CLIENTS", agencyEngagement: "ENGAGEMENT", clientPortfolio: "Client Portfolio", clientsLabel: "clients", newClient: "New Client", loadingClients: "Loading clients...", noClientsYet: "No clients yet", noClientsDesc: "Add your first client to start managing their content.", addFirstClient: "Add First Client",
+          myTeam: "My Team", myRole: "MY ROLE", teamName: "TEAM NAME", save: "Save", teamNamePlaceholder: "My Agency Team", capacity: "CAPACITY", membersLabel: "members", editClient: "Edit Client", betaDesc: "Full collaboration features coming soon", roleDescAdmin: "Full access — manage team, generate, publish & analyze", roleDescEditor: "Generate content, analyze posts & access brand memory", roleDescPublisher: "Publish content across all connected platforms", agencyClients: "CLIENTS", agencyEngagement: "ENGAGEMENT", clientPortfolio: "Client Portfolio", clientsLabel: "clients", newClient: "New Client", loadingClients: "Loading clients...", noClientsYet: "No clients yet", noClientsDesc: "Add your first client to start managing their content.", addFirstClient: "Add First Client",
         },
-        timeAgoSuffix: "ago", timeJustNow: "just now",
+        timeAgoPrefix: "", timeAgoSuffix: "ago", timeJustNow: "just now",
         copyAndOpen: "Copy & Open", selectDate: "SELECT DATE", selectTime: "SELECT TIME", schedulePost: "SCHEDULE POST",
         scheduler: { selectPost: "SELECT A POST", choosePosts: "-- Choose a post --", dateTime: "DATE & TIME", viewList: "📋 List", view30days: "📅 30 Days", next30days: "NEXT 30 DAYS" },
       scheduled: "SCHEDULED", published: "PUBLISHED", publishQueue: "PUBLISH QUEUE", noPostsScheduled: "No posts scheduled yet.",
@@ -732,7 +732,7 @@ const translations = {
         watch_search: "🌍 Veille", cancel_subscription: "❌ Abonnement annulé",
         plan_upgrade: "⬆️ Plan upgradé", plan_downgrade: "⬇️ Plan downgradé",
         publish_post: "📤 Publié",
-        team_member_joined: "👥 Membre rejoint", quota_exceeded: "⛔ Quota dépassé",
+        team_member_joined: "👥 Membre rejoint", joined_team: "👥 A rejoint l'équipe", quota_exceeded: "⛔ Quota dépassé",
         team: {
           tabTeam: "👥 ÉQUIPE",
           tabAgence: "🏢 AGENCE",
@@ -772,7 +772,7 @@ const translations = {
           confirmRemoveClient: "Retirer ce client ?",
           myTeam: "Mon équipe",
           myRole: "MON RÔLE",
-          teamName: "NOM DE L'ÉQUIPE"
+          teamName: "NOM DE L'ÉQUIPE", save: "Sauvegarder", teamNamePlaceholder: "Mon équipe agency"
         },
         team_invite: "📨 Invitation envoyée", team_invite_resent: "📨 Invitation renvoyée", team_joined: "👥 Équipe rejointe", team_role_updated: "🔄 Rôle mis à jour", team_removed: "🚫 Membre retiré", team_view_logs: "📋 Logs équipe consultés", team_update_plan: "⬆️ Plan membre mis à jour", team_reset_quota: "🔄 Quota membre réinitialisé", quota_reset: "🔄 Quota réinitialisé par admin", team_name_updated: "✏️ Nom d'équipe mis à jour",
         team_invite: "📨 Invitation envoyée", team_invite_resent: "📨 Invitation renvoyée", team_joined: "👥 Équipe rejointe", team_role_updated: "🔄 Rôle mis à jour", team_removed: "🚫 Membre retiré", team_view_logs: "📋 Logs équipe consultés", team_update_plan: "⬆️ Plan membre mis à jour", team_reset_quota: "🔄 Quota membre réinitialisé", quota_reset: "🔄 Quota réinitialisé par admin",
@@ -814,9 +814,9 @@ const translations = {
           slotsRemaining: "invitations restantes", sendInvitation: "Envoyer une invitation",
           confirmRemoveMember: "Retirer ce membre de votre équipe ?",
           confirmRemoveClient: "Retirer ce client ?",
-          myTeam: "Mon équipe", myRole: "MON RÔLE", teamName: "NOM DE L'ÉQUIPE", capacity: "CAPACITÉ", membersLabel: "membres", editClient: "Modifier le client", betaDesc: "Fonctionnalités collaboratives bientôt disponibles", roleDescAdmin: "Accès complet — gérer l'équipe, générer, publier & analyser", roleDescEditor: "Générer du contenu, analyser les posts & accéder à la mémoire de marque", roleDescPublisher: "Publier du contenu sur toutes les plateformes connectées", agencyClients: "CLIENTS", agencyEngagement: "ENGAGEMENT", clientPortfolio: "Portefeuille clients", clientsLabel: "clients", newClient: "Nouveau client", loadingClients: "Chargement...", noClientsYet: "Aucun client", noClientsDesc: "Ajoutez votre premier client pour gérer son contenu.", addFirstClient: "Ajouter le premier client",
+          myTeam: "Mon équipe", myRole: "MON RÔLE", teamName: "NOM DE L'ÉQUIPE", save: "Sauvegarder", teamNamePlaceholder: "Mon équipe agency", capacity: "CAPACITÉ", membersLabel: "membres", editClient: "Modifier le client", betaDesc: "Fonctionnalités collaboratives bientôt disponibles", roleDescAdmin: "Accès complet — gérer l'équipe, générer, publier & analyser", roleDescEditor: "Générer du contenu, analyser les posts & accéder à la mémoire de marque", roleDescPublisher: "Publier du contenu sur toutes les plateformes connectées", agencyClients: "CLIENTS", agencyEngagement: "ENGAGEMENT", clientPortfolio: "Portefeuille clients", clientsLabel: "clients", newClient: "Nouveau client", loadingClients: "Chargement...", noClientsYet: "Aucun client", noClientsDesc: "Ajoutez votre premier client pour gérer son contenu.", addFirstClient: "Ajouter le premier client",
         },
-        timeAgoSuffix: "il y a", timeJustNow: "à l'instant",
+        timeAgoPrefix: "il y a", timeAgoSuffix: "", timeJustNow: "à l'instant",
         copyAndOpen: "Copier & Ouvrir", selectDate: "SÉLECTIONNER LA DATE", selectTime: "SÉLECTIONNER L'HEURE", schedulePost: "PLANIFIER LA PUBLICATION",
         scheduler: { selectPost: "SÉLECTIONNER UN POST", choosePosts: "-- Choisir un post --", dateTime: "DATE & HEURE", viewList: "📋 Liste", view30days: "📅 30 Jours", next30days: "30 PROCHAINS JOURS" },
       scheduled: "PLANIFIÉ", published: "PUBLIÉ", publishQueue: "FILE DE PUBLICATION", noPostsScheduled: "Aucune publication planifiée.",
@@ -1267,7 +1267,7 @@ const translations = {
         plan_upgrade: "⬆️ Plan mejorado",
         plan_downgrade: "⬇️ Plan reducido",
         publish_post: "📤 Publicado",
-        team_member_joined: "👥 Miembro unido", quota_exceeded: "⛔ Cuota superada",
+        team_member_joined: "👥 Miembro unido", joined_team: "👥 Se unió al equipo", quota_exceeded: "⛔ Cuota superada",
         team: {
           tabTeam: "👥 EQUIPO",
           tabAgence: "🏢 AGENCIA",
@@ -1307,7 +1307,7 @@ const translations = {
           confirmRemoveClient: "¿Eliminar este cliente?",
           myTeam: "Mi equipo",
           myRole: "MI ROL",
-          teamName: "NOMBRE DEL EQUIPO"
+          teamName: "NOMBRE DEL EQUIPO", save: "Guardar", teamNamePlaceholder: "Mi equipo agency"
         },
         team_invite: "📨 Invitación enviada", team_invite_resent: "📨 Invitación reenviada", team_joined: "👥 Equipo unido", team_role_updated: "🔄 Rol actualizado", team_removed: "🚫 Miembro eliminado", team_view_logs: "📋 Logs del equipo vistos", team_update_plan: "⬆️ Plan de miembro actualizado", team_reset_quota: "🔄 Cuota de miembro restablecida", quota_reset: "🔄 Cuota restablecida por admin", team_name_updated: "✏️ Nombre de equipo actualizado",
         team_invite: "📨 Invitación enviada", team_invite_resent: "📨 Invitación reenviada", team_joined: "👥 Equipo unido", team_role_updated: "🔄 Rol actualizado", team_removed: "🚫 Miembro eliminado", team_view_logs: "📋 Logs del equipo vistos", team_update_plan: "⬆️ Plan de miembro actualizado", team_reset_quota: "🔄 Cuota de miembro restablecida", quota_reset: "🔄 Cuota restablecida por admin",
@@ -1348,9 +1348,9 @@ const translations = {
           resetQuota: "Reiniciar a 0", inviteYourTeam: "Invita a tu equipo",
           slotsRemaining: "invitaciones restantes", sendInvitation: "Enviar invitación",
           confirmRemoveMember: "¿Eliminar este miembro?", confirmRemoveClient: "¿Eliminar este cliente?",
-          myTeam: "Mi equipo", myRole: "MI ROL", teamName: "NOMBRE DEL EQUIPO", capacity: "CAPACIDAD", membersLabel: "miembros", editClient: "Editar cliente", betaDesc: "Funciones colaborativas próximamente", roleDescAdmin: "Acceso completo — gestionar equipo, generar, publicar & analizar", roleDescEditor: "Generar contenido, analizar posts & acceder a la memoria de marca", roleDescPublisher: "Publicar contenido en todas las plataformas conectadas", agencyClients: "CLIENTES", agencyEngagement: "PARTICIPACIÓN", clientPortfolio: "Cartera de clientes", clientsLabel: "clientes", newClient: "Nuevo cliente", loadingClients: "Cargando...", noClientsYet: "Sin clientes aún", noClientsDesc: "Añade tu primer cliente para gestionar su contenido.", addFirstClient: "Añadir primer cliente",
+          myTeam: "Mi equipo", myRole: "MI ROL", teamName: "NOMBRE DEL EQUIPO", save: "Guardar", teamNamePlaceholder: "Mi equipo agency", capacity: "CAPACIDAD", membersLabel: "miembros", editClient: "Editar cliente", betaDesc: "Funciones colaborativas próximamente", roleDescAdmin: "Acceso completo — gestionar equipo, generar, publicar & analizar", roleDescEditor: "Generar contenido, analizar posts & acceder a la memoria de marca", roleDescPublisher: "Publicar contenido en todas las plataformas conectadas", agencyClients: "CLIENTES", agencyEngagement: "PARTICIPACIÓN", clientPortfolio: "Cartera de clientes", clientsLabel: "clientes", newClient: "Nuevo cliente", loadingClients: "Cargando...", noClientsYet: "Sin clientes aún", noClientsDesc: "Añade tu primer cliente para gestionar su contenido.", addFirstClient: "Añadir primer cliente",
         },
-        timeAgoSuffix: "hace", timeJustNow: "ahora mismo",
+        timeAgoPrefix: "hace", timeAgoSuffix: "", timeJustNow: "ahora mismo",
         copyAndOpen: "Copiar & Abrir", selectDate: "SELECCIONAR FECHA", selectTime: "SELECCIONAR HORA", schedulePost: "PROGRAMAR PUBLICACIÓN",
         scheduler: { selectPost: "SELECCIONAR POST", choosePosts: "-- Elegir un post --", dateTime: "FECHA Y HORA", viewList: "📋 Lista", view30days: "📅 30 Días", next30days: "PRÓXIMOS 30 DÍAS" },
       scheduled: "PROGRAMADO", published: "PUBLICADO", publishQueue: "COLA DE PUBLICACIÓN", noPostsScheduled: "No hay publicaciones programadas.",
@@ -1738,7 +1738,7 @@ const translations = {
         plan_upgrade: "⬆️ Plan aufgewertet",
         plan_downgrade: "⬇️ Plan reduziert",
         publish_post: "📤 Veröffentlicht",
-        team_member_joined: "👥 Mitglied beigetreten", quota_exceeded: "⛔ Kontingent überschritten",
+        team_member_joined: "👥 Mitglied beigetreten", joined_team: "👥 Team beigetreten", quota_exceeded: "⛔ Kontingent überschritten",
         team: {
           tabTeam: "👥 TEAM",
           tabAgence: "🏢 AGENTUR",
@@ -1778,7 +1778,7 @@ const translations = {
           confirmRemoveClient: "Diesen Kunden entfernen?",
           myTeam: "Mein Team",
           myRole: "MEINE ROLLE",
-          teamName: "TEAMNAME"
+          teamName: "TEAMNAME", save: "Speichern", teamNamePlaceholder: "Mein Agentur-Team"
         },
         team_invite: "📨 Einladung gesendet", team_invite_resent: "📨 Einladung erneut gesendet", team_joined: "👥 Team beigetreten", team_role_updated: "🔄 Rolle aktualisiert", team_removed: "🚫 Mitglied entfernt", team_view_logs: "📋 Team-Logs angesehen", team_update_plan: "⬆️ Mitgliederplan aktualisiert", team_reset_quota: "🔄 Mitgliederkontingent zurückgesetzt", quota_reset: "🔄 Kontingent vom Admin zurückgesetzt", team_name_updated: "✏️ Teamname aktualisiert",
         team_invite: "📨 Einladung gesendet", team_invite_resent: "📨 Einladung erneut gesendet", team_joined: "👥 Team beigetreten", team_role_updated: "🔄 Rolle aktualisiert", team_removed: "🚫 Mitglied entfernt", team_view_logs: "📋 Team-Logs angesehen", team_update_plan: "⬆️ Mitgliederplan aktualisiert", team_reset_quota: "🔄 Mitgliederkontingent zurückgesetzt", quota_reset: "🔄 Kontingent vom Admin zurückgesetzt",
@@ -1819,9 +1819,9 @@ const translations = {
           resetQuota: "Auf 0 zurücksetzen", inviteYourTeam: "Team einladen",
           slotsRemaining: "Einladungen verfügbar", sendInvitation: "Einladung senden",
           confirmRemoveMember: "Dieses Mitglied entfernen?", confirmRemoveClient: "Diesen Kunden entfernen?",
-          myTeam: "Mein Team", myRole: "MEINE ROLLE", teamName: "TEAMNAME", capacity: "KAPAZITÄT", membersLabel: "Mitglieder", editClient: "Kunde bearbeiten", betaDesc: "Kollaborationsfunktionen demnächst verfügbar", roleDescAdmin: "Vollzugriff — Team verwalten, generieren, veröffentlichen & analysieren", roleDescEditor: "Inhalte erstellen, Posts analysieren & auf Markengedächtnis zugreifen", roleDescPublisher: "Inhalte auf allen verbundenen Plattformen veröffentlichen", agencyClients: "KUNDEN", agencyEngagement: "ENGAGEMENT", clientPortfolio: "Kundenportfolio", clientsLabel: "Kunden", newClient: "Neuer Kunde", loadingClients: "Laden...", noClientsYet: "Noch keine Kunden", noClientsDesc: "Fügen Sie Ihren ersten Kunden hinzu.", addFirstClient: "Ersten Kunden hinzufügen",
+          myTeam: "Mein Team", myRole: "MEINE ROLLE", teamName: "TEAMNAME", save: "Speichern", teamNamePlaceholder: "Mein Agentur-Team", capacity: "KAPAZITÄT", membersLabel: "Mitglieder", editClient: "Kunde bearbeiten", betaDesc: "Kollaborationsfunktionen demnächst verfügbar", roleDescAdmin: "Vollzugriff — Team verwalten, generieren, veröffentlichen & analysieren", roleDescEditor: "Inhalte erstellen, Posts analysieren & auf Markengedächtnis zugreifen", roleDescPublisher: "Inhalte auf allen verbundenen Plattformen veröffentlichen", agencyClients: "KUNDEN", agencyEngagement: "ENGAGEMENT", clientPortfolio: "Kundenportfolio", clientsLabel: "Kunden", newClient: "Neuer Kunde", loadingClients: "Laden...", noClientsYet: "Noch keine Kunden", noClientsDesc: "Fügen Sie Ihren ersten Kunden hinzu.", addFirstClient: "Ersten Kunden hinzufügen",
         },
-        timeAgoSuffix: "vor", timeJustNow: "gerade eben",
+        timeAgoPrefix: "vor", timeAgoSuffix: "", timeJustNow: "gerade eben",
         copyAndOpen: "Kopieren & Öffnen", selectDate: "DATUM AUSWÄHLEN", selectTime: "UHRZEIT AUSWÄHLEN", schedulePost: "BEITRAG PLANEN",
         scheduler: { selectPost: "BEITRAG AUSWÄHLEN", choosePosts: "-- Beitrag wählen --", dateTime: "DATUM & UHRZEIT", viewList: "📋 Liste", view30days: "📅 30 Tage", next30days: "NÄCHSTE 30 TAGE" },
       scheduled: "GEPLANT", published: "VERÖFFENTLICHT", publishQueue: "VERÖFFENTLICHUNGSWARTESCHLANGE", noPostsScheduled: "Noch keine geplanten Beiträge.",
@@ -2211,7 +2211,7 @@ const translations = {
         plan_upgrade: "⬆️ Piano aggiornato",
         plan_downgrade: "⬇️ Piano ridotto",
         publish_post: "📤 Pubblicato",
-        team_member_joined: "👥 Membro entrato", quota_exceeded: "⛔ Quota superata",
+        team_member_joined: "👥 Membro entrato", joined_team: "👥 Entrato nel team", quota_exceeded: "⛔ Quota superata",
         team: {
           tabTeam: "👥 TEAM",
           tabAgence: "🏢 AGENZIA",
@@ -2251,7 +2251,7 @@ const translations = {
           confirmRemoveClient: "Rimuovere questo cliente?",
           myTeam: "Il mio team",
           myRole: "IL MIO RUOLO",
-          teamName: "NOME DEL TEAM"
+          teamName: "NOME DEL TEAM", save: "Salva", teamNamePlaceholder: "Il mio team agenzia"
         },
         team_invite: "📨 Invito inviato", team_invite_resent: "📨 Invito reinviato", team_joined: "👥 Team unito", team_role_updated: "🔄 Ruolo aggiornato", team_removed: "🚫 Membro rimosso", team_view_logs: "📋 Log team visualizzati", team_update_plan: "⬆️ Piano membro aggiornato", team_reset_quota: "🔄 Quota membro reimpostata", quota_reset: "🔄 Quota reimpostata dall'admin", team_name_updated: "✏️ Nome del team aggiornato",
         team_invite: "📨 Invito inviato", team_invite_resent: "📨 Invito reinviato", team_joined: "👥 Team unito", team_role_updated: "🔄 Ruolo aggiornato", team_removed: "🚫 Membro rimosso", team_view_logs: "📋 Log team visualizzati", team_update_plan: "⬆️ Piano membro aggiornato", team_reset_quota: "🔄 Quota membro reimpostata", quota_reset: "🔄 Quota reimpostata dall'admin",
@@ -2292,9 +2292,9 @@ const translations = {
           resetQuota: "Azzera a 0", inviteYourTeam: "Invita il tuo team",
           slotsRemaining: "inviti rimanenti", sendInvitation: "Invia invito",
           confirmRemoveMember: "Rimuovere questo membro?", confirmRemoveClient: "Rimuovere questo cliente?",
-          myTeam: "Il mio team", myRole: "IL MIO RUOLO", teamName: "NOME DEL TEAM", capacity: "CAPACITÀ", membersLabel: "membri", editClient: "Modifica cliente", betaDesc: "Funzionalità collaborative in arrivo", roleDescAdmin: "Accesso completo — gestire il team, generare, pubblicare & analizzare", roleDescEditor: "Generare contenuto, analizzare post & accedere alla memoria del brand", roleDescPublisher: "Pubblicare contenuto su tutte le piattaforme collegate", agencyClients: "CLIENTI", agencyEngagement: "COINVOLGIMENTO", clientPortfolio: "Portfolio clienti", clientsLabel: "clienti", newClient: "Nuovo cliente", loadingClients: "Caricamento...", noClientsYet: "Nessun cliente", noClientsDesc: "Aggiungi il tuo primo cliente per gestire il loro contenuto.", addFirstClient: "Aggiungi primo cliente",
+          myTeam: "Il mio team", myRole: "IL MIO RUOLO", teamName: "NOME DEL TEAM", save: "Salva", teamNamePlaceholder: "Il mio team agenzia", capacity: "CAPACITÀ", membersLabel: "membri", editClient: "Modifica cliente", betaDesc: "Funzionalità collaborative in arrivo", roleDescAdmin: "Accesso completo — gestire il team, generare, pubblicare & analizzare", roleDescEditor: "Generare contenuto, analizzare post & accedere alla memoria del brand", roleDescPublisher: "Pubblicare contenuto su tutte le piattaforme collegate", agencyClients: "CLIENTI", agencyEngagement: "COINVOLGIMENTO", clientPortfolio: "Portfolio clienti", clientsLabel: "clienti", newClient: "Nuovo cliente", loadingClients: "Caricamento...", noClientsYet: "Nessun cliente", noClientsDesc: "Aggiungi il tuo primo cliente per gestire il loro contenuto.", addFirstClient: "Aggiungi primo cliente",
         },
-        timeAgoSuffix: "fa", timeJustNow: "proprio ora",
+        timeAgoPrefix: "", timeAgoSuffix: "fa", timeJustNow: "proprio ora",
         copyAndOpen: "Copia & Apri", selectDate: "SELEZIONA DATA", selectTime: "SELEZIONA ORA", schedulePost: "PROGRAMMA POST",
         scheduler: { selectPost: "SELEZIONA POST", choosePosts: "-- Scegli un post --", dateTime: "DATA & ORA", viewList: "📋 Lista", view30days: "📅 30 Giorni", next30days: "PROSSIMI 30 GIORNI" },
       scheduled: "PROGRAMMATO", published: "PUBBLICATO", publishQueue: "CODA DI PUBBLICAZIONE", noPostsScheduled: "Nessun post programmato.",
@@ -2683,7 +2683,7 @@ const translations = {
         plan_upgrade: "⬆️ Plano atualizado",
         plan_downgrade: "⬇️ Plano reduzido",
         publish_post: "📤 Publicado",
-        team_member_joined: "👥 Membro entrou", quota_exceeded: "⛔ Cota excedida",
+        team_member_joined: "👥 Membro entrou", joined_team: "👥 Entrou na equipa", quota_exceeded: "⛔ Cota excedida",
         team: {
           tabTeam: "👥 EQUIPA",
           tabAgence: "🏢 AGÊNCIA",
@@ -2723,7 +2723,7 @@ const translations = {
           confirmRemoveClient: "Remover este cliente?",
           myTeam: "A minha equipa",
           myRole: "O MEU PAPEL",
-          teamName: "NOME DA EQUIPA"
+          teamName: "NOME DA EQUIPA", save: "Guardar", teamNamePlaceholder: "A minha equipa agência"
         },
         team_invite: "📨 Convite enviado", team_invite_resent: "📨 Convite reenviado", team_joined: "👥 Equipa unida", team_role_updated: "🔄 Função atualizada", team_removed: "🚫 Membro removido", team_view_logs: "📋 Logs da equipa vistos", team_update_plan: "⬆️ Plano do membro atualizado", team_reset_quota: "🔄 Cota do membro redefinida", quota_reset: "🔄 Cota redefinida pelo admin", team_name_updated: "✏️ Nome da equipa atualizado",
         team_invite: "📨 Convite enviado", team_invite_resent: "📨 Convite reenviado", team_joined: "👥 Equipa unida", team_role_updated: "🔄 Função atualizada", team_removed: "🚫 Membro removido", team_view_logs: "📋 Logs da equipa vistos", team_update_plan: "⬆️ Plano do membro atualizado", team_reset_quota: "🔄 Cota do membro redefinida", quota_reset: "🔄 Cota redefinida pelo admin,",
@@ -2764,9 +2764,9 @@ const translations = {
           resetQuota: "Repor a 0", inviteYourTeam: "Convide a sua equipa",
           slotsRemaining: "convites restantes", sendInvitation: "Enviar convite",
           confirmRemoveMember: "Remover este membro?", confirmRemoveClient: "Remover este cliente?",
-          myTeam: "A minha equipa", myRole: "O MEU PAPEL", teamName: "NOME DA EQUIPA", capacity: "CAPACIDADE", membersLabel: "membros", editClient: "Editar cliente", betaDesc: "Funcionalidades colaborativas em breve", roleDescAdmin: "Acesso completo — gerir equipa, gerar, publicar & analisar", roleDescEditor: "Gerar conteúdo, analisar posts & aceder à memória da marca", roleDescPublisher: "Publicar conteúdo em todas as plataformas ligadas", agencyClients: "CLIENTES", agencyEngagement: "ENVOLVIMENTO", clientPortfolio: "Portfólio de clientes", clientsLabel: "clientes", newClient: "Novo cliente", loadingClients: "A carregar...", noClientsYet: "Sem clientes ainda", noClientsDesc: "Adicione o seu primeiro cliente para gerir o seu conteúdo.", addFirstClient: "Adicionar primeiro cliente",
+          myTeam: "A minha equipa", myRole: "O MEU PAPEL", teamName: "NOME DA EQUIPA", save: "Guardar", teamNamePlaceholder: "A minha equipa agência", capacity: "CAPACIDADE", membersLabel: "membros", editClient: "Editar cliente", betaDesc: "Funcionalidades colaborativas em breve", roleDescAdmin: "Acesso completo — gerir equipa, gerar, publicar & analisar", roleDescEditor: "Gerar conteúdo, analisar posts & aceder à memória da marca", roleDescPublisher: "Publicar conteúdo em todas as plataformas ligadas", agencyClients: "CLIENTES", agencyEngagement: "ENVOLVIMENTO", clientPortfolio: "Portfólio de clientes", clientsLabel: "clientes", newClient: "Novo cliente", loadingClients: "A carregar...", noClientsYet: "Sem clientes ainda", noClientsDesc: "Adicione o seu primeiro cliente para gerir o seu conteúdo.", addFirstClient: "Adicionar primeiro cliente",
         },
-        timeAgoSuffix: "atrás", timeJustNow: "agora mesmo",
+        timeAgoPrefix: "há", timeAgoSuffix: "", timeJustNow: "agora mesmo",
         copyAndOpen: "Copiar & Abrir", selectDate: "SELECIONAR DATA", selectTime: "SELECIONAR HORA", schedulePost: "AGENDAR PUBLICAÇÃO",
         scheduler: { selectPost: "SELECIONAR POST", choosePosts: "-- Escolher um post --", dateTime: "DATA & HORA", viewList: "📋 Lista", view30days: "📅 30 Dias", next30days: "PRÓXIMOS 30 DIAS" },
       scheduled: "AGENDADO", published: "PUBLICADO", publishQueue: "FILA DE PUBLICAÇÃO", noPostsScheduled: "Nenhuma publicação agendada.",

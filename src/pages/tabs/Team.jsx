@@ -33,13 +33,15 @@ function timeAgo(dateStr, lang) {
   if (!dateStr) return "—";
   const diff = Date.now() - new Date(dateStr).getTime();
   const m = Math.floor(diff / 60000);
-  const ago = tr(lang,"ui.timeAgoSuffix") || "ago";
+  const prefix = tr(lang,"ui.timeAgoPrefix") || "";
+  const suffix = tr(lang,"ui.timeAgoSuffix") || "ago";
   const justNow = tr(lang,"ui.timeJustNow") || "just now";
+  const fmt = (val, unit) => prefix ? `${prefix} ${val}${unit} ` : `${val}${unit} ${suffix}`;
   if (m < 1) return justNow;
-  if (m < 60) return `${m}m ${ago}`;
+  if (m < 60) return fmt(m, "m");
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ${ago}`;
-  return `${Math.floor(h/24)}d ${ago}`;
+  if (h < 24) return fmt(h, "h");
+  return fmt(Math.floor(h/24), "d");
 }
 
 /* ── Gate ─────────────────────────────────────────────────────────────────── */
@@ -657,7 +659,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                         </div>
                         <div style={{ flex:1 }}>
                           <div style={{ color:"#e2e8f0", fontSize:12, fontWeight:600 }}>{a.linkedin_name||a.email}</div>
-                          <div style={{ color:"#64748b", fontSize:12 }}>{tr(trendsLang,`ui.actionLabels.${a.action}`) || a.action.replace(/_/g," ")}</div>
+                          <div style={{ color:"#64748b", fontSize:12 }}>{tr(trendsLang,`ui.actionLabels.${a.action}`) || tr(trendsLang,`ui.team.activity.${a.action}`) || a.action.replace(/_/g," ")}</div>
                         </div>
                         <div style={{ color:"#334155", fontSize:11, flexShrink:0 }}>{timeAgo(a.created_at, trendsLang)}</div>
                       </div>
@@ -816,7 +818,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                     <input
                       value={teamName}
                       onChange={e => setTeamName(e.target.value)}
-                      placeholder="My Agency Team"
+                      placeholder={tr(trendsLang,"ui.team.teamNamePlaceholder") || "My Agency Team"}
                       maxLength={50}
                       style={{ flex:1, background:"#0f172a", border:"1px solid rgba(220,38,38,0.2)", borderRadius:6, color:"#e2e8f0", fontSize:12, padding:"6px 10px", outline:"none" }}
                     />
@@ -824,7 +826,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                       onClick={saveTeamName}
                       disabled={teamNameSaving}
                       style={{ background:"linear-gradient(135deg,#ef4444,#dc2626)", border:"none", borderRadius:6, color:"#fff", fontSize:11, fontWeight:700, padding:"6px 12px", cursor:"pointer", opacity: teamNameSaving ? 0.6 : 1 }}
-                    >{teamNameSaving ? "..." : "Save"}</button>
+                    >{teamNameSaving ? "..." : tr(trendsLang,"ui.team.save") || "Save"}</button>
                   </div>
                   <div style={s.divider} />
                   <span style={s.label}>PLAN</span>
@@ -834,7 +836,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                   </div>
                   <div style={s.divider} />
                   <span style={s.label}>{tr(trendsLang,"ui.team.capacity") || "CAPACITY"}</span>
-                  <div style={{ color:"#e2e8f0", fontSize:13 }}>{used} / {MAX_MEMBERS} members</div>
+                  <div style={{ color:"#e2e8f0", fontSize:13 }}>{used} / {MAX_MEMBERS} {tr(trendsLang,"ui.team.membersLabel") || "members"}</div>
                   <div style={{ height:4, background:"rgba(255,255,255,0.06)", borderRadius:2, marginTop:8 }}>
                     <div style={{ width:`${(used/MAX_MEMBERS)*100}%`, height:"100%", background:used===MAX_MEMBERS?"#ef4444":"linear-gradient(90deg,#22c55e,#16a34a)", borderRadius:2, transition:"width 0.4s" }} />
                   </div>
@@ -842,7 +844,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                     <>
                       <div style={s.divider} />
                       <span style={s.label}>CLIENTS</span>
-                      <div style={{ color:"#e2e8f0", fontSize:13 }}>{clients.length} / {MAX_CLIENTS_AGENCY} clients</div>
+                      <div style={{ color:"#e2e8f0", fontSize:13 }}>{clients.length} / {MAX_CLIENTS_AGENCY} {tr(trendsLang,"ui.team.clientsLabel") || "clients"}</div>
                     </>
                   )}
                 </div>
