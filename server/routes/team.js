@@ -1003,23 +1003,33 @@ router.patch("/approvals/:id/assign", auth, async (req, res) => {
     // Déterminer l'owner_id pour la vérification du post
     const ownerIdForCheck = isOwner ? req.user.id : caller.owner_id;
 
-    // Vérifier que le post appartient à un membre de cette équipe
+    // Vérifier que le post appartient à un membre OU à l'owner lui-même
     const postCheck = await db.query(
       `SELECT p.id, p.user_id, p.approval_status,
               u.email as author_email, u.display_name as author_name
        FROM posts p
        JOIN users u ON u.id = p.user_id
-       JOIN team_members tm ON tm.member_id = p.user_id AND tm.owner_id = $1
-       WHERE p.id = $2`,
-      [ownerIdForCheck, req.params.id]
+       WHERE p.id = $1
+         AND (
+           p.user_id = $2
+           OR EXISTS (
+             SELECT 1 FROM team_members tm
+             WHERE tm.member_id = p.user_id AND tm.owner_id = $2
+           )
+         )`,
+      [req.params.id, ownerIdForCheck]
     );
-    if (!postCheck.rows.length) return res.status(404).json({ error: "Post not found or not in your team" });
+    if (!postCheck.rows.length) {
+      console.warn(`[team] assign: post ${req.params.id} not found for owner ${ownerIdForCheck}`);
+      return res.status(404).json({ error: "Post not found or not in your team" });
+    }
 
     const post = postCheck.rows[0];
 
     // Si assigned_to est fourni, vérifier que c'est bien un membre actif de l'équipe
     let assigneeName = null;
     if (assigned_to) {
+      console.log(`[team] assign: checking assignee ${assigned_to} for owner ${ownerIdForCheck}`);
       const assigneeCheck = await db.query(
         `SELECT tm.member_id, tm.member_email, tm.role,
                 u.display_name, u.email
@@ -1028,6 +1038,7 @@ router.patch("/approvals/:id/assign", auth, async (req, res) => {
          WHERE tm.owner_id = $1 AND tm.member_id = $2 AND tm.status = 'active'`,
         [ownerIdForCheck, assigned_to]
       );
+      console.log(`[team] assign: assigneeCheck rows=${assigneeCheck.rows.length}`);
       if (!assigneeCheck.rows.length) {
         return res.status(400).json({ error: "Assignee is not an active team member" });
       }
@@ -1037,7 +1048,7 @@ router.patch("/approvals/:id/assign", auth, async (req, res) => {
 
     // Mettre à jour l'assignation
     await db.query(
-      `UPDATE posts SET assigned_to = $1, updated_at = NOW() WHERE id = $2`,
+      `UPDATE posts SET assigned_to = $1 WHERE id = $2`,
       [assigned_to || null, req.params.id]
     );
 
@@ -1088,7 +1099,7 @@ router.get("/my-assigned-posts", auth, async (req, res) => {
     // Récupérer les posts assignés à ce membre (tous statuts sauf deleted)
     const result = await db.query(
       `SELECT p.id, p.title, p.content, p.media_url, p.media_type,
-              p.created_at, p.updated_at, p.approval_status, p.assigned_to,
+              p.created_at, p.approval_status, p.assigned_to,
               p.viral_score,
               u.email as author_email,
               u.display_name as author_name,
@@ -1098,7 +1109,7 @@ router.get("/my-assigned-posts", auth, async (req, res) => {
        JOIN users u ON u.id = p.user_id
        LEFT JOIN projects proj ON proj.id = p.project_id
        WHERE p.assigned_to = $1
-       ORDER BY p.updated_at DESC
+       ORDER BY p.created_at DESC
        LIMIT 50`,
       [req.user.id]
     );
