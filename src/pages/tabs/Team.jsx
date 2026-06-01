@@ -353,6 +353,11 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
   const [quotaResetting, setQuotaResetting] = useState(null);
   const [myTeamView,  setMyTeamView]  = useState(null);
   const [assigning,   setAssigning]   = useState(null); // post_id en cours d'assignation
+  const [comments,      setComments]      = useState({}); // { [postId]: Comment[] }
+  const [commentsOpen,  setCommentsOpen]  = useState({}); // { [postId]: bool }
+  const [commentsLoading, setCommentsLoading] = useState({}); // { [postId]: bool }
+  const [commentInput,  setCommentInput]  = useState({}); // { [postId]: string }
+  const [commentPosting,setCommentPosting]= useState(null); // postId en cours d'envoi
 
   const isBusiness = userPlan === "Business" || userPlan === "Agency";
   const isAgency   = userPlan === "Agency";
@@ -486,6 +491,61 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
       console.error("[Team] assignPost fetch error:", err.message);
     }
     setAssigning(null);
+  };
+
+  const fetchComments = async (postId) => {
+    setCommentsLoading(prev => ({ ...prev, [postId]: true }));
+    try {
+      const r = await fetch(`${API}/team/posts/${postId}/comments`, { headers });
+      const d = await r.json();
+      setComments(prev => ({ ...prev, [postId]: d.comments || [] }));
+      console.log(`[Team] fetchComments post=${postId} → ${d.comments?.length} comments`);
+    } catch (err) {
+      console.error("[Team] fetchComments error:", err.message);
+    }
+    setCommentsLoading(prev => ({ ...prev, [postId]: false }));
+  };
+
+  const toggleComments = (postId) => {
+    const isOpen = commentsOpen[postId];
+    setCommentsOpen(prev => ({ ...prev, [postId]: !isOpen }));
+    if (!isOpen && !comments[postId]) fetchComments(postId);
+  };
+
+  const postComment = async (postId) => {
+    const content = (commentInput[postId] || "").trim();
+    if (!content) return;
+    setCommentPosting(postId);
+    try {
+      const r = await fetch(`${API}/team/posts/${postId}/comments`, {
+        method: "POST", headers,
+        body: JSON.stringify({ content }),
+      });
+      const d = await r.json();
+      if (d.success) {
+        setComments(prev => ({ ...prev, [postId]: [...(prev[postId] || []), d.comment] }));
+        setCommentInput(prev => ({ ...prev, [postId]: "" }));
+        console.log(`[Team] comment posted on post=${postId}`);
+      } else {
+        console.error("[Team] postComment error:", d.error);
+      }
+    } catch (err) {
+      console.error("[Team] postComment fetch error:", err.message);
+    }
+    setCommentPosting(null);
+  };
+
+  const deleteComment = async (postId, commentId) => {
+    try {
+      const r = await fetch(`${API}/team/comments/${commentId}`, { method: "DELETE", headers });
+      const d = await r.json();
+      if (d.success) {
+        setComments(prev => ({ ...prev, [postId]: prev[postId].filter(c => c.id !== commentId) }));
+        console.log(`[Team] comment ${commentId} deleted`);
+      }
+    } catch (err) {
+      console.error("[Team] deleteComment error:", err.message);
+    }
   };
 
   const fetchTeamLogs = async () => {
@@ -838,7 +898,60 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                                 onClick={() => setRejectModal({ postId: p.id, authorName: p.author_name || p.author_email })}
                                 style={{ flex:1, background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:8, color:"#ef4444", fontSize:12, fontWeight:700, padding:"10px", cursor:"pointer" }}
                               >{`❌ ${tr(trendsLang,"ui.team.reject")}`}</button>
+                              <button
+                                onClick={() => toggleComments(p.id)}
+                                style={{ background:"rgba(96,165,250,0.1)", border:"1px solid rgba(96,165,250,0.25)", borderRadius:8, color:"#60a5fa", fontSize:12, fontWeight:700, padding:"10px 14px", cursor:"pointer", display:"flex", alignItems:"center", gap:5, whiteSpace:"nowrap" }}
+                              >
+                                💬 {comments[p.id]?.length || 0}
+                              </button>
                             </div>
+
+                            {/* ── Section commentaires ── */}
+                            {commentsOpen[p.id] && (
+                              <div style={{ marginTop:12, borderTop:"1px solid rgba(255,255,255,0.06)", paddingTop:12 }}>
+                                {commentsLoading[p.id] ? (
+                                  <div style={{ color:"#475569", fontSize:11, textAlign:"center", padding:8 }}>⏳</div>
+                                ) : (
+                                  <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:10 }}>
+                                    {(comments[p.id] || []).length === 0 && (
+                                      <div style={{ color:"#334155", fontSize:11, textAlign:"center", padding:"8px 0" }}>{tr(trendsLang,"ui.team.noComments") || "No comments yet"}</div>
+                                    )}
+                                    {(comments[p.id] || []).map(c => (
+                                      <div key={c.id} style={{ display:"flex", gap:8, alignItems:"flex-start" }}>
+                                        <div style={{ width:24, height:24, borderRadius:"50%", background:"rgba(96,165,250,0.15)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, fontWeight:800, color:"#60a5fa", flexShrink:0 }}>
+                                          {(c.display_name || c.first_name || c.email || "?")[0].toUpperCase()}
+                                        </div>
+                                        <div style={{ flex:1, background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:8, padding:"7px 10px" }}>
+                                          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:3 }}>
+                                            <span style={{ color:"#60a5fa", fontSize:10, fontWeight:700 }}>{c.display_name || c.first_name || c.email?.split("@")[0]}</span>
+                                            <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                                              <span style={{ color:"#334155", fontSize:9 }}>{new Date(c.created_at).toLocaleString()}</span>
+                                              <button onClick={() => deleteComment(p.id, c.id)} style={{ background:"none", border:"none", color:"#475569", fontSize:10, cursor:"pointer", padding:"0 2px", lineHeight:1 }} title="Delete">✕</button>
+                                            </div>
+                                          </div>
+                                          <div style={{ color:"#94a3b8", fontSize:11, lineHeight:1.5 }}>{c.content}</div>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                {/* Input nouveau commentaire */}
+                                <div style={{ display:"flex", gap:6 }}>
+                                  <input
+                                    value={commentInput[p.id] || ""}
+                                    onChange={e => setCommentInput(prev => ({ ...prev, [p.id]: e.target.value }))}
+                                    onKeyDown={e => e.key === "Enter" && !e.shiftKey && postComment(p.id)}
+                                    placeholder={tr(trendsLang,"ui.team.commentPlaceholder") || "Add a comment..."}
+                                    style={{ flex:1, background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:8, padding:"7px 10px", color:"#e2e8f0", fontSize:11, outline:"none", fontFamily:"inherit" }}
+                                  />
+                                  <button
+                                    onClick={() => postComment(p.id)}
+                                    disabled={commentPosting === p.id || !commentInput[p.id]?.trim()}
+                                    style={{ background:"linear-gradient(135deg,#60a5fa,#3b82f6)", border:"none", borderRadius:8, color:"#fff", fontSize:11, fontWeight:700, padding:"7px 12px", cursor:"pointer", opacity: commentPosting === p.id || !commentInput[p.id]?.trim() ? 0.5 : 1 }}
+                                  >{commentPosting === p.id ? "⏳" : tr(trendsLang,"ui.team.send") || "Send"}</button>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>

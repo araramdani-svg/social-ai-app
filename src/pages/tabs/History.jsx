@@ -17,6 +17,11 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
   const [assignedPosts,    setAssignedPosts]    = useState([]);
   const [assignedLoading,  setAssignedLoading]  = useState(false);
   const [assignedLoaded,   setAssignedLoaded]   = useState(false);
+  const [comments,         setComments]         = useState({});
+  const [commentsOpen,     setCommentsOpen]     = useState({});
+  const [commentsLoading,  setCommentsLoading]  = useState({});
+  const [commentInput,     setCommentInput]     = useState({});
+  const [commentPosting,   setCommentPosting]   = useState(null);
 
   const ACTION_COLORS = {
     register: "#22c55e", login: "#3b82f6", verify_email: "#22c55e",
@@ -64,6 +69,62 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
       console.error("[History] fetchAssignedPosts error:", err.message);
     }
     setAssignedLoading(false);
+  };
+
+  const fetchComments = async (postId) => {
+    setCommentsLoading(prev => ({ ...prev, [postId]: true }));
+    try {
+      const r = await fetch(`${API}/team/posts/${postId}/comments`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const d = await r.json();
+      setComments(prev => ({ ...prev, [postId]: d.comments || [] }));
+    } catch (err) {
+      console.error("[History] fetchComments error:", err.message);
+    }
+    setCommentsLoading(prev => ({ ...prev, [postId]: false }));
+  };
+
+  const toggleComments = (postId) => {
+    const isOpen = commentsOpen[postId];
+    setCommentsOpen(prev => ({ ...prev, [postId]: !isOpen }));
+    if (!isOpen && !comments[postId]) fetchComments(postId);
+  };
+
+  const postComment = async (postId) => {
+    const content = (commentInput[postId] || "").trim();
+    if (!content) return;
+    setCommentPosting(postId);
+    try {
+      const r = await fetch(`${API}/team/posts/${postId}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ content }),
+      });
+      const d = await r.json();
+      if (d.success) {
+        setComments(prev => ({ ...prev, [postId]: [...(prev[postId] || []), d.comment] }));
+        setCommentInput(prev => ({ ...prev, [postId]: "" }));
+      }
+    } catch (err) {
+      console.error("[History] postComment error:", err.message);
+    }
+    setCommentPosting(null);
+  };
+
+  const deleteComment = async (postId, commentId) => {
+    try {
+      const r = await fetch(`${API}/team/comments/${commentId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const d = await r.json();
+      if (d.success) {
+        setComments(prev => ({ ...prev, [postId]: prev[postId].filter(c => c.id !== commentId) }));
+      }
+    } catch (err) {
+      console.error("[History] deleteComment error:", err.message);
+    }
   };
 
   const loadUserActions = async (p = 1) => {
@@ -527,6 +588,12 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
                                 {tr(trendsLang,"ui.editBtn")} →
                               </motion.button>
                               <motion.button whileHover={{ scale:1.05 }} whileTap={{ scale:0.95 }}
+                                style={{ padding:"4px 8px", borderRadius:6, border:`1px solid ${commentsOpen[h.id] ? "rgba(96,165,250,0.4)" : "rgba(255,255,255,0.08)"}`, background: commentsOpen[h.id] ? "rgba(96,165,250,0.1)" : "rgba(255,255,255,0.03)", color: commentsOpen[h.id] ? "#60a5fa" : "#64748b", fontSize:10, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", gap:3 }}
+                                onClick={() => toggleComments(h.id)}
+                              >
+                                💬 {comments[h.id]?.length || ""}
+                              </motion.button>
+                              <motion.button whileHover={{ scale:1.05 }} whileTap={{ scale:0.95 }}
                                 style={{ padding:"4px 8px", borderRadius:6, border:"1px solid rgba(239,68,68,0.15)", background:"rgba(239,68,68,0.05)", color:"#475569", fontSize:10, cursor:"pointer", opacity: deletingId===h.id ? 0.5 : 1 }}
                                 onClick={() => confirmDelete(h.id)}
                                 disabled={deletingId===h.id}
@@ -535,6 +602,53 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
                               </motion.button>
                             </div>
                           </div>
+                        </div>
+
+                        {/* ── Panel commentaires ── */}
+                        {commentsOpen[h.id] && (
+                          <div style={{ marginTop:10, borderTop:"1px solid rgba(255,255,255,0.05)", paddingTop:10 }}>
+                            {commentsLoading[h.id] ? (
+                              <div style={{ color:"#475569", fontSize:11, textAlign:"center", padding:6 }}>⏳</div>
+                            ) : (
+                              <div style={{ display:"flex", flexDirection:"column", gap:6, marginBottom:8 }}>
+                                {(comments[h.id] || []).length === 0 && (
+                                  <div style={{ color:"#334155", fontSize:11, textAlign:"center", padding:"6px 0" }}>{tr(trendsLang,"ui.team.noComments") || "No comments yet"}</div>
+                                )}
+                                {(comments[h.id] || []).map(c => (
+                                  <div key={c.id} style={{ display:"flex", gap:7, alignItems:"flex-start" }}>
+                                    <div style={{ width:22, height:22, borderRadius:"50%", background:"rgba(96,165,250,0.15)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:8, fontWeight:800, color:"#60a5fa", flexShrink:0 }}>
+                                      {(c.display_name || c.first_name || c.email || "?")[0].toUpperCase()}
+                                    </div>
+                                    <div style={{ flex:1, background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.05)", borderRadius:7, padding:"6px 9px" }}>
+                                      <div style={{ display:"flex", justifyContent:"space-between", marginBottom:2 }}>
+                                        <span style={{ color:"#60a5fa", fontSize:9, fontWeight:700 }}>{c.display_name || c.first_name || c.email?.split("@")[0]}</span>
+                                        <div style={{ display:"flex", alignItems:"center", gap:5 }}>
+                                          <span style={{ color:"#334155", fontSize:9 }}>{new Date(c.created_at).toLocaleString()}</span>
+                                          <button onClick={() => deleteComment(h.id, c.id)} style={{ background:"none", border:"none", color:"#475569", fontSize:9, cursor:"pointer", padding:0, lineHeight:1 }}>✕</button>
+                                        </div>
+                                      </div>
+                                      <div style={{ color:"#94a3b8", fontSize:11, lineHeight:1.5 }}>{c.content}</div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            <div style={{ display:"flex", gap:5 }}>
+                              <input
+                                value={commentInput[h.id] || ""}
+                                onChange={e => setCommentInput(prev => ({ ...prev, [h.id]: e.target.value }))}
+                                onKeyDown={e => e.key === "Enter" && !e.shiftKey && postComment(h.id)}
+                                placeholder={tr(trendsLang,"ui.team.commentPlaceholder") || "Add a comment..."}
+                                style={{ flex:1, background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:7, padding:"6px 9px", color:"#e2e8f0", fontSize:11, outline:"none", fontFamily:"inherit" }}
+                              />
+                              <button
+                                onClick={() => postComment(h.id)}
+                                disabled={commentPosting === h.id || !commentInput[h.id]?.trim()}
+                                style={{ background:"linear-gradient(135deg,#60a5fa,#3b82f6)", border:"none", borderRadius:7, color:"#fff", fontSize:10, fontWeight:700, padding:"6px 11px", cursor:"pointer", opacity: commentPosting === h.id || !commentInput[h.id]?.trim() ? 0.5 : 1 }}
+                              >{commentPosting === h.id ? "⏳" : tr(trendsLang,"ui.team.send") || "Send"}</button>
+                            </div>
+                          </div>
+                        )}
                         </div>
                       </motion.div>
                     ))}

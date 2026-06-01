@@ -1119,4 +1119,140 @@ router.get("/my-assigned-posts", auth, async (req, res) => {
   }
 });
 
+// ─── GET /team/posts/:id/comments — lire les commentaires d'un post ──────────
+// Accessible : owner, admin, et l'auteur du post
+router.get("/posts/:id/comments", auth, async (req, res) => {
+  try {
+    const postId = req.params.id;
+
+    // Vérifier accès : owner, membre de l'équipe liée au post, ou auteur
+    const accessCheck = await db.query(
+      `SELECT p.user_id, p.id
+       FROM posts p
+       WHERE p.id = $1
+         AND (
+           p.user_id = $2
+           OR EXISTS (SELECT 1 FROM team_members tm WHERE tm.owner_id = $2 AND tm.member_id = p.user_id)
+           OR EXISTS (SELECT 1 FROM team_members tm WHERE tm.member_id = $2 AND tm.status = 'active'
+                      AND tm.owner_id IN (SELECT tm2.owner_id FROM team_members tm2 WHERE tm2.member_id = p.user_id))
+         )`,
+      [postId, req.user.id]
+    );
+    if (!accessCheck.rows.length) return res.status(403).json({ error: "Access denied" });
+
+    const result = await db.query(
+      `SELECT c.id, c.post_id, c.user_id, c.content, c.created_at,
+              u.display_name, u.email, u.first_name, u.last_name
+       FROM post_comments c
+       JOIN users u ON u.id = c.user_id
+       WHERE c.post_id = $1
+       ORDER BY c.created_at ASC`,
+      [postId]
+    );
+
+    console.log(`[team] GET /posts/${postId}/comments → ${result.rows.length} comments`);
+    res.json({ comments: result.rows });
+  } catch (err) {
+    console.error("GET /team/posts/:id/comments:", err.message);
+    res.status(500).json({ error: "Failed to fetch comments" });
+  }
+});
+
+// ─── POST /team/posts/:id/comments — ajouter un commentaire ──────────────────
+router.post("/posts/:id/comments", auth, async (req, res) => {
+  const { content } = req.body;
+  if (!content?.trim()) return res.status(400).json({ error: "Content required" });
+  const postId = req.params.id;
+
+  try {
+    // Vérifier accès (même logique)
+    const accessCheck = await db.query(
+      `SELECT p.user_id FROM posts p
+       WHERE p.id = $1
+         AND (
+           p.user_id = $2
+           OR EXISTS (SELECT 1 FROM team_members tm WHERE tm.owner_id = $2 AND tm.member_id = p.user_id)
+           OR EXISTS (SELECT 1 FROM team_members tm WHERE tm.member_id = $2 AND tm.status = 'active'
+                      AND tm.owner_id IN (SELECT tm2.owner_id FROM team_members tm2 WHERE tm2.member_id = p.user_id))
+         )`,
+      [postId, req.user.id]
+    );
+    if (!accessCheck.rows.length) return res.status(403).json({ error: "Access denied" });
+
+    const result = await db.query(
+      `INSERT INTO post_comments (post_id, user_id, content, created_at)
+       VALUES ($1, $2, $3, NOW())
+       RETURNING id, post_id, user_id, content, created_at`,
+      [postId, req.user.id, content.trim()]
+    );
+    const comment = result.rows[0];
+
+    // Récupérer infos auteur pour la réponse
+    const userResult = await db.query(
+      "SELECT display_name, email, first_name, last_name FROM users WHERE id=$1",
+      [req.user.id]
+    );
+    const user = userResult.rows[0];
+
+    // Logs
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,$2,$3,NOW())`,
+      [req.user.id, "post_comment_added", JSON.stringify({ post_id: postId, comment_id: comment.id })]
+    ).catch(() => {});
+    await db.query(
+      `INSERT INTO admin_logs (admin_id, action, target_user_id, details, created_at) VALUES ($1,$2,$3,$4,NOW())`,
+      [req.user.id, "post_comment_added", accessCheck.rows[0].user_id, JSON.stringify({ post_id: postId, comment_id: comment.id })]
+    ).catch(() => {});
+
+    console.log(`[team] POST /posts/${postId}/comments → comment ${comment.id} by user=${req.user.id}`);
+    res.json({ success: true, comment: { ...comment, ...user } });
+  } catch (err) {
+    console.error("POST /team/posts/:id/comments:", err.message);
+    res.status(500).json({ error: "Failed to add comment" });
+  }
+});
+
+// ─── DELETE /team/comments/:id — supprimer un commentaire ────────────────────
+// Seul l'auteur du commentaire ou l'owner de l'équipe peut supprimer
+router.delete("/comments/:id", auth, async (req, res) => {
+  try {
+    const commentCheck = await db.query(
+      `SELECT c.id, c.user_id, c.post_id, p.user_id as post_author_id
+       FROM post_comments c
+       JOIN posts p ON p.id = c.post_id
+       WHERE c.id = $1`,
+      [req.params.id]
+    );
+    if (!commentCheck.rows.length) return res.status(404).json({ error: "Comment not found" });
+
+    const comment = commentCheck.rows[0];
+    const isAuthor = comment.user_id === req.user.id;
+
+    // Vérifier si owner de l'équipe
+    const ownerCheck = await db.query(
+      "SELECT plan FROM users WHERE id=$1",
+      [req.user.id]
+    );
+    const isOwner = ["Business","Agency"].includes(ownerCheck.rows[0]?.plan);
+
+    if (!isAuthor && !isOwner) {
+      return res.status(403).json({ error: "Not authorized to delete this comment" });
+    }
+
+    await db.query("DELETE FROM post_comments WHERE id=$1", [req.params.id]);
+
+    // Logs
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,$2,$3,NOW())`,
+      [req.user.id, "post_comment_deleted", JSON.stringify({ comment_id: req.params.id, post_id: comment.post_id })]
+    ).catch(() => {});
+
+    console.log(`[team] DELETE /comments/${req.params.id} by user=${req.user.id}`);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("DELETE /team/comments/:id:", err.message);
+    res.status(500).json({ error: "Failed to delete comment" });
+  }
+});
+
 export default router;
