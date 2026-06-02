@@ -334,13 +334,15 @@ router.get("/logs", adminAuth, async (req, res) => {
     const limit  = 30;
     const offset = (page - 1) * limit;
 
-    // Actions admin vs user
-    const ADMIN_ACTIONS = ["create_admin","delete_admin","reset_admin_password"];
-    const USER_ACTIONS  = ["edit_user","ban_user","unban_user","reset_quota","delete_user","verify_email","resend_verification","force_password_reset","send_password_reset"];
+    // Actions admin vs user vs billing
+    const ADMIN_ACTIONS   = ["create_admin","delete_admin","reset_admin_password"];
+    const USER_ACTIONS    = ["edit_user","ban_user","unban_user","reset_quota","delete_user","verify_email","resend_verification","force_password_reset","send_password_reset"];
+    const BILLING_ACTIONS = ["plan_upgrade","cancel_subscription","subscription_renewed","payment_failed","renewal_reminder_3d","renewal_reminder_30d","grace_period_warning_24h","grace_period_expired_downgrade","winback_7d","winback_30d","winback_90d"];
 
     let whereClause = "";
-    if (type === "admin") whereClause = `WHERE l.action = ANY(ARRAY[${ADMIN_ACTIONS.map(a => `'${a}'`).join(",")}])`;
-    if (type === "users") whereClause = `WHERE l.action = ANY(ARRAY[${USER_ACTIONS.map(a => `'${a}'`).join(",")}])`;
+    if (type === "admin")   whereClause = `WHERE l.action = ANY(ARRAY[${ADMIN_ACTIONS.map(a   => `'${a}'`).join(",")}])`;
+    if (type === "users")   whereClause = `WHERE l.action = ANY(ARRAY[${USER_ACTIONS.map(a    => `'${a}'`).join(",")}])`;
+    if (type === "billing") whereClause = `WHERE l.action = ANY(ARRAY[${BILLING_ACTIONS.map(a => `'${a}'`).join(",")}])`;
 
     const [logsRes, countRes] = await Promise.all([
       db.query(

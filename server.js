@@ -495,3 +495,255 @@ setInterval(publishScheduledPosts, 60 * 1000);
 // Et au démarrage
 publishScheduledPosts();
 logger.info("⏰ Auto-publish cron started (every 60s)");
+
+// ─── Import mailer pour les crons billing ─────────────────────────────────────
+import {
+  sendRenewalReminder3Days,
+  sendRenewalReminder30Days,
+  sendWinbackWeek,
+  sendWinbackMonth,
+  sendWinbackQuarter,
+  sendGracePeriodExpiring,
+  sendDowngradeToFree,
+  sendTeamSuspended,
+} from "./server/mailer.js";
+
+const BILLING_PRICES = {
+  Pro:      { monthly: "€19/month", annual: "€182/year" },
+  Business: { monthly: "€49/month", annual: "€470/year" },
+  Agency:   { monthly: "€99/month", annual: "€950/year" },
+};
+const UPGRADE_PLAN = { Pro: "Business", Business: "Agency", Agency: null };
+
+// ─── Cron billing : J-3 mensuel + J-30 annuel + grace period — toutes les heures
+const runBillingReminders = async () => {
+  const now = new Date();
+  logger.info("💳 Running billing reminders job...");
+
+  try {
+    // ── J-3 mensuel ────────────────────────────────────────────────────────────
+    const j3 = await db.query(
+      `SELECT id, email, first_name, plan, plan_interval, current_period_end
+       FROM users
+       WHERE plan_interval='month' AND plan!='Free' AND current_period_end IS NOT NULL
+         AND current_period_end BETWEEN NOW() + INTERVAL '2 days' AND NOW() + INTERVAL '4 days'
+         AND (renewal_reminder_sent_at IS NULL OR renewal_reminder_sent_at < NOW() - INTERVAL '25 days')`
+    );
+    for (const u of j3.rows) {
+      try {
+        await sendRenewalReminder3Days({
+          email: u.email, firstName: u.first_name, plan: u.plan,
+          renewalDate: new Date(u.current_period_end).toLocaleDateString("en-GB", { day:"numeric", month:"long", year:"numeric" }),
+          monthlyPrice: BILLING_PRICES[u.plan]?.monthly || "—",
+          annualPrice:  BILLING_PRICES[u.plan]?.annual  || "—",
+          upgradePlan:  UPGRADE_PLAN[u.plan],
+        });
+        await db.query("UPDATE users SET renewal_reminder_sent_at=NOW() WHERE id=$1", [u.id]);
+        await db.query(
+          `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,'renewal_reminder_3d',$2,NOW())`,
+          [u.id, JSON.stringify({ plan: u.plan, renewal_date: u.current_period_end })]
+        ).catch(() => {});
+        await db.query(
+          `INSERT INTO admin_logs (admin_id, action, target_user_id, details, created_at) VALUES ($1,'renewal_reminder_3d',$2,$3,NOW())`,
+          [u.id, u.id, JSON.stringify({ plan: u.plan, interval: "month" })]
+        ).catch(() => {});
+        logger.info(`💳 J-3 reminder sent to ${u.email} (${u.plan})`);
+      } catch (err) { logger.error(`💳 J-3 failed for ${u.email}`, { error: err.message }); }
+    }
+
+    // ── J-30 annuel ────────────────────────────────────────────────────────────
+    const j30 = await db.query(
+      `SELECT id, email, first_name, plan, plan_interval, current_period_end
+       FROM users
+       WHERE plan_interval='year' AND plan!='Free' AND current_period_end IS NOT NULL
+         AND current_period_end BETWEEN NOW() + INTERVAL '28 days' AND NOW() + INTERVAL '32 days'
+         AND (renewal_reminder_sent_at IS NULL OR renewal_reminder_sent_at < NOW() - INTERVAL '300 days')`
+    );
+    for (const u of j30.rows) {
+      try {
+        await sendRenewalReminder30Days({
+          email: u.email, firstName: u.first_name, plan: u.plan,
+          renewalDate: new Date(u.current_period_end).toLocaleDateString("en-GB", { day:"numeric", month:"long", year:"numeric" }),
+          annualPrice: BILLING_PRICES[u.plan]?.annual || "—",
+          upgradePlan: UPGRADE_PLAN[u.plan],
+        });
+        await db.query("UPDATE users SET renewal_reminder_sent_at=NOW() WHERE id=$1", [u.id]);
+        await db.query(
+          `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,'renewal_reminder_30d',$2,NOW())`,
+          [u.id, JSON.stringify({ plan: u.plan, renewal_date: u.current_period_end })]
+        ).catch(() => {});
+        await db.query(
+          `INSERT INTO admin_logs (admin_id, action, target_user_id, details, created_at) VALUES ($1,'renewal_reminder_30d',$2,$3,NOW())`,
+          [u.id, u.id, JSON.stringify({ plan: u.plan, interval: "year" })]
+        ).catch(() => {});
+        logger.info(`💳 J-30 reminder sent to ${u.email} (${u.plan})`);
+      } catch (err) { logger.error(`💳 J-30 failed for ${u.email}`, { error: err.message }); }
+    }
+
+    // ── Grace period — avertissement 24h avant expiration ─────────────────────
+    const graceWarn = await db.query(
+      `SELECT id, email, first_name, plan, grace_period_ends_at, stripe_customer_id
+       FROM users
+       WHERE grace_period_ends_at IS NOT NULL
+         AND grace_period_ends_at BETWEEN NOW() + INTERVAL '20 hours' AND NOW() + INTERVAL '28 hours'
+         AND payment_failed_at IS NOT NULL`
+    );
+    for (const u of graceWarn.rows) {
+      try {
+        let updateCardUrl = `${process.env.FRONTEND_URL}/profile`;
+        const Stripe = (await import("stripe")).default;
+        const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY);
+        if (u.stripe_customer_id) {
+          const portal = await stripeClient.billingPortal.sessions.create({
+            customer: u.stripe_customer_id,
+            return_url: `${process.env.FRONTEND_URL}/profile`,
+          }).catch(() => null);
+          if (portal?.url) updateCardUrl = portal.url;
+        }
+        await sendGracePeriodExpiring({
+          email: u.email, firstName: u.first_name, plan: u.plan,
+          expiresAt: new Date(u.grace_period_ends_at).toLocaleDateString("en-GB", { day:"numeric", month:"long", hour:"2-digit", minute:"2-digit" }),
+          updateCardUrl,
+        });
+        await db.query(
+          `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,'grace_period_warning_24h',$2,NOW())`,
+          [u.id, JSON.stringify({ plan: u.plan })]
+        ).catch(() => {});
+        logger.info(`💳 Grace period warning sent to ${u.email}`);
+      } catch (err) { logger.error(`💳 Grace warn failed for ${u.email}`, { error: err.message }); }
+    }
+
+    // ── Grace period expiré → downgrade Free ──────────────────────────────────
+    const graceExpired = await db.query(
+      `SELECT id, email, first_name, plan, stripe_subscription_id
+       FROM users
+       WHERE grace_period_ends_at IS NOT NULL
+         AND grace_period_ends_at < NOW()
+         AND plan != 'Free'
+         AND payment_failed_at IS NOT NULL`
+    );
+    for (const u of graceExpired.rows) {
+      try {
+        const previousPlan = u.plan;
+        if (u.stripe_subscription_id) {
+          const Stripe = (await import("stripe")).default;
+          const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY);
+          await stripeClient.subscriptions.cancel(u.stripe_subscription_id).catch(() => {});
+        }
+        await db.query(
+          `UPDATE users SET plan='Free', stripe_subscription_id=NULL, plan_interval=NULL,
+           current_period_end=NULL, payment_failed_at=NULL, grace_period_ends_at=NULL, downgraded_at=NOW()
+           WHERE id=$1`,
+          [u.id]
+        );
+        if (previousPlan === "Business" || previousPlan === "Agency") {
+          const membersRes = await db.query(
+            `SELECT tm.member_id, u2.email, u2.first_name, ou.email as owner_email, ou.display_name as owner_name
+             FROM team_members tm JOIN users u2 ON u2.id=tm.member_id JOIN users ou ON ou.id=tm.owner_id
+             WHERE tm.owner_id=$1 AND tm.status='active'`, [u.id]
+          ).catch(() => ({ rows: [] }));
+          await db.query("UPDATE team_members SET status='suspended' WHERE owner_id=$1 AND status='active'", [u.id]).catch(() => {});
+          for (const m of membersRes.rows) {
+            await sendTeamSuspended({ email: m.email, firstName: m.first_name, ownerName: m.owner_name, ownerEmail: m.owner_email }).catch(() => {});
+          }
+        }
+        await sendDowngradeToFree({ email: u.email, firstName: u.first_name, previousPlan }).catch(() => {});
+        await db.query(
+          `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,'grace_period_expired_downgrade',$2,NOW())`,
+          [u.id, JSON.stringify({ previous_plan: previousPlan })]
+        ).catch(() => {});
+        await db.query(
+          `INSERT INTO admin_logs (admin_id, action, target_user_id, details, created_at) VALUES ($1,'grace_period_expired_downgrade',$2,$3,NOW())`,
+          [u.id, u.id, JSON.stringify({ previous_plan: previousPlan })]
+        ).catch(() => {});
+        logger.info(`💳 Grace expired downgrade: user=${u.id} ${previousPlan}→Free`);
+      } catch (err) { logger.error(`💳 Grace expire failed for ${u.id}`, { error: err.message }); }
+    }
+
+  } catch (err) {
+    logger.error("💳 Billing reminders job error", { error: err.message });
+  }
+};
+
+// ─── Cron win-back : J+7, J+30, J+90 — toutes les 12h ────────────────────────
+const runWinbackEmails = async () => {
+  logger.info("📧 Running win-back email job...");
+  try {
+    // J+7
+    const wb7 = await db.query(
+      `SELECT id, email, first_name, highest_plan_ever FROM users
+       WHERE plan='Free' AND had_paid_plan=TRUE AND downgraded_at IS NOT NULL
+         AND downgraded_at BETWEEN NOW()-INTERVAL '8 days' AND NOW()-INTERVAL '6 days'
+         AND winback_email_sent_at IS NULL`
+    );
+    for (const u of wb7.rows) {
+      try {
+        await sendWinbackWeek({ email: u.email, firstName: u.first_name, previousPlan: u.highest_plan_ever || "Pro" });
+        await db.query("UPDATE users SET winback_email_sent_at=NOW() WHERE id=$1", [u.id]);
+        await db.query(
+          `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,'winback_7d',$2,NOW())`,
+          [u.id, JSON.stringify({ highest_plan: u.highest_plan_ever })]
+        ).catch(() => {});
+        await db.query(
+          `INSERT INTO admin_logs (admin_id, action, target_user_id, details, created_at) VALUES ($1,'winback_7d',$2,$3,NOW())`,
+          [u.id, u.id, JSON.stringify({ highest_plan: u.highest_plan_ever })]
+        ).catch(() => {});
+        logger.info(`📧 Win-back J+7 sent to ${u.email}`);
+      } catch (err) { logger.error(`📧 Win-back J+7 failed for ${u.email}`, { error: err.message }); }
+    }
+
+    // J+30
+    const wb30 = await db.query(
+      `SELECT id, email, first_name, highest_plan_ever FROM users
+       WHERE plan='Free' AND had_paid_plan=TRUE AND downgraded_at IS NOT NULL
+         AND downgraded_at BETWEEN NOW()-INTERVAL '31 days' AND NOW()-INTERVAL '29 days'
+         AND winback_email_sent_at IS NOT NULL`
+    );
+    for (const u of wb30.rows) {
+      try {
+        await sendWinbackMonth({ email: u.email, firstName: u.first_name, previousPlan: u.highest_plan_ever || "Pro" });
+        await db.query(
+          `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,'winback_30d',$2,NOW())`,
+          [u.id, JSON.stringify({ highest_plan: u.highest_plan_ever })]
+        ).catch(() => {});
+        await db.query(
+          `INSERT INTO admin_logs (admin_id, action, target_user_id, details, created_at) VALUES ($1,'winback_30d',$2,$3,NOW())`,
+          [u.id, u.id, JSON.stringify({ highest_plan: u.highest_plan_ever })]
+        ).catch(() => {});
+        logger.info(`📧 Win-back J+30 sent to ${u.email}`);
+      } catch (err) { logger.error(`📧 Win-back J+30 failed for ${u.email}`, { error: err.message }); }
+    }
+
+    // J+90
+    const wb90 = await db.query(
+      `SELECT id, email, first_name, highest_plan_ever FROM users
+       WHERE plan='Free' AND had_paid_plan=TRUE AND downgraded_at IS NOT NULL
+         AND downgraded_at BETWEEN NOW()-INTERVAL '91 days' AND NOW()-INTERVAL '89 days'
+         AND winback_email_sent_at IS NOT NULL`
+    );
+    for (const u of wb90.rows) {
+      try {
+        await sendWinbackQuarter({ email: u.email, firstName: u.first_name, previousPlan: u.highest_plan_ever || "Pro" });
+        await db.query(
+          `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,'winback_90d',$2,NOW())`,
+          [u.id, JSON.stringify({ highest_plan: u.highest_plan_ever })]
+        ).catch(() => {});
+        await db.query(
+          `INSERT INTO admin_logs (admin_id, action, target_user_id, details, created_at) VALUES ($1,'winback_90d',$2,$3,NOW())`,
+          [u.id, u.id, JSON.stringify({ highest_plan: u.highest_plan_ever })]
+        ).catch(() => {});
+        logger.info(`📧 Win-back J+90 sent to ${u.email}`);
+      } catch (err) { logger.error(`📧 Win-back J+90 failed for ${u.email}`, { error: err.message }); }
+    }
+  } catch (err) {
+    logger.error("📧 Win-back job error", { error: err.message });
+  }
+};
+
+// Lancer billing toutes les heures
+setInterval(runBillingReminders, 60 * 60 * 1000);
+// Lancer win-back toutes les 12h
+setInterval(runWinbackEmails, 12 * 60 * 60 * 1000);
+// Et au démarrage (après 30s pour laisser le temps aux connexions DB)
+setTimeout(() => { runBillingReminders(); runWinbackEmails(); }, 30000);
+logger.info("💳 Billing & win-back crons started (billing: 1h, winback: 12h)");
