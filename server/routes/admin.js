@@ -190,63 +190,112 @@ router.get("/users", adminAuth, async (req, res) => {
 
 // ─── PATCH /admin/users/:id ───────────────────────────────────────────────────
 router.patch("/users/:id", adminAuth, async (req, res) => {
-  const { plan, generations_count, banned, email_verified } = req.body;
+  const { plan, generations_count, banned, email_verified,
+          override_duration, override_reason } = req.body;
+  // override_duration : "7d" | "30d" | "90d" | "permanent" | null (= sync Stripe)
+
   const fields = [];
   const values = [];
   let i = 1;
 
-  if (plan               !== undefined) { fields.push(`plan=$${i++}`);               values.push(plan); }
-  if (generations_count  !== undefined) { fields.push(`generations_count=$${i++}`);  values.push(parseInt(generations_count)); }
-  if (banned             !== undefined) { fields.push(`banned=$${i++}`);             values.push(banned); }
-  if (email_verified     !== undefined) { fields.push(`email_verified=$${i++}`);     values.push(email_verified); }
+  // ── Changement de plan avec gestion override ──────────────────────────────
+  if (plan !== undefined) {
+    fields.push(`plan=$${i++}`);
+    values.push(plan);
+
+    // Toujours mettre à jour had_paid_plan et highest_plan_ever
+    if (plan !== "Free") {
+      fields.push(`had_paid_plan=TRUE`);
+      fields.push(`highest_plan_ever=CASE
+        WHEN highest_plan_ever='Agency' THEN 'Agency'
+        WHEN $${i}='Agency' THEN 'Agency'
+        WHEN highest_plan_ever='Business' AND $${i} IN ('Business','Agency') THEN $${i}
+        WHEN $${i}='Pro' AND (highest_plan_ever IS NULL OR highest_plan_ever='Free') THEN 'Pro'
+        ELSE COALESCE(highest_plan_ever, $${i})
+      END`);
+      values.push(plan); i++;
+    }
+
+    // Override temporaire
+    if (override_duration && plan !== "Free") {
+      let expiresAt = null;
+      if (override_duration === "7d")       expiresAt = new Date(Date.now() + 7  * 86400000);
+      else if (override_duration === "30d") expiresAt = new Date(Date.now() + 30 * 86400000);
+      else if (override_duration === "90d") expiresAt = new Date(Date.now() + 90 * 86400000);
+      // "permanent" → expiresAt reste null
+
+      fields.push(`admin_override=TRUE`);
+      fields.push(`admin_override_plan=$${i++}`);
+      values.push(plan);
+      fields.push(`override_expires_at=$${i++}`);
+      values.push(expiresAt);
+      fields.push(`override_granted_by=$${i++}`);
+      values.push(req.user.id);
+      fields.push(`override_reason=$${i++}`);
+      values.push(override_reason || null);
+
+      // Reset quota si upgrade
+      fields.push(`generations_count=0`);
+      fields.push(`quota_reset_date=NOW()`);
+
+    } else if (plan === "Free") {
+      // Downgrade admin → effacer l'override
+      fields.push(`admin_override=FALSE`);
+      fields.push(`admin_override_plan=NULL`);
+      fields.push(`override_expires_at=NULL`);
+      fields.push(`override_granted_by=NULL`);
+      fields.push(`downgraded_at=NOW()`);
+    }
+  }
+
+  if (generations_count !== undefined) { fields.push(`generations_count=$${i++}`); values.push(parseInt(generations_count)); }
+  if (banned            !== undefined) { fields.push(`banned=$${i++}`);            values.push(banned); }
+  if (email_verified    !== undefined) { fields.push(`email_verified=$${i++}`);    values.push(email_verified); }
 
   if (!fields.length) return res.status(400).json({ error: "Nothing to update" });
   values.push(req.params.id);
 
   try {
     const result = await db.query(
-      `UPDATE users SET ${fields.join(",")} WHERE id=$${i} RETURNING id, email, plan, generations_count`,
+      `UPDATE users SET ${fields.join(",")} WHERE id=$${i} RETURNING id, email, plan, generations_count, admin_override, override_expires_at`,
       values
     );
     if (!result.rows.length) return res.status(404).json({ error: "User not found" });
+    const updatedUser = result.rows[0];
 
-    // Log admin_logs
-    const adminAction = 
+    // ── Logs ────────────────────────────────────────────────────────────────
+    const adminAction =
       banned !== undefined         ? (banned ? "ban_user" : "unban_user") :
       email_verified !== undefined ? "verify_email" :
       plan !== undefined           ? "edit_user_plan" :
       "edit_user";
-    await logAction(req.user.id, adminAction, req.params.id, { plan, generations_count, banned, email_verified });
 
-    // Log user_logs pour toutes les actions impactant le user
-    try {
-      if (plan !== undefined) {
-        await db.query(
-          `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
-          [req.params.id, "plan_upgrade", JSON.stringify({ plan, changed_by: "admin" })]
-        );
-      }
-      if (banned === true) {
-        await db.query(
-          `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
-          [req.params.id, "account_banned", JSON.stringify({ by: "admin" })]
-        );
-      }
-      if (banned === false) {
-        await db.query(
-          `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
-          [req.params.id, "account_unbanned", JSON.stringify({ by: "admin" })]
-        );
-      }
-      if (email_verified === true) {
-        await db.query(
-          `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
-          [req.params.id, "verify_email", JSON.stringify({ by: "admin" })]
-        );
-      }
-    } catch {}
+    await logAction(req.user.id, adminAction, req.params.id, {
+      plan, generations_count, banned, email_verified,
+      override_duration, override_reason,
+      override_expires_at: updatedUser.override_expires_at,
+      note: override_duration ? `Admin override (${override_duration}) — no Stripe charge` : undefined,
+    });
 
-    res.json({ user: result.rows[0] });
+    if (plan !== undefined) {
+      await db.query(
+        `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,$2,$3,NOW())`,
+        [req.params.id, plan === "Free" ? "cancel_subscription" : "plan_upgrade",
+         JSON.stringify({
+           plan,
+           changed_by: "admin",
+           admin_id: req.user.id,
+           override_duration: override_duration || null,
+           override_reason: override_reason || null,
+           no_stripe_charge: true,
+         })]
+      ).catch(() => {});
+    }
+    if (banned === true)  await db.query(`INSERT INTO user_logs (user_id,action,details,created_at) VALUES ($1,'account_banned',$2,NOW())`,   [req.params.id, JSON.stringify({ by:"admin" })]).catch(() => {});
+    if (banned === false) await db.query(`INSERT INTO user_logs (user_id,action,details,created_at) VALUES ($1,'account_unbanned',$2,NOW())`, [req.params.id, JSON.stringify({ by:"admin" })]).catch(() => {});
+
+    console.log(`[admin] PATCH user=${req.params.id} plan=${plan} override=${override_duration || "none"} by admin=${req.user.id}`);
+    res.json({ success: true, user: updatedUser });
   } catch (err) {
     console.error("Admin patch user error:", err.message);
     res.status(500).json({ error: "Failed to update user" });
@@ -471,6 +520,26 @@ router.get("/user-logs", adminAuth, async (req, res) => {
   } catch (err) {
     console.error("Admin user-logs error:", err.message);
     res.status(500).json({ error: "Failed to fetch user logs" });
+  }
+});
+
+// ─── GET /admin/overrides — liste des overrides admin actifs ─────────────────
+router.get("/overrides", adminAuth, async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT u.id, u.email, u.plan, u.admin_override_plan,
+              u.override_expires_at, u.override_reason, u.override_granted_by,
+              u.had_paid_plan, u.highest_plan_ever,
+              a.email as granted_by_email
+       FROM users u
+       LEFT JOIN users a ON a.id = u.override_granted_by
+       WHERE u.admin_override = TRUE
+       ORDER BY u.override_expires_at ASC NULLS LAST`
+    );
+    res.json({ overrides: result.rows });
+  } catch (err) {
+    console.error("Admin overrides error:", err.message);
+    res.status(500).json({ error: "Failed to fetch overrides" });
   }
 });
 

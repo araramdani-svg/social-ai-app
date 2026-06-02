@@ -660,6 +660,38 @@ const runBillingReminders = async () => {
       } catch (err) { logger.error(`💳 Grace expire failed for ${u.id}`, { error: err.message }); }
     }
 
+    // ── Overrides admin expirés → downgrade Free ───────────────────────────────
+    const expiredOverrides = await db.query(
+      `SELECT id, email, first_name, plan, admin_override_plan
+       FROM users
+       WHERE admin_override = TRUE
+         AND override_expires_at IS NOT NULL
+         AND override_expires_at < NOW()
+         AND plan != 'Free'`
+    );
+    for (const u of expiredOverrides.rows) {
+      try {
+        await db.query(
+          `UPDATE users SET
+             plan='Free', admin_override=FALSE, admin_override_plan=NULL,
+             override_expires_at=NULL, override_granted_by=NULL,
+             downgraded_at=NOW()
+           WHERE id=$1`,
+          [u.id]
+        );
+        await db.query(
+          `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,'cancel_subscription',$2,NOW())`,
+          [u.id, JSON.stringify({ previous_plan: u.plan, reason:"admin_override_expired" })]
+        ).catch(() => {});
+        await db.query(
+          `INSERT INTO admin_logs (admin_id, action, target_user_id, details, created_at) VALUES ($1,'override_expired',$2,$3,NOW())`,
+          [u.id, u.id, JSON.stringify({ previous_plan: u.plan })]
+        ).catch(() => {});
+        await sendDowngradeToFree({ email: u.email, firstName: u.first_name, previousPlan: u.plan }).catch(() => {});
+        logger.info(`🎁 Override expired: user=${u.id} ${u.plan}→Free`);
+      } catch (err) { logger.error(`🎁 Override expire failed for ${u.id}`, { error: err.message }); }
+    }
+
   } catch (err) {
     logger.error("💳 Billing reminders job error", { error: err.message });
   }

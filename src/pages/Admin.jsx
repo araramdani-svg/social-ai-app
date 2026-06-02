@@ -167,26 +167,43 @@ function ResetPasswordModal({ user, token, onClose }) {
 }
 
 function EditUserModal({ user, token, onClose, onSave }) {
-  const [plan,   setPlan]   = useState(user.plan || "Free");
-  const [quota,  setQuota]  = useState(user.generations_count || 0);
-  const [saving, setSaving] = useState(false);
+  const [plan,             setPlan]             = useState(user.plan || "Free");
+  const [quota,            setQuota]            = useState(user.generations_count || 0);
+  const [overrideDuration, setOverrideDuration] = useState("30d");
+  const [overrideReason,   setOverrideReason]   = useState("");
+  const [saving,           setSaving]           = useState(false);
+  const [msg,              setMsg]              = useState(null);
+
+  const isOverride    = user.admin_override;
+  const overrideExpires = user.override_expires_at;
+  const planChanged   = plan !== user.plan;
 
   const save = async () => {
-    setSaving(true);
-    await fetch(`${API}/admin/users/${user.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
-      body: JSON.stringify({ plan, generations_count: quota }),
-    });
-    onSave();
-    onClose();
+    setSaving(true); setMsg(null);
+    try {
+      const body = { generations_count: quota };
+      if (planChanged) {
+        body.plan = plan;
+        if (plan !== "Free") {
+          body.override_duration = overrideDuration;
+          body.override_reason   = overrideReason || null;
+        }
+      }
+      const r = await fetch(`${API}/admin/users/${user.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+        body: JSON.stringify(body),
+      });
+      const d = await r.json();
+      if (d.success) { setMsg({ type:"success", text:"✅ Sauvegardé" }); setTimeout(() => { onSave(); onClose(); }, 800); }
+      else setMsg({ type:"error", text: d.error || "Erreur" });
+    } catch { setMsg({ type:"error", text:"Erreur serveur" }); }
     setSaving(false);
   };
 
   const resetQuota = async () => {
     await fetch(`${API}/admin/users/${user.id}/reset-quota`, {
-      method: "POST",
-      headers: { Authorization:`Bearer ${token}` },
+      method: "POST", headers: { Authorization:`Bearer ${token}` },
     });
     setQuota(0);
   };
@@ -197,30 +214,77 @@ function EditUserModal({ user, token, onClose, onSave }) {
       headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
       body: JSON.stringify({ banned: !user.banned }),
     });
-    onSave();
-    onClose();
+    onSave(); onClose();
+  };
+
+  const revokeOverride = async () => {
+    await fetch(`${API}/admin/users/${user.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+      body: JSON.stringify({ plan: "Free" }),
+    });
+    onSave(); onClose();
   };
 
   return (
-    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.8)", zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
-      <div style={{ ...s.card, width:"100%", maxWidth:440, background:"#111827", border:"1px solid rgba(220,38,38,0.25)", boxShadow:"0 30px 80px rgba(0,0,0,0.6)" }}>
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+      <div style={{ ...s.card, width:"100%", maxWidth:480, background:"#111827", border:"1px solid rgba(220,38,38,0.25)", boxShadow:"0 30px 80px rgba(0,0,0,0.6)", maxHeight:"90vh", overflowY:"auto" }}>
+
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
           <div style={{ color:"#e2e8f0", fontWeight:800, fontSize:15 }}>✏️ Edit User</div>
           <button style={{ background:"transparent", border:"none", color:"#475569", fontSize:20, cursor:"pointer" }} onClick={onClose}>✕</button>
         </div>
 
-        <div style={{ color:"#64748b", fontSize:12, marginBottom:20, background:"rgba(255,255,255,0.03)", padding:"10px 14px", borderRadius:8 }}>
+        <div style={{ color:"#64748b", fontSize:12, marginBottom:16, background:"rgba(255,255,255,0.03)", padding:"10px 14px", borderRadius:8 }}>
           <div style={{ color:"#e2e8f0", fontWeight:700 }}>{user.email}</div>
-          <div style={{ marginTop:4 }}>ID #{user.id}</div>
+          <div style={{ marginTop:3 }}>ID #{user.id} · {user.had_paid_plan ? `Highest: ${user.highest_plan_ever}` : "Jamais payant"}</div>
           {user.banned && <div style={{ color:"#ef4444", fontWeight:700, marginTop:6 }}>🚫 Compte suspendu</div>}
         </div>
 
-        <span style={s.label}>PLAN</span>
-        <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
+        {/* Override actif */}
+        {isOverride && (
+          <div style={{ background:"rgba(245,158,11,0.08)", border:"1px solid rgba(245,158,11,0.3)", borderRadius:10, padding:"12px 14px", marginBottom:16 }}>
+            <div style={{ color:"#f59e0b", fontWeight:700, fontSize:12, marginBottom:4 }}>⚠️ OVERRIDE ADMIN ACTIF</div>
+            <div style={{ color:"#94a3b8", fontSize:11, lineHeight:1.6 }}>
+              Plan: <strong style={{ color:"#e2e8f0" }}>{user.admin_override_plan}</strong><br/>
+              {overrideExpires
+                ? <>Expire le : <strong style={{ color:"#e2e8f0" }}>{new Date(overrideExpires).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</strong></>
+                : <span style={{ color:"#22c55e" }}>Permanent (pas d'expiration)</span>}
+              <br/>{user.override_reason && <>Raison : <em>{user.override_reason}</em></>}
+            </div>
+            <button onClick={revokeOverride} style={{ marginTop:8, padding:"5px 12px", borderRadius:6, border:"1px solid rgba(239,68,68,0.4)", background:"rgba(239,68,68,0.1)", color:"#ef4444", fontSize:11, fontWeight:700, cursor:"pointer" }}>
+              ✕ Révoquer l'override
+            </button>
+          </div>
+        )}
+
+        <span style={s.label}>PLAN {planChanged && <span style={{ color:"#f59e0b", marginLeft:8 }}>⚠️ Modifié</span>}</span>
+        <div style={{ display:"flex", gap:8, marginBottom:12, flexWrap:"wrap" }}>
           {PLANS.map(p => (
             <button key={p} style={{ ...s.btnSm, background:plan===p?`${PLAN_COLORS[p]}20`:"rgba(255,255,255,0.04)", border:`1px solid ${plan===p?PLAN_COLORS[p]:"rgba(255,255,255,0.1)"}`, color:plan===p?PLAN_COLORS[p]:"#94a3b8", padding:"7px 14px", fontSize:11 }} onClick={()=>setPlan(p)}>{p}</button>
           ))}
         </div>
+
+        {/* Options override */}
+        {planChanged && plan !== "Free" && (
+          <div style={{ background:"rgba(96,165,250,0.06)", border:"1px solid rgba(96,165,250,0.2)", borderRadius:10, padding:"14px", marginBottom:16 }}>
+            <div style={{ color:"#60a5fa", fontSize:11, fontWeight:700, marginBottom:10 }}>🎁 OVERRIDE ADMIN — Aucun paiement Stripe</div>
+            <span style={s.label}>DURÉE</span>
+            <div style={{ display:"flex", gap:6, marginBottom:12, flexWrap:"wrap" }}>
+              {[{value:"7d",label:"7 jours"},{value:"30d",label:"30 jours"},{value:"90d",label:"90 jours"},{value:"permanent",label:"♾️ Permanent"}].map(opt => (
+                <button key={opt.value}
+                  style={{ padding:"5px 12px", borderRadius:20, border:`1px solid ${overrideDuration===opt.value?"rgba(96,165,250,0.5)":"rgba(255,255,255,0.08)"}`, background:overrideDuration===opt.value?"rgba(96,165,250,0.15)":"rgba(255,255,255,0.02)", color:overrideDuration===opt.value?"#60a5fa":"#475569", fontSize:11, fontWeight:700, cursor:"pointer" }}
+                  onClick={()=>setOverrideDuration(opt.value)}>{opt.label}</button>
+              ))}
+            </div>
+            <span style={s.label}>RAISON (optionnelle)</span>
+            <input style={{ ...s.input, width:"100%", fontSize:12, boxSizing:"border-box" }} placeholder="ex: compensation bug, partenaire, test..." value={overrideReason} onChange={e=>setOverrideReason(e.target.value)} />
+            <div style={{ marginTop:10, padding:"8px 12px", background:"rgba(0,0,0,0.2)", borderRadius:8, color:"#64748b", fontSize:11 }}>
+              ℹ️ Accès <strong style={{ color:PLAN_COLORS[plan] }}>{plan}</strong> sans paiement.
+              {overrideDuration==="permanent" ? " Permanent jusqu'à révocation." : ` Expire dans ${overrideDuration==="7d"?"7 jours":overrideDuration==="30d"?"30 jours":"90 jours"}.`}
+            </div>
+          </div>
+        )}
 
         <span style={s.label}>GÉNÉRATIONS UTILISÉES <span style={{ color:"#475569", fontWeight:400 }}>/ {planLimit(plan)}</span></span>
         <div style={{ display:"flex", gap:8, marginBottom:20 }}>
@@ -228,15 +292,97 @@ function EditUserModal({ user, token, onClose, onSave }) {
           <button style={{ ...s.btnSm, background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.3)", color:"#22c55e", padding:"9px 14px" }} onClick={resetQuota}>Reset à 0</button>
         </div>
 
+        {msg && <div style={{ padding:"8px 12px", borderRadius:8, marginBottom:12, background:msg.type==="success"?"rgba(34,197,94,0.1)":"rgba(239,68,68,0.1)", color:msg.type==="success"?"#22c55e":"#ef4444", fontSize:12 }}>{msg.text}</div>}
+
         <div style={{ display:"flex", gap:10 }}>
           <button style={{ flex:1, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, color:"#94a3b8", fontSize:11, fontWeight:700, padding:"10px", cursor:"pointer" }} onClick={onClose}>Annuler</button>
-          <button
-            style={{ ...s.btnSm, padding:"10px 14px", background: user.banned ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)", border: user.banned ? "1px solid rgba(34,197,94,0.4)" : "1px solid rgba(239,68,68,0.4)", color: user.banned ? "#22c55e" : "#ef4444", fontSize:11, borderRadius:8 }}
-            onClick={toggleBan}
-          >{user.banned ? "✅ Débannir" : "🚫 Bannir"}</button>
+          <button style={{ ...s.btnSm, padding:"10px 14px", background:user.banned?"rgba(34,197,94,0.1)":"rgba(239,68,68,0.1)", border:user.banned?"1px solid rgba(34,197,94,0.4)":"1px solid rgba(239,68,68,0.4)", color:user.banned?"#22c55e":"#ef4444", fontSize:11, borderRadius:8 }} onClick={toggleBan}>{user.banned?"✅ Débannir":"🚫 Bannir"}</button>
           <button style={{ ...s.btn, flex:2, opacity:saving?0.7:1 }} onClick={save} disabled={saving}>{saving?"💾 Enregistrement...":"💾 Enregistrer"}</button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── Onglet Overrides Admin ───────────────────────────────────────────────────
+function OverridesTab({ token }) {
+  const [overrides, setOverrides] = useState([]);
+  const [loading,   setLoading]   = useState(false);
+
+  const fetchOverrides = async () => {
+    setLoading(true);
+    try {
+      const r = await fetch(`${API}/admin/overrides`, { headers:{ Authorization:`Bearer ${token}` } });
+      const d = await r.json();
+      setOverrides(d.overrides || []);
+    } catch {}
+    setLoading(false);
+  };
+
+  const revoke = async (userId) => {
+    await fetch(`${API}/admin/users/${userId}`, {
+      method:"PATCH",
+      headers:{ "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+      body: JSON.stringify({ plan:"Free" }),
+    });
+    fetchOverrides();
+  };
+
+  useEffect(() => { fetchOverrides(); }, []);
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+        <div>
+          <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:14 }}>🎁 Overrides admin actifs</div>
+          <div style={{ color:"#475569", fontSize:12, marginTop:2 }}>Plans accordés manuellement sans paiement Stripe</div>
+        </div>
+        <button onClick={fetchOverrides} style={{ padding:"7px 12px", borderRadius:8, border:"1px solid rgba(255,255,255,0.08)", background:"rgba(255,255,255,0.03)", color:"#64748b", fontSize:11, cursor:"pointer" }}>🔄</button>
+      </div>
+      {loading ? (
+        <div style={{ textAlign:"center", padding:40, color:"#475569" }}>Chargement...</div>
+      ) : overrides.length === 0 ? (
+        <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:12, padding:"40px 24px", textAlign:"center" }}>
+          <div style={{ fontSize:36, marginBottom:10 }}>✅</div>
+          <div style={{ color:"#475569", fontSize:14, fontWeight:700 }}>Aucun override actif</div>
+          <div style={{ color:"#334155", fontSize:12, marginTop:4 }}>Tous les plans sont liés à des abonnements Stripe réels.</div>
+        </div>
+      ) : (
+        <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:12, overflow:"hidden" }}>
+          <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+            <thead><tr style={{ background:"rgba(255,255,255,0.03)" }}>
+              {["USER","PLAN","EXPIRATION","RAISON","ACCORDÉ PAR","ACTION"].map(h=>(
+                <th key={h} style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"12px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>{h}</th>
+              ))}
+            </tr></thead>
+            <tbody>
+              {overrides.map(o => {
+                const isExpiringSoon = o.override_expires_at && new Date(o.override_expires_at) < new Date(Date.now()+3*86400000);
+                const isExpired      = o.override_expires_at && new Date(o.override_expires_at) < new Date();
+                return (
+                  <tr key={o.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)", background:isExpired?"rgba(239,68,68,0.04)":isExpiringSoon?"rgba(245,158,11,0.04)":"transparent" }}>
+                    <td style={{ padding:"12px 16px" }}>
+                      <div style={{ color:"#e2e8f0", fontSize:12 }}>{o.email}</div>
+                      <div style={{ color:"#475569", fontSize:10 }}>#{o.id} · {o.had_paid_plan?`Highest: ${o.highest_plan_ever}`:"Jamais payant"}</div>
+                    </td>
+                    <td style={{ padding:"12px 16px" }}>
+                      <span style={{ background:`${PLAN_COLORS[o.plan]||"#64748b"}20`, border:`1px solid ${PLAN_COLORS[o.plan]||"#64748b"}40`, borderRadius:10, padding:"2px 8px", fontSize:10, fontWeight:700, color:PLAN_COLORS[o.plan]||"#64748b" }}>{o.plan}</span>
+                    </td>
+                    <td style={{ padding:"12px 16px", color:isExpired?"#ef4444":isExpiringSoon?"#f59e0b":"#94a3b8", fontSize:11, fontWeight:isExpiringSoon?700:400 }}>
+                      {o.override_expires_at ? <>{isExpired?"⚠️ Expiré — ":"⏰ "}{new Date(o.override_expires_at).toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"})}</> : <span style={{ color:"#22c55e", fontWeight:700 }}>♾️ Permanent</span>}
+                    </td>
+                    <td style={{ padding:"12px 16px", color:"#64748b", fontSize:11 }}>{o.override_reason||"—"}</td>
+                    <td style={{ padding:"12px 16px", color:"#475569", fontSize:11 }}>{o.granted_by_email||"—"}</td>
+                    <td style={{ padding:"12px 16px" }}>
+                      <button onClick={()=>revoke(o.id)} style={{ padding:"4px 10px", borderRadius:6, border:"1px solid rgba(239,68,68,0.4)", background:"rgba(239,68,68,0.1)", color:"#ef4444", fontSize:10, fontWeight:700, cursor:"pointer" }}>Révoquer</button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
@@ -1074,6 +1220,7 @@ export default function Admin({ token, logout }) {
         <div style={{ display:"flex", borderBottom:"1px solid rgba(255,255,255,0.07)", marginBottom:24 }}>
           <button style={s.tabBtn(tab==="users")}      onClick={()=>setTab("users")}>👥 Comptes</button>
           <button style={s.tabBtn(tab==="logs")}       onClick={()=>setTab("logs")}>📋 Historique</button>
+          <button style={s.tabBtn(tab==="overrides")}  onClick={()=>setTab("overrides")}>🎁 Overrides</button>
           <button style={s.tabBtn(tab==="analytics")}  onClick={()=>setTab("analytics")}>📊 Visites</button>
         </div>
 
@@ -1230,6 +1377,7 @@ export default function Admin({ token, logout }) {
         )}
 
         {/* ── Onglet Visites ── */}
+        {tab === "overrides" && <OverridesTab token={token} />}
         {tab === "analytics" && <AnalyticsTab token={token} />}
       </div>
 
