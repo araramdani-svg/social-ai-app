@@ -1490,4 +1490,167 @@ router.patch("/posts/:id/link-client", auth, async (req, res) => {
   }
 });
 
+// ─── GET /notifications — aggrège toutes les notifs in-app ──────────────────
+// Retourne les événements récents pertinents pour l'user connecté
+router.get("/notifications", auth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const notifs = [];
+
+    // 1. Approvals en attente (pour owner/admin)
+    const approvalRes = await db.query(
+      `SELECT p.id as post_id, p.title, p.content, p.created_at,
+              u.display_name, u.email
+       FROM posts p
+       JOIN users u ON u.id = p.user_id
+       JOIN team_members tm ON tm.member_id = p.user_id AND tm.owner_id = $1
+       WHERE p.approval_status = 'pending_approval'
+       ORDER BY p.created_at DESC LIMIT 10`,
+      [userId]
+    ).catch(() => ({ rows: [] }));
+    approvalRes.rows.forEach(r => notifs.push({
+      id: `approval_${r.post_id}`,
+      type: "approval",
+      icon: "⏳",
+      color: "#f59e0b",
+      title: r.display_name || r.email,
+      body: (r.title || r.content || "").slice(0, 60),
+      created_at: r.created_at,
+      link_tab: "team",
+      read: false,
+    }));
+
+    // 2. Commentaires récents sur mes posts (dernières 48h)
+    const commentRes = await db.query(
+      `SELECT c.id, c.post_id, c.content, c.created_at,
+              u.display_name, u.email
+       FROM post_comments c
+       JOIN users u ON u.id = c.user_id
+       JOIN posts p ON p.id = c.post_id
+       WHERE p.user_id = $1 AND c.user_id != $1
+         AND c.created_at > NOW() - INTERVAL '48 hours'
+       ORDER BY c.created_at DESC LIMIT 10`,
+      [userId]
+    ).catch(() => ({ rows: [] }));
+    commentRes.rows.forEach(r => notifs.push({
+      id: `comment_${r.id}`,
+      type: "comment",
+      icon: "💬",
+      color: "#60a5fa",
+      title: r.display_name || r.email,
+      body: r.content.slice(0, 60),
+      created_at: r.created_at,
+      link_tab: "history",
+      read: false,
+    }));
+
+    // 3. Posts assignés à moi (dernières 48h)
+    const assignRes = await db.query(
+      `SELECT p.id, p.title, p.content, p.created_at,
+              u.display_name, u.email
+       FROM posts p
+       JOIN users u ON u.id = p.user_id
+       WHERE p.assigned_to = $1
+         AND p.created_at > NOW() - INTERVAL '48 hours'
+       ORDER BY p.created_at DESC LIMIT 5`,
+      [userId]
+    ).catch(() => ({ rows: [] }));
+    assignRes.rows.forEach(r => notifs.push({
+      id: `assigned_${r.id}`,
+      type: "assigned",
+      icon: "🎯",
+      color: "#a78bfa",
+      title: r.display_name || r.email,
+      body: (r.title || r.content || "").slice(0, 60),
+      created_at: r.created_at,
+      link_tab: "history",
+      read: false,
+    }));
+
+    // 4. Posts approuvés récemment (pour l'auteur, dernières 48h)
+    const approvedRes = await db.query(
+      `SELECT p.id, p.title, p.content, p.approved_at
+       FROM posts p
+       WHERE p.user_id = $1
+         AND p.approval_status = 'approved'
+         AND p.approved_at > NOW() - INTERVAL '48 hours'
+       ORDER BY p.approved_at DESC LIMIT 5`,
+      [userId]
+    ).catch(() => ({ rows: [] }));
+    approvedRes.rows.forEach(r => notifs.push({
+      id: `approved_${r.id}`,
+      type: "approved",
+      icon: "✅",
+      color: "#22c55e",
+      title: "Post approved",
+      body: (r.title || r.content || "").slice(0, 60),
+      created_at: r.approved_at,
+      link_tab: "history",
+      read: false,
+    }));
+
+    // 5. Posts rejetés récemment (pour l'auteur, dernières 48h)
+    const rejectedRes = await db.query(
+      `SELECT p.id, p.title, p.content, p.approved_at
+       FROM posts p
+       WHERE p.user_id = $1
+         AND p.approval_status = 'rejected'
+         AND p.approved_at > NOW() - INTERVAL '48 hours'
+       ORDER BY p.approved_at DESC LIMIT 5`,
+      [userId]
+    ).catch(() => ({ rows: [] }));
+    rejectedRes.rows.forEach(r => notifs.push({
+      id: `rejected_${r.id}`,
+      type: "rejected",
+      icon: "❌",
+      color: "#ef4444",
+      title: "Post rejected",
+      body: (r.title || r.content || "").slice(0, 60),
+      created_at: r.approved_at,
+      link_tab: "history",
+      read: false,
+    }));
+
+    // Marquer comme lues les notifs déjà vues (via user_logs)
+    const readRes = await db.query(
+      `SELECT details->>'notif_id' as notif_id FROM user_logs
+       WHERE user_id = $1 AND action = 'notif_read'
+         AND created_at > NOW() - INTERVAL '48 hours'`,
+      [userId]
+    ).catch(() => ({ rows: [] }));
+    const readIds = new Set(readRes.rows.map(r => r.notif_id));
+    notifs.forEach(n => { if (readIds.has(n.id)) n.read = true; });
+
+    // Trier par date desc
+    notifs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    console.log(`[team] GET /notifications → ${notifs.length} notifs for user=${userId}`);
+    res.json({ notifications: notifs, unread: notifs.filter(n => !n.read).length });
+  } catch (err) {
+    console.error("GET /notifications:", err.message);
+    res.status(500).json({ error: "Failed to fetch notifications" });
+  }
+});
+
+// ─── POST /notifications/read-all — marquer toutes comme lues ────────────────
+router.post("/notifications/read-all", auth, async (req, res) => {
+  const { notif_ids } = req.body; // tableau d'ids
+  try {
+    if (Array.isArray(notif_ids) && notif_ids.length > 0) {
+      for (const notif_id of notif_ids) {
+        await db.query(
+          `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,'notif_read',$2,NOW())
+           ON CONFLICT DO NOTHING`,
+          [req.user.id, JSON.stringify({ notif_id })]
+        ).catch(() => {});
+      }
+    }
+    console.log(`[team] POST /notifications/read-all → ${notif_ids?.length || 0} marked read`);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("POST /notifications/read-all:", err.message);
+    res.status(500).json({ error: "Failed to mark read" });
+  }
+});
+
 export default router;
