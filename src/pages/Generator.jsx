@@ -32,7 +32,14 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
 
   /* ── Routing ── */
   const [tab, setTabState] = useState(() => sessionStorage.getItem("gp_tab") || "home");
-  const setTab    = (t) => { setTabState(t); sessionStorage.setItem("gp_tab", t); };
+  const setTab    = (t) => {
+    setTabState(t);
+    sessionStorage.setItem("gp_tab", t);
+    // Effacer le badge de l'onglet visité
+    if (t === "history")   { setHistoryBadge(0);   localStorage.setItem("gp_history_seen",  String(Date.now())); }
+    if (t === "publish")   { setPublishBadge(0);   localStorage.setItem("gp_publish_seen",  String(Date.now())); }
+    if (t === "scheduler") { setSchedulerBadge(0); }
+  };
   const navigate  = (t) => { setTab(t); setSidebarOpen(false); };
 
   /* ── Breakpoints ── */
@@ -140,6 +147,9 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   const [tiktokPosting,   setTiktokPosting]   = useState(false);
   const [userPlan,        setUserPlan]        = useState({ plan:"Free", interval:null });
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
+  const [historyBadge,    setHistoryBadge]    = useState(0); // nouveaux posts non vus
+  const [publishBadge,    setPublishBadge]    = useState(0); // publications récentes non vues
+  const [schedulerBadge,  setSchedulerBadge]  = useState(0); // posts planifiés actifs
   const [planManagedBy,   setPlanManagedBy]   = useState("self");
   const [managedByTeamName,   setManagedByTeamName]   = useState(null);
   const [managedByOwnerEmail, setManagedByOwnerEmail] = useState(null);
@@ -194,7 +204,10 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   // Passer CharCounter et autoSaveLabel à Create via props supplémentaires
   const charCounterProps = { autoSaveLabel, CharCounter };
 
-  const growthData = (() => {
+  // Badge scheduler = nombre de posts planifiés actifs
+  useEffect(() => {
+    setSchedulerBadge(scheduledPosts.length);
+  }, [scheduledPosts]);
     try {
       const scored = (history||[]).filter(p=>(p?.score>0)||(p?.analysis?.score>0)).slice(-7);
       if (!scored.length) return [{ day:"D-6",score:0 },{ day:"D-5",score:0 },{ day:"D-4",score:0 },{ day:"D-3",score:0 },{ day:"D-2",score:0 },{ day:"D-1",score:0 },{ day:"Today",score:analysis?.score||0 }];
@@ -311,8 +324,28 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
 
   /* ── API functions ── */
   const loadProjects   = async () => { const d=await api("auth/projects",{},"GET"); setProjects(Array.isArray(d)?d:[]); };
-  const loadHistory    = async () => { try { const d=await api("auth/posts",{},"GET"); setHistory(Array.isArray(d)?d:[]); } catch { setHistory([]); } };
-  const loadPublishLog = async () => { try { const d=await api("auth/publish-log",{},"GET"); setPublishLog(Array.isArray(d)?d.map(p=>({ dest:p.platform, date:new Date(p.created_at).toLocaleString() })):[]); } catch { setPublishLog([]); } };
+  const loadHistory    = async () => {
+    try {
+      const d = await api("auth/posts",{},"GET");
+      const posts = Array.isArray(d) ? d : [];
+      setHistory(posts);
+      // Badge : posts créés depuis la dernière visite de l'onglet history
+      const lastSeen = parseInt(localStorage.getItem("gp_history_seen") || "0");
+      const newPosts = posts.filter(p => new Date(p.created_at).getTime() > lastSeen).length;
+      setHistoryBadge(newPosts);
+    } catch { setHistory([]); }
+  };
+  const loadPublishLog = async () => {
+    try {
+      const d = await api("auth/publish-log",{},"GET");
+      const logs = Array.isArray(d) ? d.map(p=>({ dest:p.platform, date:new Date(p.created_at).toLocaleString(), created_at:p.created_at })) : [];
+      setPublishLog(logs);
+      // Badge : publications depuis la dernière visite de l'onglet publish
+      const lastSeen = parseInt(localStorage.getItem("gp_publish_seen") || "0");
+      const recent = logs.filter(p => new Date(p.created_at).getTime() > lastSeen).length;
+      setPublishBadge(recent);
+    } catch { setPublishLog([]); }
+  };
   const selectProject  = async (n) => { setSelectedProject(n); setCompareDraft(null); const d=await api(`auth/project/${n}`,{},"GET"); if(d){ setMemory(d.memory||{ niche:"",audience:"",tone:"",cta:"",banned_words:"" }); setDrafts(d.drafts||[]); setHistory(d.posts||[]); setProjectTitle(n); } try{ const posts=await fetch(`${API}/auth/posts/by-project/${encodeURIComponent(n)}`,{headers:{Authorization:`Bearer ${token}`}}).then(r=>r.json()); if(Array.isArray(posts)) setProjectPosts(posts); } catch{} };
   const createProject  = async () => { if(!projectTitle) return; await api("auth/create-project",{ name:projectTitle,workspace,campaign }); await loadProjects(); await selectProject(projectTitle); showToast(tr(trendsLang,"messages.projectSaved")); logUserAction("create_project", { name: projectTitle }); };
   const deleteProject  = async (n) => { await api(`auth/delete-project/${n}`,{},"DELETE"); showToast(tr(trendsLang,"messages.projectDeleted")); await loadProjects(); if(selectedProject===n){ setSelectedProject(""); setProjectTitle(""); setPost(""); setDrafts([]); setHistory([]); } logUserAction("delete_project", { name: n }); };
@@ -405,16 +438,28 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
             <img src={logo} alt="logo" style={st.sidebarLogo} />
             <h2 style={st.brandMini}>GrowthPILOT</h2>
           </div>
-          {NAV_TABS.map(k=>(
-            <button key={k} style={{ ...st.nav,background:tab===k?"rgba(220,38,38,0.1)":"transparent",border:"none",borderRadius:8,color:tab===k?"#ef4444":"#64748b",borderLeft:tab===k?"3px solid #ef4444":"3px solid transparent",boxShadow:tab===k?"0 0 16px rgba(220,38,38,0.12)":"none",textShadow:"none", position:"relative" }} onClick={()=>setTab(k)}>
-              {tr(trendsLang,`nav.${k}`)}
-              {k === "team" && pendingApprovalsCount > 0 && (
-                <span style={{ position:"absolute", top:6, right:8, background:"#ef4444", color:"#fff", borderRadius:"50%", minWidth:16, height:16, fontSize:9, fontWeight:800, display:"flex", alignItems:"center", justifyContent:"center", padding:"0 3px", lineHeight:1 }}>
-                  {pendingApprovalsCount}
-                </span>
-              )}
-            </button>
-          ))}
+          {NAV_TABS.map(k=>{
+            const badgeCount =
+              k === "team"      ? pendingApprovalsCount :
+              k === "history"   ? historyBadge :
+              k === "publish"   ? publishBadge :
+              k === "scheduler" ? schedulerBadge : 0;
+            const badgeColor =
+              k === "team"      ? "#ef4444" :
+              k === "history"   ? "#8b5cf6" :
+              k === "publish"   ? "#f97316" :
+              k === "scheduler" ? "#60a5fa" : "#ef4444";
+            return (
+              <button key={k} style={{ ...st.nav,background:tab===k?"rgba(220,38,38,0.1)":"transparent",border:"none",borderRadius:8,color:tab===k?"#ef4444":"#64748b",borderLeft:tab===k?"3px solid #ef4444":"3px solid transparent",boxShadow:tab===k?"0 0 16px rgba(220,38,38,0.12)":"none",textShadow:"none", position:"relative" }} onClick={()=>setTab(k)}>
+                {tr(trendsLang,`nav.${k}`)}
+                {badgeCount > 0 && (
+                  <span style={{ position:"absolute", top:6, right:8, background:badgeColor, color:"#fff", borderRadius:"50%", minWidth:16, height:16, fontSize:9, fontWeight:800, display:"flex", alignItems:"center", justifyContent:"center", padding:"0 3px", lineHeight:1 }}>
+                    {badgeCount}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </aside>
       )}
 
@@ -427,16 +472,28 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
               <div style={{ display:"flex",alignItems:"center",gap:10 }}><img src={logo} alt="logo" style={{ width:30,height:30,objectFit:"contain" }} /><h2 style={st.brandMini}>GrowthPILOT</h2></div>
               <button style={{ background:"transparent",border:"none",color:"#ef4444",fontSize:22,cursor:"pointer",padding:"4px 8px" }} onClick={()=>setSidebarOpen(false)}>✕</button>
             </div>
-            {[...NAV_TABS,"profile"].map(k=>(
-              <button key={k} style={{ ...st.nav,background:tab===k?"rgba(220,38,38,0.1)":"transparent",border:"none",borderRadius:8,color:tab===k?"#ef4444":"#64748b",borderLeft:tab===k?"3px solid #ef4444":"3px solid transparent",textShadow:"none",fontSize:14,padding:"14px 16px", position:"relative" }} onClick={()=>navigate(k)}>
-                {tr(trendsLang,`nav.${k}`)}
-                {k === "team" && pendingApprovalsCount > 0 && (
-                  <span style={{ position:"absolute", top:10, right:12, background:"#ef4444", color:"#fff", borderRadius:"50%", minWidth:18, height:18, fontSize:10, fontWeight:800, display:"flex", alignItems:"center", justifyContent:"center", padding:"0 4px", lineHeight:1 }}>
-                    {pendingApprovalsCount}
-                  </span>
-                )}
-              </button>
-            ))}
+            {[...NAV_TABS,"profile"].map(k=>{
+              const badgeCount =
+                k === "team"      ? pendingApprovalsCount :
+                k === "history"   ? historyBadge :
+                k === "publish"   ? publishBadge :
+                k === "scheduler" ? schedulerBadge : 0;
+              const badgeColor =
+                k === "team"      ? "#ef4444" :
+                k === "history"   ? "#8b5cf6" :
+                k === "publish"   ? "#f97316" :
+                k === "scheduler" ? "#60a5fa" : "#ef4444";
+              return (
+                <button key={k} style={{ ...st.nav,background:tab===k?"rgba(220,38,38,0.1)":"transparent",border:"none",borderRadius:8,color:tab===k?"#ef4444":"#64748b",borderLeft:tab===k?"3px solid #ef4444":"3px solid transparent",textShadow:"none",fontSize:14,padding:"14px 16px", position:"relative" }} onClick={()=>navigate(k)}>
+                  {tr(trendsLang,`nav.${k}`)}
+                  {badgeCount > 0 && (
+                    <span style={{ position:"absolute", top:10, right:12, background:badgeColor, color:"#fff", borderRadius:"50%", minWidth:18, height:18, fontSize:10, fontWeight:800, display:"flex", alignItems:"center", justifyContent:"center", padding:"0 4px", lineHeight:1 }}>
+                      {badgeCount}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </>
       )}
