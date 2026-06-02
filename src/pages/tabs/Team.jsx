@@ -256,6 +256,8 @@ function AgencyDashboard({ token, trendsLang, clients, onAddClient, onEditClient
     setActiveClient(isOpen ? null : client);
     if (!isOpen && !clientPosts[client.id]) fetchClientPosts(client.id);
   };
+
+  return (
     <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
 
       {/* Stats agence */}
