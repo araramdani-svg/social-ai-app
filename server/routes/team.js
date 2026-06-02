@@ -1255,4 +1255,158 @@ router.delete("/comments/:id", auth, async (req, res) => {
   }
 });
 
+// ─── GET /team/calendar — calendrier partagé de l'équipe ─────────────────────
+// Accessible : owner + tous les membres actifs de l'équipe
+router.get("/calendar", auth, async (req, res) => {
+  try {
+    // Trouver l'owner_id de l'équipe du user (soit lui-même si owner, soit son owner)
+    const ownerRes = await db.query(
+      `SELECT
+         CASE WHEN (u.plan='Business' OR u.plan='Agency') THEN u.id
+              ELSE tm.owner_id
+         END as owner_id
+       FROM users u
+       LEFT JOIN team_members tm ON tm.member_id = u.id AND tm.status='active'
+       WHERE u.id = $1
+       LIMIT 1`,
+      [req.user.id]
+    );
+    if (!ownerRes.rows.length || !ownerRes.rows[0].owner_id) {
+      return res.json({ cards: [] });
+    }
+    const ownerId = ownerRes.rows[0].owner_id;
+
+    // Récupérer toutes les cards du calendrier partagé de cette équipe
+    const result = await db.query(
+      `SELECT tc.*, u.display_name, u.email, u.first_name
+       FROM team_calendar tc
+       JOIN users u ON u.id = tc.user_id
+       WHERE tc.owner_id = $1
+       ORDER BY tc.date ASC, tc.created_at ASC`,
+      [ownerId]
+    );
+
+    console.log(`[team] GET /calendar → ${result.rows.length} cards for team owner=${ownerId}`);
+    res.json({ cards: result.rows });
+  } catch (err) {
+    console.error("GET /team/calendar:", err.message);
+    res.status(500).json({ error: "Failed to fetch team calendar" });
+  }
+});
+
+// ─── POST /team/calendar — ajouter une card au calendrier partagé ─────────────
+router.post("/calendar", auth, async (req, res) => {
+  const { title, content, col, date, platform, media_url } = req.body;
+  if (!title?.trim()) return res.status(400).json({ error: "Title required" });
+
+  try {
+    const ownerRes = await db.query(
+      `SELECT
+         CASE WHEN (u.plan='Business' OR u.plan='Agency') THEN u.id
+              ELSE tm.owner_id
+         END as owner_id
+       FROM users u
+       LEFT JOIN team_members tm ON tm.member_id = u.id AND tm.status='active'
+       WHERE u.id = $1 LIMIT 1`,
+      [req.user.id]
+    );
+    const ownerId = ownerRes.rows[0]?.owner_id;
+    if (!ownerId) return res.status(403).json({ error: "Not part of a team" });
+
+    const result = await db.query(
+      `INSERT INTO team_calendar (owner_id, user_id, title, content, col, date, platform, media_url, created_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW())
+       RETURNING *`,
+      [ownerId, req.user.id, title.trim(), content||null, col||"ideas", date||null, platform||"LinkedIn", media_url||null]
+    );
+    const card = result.rows[0];
+
+    // Récupérer infos auteur
+    const userRes = await db.query("SELECT display_name, email, first_name FROM users WHERE id=$1", [req.user.id]);
+    const user = userRes.rows[0];
+
+    // Logs
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,$2,$3,NOW())`,
+      [req.user.id, "team_calendar_add", JSON.stringify({ card_id: card.id, title: title.trim(), col })]
+    ).catch(()=>{});
+    await db.query(
+      `INSERT INTO admin_logs (admin_id, action, target_user_id, details, created_at) VALUES ($1,$2,$3,$4,NOW())`,
+      [req.user.id, "team_calendar_add", ownerId, JSON.stringify({ card_id: card.id, col })]
+    ).catch(()=>{});
+
+    console.log(`[team] POST /calendar → card ${card.id} by user=${req.user.id} team=${ownerId}`);
+    res.json({ success: true, card: { ...card, ...user } });
+  } catch (err) {
+    console.error("POST /team/calendar:", err.message);
+    res.status(500).json({ error: "Failed to add card" });
+  }
+});
+
+// ─── PATCH /team/calendar/:id — déplacer / modifier une card ─────────────────
+router.patch("/calendar/:id", auth, async (req, res) => {
+  const { col, date, platform, title } = req.body;
+  try {
+    // Vérifier que la card appartient à l'équipe du user
+    const check = await db.query(
+      `SELECT tc.id, tc.user_id, tc.owner_id FROM team_calendar tc
+       WHERE tc.id = $1
+         AND (tc.user_id = $2 OR tc.owner_id = $2 OR
+              EXISTS (SELECT 1 FROM team_members tm WHERE tm.member_id = $2 AND tm.owner_id = tc.owner_id))`,
+      [req.params.id, req.user.id]
+    );
+    if (!check.rows.length) return res.status(404).json({ error: "Card not found" });
+
+    const updates = [];
+    const vals = [];
+    let i = 1;
+    if (col !== undefined)      { updates.push(`col=$${i++}`);      vals.push(col); }
+    if (date !== undefined)     { updates.push(`date=$${i++}`);     vals.push(date); }
+    if (platform !== undefined) { updates.push(`platform=$${i++}`); vals.push(platform); }
+    if (title !== undefined)    { updates.push(`title=$${i++}`);    vals.push(title); }
+    if (!updates.length) return res.status(400).json({ error: "Nothing to update" });
+
+    vals.push(req.params.id);
+    await db.query(`UPDATE team_calendar SET ${updates.join(",")} WHERE id=$${i}`, vals);
+
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,$2,$3,NOW())`,
+      [req.user.id, "team_calendar_move", JSON.stringify({ card_id: req.params.id, col })]
+    ).catch(()=>{});
+
+    console.log(`[team] PATCH /calendar/${req.params.id} → col=${col} by user=${req.user.id}`);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("PATCH /team/calendar/:id:", err.message);
+    res.status(500).json({ error: "Failed to update card" });
+  }
+});
+
+// ─── DELETE /team/calendar/:id — supprimer une card ──────────────────────────
+router.delete("/calendar/:id", auth, async (req, res) => {
+  try {
+    const check = await db.query(
+      `SELECT tc.id, tc.user_id, tc.owner_id FROM team_calendar tc
+       WHERE tc.id = $1
+         AND (tc.user_id = $2 OR tc.owner_id = $2 OR
+              EXISTS (SELECT 1 FROM team_members tm WHERE tm.member_id = $2 AND tm.owner_id = tc.owner_id AND tm.role='admin'))`,
+      [req.params.id, req.user.id]
+    );
+    if (!check.rows.length) return res.status(403).json({ error: "Not authorized" });
+
+    await db.query("DELETE FROM team_calendar WHERE id=$1", [req.params.id]);
+
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,$2,$3,NOW())`,
+      [req.user.id, "team_calendar_delete", JSON.stringify({ card_id: req.params.id })]
+    ).catch(()=>{});
+
+    console.log(`[team] DELETE /calendar/${req.params.id} by user=${req.user.id}`);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("DELETE /team/calendar/:id:", err.message);
+    res.status(500).json({ error: "Failed to delete card" });
+  }
+});
+
 export default router;

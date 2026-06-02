@@ -358,6 +358,18 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
   const [commentsLoading, setCommentsLoading] = useState({}); // { [postId]: bool }
   const [commentInput,  setCommentInput]  = useState({}); // { [postId]: string }
   const [commentPosting,setCommentPosting]= useState(null); // postId en cours d'envoi
+  // Calendrier partagé
+  const [teamCal,       setTeamCal]       = useState([]);
+  const [teamCalLoading,setTeamCalLoading]= useState(false);
+  const [teamCalLoaded, setTeamCalLoaded] = useState(false);
+  const [calView,       setCalView]       = useState("kanban");
+  const [calAddingTo,   setCalAddingTo]   = useState(null);
+  const [calNewTitle,   setCalNewTitle]   = useState("");
+  const [calNewDate,    setCalNewDate]    = useState(new Date().toISOString().split("T")[0]);
+  const [calNewPlat,    setCalNewPlat]    = useState("LinkedIn");
+  const [calDragging,   setCalDragging]   = useState(null);
+  const [calDragOver,   setCalDragOver]   = useState(null);
+  const [calConfirmDelete, setCalConfirmDelete] = useState(null);
 
   const isBusiness = userPlan === "Business" || userPlan === "Agency";
   const isAgency   = userPlan === "Agency";
@@ -548,6 +560,65 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
     }
   };
 
+  // ── Calendrier partagé ────────────────────────────────────────────────────
+  const CAL_COLS = [
+    { id:"ideas",     label: tr(trendsLang,"calendar.colIdeas")     || "💡 Ideas",     color:"#475569", bg:"rgba(71,85,105,0.1)" },
+    { id:"draft",     label: tr(trendsLang,"calendar.colDraft")     || "✏️ Draft",     color:"#f59e0b", bg:"rgba(245,158,11,0.08)" },
+    { id:"scheduled", label: tr(trendsLang,"calendar.colScheduled") || "📅 Scheduled", color:"#60a5fa", bg:"rgba(96,165,250,0.08)" },
+    { id:"published", label: tr(trendsLang,"calendar.colPublished") || "✅ Published",  color:"#22c55e", bg:"rgba(34,197,94,0.08)" },
+  ];
+  const CAL_PLATFORMS = ["LinkedIn","Threads","X","Instagram"];
+
+  const fetchTeamCal = async () => {
+    setTeamCalLoading(true);
+    try {
+      const r = await fetch(`${API}/team/calendar`, { headers });
+      const d = await r.json();
+      setTeamCal(d.cards || []);
+      setTeamCalLoaded(true);
+      console.log(`[Team] fetchTeamCal → ${d.cards?.length || 0} cards`);
+    } catch (err) {
+      console.error("[Team] fetchTeamCal error:", err.message);
+    }
+    setTeamCalLoading(false);
+  };
+
+  const calAddCard = async (colId) => {
+    if (!calNewTitle.trim()) return;
+    try {
+      const r = await fetch(`${API}/team/calendar`, {
+        method: "POST", headers,
+        body: JSON.stringify({ title: calNewTitle.trim(), col: colId, date: calNewDate, platform: calNewPlat }),
+      });
+      const d = await r.json();
+      if (d.success) {
+        setTeamCal(prev => [...prev, d.card]);
+        setCalNewTitle(""); setCalAddingTo(null);
+        console.log(`[Team] calAddCard → card ${d.card.id}`);
+      }
+    } catch (err) { console.error("[Team] calAddCard error:", err.message); }
+  };
+
+  const calMoveCard = async (id, newCol) => {
+    setTeamCal(prev => prev.map(c => c.id === id ? { ...c, col: newCol } : c));
+    try {
+      await fetch(`${API}/team/calendar/${id}`, { method:"PATCH", headers, body: JSON.stringify({ col: newCol }) });
+      console.log(`[Team] calMoveCard ${id} → ${newCol}`);
+    } catch (err) { console.error("[Team] calMoveCard error:", err.message); }
+  };
+
+  const calDeleteCard = async (id) => {
+    setTeamCal(prev => prev.filter(c => c.id !== id));
+    try {
+      await fetch(`${API}/team/calendar/${id}`, { method:"DELETE", headers });
+      console.log(`[Team] calDeleteCard ${id}`);
+    } catch (err) { console.error("[Team] calDeleteCard error:", err.message); }
+  };
+
+  const calOnDragStart = (e, id) => { setCalDragging(id); e.dataTransfer.effectAllowed = "move"; };
+  const calOnDragOver  = (e, colId) => { e.preventDefault(); setCalDragOver(colId); };
+  const calOnDrop      = (e, colId) => { e.preventDefault(); if (calDragging) calMoveCard(calDragging, colId); setCalDragging(null); setCalDragOver(null); };
+
   const fetchTeamLogs = async () => {
     setLogsLoading(true);
     try {
@@ -709,6 +780,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                   {isOwner && <button style={s.tabBtn(activeTab==="approvals","#f59e0b")} onClick={()=>{ setActiveTab("approvals"); fetchApprovals(); }}>{tr(trendsLang,"ui.team.tabApprovals")} {approvals.length > 0 && <span style={{ background:"#ef4444", color:"#fff", borderRadius:"50%", padding:"1px 5px", fontSize:9, marginLeft:4 }}>{approvals.length}</span>}</button>}
                   {isOwner && <button style={s.tabBtn(activeTab==="logs")}  onClick={()=>{ setActiveTab("logs"); fetchTeamLogs(); }}>{tr(trendsLang,"ui.team.tabHistory")}</button>}
                   {isOwner && <button style={s.tabBtn(activeTab==="plans")} onClick={()=>setActiveTab("plans")}>{tr(trendsLang,"ui.team.tabPlans")}</button>}
+                  <button style={s.tabBtn(activeTab==="calendar","#22c55e")} onClick={()=>{ setActiveTab("calendar"); if (!teamCalLoaded) fetchTeamCal(); }}>📅 {tr(trendsLang,"ui.team.tabCalendar") || "CALENDRIER"}</button>
                 </div>
 
                 {/* Members */}
@@ -1086,9 +1158,169 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                     )}
                   </div>
                 )}
-              </div>
 
-              {/* Right */}
+                {/* ── Calendrier partagé ── */}
+                {activeTab === "calendar" && (
+                  <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+                    {/* Header */}
+                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                      <div>
+                        <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:14 }}>📅 {tr(trendsLang,"ui.team.sharedCalendar") || "Calendrier partagé"}</div>
+                        <div style={{ color:"#475569", fontSize:12, marginTop:2 }}>{tr(trendsLang,"ui.team.sharedCalendarDesc") || "Planifiez le contenu de votre équipe"}</div>
+                      </div>
+                      <div style={{ display:"flex", gap:6, alignItems:"center" }}>
+                        <button onClick={() => setCalView("kanban")} style={{ padding:"6px 12px", borderRadius:6, border:`1px solid ${calView==="kanban" ? "rgba(34,197,94,0.4)" : "rgba(255,255,255,0.08)"}`, background: calView==="kanban" ? "rgba(34,197,94,0.1)" : "rgba(255,255,255,0.03)", color: calView==="kanban" ? "#22c55e" : "#64748b", fontSize:10, fontWeight:700, cursor:"pointer" }}>📋 Kanban</button>
+                        <button onClick={() => setCalView("timeline")} style={{ padding:"6px 12px", borderRadius:6, border:`1px solid ${calView==="timeline" ? "rgba(34,197,94,0.4)" : "rgba(255,255,255,0.08)"}`, background: calView==="timeline" ? "rgba(34,197,94,0.1)" : "rgba(255,255,255,0.03)", color: calView==="timeline" ? "#22c55e" : "#64748b", fontSize:10, fontWeight:700, cursor:"pointer" }}>📅 Timeline</button>
+                        <button onClick={fetchTeamCal} style={{ padding:"6px 10px", borderRadius:6, border:"1px solid rgba(255,255,255,0.08)", background:"rgba(255,255,255,0.03)", color:"#64748b", fontSize:10, cursor:"pointer" }}>🔄</button>
+                      </div>
+                    </div>
+
+                    {/* Stats mini */}
+                    <div style={{ display:"flex", gap:8 }}>
+                      {CAL_COLS.map(col => (
+                        <div key={col.id} style={{ flex:1, background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderTop:`3px solid ${col.color}`, borderRadius:8, padding:"8px 10px", textAlign:"center" }}>
+                          <div style={{ color:col.color, fontSize:16, fontWeight:900 }}>{teamCal.filter(c=>c.col===col.id).length}</div>
+                          <div style={{ color:"#475569", fontSize:8, fontWeight:700, letterSpacing:"0.5px" }}>{col.label.replace(/^[^\w\u00C0-\u024F]*/, "").toUpperCase()}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {teamCalLoading ? (
+                      <div style={{ textAlign:"center", padding:40, color:"#475569" }}>⏳ {tr(trendsLang,"calendar.loading") || "Loading..."}</div>
+                    ) : calView === "kanban" ? (
+                      /* ── Kanban ── */
+                      <div style={{ display:"flex", gap:10, overflowX:"auto", paddingBottom:4 }}>
+                        {CAL_COLS.map(col => (
+                          <div
+                            key={col.id}
+                            style={{ minWidth:200, flex:1, background: calDragOver===col.id ? col.bg : "rgba(255,255,255,0.02)", border:`1px solid ${calDragOver===col.id ? col.color+"50" : "rgba(255,255,255,0.06)"}`, borderRadius:10, padding:12, transition:"all 0.2s" }}
+                            onDragOver={e => calOnDragOver(e, col.id)}
+                            onDrop={e => calOnDrop(e, col.id)}
+                            onDragLeave={() => setCalDragOver(null)}
+                          >
+                            {/* Col header */}
+                            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+                              <span style={{ color:col.color, fontSize:11, fontWeight:700 }}>{col.label}</span>
+                              <span style={{ color:"#334155", fontSize:9, fontWeight:700 }}>{teamCal.filter(c=>c.col===col.id).length}</span>
+                            </div>
+
+                            {/* Cards */}
+                            {teamCal.filter(c=>c.col===col.id).map(card => (
+                              <div
+                                key={card.id}
+                                draggable
+                                onDragStart={e => calOnDragStart(e, card.id)}
+                                style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderLeft:`3px solid ${col.color}`, borderRadius:8, padding:"10px 12px", marginBottom:8, opacity: calDragging===card.id ? 0.4 : 1, cursor:"grab" }}
+                              >
+                                {/* Auteur */}
+                                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:5 }}>
+                                  <div style={{ display:"flex", alignItems:"center", gap:5 }}>
+                                    <div style={{ width:18, height:18, borderRadius:"50%", background:`${col.color}25`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:8, fontWeight:800, color:col.color, flexShrink:0 }}>
+                                      {(card.display_name || card.first_name || card.email || "?")[0].toUpperCase()}
+                                    </div>
+                                    <span style={{ color:"#475569", fontSize:9 }}>{card.display_name || card.first_name || card.email?.split("@")[0]}</span>
+                                  </div>
+                                  <button onClick={() => setCalConfirmDelete(card.id)} style={{ background:"none", border:"none", color:"#334155", fontSize:10, cursor:"pointer", lineHeight:1 }}>✕</button>
+                                </div>
+
+                                <div style={{ color:"#e2e8f0", fontSize:11, fontWeight:600, marginBottom:5, lineHeight:1.4 }}>{card.title}</div>
+
+                                <div style={{ display:"flex", gap:5, alignItems:"center", flexWrap:"wrap" }}>
+                                  <span style={{ background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:4, padding:"1px 6px", fontSize:9, color:"#64748b", fontWeight:600 }}>{card.platform}</span>
+                                  {card.date && <span style={{ color:"#334155", fontSize:9 }}>{new Date(card.date).toLocaleDateString()}</span>}
+                                </div>
+
+                                {/* Boutons déplacer */}
+                                <div style={{ display:"flex", gap:4, marginTop:6, flexWrap:"wrap" }}>
+                                  {CAL_COLS.filter(c => c.id !== col.id).map(c => (
+                                    <button key={c.id} onClick={() => calMoveCard(card.id, c.id)} style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:4, color:c.color, fontSize:8, fontWeight:700, padding:"2px 6px", cursor:"pointer" }}>→ {c.label.replace(/^[^\w\u00C0-\u024F]*/, "")}</button>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+
+                            {/* Add form */}
+                            {calAddingTo === col.id ? (
+                              <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:8, padding:10, marginTop:4 }}>
+                                <input
+                                  value={calNewTitle}
+                                  onChange={e => setCalNewTitle(e.target.value)}
+                                  onKeyDown={e => e.key === "Enter" && calAddCard(col.id)}
+                                  placeholder={tr(trendsLang,"calendar.addTitle") || "Title..."}
+                                  autoFocus
+                                  style={{ width:"100%", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:6, padding:"6px 8px", color:"#e2e8f0", fontSize:11, outline:"none", marginBottom:6, boxSizing:"border-box", fontFamily:"inherit" }}
+                                />
+                                <input type="date" value={calNewDate} onChange={e => setCalNewDate(e.target.value)} style={{ width:"100%", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:6, padding:"5px 8px", color:"#94a3b8", fontSize:10, outline:"none", marginBottom:6, boxSizing:"border-box" }} />
+                                <select value={calNewPlat} onChange={e => setCalNewPlat(e.target.value)} style={{ width:"100%", background:"#0f172a", border:"1px solid rgba(255,255,255,0.08)", borderRadius:6, padding:"5px 8px", color:"#94a3b8", fontSize:10, outline:"none", marginBottom:8 }}>
+                                  {CAL_PLATFORMS.map(p => <option key={p}>{p}</option>)}
+                                </select>
+                                <div style={{ display:"flex", gap:6 }}>
+                                  <button onClick={() => calAddCard(col.id)} style={{ flex:1, background:"linear-gradient(135deg,#22c55e,#16a34a)", border:"none", borderRadius:6, color:"#fff", fontSize:10, fontWeight:700, padding:"7px", cursor:"pointer" }}>{tr(trendsLang,"calendar.add") || "Add"}</button>
+                                  <button onClick={() => setCalAddingTo(null)} style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:6, color:"#64748b", fontSize:10, fontWeight:700, padding:"7px 10px", cursor:"pointer" }}>✕</button>
+                                </div>
+                              </div>
+                            ) : (
+                              <button onClick={() => { setCalAddingTo(col.id); setCalNewTitle(""); }} style={{ width:"100%", background:"rgba(255,255,255,0.02)", border:"1px dashed rgba(255,255,255,0.07)", borderRadius:8, color:"#334155", fontSize:10, padding:"8px", cursor:"pointer", marginTop:4 }}>+ {tr(trendsLang,"calendar.addCard") || "Add card"}</button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      /* ── Timeline ── */
+                      <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:10, padding:16 }}>
+                        {Array.from({ length: 14 }, (_, i) => {
+                          const d = new Date(); d.setDate(d.getDate() + i);
+                          const dateStr = d.toISOString().split("T")[0];
+                          const dayCards = teamCal.filter(c => c.date?.startsWith(dateStr));
+                          return (
+                            <div key={dateStr} style={{ display:"flex", gap:12, alignItems:"flex-start", padding:"8px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+                              <div style={{ width:56, flexShrink:0, textAlign:"right" }}>
+                                <div style={{ color: i===0 ? "#22c55e" : "#475569", fontSize:10, fontWeight: i===0 ? 800 : 600 }}>{d.toLocaleDateString(trendsLang, { weekday:"short" })}</div>
+                                <div style={{ color: i===0 ? "#22c55e" : "#334155", fontSize:11, fontWeight:700 }}>{d.getDate()}</div>
+                              </div>
+                              <div style={{ flex:1, display:"flex", gap:6, flexWrap:"wrap" }}>
+                                {dayCards.length === 0
+                                  ? <div style={{ color:"#1e293b", fontSize:10, padding:"4px 0" }}>—</div>
+                                  : dayCards.map(card => {
+                                      const colColor = CAL_COLS.find(c=>c.id===card.col)?.color || "#64748b";
+                                      return (
+                                        <div key={card.id} style={{ background:"rgba(255,255,255,0.03)", border:`1px solid ${colColor}30`, borderLeft:`3px solid ${colColor}`, borderRadius:6, padding:"5px 10px", fontSize:10 }}>
+                                          <span style={{ color:colColor, fontSize:8, fontWeight:700, marginRight:5 }}>{card.col.toUpperCase()}</span>
+                                          <span style={{ color:"#e2e8f0" }}>{card.title}</span>
+                                          <span style={{ color:"#475569", fontSize:8, marginLeft:5 }}>· {card.display_name || card.first_name || card.email?.split("@")[0]}</span>
+                                        </div>
+                                      );
+                                    })
+                                }
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Empty state */}
+                    {!teamCalLoading && teamCal.length === 0 && (
+                      <div style={{ textAlign:"center", padding:"32px 20px", color:"#334155" }}>
+                        <div style={{ fontSize:36, marginBottom:10 }}>📅</div>
+                        <div style={{ color:"#e2e8f0", fontWeight:700, marginBottom:6 }}>{tr(trendsLang,"ui.team.calendarEmpty") || "Calendrier vide"}</div>
+                        <div style={{ fontSize:12 }}>{tr(trendsLang,"ui.team.calendarEmptyDesc") || "Ajoutez une card dans une colonne pour planifier le contenu de l'équipe."}</div>
+                      </div>
+                    )}
+
+                    {/* Confirm delete */}
+                    {calConfirmDelete !== null && (
+                      <ConfirmModal
+                        message={tr(trendsLang,"calendar.confirmDelete") || "Supprimer cette carte ?"}
+                        confirmLabel={tr(trendsLang,"ui.delete") || "Supprimer"}
+                        cancelLabel={tr(trendsLang,"ui.cancel") || "Annuler"}
+                        danger={true}
+                        onConfirm={() => { calDeleteCard(calConfirmDelete); setCalConfirmDelete(null); }}
+                        onCancel={() => setCalConfirmDelete(null)}
+                      />
+                    )}
+                  </div>
+                )}
               <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
                 <div style={s.card}>
                   <span style={s.label}>WORKSPACE</span>
