@@ -22,6 +22,8 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
   const [commentsLoading,  setCommentsLoading]  = useState({});
   const [commentInput,     setCommentInput]     = useState({});
   const [commentPosting,   setCommentPosting]   = useState(null);
+  const [clients,          setClients]          = useState([]);
+  const [linkingPost,      setLinkingPost]      = useState(null); // postId en cours de liaison
 
   const ACTION_COLORS = {
     register: "#22c55e", login: "#3b82f6", verify_email: "#22c55e",
@@ -54,6 +56,37 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
   const USER_ACTION_LABELS = Object.fromEntries(
     Object.keys(ACTION_COLORS).map(key => [key, { label: getActionLabel(key), color: getActionColor(key) }])
   );
+
+  // Charger les clients agency disponibles pour liaison
+  useEffect(() => {
+    if (!token) return;
+    fetch(`${API}/agency/clients`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => { if (Array.isArray(d.clients)) setClients(d.clients); })
+      .catch(() => {});
+  }, [token]);
+
+  const linkClient = async (postId, clientId) => {
+    setLinkingPost(postId);
+    try {
+      const r = await fetch(`${API}/team/posts/${postId}/link-client`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ client_id: clientId || null }),
+      });
+      const d = await r.json();
+      if (d.success) {
+        // Mettre à jour localement dans history
+        loadHistory();
+        console.log(`[History] post ${postId} linked to client ${clientId || "none"}`);
+      } else {
+        console.error("[History] linkClient error:", d.error);
+      }
+    } catch (err) {
+      console.error("[History] linkClient fetch error:", err.message);
+    }
+    setLinkingPost(null);
+  };
 
   const fetchAssignedPosts = async () => {
     setAssignedLoading(true);
@@ -574,7 +607,30 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
                           {/* Date + Actions */}
                           <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6, flexShrink:0 }}>
                             <span style={{ color:"#334155", fontSize:10 }}>{formatDate(h.created_at)}</span>
+                            {/* Badge client si lié */}
+                            {h.client_id && clients.length > 0 && (() => {
+                              const c = clients.find(cl => cl.id === h.client_id);
+                              return c ? (
+                                <span style={{ background:`${c.color}15`, border:`1px solid ${c.color}40`, color:c.color, fontSize:9, fontWeight:700, padding:"2px 7px", borderRadius:10, maxWidth:90, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                                  🏢 {c.name}
+                                </span>
+                              ) : null;
+                            })()}
                             <div style={{ display:"flex", gap:4 }}>
+                              {/* Dropdown client */}
+                              {clients.length > 0 && (
+                                <select
+                                  value={h.client_id || ""}
+                                  disabled={linkingPost === h.id}
+                                  onChange={e => linkClient(h.id, e.target.value || null)}
+                                  onClick={e => e.stopPropagation()}
+                                  title={tr(trendsLang,"ui.team.linkToClient") || "Link to client"}
+                                  style={{ background:"#0f172a", border:`1px solid ${h.client_id ? "rgba(139,92,246,0.5)" : "rgba(255,255,255,0.08)"}`, borderRadius:6, padding:"3px 6px", color: h.client_id ? "#a78bfa" : "#475569", fontSize:9, outline:"none", cursor:"pointer", maxWidth:80, opacity: linkingPost === h.id ? 0.6 : 1 }}
+                                >
+                                  <option value="">🏢 —</option>
+                                  {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                </select>
+                              )}
                               <motion.button whileHover={{ scale:1.05 }} whileTap={{ scale:0.95 }}
                                 style={{ padding:"4px 8px", borderRadius:6, border:"1px solid rgba(255,255,255,0.08)", background:"rgba(255,255,255,0.03)", color: copiedIdx===h.id ? "#22c55e" : "#64748b", fontSize:10, fontWeight:700, cursor:"pointer" }}
                                 onClick={() => copyPost(h.content, h.id)}

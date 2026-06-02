@@ -1409,4 +1409,85 @@ router.delete("/calendar/:id", auth, async (req, res) => {
   }
 });
 
+// ─── GET /agency/clients/:id/posts — posts liés à un client ─────────────────
+router.get("/agency/clients/:id/posts", auth, requireBusiness, async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT p.id, p.title, p.content, p.media_url, p.media_type,
+              p.created_at, p.approval_status, p.viral_score, p.client_id,
+              u.email as author_email, u.display_name as author_name
+       FROM posts p
+       JOIN users u ON u.id = p.user_id
+       WHERE p.client_id = $1 AND p.user_id = $2
+       ORDER BY p.created_at DESC
+       LIMIT 50`,
+      [req.params.id, req.user.id]
+    );
+    console.log(`[team] GET /agency/clients/${req.params.id}/posts → ${result.rows.length} posts`);
+    res.json({ posts: result.rows });
+  } catch (err) {
+    console.error("GET /agency/clients/:id/posts:", err.message);
+    res.status(500).json({ error: "Failed to fetch client posts" });
+  }
+});
+
+// ─── PATCH /team/posts/:id/link-client — lier/délier un post à un client ─────
+// Accessible : owner + membres avec accès au post
+router.patch("/posts/:id/link-client", auth, async (req, res) => {
+  const { client_id } = req.body; // null pour délier
+
+  try {
+    // Vérifier que le post appartient au user ou à son équipe
+    const postCheck = await db.query(
+      `SELECT p.id, p.user_id FROM posts p
+       WHERE p.id = $1
+         AND (p.user_id = $2
+              OR EXISTS (SELECT 1 FROM team_members tm WHERE tm.owner_id = $2 AND tm.member_id = p.user_id))`,
+      [req.params.id, req.user.id]
+    );
+    if (!postCheck.rows.length) return res.status(404).json({ error: "Post not found" });
+
+    // Si client_id fourni, vérifier qu'il appartient à l'owner
+    let clientName = null;
+    if (client_id) {
+      const ownerRes = await db.query(
+        `SELECT u.id FROM users u
+         LEFT JOIN team_members tm ON tm.member_id = u.id AND tm.status = 'active'
+         WHERE u.id = $1`,
+        [req.user.id]
+      );
+      const ownerId = req.user.id;
+      const clientCheck = await db.query(
+        `SELECT id, name FROM agency_clients WHERE id = $1 AND user_id = $2`,
+        [client_id, ownerId]
+      );
+      if (!clientCheck.rows.length) return res.status(400).json({ error: "Client not found" });
+      clientName = clientCheck.rows[0].name;
+    }
+
+    await db.query(
+      `UPDATE posts SET client_id = $1 WHERE id = $2`,
+      [client_id || null, req.params.id]
+    );
+
+    // Logs
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,$2,$3,NOW())`,
+      [req.user.id, client_id ? "post_linked_to_client" : "post_unlinked_from_client",
+       JSON.stringify({ post_id: req.params.id, client_id: client_id || null, client_name: clientName })]
+    ).catch(() => {});
+    await db.query(
+      `INSERT INTO admin_logs (admin_id, action, target_user_id, details, created_at) VALUES ($1,$2,$3,$4,NOW())`,
+      [req.user.id, "post_link_client", postCheck.rows[0].user_id,
+       JSON.stringify({ post_id: req.params.id, client_id: client_id || null })]
+    ).catch(() => {});
+
+    console.log(`[team] PATCH /posts/${req.params.id}/link-client → client_id=${client_id || "null"}`);
+    res.json({ success: true, client_id: client_id || null, client_name: clientName });
+  } catch (err) {
+    console.error("PATCH /team/posts/:id/link-client:", err.message);
+    res.status(500).json({ error: "Failed to link client" });
+  }
+});
+
 export default router;

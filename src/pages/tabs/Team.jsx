@@ -209,6 +209,9 @@ function AddClientModal({ token, onClose, onSuccess, editClient, trendsLang }) {
 function AgencyDashboard({ token, trendsLang, clients, onAddClient, onEditClient, onDeleteClient, onRefresh, loading, onConfirm }) {
   const [dashStats,   setDashStats]   = useState(null);
   const [activeClient,setActiveClient]= useState(null);
+  const [pdfLoading,  setPdfLoading]  = useState(null);
+  const [clientPosts, setClientPosts] = useState({});
+  const [clientPostsLoading, setClientPostsLoading] = useState({});
   const headers = { "Content-Type":"application/json", Authorization:`Bearer ${token}` };
 
   useEffect(() => {
@@ -235,7 +238,24 @@ function AgencyDashboard({ token, trendsLang, clients, onAddClient, onEditClient
     }
   };
 
-  return (
+  const fetchClientPosts = async (clientId) => {
+    setClientPostsLoading(prev => ({ ...prev, [clientId]: true }));
+    try {
+      const r = await fetch(`${API}/agency/clients/${clientId}/posts`, { headers });
+      const d = await r.json();
+      setClientPosts(prev => ({ ...prev, [clientId]: d.posts || [] }));
+      console.log(`[Team] fetchClientPosts client=${clientId} → ${d.posts?.length || 0} posts`);
+    } catch (err) {
+      console.error("[Team] fetchClientPosts error:", err.message);
+    }
+    setClientPostsLoading(prev => ({ ...prev, [clientId]: false }));
+  };
+
+  const toggleClient = (client) => {
+    const isOpen = activeClient?.id === client.id;
+    setActiveClient(isOpen ? null : client);
+    if (!isOpen && !clientPosts[client.id]) fetchClientPosts(client.id);
+  };
     <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
 
       {/* Stats agence */}
@@ -283,7 +303,7 @@ function AgencyDashboard({ token, trendsLang, clients, onAddClient, onEditClient
       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:12 }}>
         {clients.map(client => (
           <div key={client.id} style={{ ...s.card, borderLeft:`3px solid ${client.color}`, position:"relative", cursor:"pointer" }}
-            onClick={() => setActiveClient(activeClient?.id===client.id ? null : client)}>
+            onClick={() => toggleClient(client)}>
 
             {/* Header client */}
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
@@ -313,10 +333,48 @@ function AgencyDashboard({ token, trendsLang, clients, onAddClient, onEditClient
               <span style={{ color:"#334155", fontSize:10 }}>{tr(trendsLang,"ui.team.addedLabel") || "Added"} {timeAgo(client.created_at, trendsLang)}</span>
             </div>
 
-            {/* Notes expandable */}
-            {activeClient?.id === client.id && client.notes && (
-              <div style={{ marginTop:12, padding:"10px 12px", background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:8, fontSize:12, color:"#94a3b8", lineHeight:1.6 }}>
-                {client.notes}
+            {/* Panel expandable : notes + posts liés */}
+            {activeClient?.id === client.id && (
+              <div style={{ marginTop:12, borderTop:"1px solid rgba(255,255,255,0.06)", paddingTop:12 }}>
+                {/* Notes */}
+                {client.notes && (
+                  <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:8, padding:"8px 12px", fontSize:12, color:"#94a3b8", lineHeight:1.6, marginBottom:10 }}>
+                    💡 {client.notes}
+                  </div>
+                )}
+                {/* Posts liés */}
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
+                  <span style={{ color:"#475569", fontSize:11, fontWeight:700 }}>
+                    📝 {tr(trendsLang,"ui.team.linkedPosts") || "Linked posts"} {clientPosts[client.id] ? `(${clientPosts[client.id].length})` : ""}
+                  </span>
+                  <button onClick={e => { e.stopPropagation(); fetchClientPosts(client.id); }}
+                    style={{ background:"none", border:"none", color:"#475569", fontSize:10, cursor:"pointer" }}>🔄</button>
+                </div>
+                {clientPostsLoading[client.id] ? (
+                  <div style={{ color:"#334155", fontSize:11, textAlign:"center", padding:8 }}>⏳</div>
+                ) : (clientPosts[client.id] || []).length === 0 ? (
+                  <div style={{ color:"#334155", fontSize:11, textAlign:"center", padding:"8px 0", fontStyle:"italic" }}>
+                    {tr(trendsLang,"ui.team.noLinkedPosts") || "No posts linked yet — link posts from History"}
+                  </div>
+                ) : (
+                  <div style={{ display:"flex", flexDirection:"column", gap:6, maxHeight:200, overflowY:"auto" }}>
+                    {(clientPosts[client.id] || []).map(p => {
+                      const statusColor = { approved:"#22c55e", pending_approval:"#f59e0b", rejected:"#ef4444" }[p.approval_status] || "#64748b";
+                      return (
+                        <div key={p.id} style={{ background:"rgba(255,255,255,0.02)", border:`1px solid ${client.color}20`, borderLeft:`3px solid ${client.color}`, borderRadius:7, padding:"7px 10px" }}>
+                          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:3 }}>
+                            <span style={{ color:"#e2e8f0", fontSize:11, fontWeight:600 }}>{(p.title || p.content?.split(" ").slice(0,5).join(" ") || "Post")}</span>
+                            <div style={{ display:"flex", gap:5, alignItems:"center" }}>
+                              {p.viral_score > 0 && <span style={{ color: p.viral_score>=70?"#22c55e":p.viral_score>=50?"#f59e0b":"#ef4444", fontSize:9, fontWeight:700 }}>⚡{p.viral_score}</span>}
+                              <span style={{ background:`${statusColor}15`, color:statusColor, fontSize:8, fontWeight:700, padding:"1px 5px", borderRadius:4 }}>{p.approval_status?.replace("_"," ") || "draft"}</span>
+                            </div>
+                          </div>
+                          <div style={{ color:"#475569", fontSize:10 }}>{new Date(p.created_at).toLocaleDateString()}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </div>
