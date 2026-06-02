@@ -1321,6 +1321,9 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                     )}
                   </div>
                 )}
+              </div>
+
+              {/* Right */}
               <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
                 <div style={s.card}>
                   <span style={s.label}>WORKSPACE</span>
