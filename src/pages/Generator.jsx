@@ -208,6 +208,8 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
   useEffect(() => {
     setSchedulerBadge(scheduledPosts.length);
   }, [scheduledPosts]);
+
+  const growthData = (() => {
     try {
       const scored = (history||[]).filter(p=>(p?.score>0)||(p?.analysis?.score>0)).slice(-7);
       if (!scored.length) return [{ day:"D-6",score:0 },{ day:"D-5",score:0 },{ day:"D-4",score:0 },{ day:"D-3",score:0 },{ day:"D-2",score:0 },{ day:"D-1",score:0 },{ day:"Today",score:analysis?.score||0 }];
