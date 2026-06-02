@@ -13,6 +13,7 @@ const PLAN_LIMITS = { Free: 5, Pro: 100, Business: Infinity, Agency: Infinity };
 const planLimit = (plan) => { const l = PLAN_LIMITS[plan] ?? 5; return l === Infinity ? "∞" : l; };
 
 const ACTION_LABELS = {
+  // Admin actions
   edit_user:             { label:"✏️ Édition user",       color:"#3b82f6" },
   ban_user:              { label:"🚫 Banni",               color:"#ef4444" },
   unban_user:            { label:"✅ Débanni",             color:"#22c55e" },
@@ -25,6 +26,22 @@ const ACTION_LABELS = {
   create_admin:          { label:"🛡️ Admin créé",          color:"#8b5cf6" },
   delete_admin:          { label:"🗑️ Admin supprimé",      color:"#ef4444" },
   reset_admin_password:  { label:"🔑 Reset mdp admin",     color:"#f59e0b" },
+  // Billing actions (depuis admin_logs)
+  plan_upgrade:                    { label:"⬆️ Plan upgradé",          color:"#22c55e" },
+  cancel_subscription:             { label:"❌ Abonnement annulé",      color:"#ef4444" },
+  subscription_renewed:            { label:"🔄 Renouvellement",         color:"#22c55e" },
+  payment_failed:                  { label:"⚠️ Paiement échoué",        color:"#ef4444" },
+  renewal_reminder_3d:             { label:"📧 Rappel J-3",             color:"#f59e0b" },
+  renewal_reminder_30d:            { label:"📧 Rappel J-30",            color:"#f97316" },
+  grace_period_warning_24h:        { label:"⏰ Grace warning",          color:"#ef4444" },
+  grace_period_expired_downgrade:  { label:"⬇️ Grace → Free",          color:"#ef4444" },
+  winback_7d:                      { label:"📨 Win-back +7j",           color:"#8b5cf6" },
+  winback_30d:                     { label:"📨 Win-back +30j",          color:"#8b5cf6" },
+  winback_90d:                     { label:"📨 Win-back +90j",          color:"#8b5cf6" },
+  // Team actions
+  post_assigned:                   { label:"🎯 Post assigné",           color:"#60a5fa" },
+  post_comment_added:              { label:"💬 Commentaire",            color:"#60a5fa" },
+  team_calendar_add:               { label:"📅 Cal. équipe ajout",      color:"#22c55e" },
 };
 
 const s = {
@@ -332,25 +349,56 @@ function UsersActionsTab({ token }) {
 
 // ─── Onglet Users Events ──────────────────────────────────────────────────────
 const USER_ACTION_LABELS = {
-  generate_post:        { label:"✍️ Génération",    color:"#ef4444" },
-  save_post:            { label:"💾 Sauvegarde",     color:"#22c55e" },
-  copy_post:            { label:"📋 Copie",          color:"#64748b" },
-  rewrite_post:         { label:"🔄 Réécriture",     color:"#f59e0b" },
-  analyze_post:         { label:"🔍 Analyse",        color:"#8b5cf6" },
-  create_project:       { label:"📁 Projet créé",    color:"#3b82f6" },
-  delete_project:       { label:"🗑️ Projet supprimé",color:"#ef4444" },
-  rename_project:       { label:"✏️ Projet renommé", color:"#f59e0b" },
-  calendar_add_card:    { label:"📅 Cal. Ajout",     color:"#22c55e" },
-  calendar_delete_card: { label:"📅 Cal. Supprim.",  color:"#ef4444" },
-  calendar_move_card:   { label:"📅 Cal. Déplace",   color:"#f59e0b" },
-  calendar_edit_card:   { label:"📅 Cal. Édition",   color:"#64748b" },
-  calendar_import_post: { label:"📅 Cal. Import",    color:"#8b5cf6" },
-  update_profile:       { label:"👤 Profil modifié", color:"#3b82f6" },
-  change_password:      { label:"🔑 Mdp changé",     color:"#f97316" },
-  change_email:         { label:"📧 Email changé",   color:"#f97316" },
-  generate_image:       { label:"🖼️ Image générée",  color:"#8b5cf6" },
-  attach_media:         { label:"📎 Média attaché",  color:"#38bdf8" },
-  watch_search:         { label:"🌍 Veille",         color:"#22c55e" },
+  // Content
+  generate_post:        { label:"✍️ Génération",          color:"#ef4444" },
+  save_post:            { label:"💾 Sauvegarde",           color:"#22c55e" },
+  copy_post:            { label:"📋 Copie",                color:"#64748b" },
+  rewrite_post:         { label:"🔄 Réécriture",           color:"#f59e0b" },
+  analyze_post:         { label:"🔍 Analyse",              color:"#8b5cf6" },
+  generate_image:       { label:"🖼️ Image générée",        color:"#8b5cf6" },
+  attach_media:         { label:"📎 Média attaché",        color:"#38bdf8" },
+  // Projects
+  create_project:       { label:"📁 Projet créé",          color:"#3b82f6" },
+  delete_project:       { label:"🗑️ Projet supprimé",     color:"#ef4444" },
+  rename_project:       { label:"✏️ Projet renommé",       color:"#f59e0b" },
+  // Calendar
+  calendar_add_card:    { label:"📅 Cal. Ajout",           color:"#22c55e" },
+  calendar_delete_card: { label:"📅 Cal. Supprim.",        color:"#ef4444" },
+  calendar_move_card:   { label:"📅 Cal. Déplace",         color:"#f59e0b" },
+  calendar_edit_card:   { label:"📅 Cal. Édition",         color:"#64748b" },
+  calendar_import_post: { label:"📅 Cal. Import",          color:"#8b5cf6" },
+  // Profile
+  update_profile:       { label:"👤 Profil modifié",       color:"#3b82f6" },
+  change_password:      { label:"🔑 Mdp changé",           color:"#f97316" },
+  change_email:         { label:"📧 Email changé",         color:"#f97316" },
+  // Trends
+  watch_search:         { label:"🌍 Veille",               color:"#22c55e" },
+  // Billing
+  plan_upgrade:                    { label:"⬆️ Plan upgradé",          color:"#22c55e" },
+  cancel_subscription:             { label:"❌ Abonnement annulé",      color:"#ef4444" },
+  subscription_renewed:            { label:"🔄 Renouvellement",         color:"#22c55e" },
+  payment_failed:                  { label:"⚠️ Paiement échoué",        color:"#ef4444" },
+  renewal_reminder_3d:             { label:"📧 Rappel J-3",             color:"#f59e0b" },
+  renewal_reminder_30d:            { label:"📧 Rappel J-30",            color:"#f97316" },
+  grace_period_warning_24h:        { label:"⏰ Grace warning",          color:"#ef4444" },
+  grace_period_expired_downgrade:  { label:"⬇️ Grace → Free",          color:"#ef4444" },
+  winback_7d:                      { label:"📨 Win-back +7j",           color:"#8b5cf6" },
+  winback_30d:                     { label:"📨 Win-back +30j",          color:"#8b5cf6" },
+  winback_90d:                     { label:"📨 Win-back +90j",          color:"#8b5cf6" },
+  // Team
+  post_assigned:                   { label:"🎯 Post assigné",           color:"#60a5fa" },
+  post_assigned_to_me:             { label:"📥 Assigné à moi",          color:"#60a5fa" },
+  post_approved:                   { label:"✅ Post approuvé",           color:"#22c55e" },
+  post_rejected:                   { label:"❌ Post rejeté",             color:"#ef4444" },
+  post_comment_added:              { label:"💬 Commentaire ajouté",      color:"#60a5fa" },
+  post_comment_deleted:            { label:"🗑️ Commentaire supprimé",   color:"#ef4444" },
+  post_linked_to_client:           { label:"🏢 Lié à client",           color:"#a78bfa" },
+  post_unlinked_from_client:       { label:"🏢 Délié client",           color:"#64748b" },
+  team_calendar_add:               { label:"📅 Cal. équipe ajout",      color:"#22c55e" },
+  team_calendar_move:              { label:"📅 Cal. équipe déplace",     color:"#f59e0b" },
+  team_calendar_delete:            { label:"📅 Cal. équipe supprim.",    color:"#ef4444" },
+  team_view_assigned_posts:        { label:"🎯 Posts assignés vus",      color:"#64748b" },
+  notif_read:                      { label:"🔔 Notifs lues",             color:"#64748b" },
 };
 
 function UserLogsTab({ token }) {
@@ -430,6 +478,127 @@ function UserLogsTab({ token }) {
   );
 }
 
+
+// ─── Onglet Billing (depuis admin_logs) ──────────────────────────────────────
+const BILLING_ACTIONS = ["plan_upgrade","cancel_subscription","subscription_renewed","payment_failed","renewal_reminder_3d","renewal_reminder_30d","grace_period_warning_24h","grace_period_expired_downgrade","winback_7d","winback_30d","winback_90d"];
+
+function BillingLogsTab({ token }) {
+  const [logs,         setLogs]         = useState([]);
+  const [pages,        setPages]        = useState(1);
+  const [page,         setPage]         = useState(1);
+  const [loading,      setLoading]      = useState(false);
+  const [filterAction, setFilterAction] = useState("");
+  const [stats,        setStats]        = useState(null);
+
+  const fetchLogs = useCallback(async (p = 1, action = filterAction) => {
+    setLoading(true);
+    const params = new URLSearchParams({ page: p, type: "billing" });
+    if (action) params.append("action_filter", action);
+    const r = await fetch(`${API}/admin/logs?${params}`, { headers:{ Authorization:`Bearer ${token}` } });
+    const d = await r.json();
+    setLogs(d.logs || []); setPages(d.pages || 1); setPage(p);
+    setLoading(false);
+  }, [token, filterAction]);
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const r = await fetch(`${API}/admin/billing-stats`, { headers:{ Authorization:`Bearer ${token}` } });
+      const d = await r.json();
+      setStats(d);
+    } catch {}
+  }, [token]);
+
+  useEffect(() => { fetchLogs(1); fetchStats(); }, []);
+
+  const QUICK_FILTERS = [
+    { label:"Tout",       value:"" },
+    { label:"⬆️ Upgrades",  value:"plan_upgrade" },
+    { label:"❌ Annulations",value:"cancel_subscription" },
+    { label:"🔄 Renouvellements",value:"subscription_renewed" },
+    { label:"⚠️ Paiements échoués",value:"payment_failed" },
+    { label:"📨 Win-back", value:"winback" },
+    { label:"📧 Rappels",  value:"renewal_reminder" },
+  ];
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+
+      {/* Stats MRR rapides */}
+      {stats && (
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10 }}>
+          {[
+            { label:"UPGRADES (30j)",    value:stats.upgrades_30d    || 0, color:"#22c55e" },
+            { label:"ANNULATIONS (30j)", value:stats.cancels_30d     || 0, color:"#ef4444" },
+            { label:"PAIEMENTS ÉCHOUÉS", value:stats.failed_30d      || 0, color:"#f59e0b" },
+            { label:"WIN-BACKS ENVOYÉS", value:stats.winbacks_total  || 0, color:"#8b5cf6" },
+          ].map(s => (
+            <div key={s.label} style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.07)", borderTop:`3px solid ${s.color}`, borderRadius:10, padding:"14px 16px", textAlign:"center" }}>
+              <div style={{ color:s.color, fontSize:24, fontWeight:900 }}>{s.value}</div>
+              <div style={{ color:"#475569", fontSize:9, fontWeight:700, letterSpacing:"1px", marginTop:4 }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Filtres rapides */}
+      <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+        {QUICK_FILTERS.map(f => (
+          <button key={f.value} onClick={() => { setFilterAction(f.value); fetchLogs(1, f.value); }}
+            style={{ padding:"5px 12px", borderRadius:20, border:`1px solid ${filterAction===f.value ? "rgba(220,38,38,0.5)" : "rgba(255,255,255,0.08)"}`, background: filterAction===f.value ? "rgba(220,38,38,0.1)" : "rgba(255,255,255,0.02)", color: filterAction===f.value ? "#ef4444" : "#475569", fontSize:11, fontWeight:700, cursor:"pointer" }}>
+            {f.label}
+          </button>
+        ))}
+        <button onClick={() => fetchLogs(1)} style={{ padding:"5px 12px", borderRadius:20, border:"1px solid rgba(255,255,255,0.08)", background:"rgba(255,255,255,0.03)", color:"#64748b", fontSize:11, cursor:"pointer" }}>🔄</button>
+      </div>
+
+      {/* Table */}
+      <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:12, overflow:"hidden" }}>
+        <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+          <thead>
+            <tr style={{ background:"rgba(255,255,255,0.03)" }}>
+              {["DATE","USER","PLAN","ACTION","DÉTAILS"].map(h => (
+                <th key={h} style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"14px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {loading && <tr><td colSpan={5} style={{ textAlign:"center", padding:40, color:"#475569" }}>Chargement...</td></tr>}
+            {!loading && logs.length === 0 && <tr><td colSpan={5} style={{ textAlign:"center", padding:40, color:"#475569" }}>Aucun événement billing</td></tr>}
+            {logs.map(log => {
+              const cfg = ACTION_LABELS[log.action] || { label:log.action, color:"#94a3b8" };
+              let details = "—";
+              try {
+                const d = typeof log.details === "string" ? JSON.parse(log.details) : log.details;
+                if (d?.plan) details = `Plan: ${d.plan}`;
+                if (d?.amount_paid) details += ` · ${d.amount_paid}${d.currency ? " "+d.currency.toUpperCase() : ""}`;
+                if (d?.previous_plan) details = `${d.previous_plan} → Free`;
+                if (d?.highest_plan) details = `Was: ${d.highest_plan}`;
+                if (d?.interval) details += ` (${d.interval})`;
+              } catch {}
+              return (
+                <tr key={log.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+                  <td style={{ padding:"12px 16px", color:"#475569", fontSize:11, whiteSpace:"nowrap" }}>{new Date(log.created_at).toLocaleString("fr-FR")}</td>
+                  <td style={{ padding:"12px 16px", color:"#94a3b8", fontSize:11 }}>{log.target_email || `#${log.target_user_id}`}</td>
+                  <td style={{ padding:"12px 16px" }}>
+                    {log.details && (() => { try { const d = typeof log.details==="string"?JSON.parse(log.details):log.details; return d?.plan ? <span style={{ background:"rgba(139,92,246,0.1)", border:"1px solid rgba(139,92,246,0.3)", borderRadius:10, padding:"2px 8px", fontSize:9, fontWeight:700, color:"#a78bfa" }}>{d.plan}</span> : null; } catch { return null; } })()}
+                  </td>
+                  <td style={{ padding:"12px 16px" }}>
+                    <span style={{ background:`${cfg.color}15`, border:`1px solid ${cfg.color}40`, borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:700, color:cfg.color }}>{cfg.label}</span>
+                  </td>
+                  <td style={{ padding:"12px 16px", color:"#64748b", fontSize:11, maxWidth:260, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}
+                    title={typeof log.details==="string"?log.details:JSON.stringify(log.details)}>
+                    {details}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        {pages > 1 && <div style={{ display:"flex", justifyContent:"center", gap:6, padding:14 }}>{Array.from({ length:pages },(_, i)=>i+1).map(p=><button key={p} style={{ ...s.btnSm, background:page===p?"rgba(220,38,38,0.15)":"rgba(255,255,255,0.04)", border:`1px solid ${page===p?"rgba(220,38,38,0.4)":"rgba(255,255,255,0.1)"}`, color:page===p?"#ef4444":"#64748b", width:32, height:32 }} onClick={()=>fetchLogs(p)}>{p}</button>)}</div>}
+      </div>
+    </div>
+  );
+}
 
 // ─── Onglet Visites ───────────────────────────────────────────────────────────
 const PAGE_LABELS = { landing:"🏠 Landing", generator:"⚡ App", pricing:"💳 Pricing", auth:"🔑 Auth", other:"📄 Autre" };
@@ -1048,13 +1217,15 @@ export default function Admin({ token, logout }) {
         {tab === "logs" && (
           <div>
             <div style={{ display:"flex", gap:4, marginBottom:16, borderBottom:"1px solid rgba(255,255,255,0.06)", paddingBottom:0 }}>
-              <button style={{ ...s.tabBtn(logsSubTab==="admin"), fontSize:11, padding:"8px 16px" }} onClick={() => setLogsSubTab("admin")}>🛡️ Actions Admins</button>
-              <button style={{ ...s.tabBtn(logsSubTab==="users"), fontSize:11, padding:"8px 16px" }} onClick={() => setLogsSubTab("users")}>👥 Actions Users</button>
+              <button style={{ ...s.tabBtn(logsSubTab==="admin"),      fontSize:11, padding:"8px 16px" }} onClick={() => setLogsSubTab("admin")}>🛡️ Actions Admins</button>
+              <button style={{ ...s.tabBtn(logsSubTab==="users"),      fontSize:11, padding:"8px 16px" }} onClick={() => setLogsSubTab("users")}>👥 Actions Users</button>
               <button style={{ ...s.tabBtn(logsSubTab==="userevents"), fontSize:11, padding:"8px 16px" }} onClick={() => setLogsSubTab("userevents")}>📊 Events Users</button>
+              <button style={{ ...s.tabBtn(logsSubTab==="billing"),    fontSize:11, padding:"8px 16px" }} onClick={() => setLogsSubTab("billing")}>💳 Billing</button>
             </div>
-            {logsSubTab === "admin" && <AdminLogsTab token={token} />}
-            {logsSubTab === "users" && <UsersActionsTab token={token} />}
-            {logsSubTab === "userevents" && <UserLogsTab token={token} />}
+            {logsSubTab === "admin"      && <AdminLogsTab      token={token} />}
+            {logsSubTab === "users"      && <UsersActionsTab   token={token} />}
+            {logsSubTab === "userevents" && <UserLogsTab       token={token} />}
+            {logsSubTab === "billing"    && <BillingLogsTab    token={token} />}
           </div>
         )}
 

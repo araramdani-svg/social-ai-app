@@ -342,7 +342,15 @@ router.get("/logs", adminAuth, async (req, res) => {
     let whereClause = "";
     if (type === "admin")   whereClause = `WHERE l.action = ANY(ARRAY[${ADMIN_ACTIONS.map(a   => `'${a}'`).join(",")}])`;
     if (type === "users")   whereClause = `WHERE l.action = ANY(ARRAY[${USER_ACTIONS.map(a    => `'${a}'`).join(",")}])`;
-    if (type === "billing") whereClause = `WHERE l.action = ANY(ARRAY[${BILLING_ACTIONS.map(a => `'${a}'`).join(",")}])`;
+    if (type === "billing") {
+      const actionFilter = req.query.action_filter || "";
+      if (actionFilter) {
+        // Filtre partiel (ex: "winback" matche winback_7d, winback_30d, winback_90d)
+        whereClause = `WHERE l.action ILIKE '%${actionFilter.replace(/'/g,"''")}%'`;
+      } else {
+        whereClause = `WHERE l.action = ANY(ARRAY[${BILLING_ACTIONS.map(a => `'${a}'`).join(",")}])`;
+      }
+    }
 
     const [logsRes, countRes] = await Promise.all([
       db.query(
@@ -463,6 +471,36 @@ router.get("/user-logs", adminAuth, async (req, res) => {
   } catch (err) {
     console.error("Admin user-logs error:", err.message);
     res.status(500).json({ error: "Failed to fetch user logs" });
+  }
+});
+
+// ─── GET /admin/billing-stats — stats billing 30 derniers jours ──────────────
+router.get("/billing-stats", adminAuth, async (req, res) => {
+  try {
+    const [upgrades, cancels, failed, winbacks] = await Promise.all([
+      db.query(
+        `SELECT COUNT(*)::int AS count FROM admin_logs WHERE action='plan_upgrade' AND created_at > NOW()-INTERVAL '30 days'`
+      ),
+      db.query(
+        `SELECT COUNT(*)::int AS count FROM admin_logs WHERE action='cancel_subscription' AND created_at > NOW()-INTERVAL '30 days'`
+      ),
+      db.query(
+        `SELECT COUNT(*)::int AS count FROM admin_logs WHERE action='payment_failed' AND created_at > NOW()-INTERVAL '30 days'`
+      ),
+      db.query(
+        `SELECT COUNT(*)::int AS count FROM admin_logs WHERE action IN ('winback_7d','winback_30d','winback_90d')`
+      ),
+    ]);
+
+    res.json({
+      upgrades_30d:   upgrades.rows[0].count,
+      cancels_30d:    cancels.rows[0].count,
+      failed_30d:     failed.rows[0].count,
+      winbacks_total: winbacks.rows[0].count,
+    });
+  } catch (err) {
+    console.error("Billing stats error:", err.message);
+    res.status(500).json({ error: "Failed to fetch billing stats" });
   }
 });
 
