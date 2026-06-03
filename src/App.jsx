@@ -201,11 +201,10 @@ function App() {
     { icon:"↩",  label:"Déconnexion", action: logout },
   ];
 
-  // Calcul positions en arc (demi-cercle vers la gauche/bas depuis coin haut-droit)
-  // On part de 180° (gauche) et on monte jusqu'à 270° (bas) pour un arc de 90°
-  const ARC_START = 145; // degrés
-  const ARC_END   = 250;
-  const RADIUS    = 90;  // px
+  // Arc depuis coin haut-droit → déploiement vers bas et gauche
+  const ARC_START = 195;
+  const ARC_END   = 265;
+  const RADIUS    = 80;
   const getPos = (i, total) => {
     const angle = ARC_START + (ARC_END - ARC_START) * (i / (total - 1));
     const rad   = (angle * Math.PI) / 180;

@@ -20,20 +20,20 @@ const SPOTLIGHT = [
   { key:"trends",   icon:"🌍", color:"#22c55e", gradient:"linear-gradient(135deg,rgba(34,197,94,0.15),rgba(34,197,94,0.05))", border:"rgba(34,197,94,0.3)",   descKey:"ui.qlTrends",   descFallback:"Discover viral topics in real time" },
 ];
 
-// Modules secondaires
+// Modules secondaires enrichis avec descriptions
 const MODULES = [
-  { key:"dashboard",  icon:"📊" },
-  { key:"memory",     icon:"🧠" },
-  { key:"carousel",   icon:"🎠" },
-  { key:"ghostwrite", icon:"✨" },
-  { key:"autorepost", icon:"🔄" },
-  { key:"scheduler",  icon:"⏰" },
-  { key:"autopost",   icon:"🚀" },
-  { key:"analyze",    icon:"🔍" },
-  { key:"planner",    icon:"🗓️" },
-  { key:"publish",    icon:"📤" },
-  { key:"team",       icon:"👥" },
-  { key:"integrations", icon:"🔗" },
+  { key:"dashboard",    icon:"📊", color:"#3b82f6",  descKey:"ui.mod.dashboard"    },
+  { key:"memory",       icon:"🧠", color:"#8b5cf6",  descKey:"ui.mod.memory"       },
+  { key:"carousel",     icon:"🎠", color:"#f97316",  descKey:"ui.mod.carousel"     },
+  { key:"ghostwrite",   icon:"✨", color:"#ec4899",  descKey:"ui.mod.ghostwrite"   },
+  { key:"autorepost",   icon:"🔄", color:"#22c55e",  descKey:"ui.mod.autorepost"   },
+  { key:"scheduler",    icon:"⏰", color:"#f59e0b",  descKey:"ui.mod.scheduler"    },
+  { key:"autopost",     icon:"🚀", color:"#ef4444",  descKey:"ui.mod.autopost"     },
+  { key:"analyze",      icon:"🔍", color:"#60a5fa",  descKey:"ui.mod.analyze"      },
+  { key:"planner",      icon:"🗓️", color:"#a78bfa",  descKey:"ui.mod.planner"      },
+  { key:"publish",      icon:"📤", color:"#34d399",  descKey:"ui.mod.publish"      },
+  { key:"team",         icon:"👥", color:"#fb923c",  descKey:"ui.mod.team"         },
+  { key:"integrations", icon:"🔗", color:"#94a3b8",  descKey:"ui.mod.integrations" },
 ];
 
 export default function Home({ trendsLang, isMobile, setTab, stats, userPlan, firstName, displayName }) {
@@ -243,30 +243,45 @@ export default function Home({ trendsLang, isMobile, setTab, stats, userPlan, fi
         </div>
         <div style={{
           display:"grid",
-          gridTemplateColumns: isMobile ? "repeat(3,1fr)" : "repeat(6,1fr)",
-          gap:8,
+          gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)",
+          gap: isMobile ? 8 : 10,
         }}>
-          {MODULES.map(({ key, icon }, i) => (
+          {MODULES.map(({ key, icon, color, descKey }, i) => (
             <motion.div
               key={key}
               initial={{ opacity:0, scale:0.95 }}
               animate={{ opacity:1, scale:1 }}
               transition={{ duration:0.25, delay: 0.2 + i * 0.04 }}
-              whileHover={{ y:-2, background:"rgba(220,38,38,0.08)", borderColor:"rgba(220,38,38,0.3)" }}
+              whileHover={{ y:-3, background:`${color}10`, borderColor:`${color}40`, boxShadow:`0 6px 20px ${color}18` }}
               onClick={() => setTab(key)}
               style={{
                 background:"rgba(255,255,255,0.02)",
                 border:"1px solid rgba(255,255,255,0.06)",
-                borderRadius:12,
-                padding: isMobile ? "12px 8px" : "14px 10px",
+                borderRadius:14,
+                padding: isMobile ? "14px 12px" : "16px 14px",
                 cursor:"pointer",
-                display:"flex", flexDirection:"column", alignItems:"center", gap:6,
-                transition:"all 0.15s ease",
+                display:"flex", flexDirection:"column", alignItems:"center", gap:8,
+                transition:"all 0.18s ease",
+                textAlign:"center",
               }}
             >
-              <span style={{ fontSize: isMobile ? 20 : 22 }}>{icon}</span>
-              <span style={{ color:"#64748b", fontSize: isMobile ? 9 : 10, fontWeight:700, letterSpacing:"0.8px", textAlign:"center" }}>
+              {/* Icone dans bulle colorée */}
+              <div style={{
+                width:44, height:44, borderRadius:12,
+                background:`${color}15`,
+                border:`1px solid ${color}25`,
+                display:"flex", alignItems:"center", justifyContent:"center",
+                fontSize:22, flexShrink:0,
+              }}>
+                {icon}
+              </div>
+              {/* Nom */}
+              <span style={{ color:"#e2e8f0", fontSize: isMobile ? 10 : 11, fontWeight:800, letterSpacing:"0.5px" }}>
                 {tr(trendsLang, `nav.${key}`)}
+              </span>
+              {/* Description */}
+              <span style={{ color:"#475569", fontSize: isMobile ? 9 : 10, lineHeight:1.4, fontWeight:500 }}>
+                {tr(trendsLang, descKey) || ""}
               </span>
             </motion.div>
           ))}
