@@ -1142,8 +1142,8 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                     {/* Permissions granulaires par membre */}
                     {isOwner && members.filter(m => m.status === "active" && m.role !== "owner").length > 0 && (
                       <div style={s.card}>
-                        <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:4 }}>⚙️ Permissions par membre</div>
-                        <div style={{ color:"#475569", fontSize:12, marginBottom:16 }}>Personnalisez les permissions individuellement au-delà du rôle par défaut.</div>
+                        <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:4 }}>⚙️ {tr(trendsLang,"ui.team.permsByMember") || "Permissions par membre"}</div>
+                        <div style={{ color:"#475569", fontSize:12, marginBottom:16 }}>{tr(trendsLang,"ui.team.permsByMemberDesc") || "Personnalisez les permissions individuellement au-delà du rôle par défaut."}</div>
                         <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
                           {members.filter(m => m.status === "active" && m.role !== "owner").map(m => {
                             const perms = m.permissions || {};
@@ -1162,10 +1162,10 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                             };
 
                             const PERM_ITEMS = [
-                              { key:"canGenerate",       label:"Générer", icon:"✍️" },
-                              { key:"canPublish",        label:"Publier",  icon:"📤" },
-                              { key:"canApprove",        label:"Approuver",icon:"✅" },
-                              { key:"canManageCalendar", label:"Calendrier",icon:"📅" },
+                              { key:"canGenerate",       label: tr(trendsLang,"ui.team.permGenerate")  || "Générer",    icon:"✍️" },
+                              { key:"canPublish",        label: tr(trendsLang,"ui.team.permPublish")   || "Publier",    icon:"📤" },
+                              { key:"canApprove",        label: tr(trendsLang,"ui.team.permApprove")   || "Approuver",  icon:"✅" },
+                              { key:"canManageCalendar", label: tr(trendsLang,"ui.team.permCalendar")  || "Calendrier", icon:"📅" },
                             ];
 
                             return (
@@ -1208,7 +1208,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                     <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:4 }}>✅ {tr(trendsLang,"ui.team.approvalTitle")}</div>
                     <div style={{ color:"#475569", fontSize:12, marginBottom:16 }}>{tr(trendsLang,"ui.team.approvalDesc")}</div>
                     {approvalsLoading ? (
-                      <div style={{ textAlign:"center", color:"#475569", padding:20 }}>{tr(trendsLang,"ui.loading") || "Loading..."}</div>
+                      <div style={{ textAlign:"center", color:"#475569", padding:20 }}>{tr(trendsLang,"ui.team.loading") || "Loading..."}</div>
                     ) : approvals.length === 0 ? (
                       <div style={{ textAlign:"center", padding:"32px 0" }}>
                         <div style={{ fontSize:28, marginBottom:8 }}>✅</div>
