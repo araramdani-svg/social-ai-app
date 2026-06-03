@@ -82,6 +82,7 @@ export default function Home({ trendsLang, isMobile, setTab, stats, userPlan, fi
           border:"1px solid rgba(220,38,38,0.12)",
           borderRadius:16,
           padding: isMobile ? "20px 20px" : "28px 32px",
+          paddingRight: isMobile ? 20 : 90,
           display:"flex",
           justifyContent:"space-between",
           alignItems: isMobile ? "flex-start" : "center",
