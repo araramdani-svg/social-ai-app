@@ -206,6 +206,168 @@ function AddClientModal({ token, onClose, onSuccess, editClient, trendsLang }) {
 }
 
 /* ── Agency Dashboard ─────────────────────────────────────────────────────── */
+// ─── Analytics Agency ─────────────────────────────────────────────────────────
+function AgencyAnalytics({ token, trendsLang }) {
+  const [data,    setData]    = useState(null);
+  const [loading, setLoading] = useState(false);
+  const API     = "https://social-ai-app-production.up.railway.app";
+  const headers = { "Content-Type":"application/json", Authorization:`Bearer ${token}` };
+
+  useEffect(() => {
+    setLoading(true);
+    fetch(`${API}/team/agency/analytics`, { headers })
+      .then(r => r.json())
+      .then(d => { setData(d); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div style={{ textAlign:"center", padding:60, color:"#475569" }}>⏳ Chargement analytics...</div>;
+  if (!data)   return <div style={{ textAlign:"center", padding:60, color:"#334155" }}>Aucune donnée disponible</div>;
+
+  const { global: g, clients, topPosts, activity30d } = data;
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+
+      {/* ── Stats globales ── */}
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:10 }}>
+        {[
+          { label:"CLIENTS", value:g?.total_clients || 0, color:"#8b5cf6", icon:"👥" },
+          { label:"POSTS TOTAL", value:g?.total_posts || 0, color:"#ef4444", icon:"📝" },
+          { label:"POSTS 30J", value:g?.posts_30d || 0, color:"#22c55e", icon:"📈" },
+          { label:"SCORE VIRAL MOY.", value:g?.avg_viral_score ? `${g.avg_viral_score}/100` : "—", color:"#f59e0b", icon:"⚡" },
+          { label:"APPROUVÉS", value:g?.approved_posts || 0, color:"#22c55e", icon:"✅" },
+          { label:"EN ATTENTE", value:g?.pending_posts || 0, color:"#f59e0b", icon:"⏳" },
+        ].map(s => (
+          <div key={s.label} style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderTop:`3px solid ${s.color}`, borderRadius:12, padding:"14px 16px", textAlign:"center" }}>
+            <div style={{ fontSize:20, marginBottom:6 }}>{s.icon}</div>
+            <div style={{ color:s.color, fontSize:22, fontWeight:900 }}>{s.value}</div>
+            <div style={{ color:"#475569", fontSize:9, fontWeight:700, letterSpacing:"1px", marginTop:4 }}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Activité 30j sparkline simple ── */}
+      {activity30d?.length > 0 && (
+        <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:12, padding:"16px 20px" }}>
+          <div style={{ color:"#e2e8f0", fontSize:12, fontWeight:700, marginBottom:12 }}>📅 Activité 30 derniers jours</div>
+          <div style={{ display:"flex", alignItems:"flex-end", gap:3, height:48 }}>
+            {(() => {
+              const max = Math.max(...activity30d.map(d => d.posts_count), 1);
+              return activity30d.map((d, i) => (
+                <div key={i} title={`${d.day}: ${d.posts_count} posts`} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:2 }}>
+                  <div style={{ width:"100%", background:"rgba(236,72,153,0.7)", borderRadius:"2px 2px 0 0", height:`${(d.posts_count / max) * 40}px`, minHeight: d.posts_count > 0 ? 4 : 0, transition:"height 0.3s" }} />
+                </div>
+              ));
+            })()}
+          </div>
+          <div style={{ display:"flex", justifyContent:"space-between", color:"#334155", fontSize:9, marginTop:4 }}>
+            <span>J-30</span><span>Aujourd'hui</span>
+          </div>
+        </div>
+      )}
+
+      {/* ── Stats par client ── */}
+      <div>
+        <div style={{ color:"#475569", fontSize:10, fontWeight:700, letterSpacing:"2px", marginBottom:10 }}>PERFORMANCE PAR CLIENT</div>
+        <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+          {clients?.length === 0 && (
+            <div style={{ textAlign:"center", padding:"32px 20px", color:"#334155" }}>
+              <div style={{ fontSize:32, marginBottom:8 }}>📭</div>
+              <div>Aucun client avec des posts liés</div>
+              <div style={{ fontSize:12, marginTop:4, color:"#1e293b" }}>Liez des posts à vos clients depuis l'Historique</div>
+            </div>
+          )}
+          {clients?.map(c => {
+            const activity = c.posts_30d > 0 ? "🟢 Actif" : c.total_posts > 0 ? "🟡 Inactif" : "⚪ Nouveau";
+            return (
+              <div key={c.id} style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderLeft:`3px solid ${c.color || "#8b5cf6"}`, borderRadius:12, padding:"14px 16px" }}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                    <div style={{ width:32, height:32, borderRadius:"50%", background:`${c.color || "#8b5cf6"}20`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:800, color:c.color || "#8b5cf6" }}>
+                      {c.name?.slice(0,2).toUpperCase()}
+                    </div>
+                    <div>
+                      <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13 }}>{c.name}</div>
+                      <div style={{ color:"#475569", fontSize:10 }}>{c.niche || c.email || "—"}</div>
+                    </div>
+                  </div>
+                  <span style={{ fontSize:10, color:"#64748b" }}>{activity}</span>
+                </div>
+
+                {/* Métriques client */}
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8 }}>
+                  {[
+                    { label:"Posts", value:c.total_posts || 0, color:"#e2e8f0" },
+                    { label:"30 jours", value:c.posts_30d || 0, color:"#22c55e" },
+                    { label:"Score moy.", value:c.avg_viral_score ? `${c.avg_viral_score}` : "—", color:"#f59e0b" },
+                    { label:"Approuvés", value:c.approved_posts || 0, color:"#60a5fa" },
+                  ].map(m => (
+                    <div key={m.label} style={{ background:"rgba(255,255,255,0.03)", borderRadius:8, padding:"8px 10px", textAlign:"center" }}>
+                      <div style={{ color:m.color, fontSize:16, fontWeight:800 }}>{m.value}</div>
+                      <div style={{ color:"#334155", fontSize:9, fontWeight:700, letterSpacing:"0.5px" }}>{m.label}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Barre progression viral score */}
+                {c.avg_viral_score > 0 && (
+                  <div style={{ marginTop:10 }}>
+                    <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
+                      <span style={{ color:"#475569", fontSize:10 }}>Score viral moyen</span>
+                      <span style={{ color: c.avg_viral_score >= 70 ? "#22c55e" : c.avg_viral_score >= 50 ? "#f59e0b" : "#ef4444", fontSize:10, fontWeight:700 }}>{c.avg_viral_score}/100</span>
+                    </div>
+                    <div style={{ height:4, background:"rgba(255,255,255,0.06)", borderRadius:4, overflow:"hidden" }}>
+                      <div style={{ width:`${c.avg_viral_score}%`, height:"100%", background: c.avg_viral_score >= 70 ? "linear-gradient(90deg,#22c55e,#16a34a)" : c.avg_viral_score >= 50 ? "linear-gradient(90deg,#f59e0b,#d97706)" : "linear-gradient(90deg,#ef4444,#dc2626)", transition:"width 0.5s ease" }} />
+                    </div>
+                  </div>
+                )}
+
+                {/* Dernière activité */}
+                {c.last_post_at && (
+                  <div style={{ marginTop:8, color:"#334155", fontSize:10 }}>
+                    Dernier post : {new Date(c.last_post_at).toLocaleDateString("fr-FR", { day:"numeric", month:"short" })}
+                    {c.total_comments > 0 && ` · ${c.total_comments} commentaire${c.total_comments > 1 ? "s" : ""}`}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── Top posts ── */}
+      {topPosts?.length > 0 && (
+        <div>
+          <div style={{ color:"#475569", fontSize:10, fontWeight:700, letterSpacing:"2px", marginBottom:10 }}>🏆 TOP POSTS (MEILLEUR SCORE)</div>
+          <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+            {topPosts.map((p, i) => (
+              <div key={p.id} style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:10, padding:"10px 14px", display:"flex", alignItems:"center", gap:12 }}>
+                <div style={{ width:28, height:28, borderRadius:"50%", background:"rgba(245,158,11,0.15)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800, color:"#f59e0b", flexShrink:0 }}>
+                  {i + 1}
+                </div>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ color:"#e2e8f0", fontSize:12, fontWeight:600, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                    {p.title || p.content?.slice(0,60) || "Post"}
+                  </div>
+                  <div style={{ display:"flex", gap:8, alignItems:"center", marginTop:3 }}>
+                    {p.client_name && <span style={{ background:`${p.client_color || "#8b5cf6"}15`, color:p.client_color || "#8b5cf6", fontSize:9, fontWeight:700, padding:"1px 6px", borderRadius:6 }}>🏢 {p.client_name}</span>}
+                    <span style={{ color:"#475569", fontSize:10 }}>{new Date(p.created_at).toLocaleDateString("fr-FR")}</span>
+                  </div>
+                </div>
+                <div style={{ flexShrink:0, textAlign:"right" }}>
+                  <div style={{ color: p.viral_score >= 70 ? "#22c55e" : p.viral_score >= 50 ? "#f59e0b" : "#ef4444", fontSize:16, fontWeight:900 }}>⚡{p.viral_score}</div>
+                  <div style={{ color:"#334155", fontSize:9 }}>/100</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AgencyDashboard({ token, trendsLang, clients, onAddClient, onEditClient, onDeleteClient, onRefresh, loading, onConfirm }) {
   const [dashStats,   setDashStats]   = useState(null);
   const [activeClient,setActiveClient]= useState(null);
@@ -824,6 +986,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
             <div style={{ display:"flex", borderBottom:"1px solid rgba(255,255,255,0.07)", marginBottom:16 }}>
               <button style={s.tabBtn(mainTab==="team")}   onClick={()=>setMainTab("team")}>{tr(trendsLang,"ui.team.tabTeam")}</button>
               <button style={s.tabBtn(mainTab==="agency","#8b5cf6")} onClick={()=>setMainTab("agency")}>{tr(trendsLang,"ui.team.tabAgence")}</button>
+              {isAgency && <button style={s.tabBtn(mainTab==="analytics","#ec4899")} onClick={()=>setMainTab("analytics")}>📊 {tr(trendsLang,"ui.team.tabAnalytics") || "ANALYTICS"}</button>}
             </div>
           )}
 
@@ -1464,6 +1627,10 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
               onRefresh={fetchClients}
               onConfirm={(opts) => setConfirm({ message: opts.message, onConfirm: async () => { await opts.onConfirm(); setConfirm(null); } })}
             />
+          )}
+
+          {mainTab === "analytics" && isAgency && (
+            <AgencyAnalytics token={token} trendsLang={trendsLang} />
           )}
         </>
       )}

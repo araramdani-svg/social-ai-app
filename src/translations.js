@@ -185,7 +185,7 @@ const translations = {
         team_member_joined: "👥 Member joined", joined_team: "👥 Joined team", quota_exceeded: "⛔ Quota exceeded",
         team: {
           tabTeam: "👥 TEAM",
-          tabAgence: "🏢 AGENCY",
+          tabAgence: "🏢 AGENCY", tabAnalytics: "📊 ANALYTICS",
           tabMembers: "👥 MEMBERS",
           tabActivity: "📊 ACTIVITY",
           tabRoles: "🔐 ROLES",
@@ -246,7 +246,7 @@ const translations = {
       platformDistribution: "PLATFORM DISTRIBUTION",
       scoreLabel: "SCORE", hookLabel: "HOOK", viralityLabel: "VIRALITY", clarityLabel: "CLARITY", ctaLabel: "CTA", readabilityLabel: "READABILITY",
       team: {
-          tabTeam: "👥 TEAM", tabAgence: "🏢 AGENCY", tabMembers: "👥 MEMBERS",
+          tabTeam: "👥 TEAM", tabAgence: "🏢 AGENCY", tabAnalytics: "📊 ANALYTICS", tabMembers: "👥 MEMBERS",
           tabActivity: "📊 ACTIVITY", tabRoles: "🔐 ROLES", tabHistory: "📋 HISTORY",
           tabPlans: "💳 PLANS", tabCalendar: "📅 CALENDAR", sharedCalendar: "Shared Calendar", sharedCalendarDesc: "Plan your team content", calendarEmpty: "Empty calendar", calendarEmptyDesc: "Add a card to plan team content.", teamMembers: "Team Members", slotsUsed: "slots used",
           invite: "Invite", noMembers: "No members yet.", inviteFirst: "Invite your first member",
@@ -735,7 +735,7 @@ const translations = {
         team_member_joined: "👥 Membre rejoint", joined_team: "👥 A rejoint l'équipe", quota_exceeded: "⛔ Quota dépassé",
         team: {
           tabTeam: "👥 ÉQUIPE",
-          tabAgence: "🏢 AGENCE",
+          tabAgence: "🏢 AGENCE", tabAnalytics: "📊 ANALYTICS",
           tabMembers: "👥 MEMBRES",
           tabActivity: "📊 ACTIVITÉ",
           tabRoles: "🔐 RÔLES",
@@ -796,7 +796,7 @@ const translations = {
       platformDistribution: "DISTRIBUTION PAR PLATEFORME",
       scoreLabel: "SCORE", hookLabel: "ACCROCHE", viralityLabel: "VIRALITÉ", clarityLabel: "CLARTÉ", ctaLabel: "CTA", readabilityLabel: "LISIBILITÉ",
       team: {
-          tabTeam: "👥 ÉQUIPE", tabAgence: "🏢 AGENCE", tabMembers: "👥 MEMBRES",
+          tabTeam: "👥 ÉQUIPE", tabAgence: "🏢 AGENCE", tabAnalytics: "📊 ANALYTICS", tabMembers: "👥 MEMBRES",
           tabActivity: "📊 ACTIVITÉ", tabRoles: "🔐 RÔLES", tabHistory: "📋 HISTORIQUE",
           tabPlans: "💳 PLANS", tabCalendar: "📅 CALENDRIER", sharedCalendar: "Calendrier partagé", sharedCalendarDesc: "Planifiez le contenu de votre équipe", calendarEmpty: "Calendrier vide", calendarEmptyDesc: "Ajoutez une carte pour planifier le contenu de l'équipe.", teamMembers: "Membres de l'équipe", slotsUsed: "slots utilisés",
           invite: "Inviter", noMembers: "Aucun membre.", inviteFirst: "Inviter votre premier membre",
@@ -1270,7 +1270,7 @@ const translations = {
         team_member_joined: "👥 Miembro unido", joined_team: "👥 Se unió al equipo", quota_exceeded: "⛔ Cuota superada",
         team: {
           tabTeam: "👥 EQUIPO",
-          tabAgence: "🏢 AGENCIA",
+          tabAgence: "🏢 AGENCIA", tabAnalytics: "📊 ANALYTICS",
           tabMembers: "👥 MIEMBROS",
           tabActivity: "📊 ACTIVIDAD",
           tabRoles: "🔐 ROLES",
@@ -1331,7 +1331,7 @@ const translations = {
       platformDistribution: "DISTRIBUCIÓN POR PLATAFORMA",
       scoreLabel: "PUNTUACIÓN", hookLabel: "GANCHO", viralityLabel: "VIRALIDAD", clarityLabel: "CLARIDAD", ctaLabel: "CTA", readabilityLabel: "LEGIBILIDAD",
       team: {
-          tabTeam: "👥 EQUIPO", tabAgence: "🏢 AGENCIA", tabMembers: "👥 MIEMBROS",
+          tabTeam: "👥 EQUIPO", tabAgence: "🏢 AGENCIA", tabAnalytics: "📊 ANALYTICS", tabMembers: "👥 MIEMBROS",
           tabActivity: "📊 ACTIVIDAD", tabRoles: "🔐 ROLES", tabHistory: "📋 HISTORIAL",
           tabPlans: "💳 PLANES", tabCalendar: "📅 CALENDARIO", sharedCalendar: "Calendario compartido", sharedCalendarDesc: "Planifica el contenido del equipo", calendarEmpty: "Calendario vacío", calendarEmptyDesc: "Añade una tarjeta para planificar el contenido.", teamMembers: "Miembros del equipo", slotsUsed: "espacios usados",
           invite: "Invitar", noMembers: "Sin miembros aún.", inviteFirst: "Invitar al primer miembro",
@@ -1741,7 +1741,7 @@ const translations = {
         team_member_joined: "👥 Mitglied beigetreten", joined_team: "👥 Team beigetreten", quota_exceeded: "⛔ Kontingent überschritten",
         team: {
           tabTeam: "👥 TEAM",
-          tabAgence: "🏢 AGENTUR",
+          tabAgence: "🏢 AGENTUR", tabAnalytics: "📊 ANALYTICS",
           tabMembers: "👥 MITGLIEDER",
           tabActivity: "📊 AKTIVITÄT",
           tabRoles: "🔐 ROLLEN",
@@ -1802,7 +1802,7 @@ const translations = {
       platformDistribution: "PLATTFORMVERTEILUNG",
       scoreLabel: "SCORE", hookLabel: "HOOK", viralityLabel: "VIRALITÄT", clarityLabel: "KLARHEIT", ctaLabel: "CTA", readabilityLabel: "LESBARKEIT",
       team: {
-          tabTeam: "👥 TEAM", tabAgence: "🏢 AGENTUR", tabMembers: "👥 MITGLIEDER",
+          tabTeam: "👥 TEAM", tabAgence: "🏢 AGENTUR", tabAnalytics: "📊 ANALYTICS", tabMembers: "👥 MITGLIEDER",
           tabActivity: "📊 AKTIVITÄT", tabRoles: "🔐 ROLLEN", tabHistory: "📋 VERLAUF",
           tabPlans: "💳 PLÄNE", tabCalendar: "📅 KALENDER", sharedCalendar: "Geteilter Kalender", sharedCalendarDesc: "Teaminhalt planen", calendarEmpty: "Kalender leer", calendarEmptyDesc: "Karte hinzufügen um Teaminhalt zu planen.", teamMembers: "Teammitglieder", slotsUsed: "Plätze belegt",
           invite: "Einladen", noMembers: "Noch keine Mitglieder.", inviteFirst: "Erstes Mitglied einladen",
@@ -2214,7 +2214,7 @@ const translations = {
         team_member_joined: "👥 Membro entrato", joined_team: "👥 Entrato nel team", quota_exceeded: "⛔ Quota superata",
         team: {
           tabTeam: "👥 TEAM",
-          tabAgence: "🏢 AGENZIA",
+          tabAgence: "🏢 AGENZIA", tabAnalytics: "📊 ANALYTICS",
           tabMembers: "👥 MEMBRI",
           tabActivity: "📊 ATTIVITÀ",
           tabRoles: "🔐 RUOLI",
@@ -2275,7 +2275,7 @@ const translations = {
       platformDistribution: "DISTRIBUZIONE PER PIATTAFORMA",
       scoreLabel: "PUNTEGGIO", hookLabel: "HOOK", viralityLabel: "VIRALITÀ", clarityLabel: "CHIAREZZA", ctaLabel: "CTA", readabilityLabel: "LEGGIBILITÀ",
       team: {
-          tabTeam: "👥 TEAM", tabAgence: "🏢 AGENZIA", tabMembers: "👥 MEMBRI",
+          tabTeam: "👥 TEAM", tabAgence: "🏢 AGENZIA", tabAnalytics: "📊 ANALYTICS", tabMembers: "👥 MEMBRI",
           tabActivity: "📊 ATTIVITÀ", tabRoles: "🔐 RUOLI", tabHistory: "📋 CRONOLOGIA",
           tabPlans: "💳 PIANI", tabCalendar: "📅 CALENDARIO", sharedCalendar: "Calendario condiviso", sharedCalendarDesc: "Pianifica il contenuto del team", calendarEmpty: "Calendario vuoto", calendarEmptyDesc: "Aggiungi una scheda per pianificare.", teamMembers: "Membri del team", slotsUsed: "posti usati",
           invite: "Invita", noMembers: "Nessun membro.", inviteFirst: "Invita il primo membro",
@@ -2686,7 +2686,7 @@ const translations = {
         team_member_joined: "👥 Membro entrou", joined_team: "👥 Entrou na equipa", quota_exceeded: "⛔ Cota excedida",
         team: {
           tabTeam: "👥 EQUIPA",
-          tabAgence: "🏢 AGÊNCIA",
+          tabAgence: "🏢 AGÊNCIA", tabAnalytics: "📊 ANALYTICS",
           tabMembers: "👥 MEMBROS",
           tabActivity: "📊 ATIVIDADE",
           tabRoles: "🔐 FUNÇÕES",
@@ -2747,7 +2747,7 @@ const translations = {
       platformDistribution: "DISTRIBUIÇÃO POR PLATAFORMA",
       scoreLabel: "PONTUAÇÃO", hookLabel: "GANCHO", viralityLabel: "VIRALIDADE", clarityLabel: "CLAREZA", ctaLabel: "CTA", readabilityLabel: "LEGIBILIDADE",
       team: {
-          tabTeam: "👥 EQUIPA", tabAgence: "🏢 AGÊNCIA", tabMembers: "👥 MEMBROS",
+          tabTeam: "👥 EQUIPA", tabAgence: "🏢 AGÊNCIA", tabAnalytics: "📊 ANALYTICS", tabMembers: "👥 MEMBROS",
           tabActivity: "📊 ATIVIDADE", tabRoles: "🔐 FUNÇÕES", tabHistory: "📋 HISTÓRICO",
           tabPlans: "💳 PLANOS", tabCalendar: "📅 CALENDÁRIO", sharedCalendar: "Calendário partilhado", sharedCalendarDesc: "Planeia o conteúdo da equipa", calendarEmpty: "Calendário vazio", calendarEmptyDesc: "Adicione um cartão para planear o conteúdo.", teamMembers: "Membros da equipa", slotsUsed: "lugares usados",
           invite: "Convidar", noMembers: "Sem membros ainda.", inviteFirst: "Convidar primeiro membro",

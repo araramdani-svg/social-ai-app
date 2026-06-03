@@ -1653,4 +1653,175 @@ router.post("/notifications/read-all", auth, async (req, res) => {
   }
 });
 
+// ─── GET /agency/analytics — tableau de bord analytics par client ────────────
+router.get("/agency/analytics", auth, requireBusiness, async (req, res) => {
+  try {
+    const ownerId = req.user.id;
+
+    // Stats globales agence
+    const globalStats = await db.query(
+      `SELECT
+         COUNT(DISTINCT ac.id)::int                                    AS total_clients,
+         COUNT(DISTINCT p.id)::int                                     AS total_posts,
+         ROUND(AVG(p.viral_score) FILTER (WHERE p.viral_score > 0))::int AS avg_viral_score,
+         COUNT(DISTINCT p.id) FILTER (WHERE p.approval_status='approved')::int AS approved_posts,
+         COUNT(DISTINCT p.id) FILTER (WHERE p.approval_status='pending_approval')::int AS pending_posts,
+         COUNT(DISTINCT p.id) FILTER (WHERE p.created_at > NOW() - INTERVAL '30 days')::int AS posts_30d
+       FROM agency_clients ac
+       LEFT JOIN posts p ON p.client_id = ac.id AND p.user_id = $1
+       WHERE ac.user_id = $1`,
+      [ownerId]
+    );
+
+    // Stats par client
+    const clientStats = await db.query(
+      `SELECT
+         ac.id, ac.name, ac.color, ac.niche, ac.email,
+         COUNT(DISTINCT p.id)::int                                                AS total_posts,
+         COUNT(DISTINCT p.id) FILTER (WHERE p.created_at > NOW() - INTERVAL '30 days')::int AS posts_30d,
+         COUNT(DISTINCT p.id) FILTER (WHERE p.created_at > NOW() - INTERVAL '7 days')::int  AS posts_7d,
+         ROUND(AVG(p.viral_score) FILTER (WHERE p.viral_score > 0))::int          AS avg_viral_score,
+         MAX(p.viral_score)::int                                                   AS max_viral_score,
+         COUNT(DISTINCT p.id) FILTER (WHERE p.approval_status='approved')::int    AS approved_posts,
+         COUNT(DISTINCT p.id) FILTER (WHERE p.approval_status='pending_approval')::int AS pending_posts,
+         COUNT(DISTINCT p.id) FILTER (WHERE p.approval_status='rejected')::int    AS rejected_posts,
+         MAX(p.created_at)                                                         AS last_post_at,
+         COUNT(DISTINCT pc.id)::int                                                AS total_comments
+       FROM agency_clients ac
+       LEFT JOIN posts p ON p.client_id = ac.id AND p.user_id = $1
+       LEFT JOIN post_comments pc ON pc.post_id = p.id
+       WHERE ac.user_id = $1
+       GROUP BY ac.id, ac.name, ac.color, ac.niche, ac.email
+       ORDER BY posts_30d DESC, total_posts DESC`,
+      [ownerId]
+    );
+
+    // Activité 30j par jour (pour sparkline)
+    const activity30d = await db.query(
+      `SELECT
+         DATE(p.created_at) AS day,
+         COUNT(*)::int       AS posts_count,
+         ROUND(AVG(p.viral_score) FILTER (WHERE p.viral_score > 0))::int AS avg_score
+       FROM posts p
+       JOIN agency_clients ac ON ac.id = p.client_id AND ac.user_id = $1
+       WHERE p.user_id = $1 AND p.created_at > NOW() - INTERVAL '30 days'
+       GROUP BY DATE(p.created_at)
+       ORDER BY day ASC`,
+      [ownerId]
+    );
+
+    // Top posts (meilleur viral score)
+    const topPosts = await db.query(
+      `SELECT p.id, p.title, p.content, p.viral_score, p.created_at,
+              p.approval_status, ac.name AS client_name, ac.color AS client_color
+       FROM posts p
+       JOIN agency_clients ac ON ac.id = p.client_id AND ac.user_id = $1
+       WHERE p.user_id = $1 AND p.viral_score > 0
+       ORDER BY p.viral_score DESC
+       LIMIT 5`,
+      [ownerId]
+    );
+
+    // Logs
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,'agency_analytics_view',$2,NOW())`,
+      [ownerId, JSON.stringify({ clients: clientStats.rows.length })]
+    ).catch(() => {});
+
+    console.log(`[team] GET /agency/analytics → ${clientStats.rows.length} clients for user=${ownerId}`);
+    res.json({
+      global:     globalStats.rows[0],
+      clients:    clientStats.rows,
+      activity30d:activity30d.rows,
+      topPosts:   topPosts.rows,
+    });
+  } catch (err) {
+    console.error("GET /agency/analytics:", err.message);
+    res.status(500).json({ error: "Failed to fetch analytics" });
+  }
+});
+
+// ─── GET /team/notifications/counts — compteurs unifiés pour badges sidebar ──
+// Route légère appelée toutes les 30s — remplace les 4 fetches séparés
+router.get("/notifications/counts", auth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const [approvals, comments, assigned, history, publish] = await Promise.all([
+      // Approvals en attente (owner)
+      db.query(
+        `SELECT COUNT(*)::int AS count FROM posts p
+         JOIN team_members tm ON tm.member_id = p.user_id AND tm.owner_id = $1
+         WHERE p.approval_status = 'pending_approval'`,
+        [userId]
+      ).catch(() => ({ rows: [{ count: 0 }] })),
+
+      // Commentaires non lus sur mes posts (48h)
+      db.query(
+        `SELECT COUNT(*)::int AS count FROM post_comments c
+         JOIN posts p ON p.id = c.post_id
+         WHERE p.user_id = $1 AND c.user_id != $1
+           AND c.created_at > NOW() - INTERVAL '48 hours'
+           AND NOT EXISTS (
+             SELECT 1 FROM user_logs ul
+             WHERE ul.user_id = $1 AND ul.action = 'notif_read'
+               AND ul.details->>'notif_id' = 'comment_' || c.id::text
+           )`,
+        [userId]
+      ).catch(() => ({ rows: [{ count: 0 }] })),
+
+      // Posts assignés à moi non vus (48h)
+      db.query(
+        `SELECT COUNT(*)::int AS count FROM posts p
+         WHERE p.assigned_to = $1
+           AND p.created_at > NOW() - INTERVAL '48 hours'
+           AND NOT EXISTS (
+             SELECT 1 FROM user_logs ul
+             WHERE ul.user_id = $1 AND ul.action = 'notif_read'
+               AND ul.details->>'notif_id' = 'assigned_' || p.id::text
+           )`,
+        [userId]
+      ).catch(() => ({ rows: [{ count: 0 }] })),
+
+      // Nouveaux posts dans history depuis dernière visite
+      db.query(
+        `SELECT COUNT(*)::int AS count FROM posts p
+         WHERE p.user_id = $1
+           AND p.created_at > COALESCE(
+             (SELECT TO_TIMESTAMP((details->>'timestamp')::bigint/1000)
+              FROM user_logs WHERE user_id = $1 AND action = 'tab_visit_history'
+              ORDER BY created_at DESC LIMIT 1),
+             NOW() - INTERVAL '24 hours'
+           )`,
+        [userId]
+      ).catch(() => ({ rows: [{ count: 0 }] })),
+
+      // Publications récentes non vues
+      db.query(
+        `SELECT COUNT(*)::int AS count FROM publish_log p
+         WHERE p.user_id = $1
+           AND p.created_at > COALESCE(
+             (SELECT TO_TIMESTAMP((details->>'timestamp')::bigint/1000)
+              FROM user_logs WHERE user_id = $1 AND action = 'tab_visit_publish'
+              ORDER BY created_at DESC LIMIT 1),
+             NOW() - INTERVAL '24 hours'
+           )`,
+        [userId]
+      ).catch(() => ({ rows: [{ count: 0 }] })),
+    ]);
+
+    res.json({
+      team:      approvals.rows[0].count,
+      comments:  comments.rows[0].count,
+      assigned:  assigned.rows[0].count,
+      history:   history.rows[0].count,
+      publish:   publish.rows[0].count,
+      total:     approvals.rows[0].count + comments.rows[0].count + assigned.rows[0].count,
+    });
+  } catch (err) {
+    console.error("GET /team/notifications/counts:", err.message);
+    res.status(500).json({ error: "Failed to fetch counts" });
+  }
+});
+
 export default router;

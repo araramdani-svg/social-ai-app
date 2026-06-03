@@ -212,18 +212,25 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
     setSchedulerBadge(scheduledPosts.length);
   }, [scheduledPosts]);
 
-  // Notifications in-app — fetch + polling 30s
+  // Notifications in-app — fetch unifié + polling 30s
   const fetchNotifications = async () => {
     if (!token || token === "guest") return;
     try {
-      const r = await fetch(`${API}/team/notifications`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const d = await r.json();
-      if (d.notifications) {
-        setNotifications(d.notifications);
-        setNotifUnread(d.unread || 0);
+      // Route unifiée pour tous les compteurs
+      const [notifR, countsR] = await Promise.all([
+        fetch(`${API}/team/notifications`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API}/team/notifications/counts`, { headers: { Authorization: `Bearer ${token}` } }),
+      ]);
+      const [notifD, countsD] = await Promise.all([notifR.json(), countsR.json()]);
+
+      if (notifD.notifications) {
+        setNotifications(notifD.notifications);
+        setNotifUnread(notifD.unread || 0);
       }
+      // Mise à jour des badges sidebar depuis les counts unifiés
+      if (countsD.team      !== undefined) setPendingApprovalsCount(countsD.team);
+      if (countsD.history   !== undefined) setHistoryBadge(countsD.history);
+      if (countsD.publish   !== undefined) setPublishBadge(countsD.publish);
     } catch {}
   };
 

@@ -99,6 +99,7 @@ import tiktokRouter            from "./server/routes/tiktok.js";
 import adminRouter             from "./server/routes/admin.js";
 import analyticsRouter         from "./server/routes/analytics.js";
 import watchRouter             from "./server/routes/watch.js";
+import webhooksRouter          from "./server/routes/webhooks.js";
 
 const app = express();
 
@@ -153,6 +154,7 @@ app.use("/tiktok",                               tiktokRouter);
 app.use("/admin",              adminLimiter,     adminRouter);
 app.use("/analytics",          analyticsLimiter, analyticsRouter);
 app.use("/watch",                                watchRouter);
+app.use("/webhooks",                             webhooksRouter);
 
 // ─── Error handler global ──────────────────────────────────────────────────────
 // Sentry error handler — doit être AVANT le error handler global
