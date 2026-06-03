@@ -40,10 +40,34 @@ export default function Home({ trendsLang, isMobile, setTab, stats, userPlan, fi
 
   const greeting = GREETING(trendsLang);
   const name = displayName ? `, ${displayName}` : firstName ? `, ${firstName}` : "";
-  const plan = userPlan?.plan || "Free";
+  const plan     = userPlan?.plan     || "Free";
+  const interval = userPlan?.interval || null;
+  const periodEnd        = userPlan?.current_period_end  || null;
+  const paymentFailed    = userPlan?.payment_failed      || false;
+  const gracePeriodEnds  = userPlan?.grace_period_ends_at|| null;
 
-  const planColor = plan === "Business" ? "#a855f7" : plan === "Pro" ? "#ef4444" : "#475569";
-  const planIcon  = plan === "Business" ? "💎" : plan === "Pro" ? "⚡" : "🆓";
+  const planColor = plan === "Agency" ? "#ec4899" : plan === "Business" ? "#a855f7" : plan === "Pro" ? "#ef4444" : "#475569";
+  const planIcon  = plan === "Agency" ? "🏢" : plan === "Business" ? "💎" : plan === "Pro" ? "⚡" : "🆓";
+
+  // Calcul jours restants
+  const daysLeft = (() => {
+    const end = gracePeriodEnds || periodEnd;
+    if (!end) return null;
+    const diff = new Date(end) - new Date();
+    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  })();
+
+  const daysColor = daysLeft === null ? planColor
+    : daysLeft <= 3  ? "#ef4444"
+    : daysLeft <= 7  ? "#f59e0b"
+    : daysLeft <= 14 ? "#f97316"
+    : "#22c55e";
+
+  const intervalLabel = interval === "year"
+    ? tr(trendsLang, "ui.annual")    || "Annual"
+    : interval === "month"
+    ? tr(trendsLang, "ui.monthly")   || "Monthly"
+    : null;
 
   return (
     <div style={{ display:"flex", flexDirection:"column", gap: isMobile ? 12 : 16 }}>
@@ -77,20 +101,87 @@ export default function Home({ trendsLang, isMobile, setTab, stats, userPlan, fi
           </p>
         </div>
 
-        {/* Badge plan + quota */}
+        {/* Badge plan + subscription info */}
         <div style={{
-          display:"flex", flexDirection:"row", gap:16, alignItems:"center", justifyContent: isMobile ? "flex-start" : "flex-end",
-          flexShrink:0, flexWrap:"wrap",
+          display:"flex", flexDirection:"column", gap:8, alignItems: isMobile ? "flex-start" : "flex-end",
+          flexShrink:0,
         }}>
-          <div style={{
-            display:"inline-flex", alignItems:"center", gap:8,
-            background:`rgba(${plan==="Business"?"168,85,247":plan==="Pro"?"220,38,38":"71,85,105"},0.1)`,
-            border:`1px solid ${planColor}30`,
-            borderRadius:20, padding:"6px 14px",
-          }}>
-            <span style={{ fontSize:14 }}>{planIcon}</span>
-            <span style={{ color:planColor, fontSize:12, fontWeight:700, letterSpacing:"1px" }}>{plan.toUpperCase()}</span>
+          {/* Ligne 1 : Plan + interval */}
+          <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
+            <div style={{
+              display:"inline-flex", alignItems:"center", gap:8,
+              background:`rgba(${plan==="Agency"?"236,72,153":plan==="Business"?"168,85,247":plan==="Pro"?"220,38,38":"71,85,105"},0.1)`,
+              border:`1px solid ${planColor}30`,
+              borderRadius:20, padding:"6px 14px",
+            }}>
+              <span style={{ fontSize:14 }}>{planIcon}</span>
+              <span style={{ color:planColor, fontSize:12, fontWeight:700, letterSpacing:"1px" }}>{plan.toUpperCase()}</span>
+            </div>
+            {intervalLabel && (
+              <div style={{
+                display:"inline-flex", alignItems:"center", gap:4,
+                background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)",
+                borderRadius:20, padding:"5px 10px",
+              }}>
+                <span style={{ fontSize:10 }}>{interval === "year" ? "📅" : "🗓️"}</span>
+                <span style={{ color:"#64748b", fontSize:11, fontWeight:600 }}>{intervalLabel}</span>
+              </div>
+            )}
           </div>
+
+          {/* Ligne 2 : Décompte jours + alerte paiement */}
+          {paymentFailed && gracePeriodEnds && (
+            <div style={{
+              display:"inline-flex", alignItems:"center", gap:6,
+              background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.35)",
+              borderRadius:10, padding:"5px 12px", cursor:"pointer",
+            }} onClick={() => setTab("profile")}>
+              <span style={{ fontSize:12 }}>⚠️</span>
+              <span style={{ color:"#ef4444", fontSize:11, fontWeight:700 }}>
+                {tr(trendsLang,"ui.paymentFailed") || "Payment failed"} — {daysLeft}j grace
+              </span>
+            </div>
+          )}
+
+          {!paymentFailed && daysLeft !== null && plan !== "Free" && (
+            <div style={{
+              display:"inline-flex", alignItems:"center", gap:6,
+              background:`${daysColor}12`, border:`1px solid ${daysColor}35`,
+              borderRadius:10, padding:"5px 12px",
+            }}>
+              <span style={{ fontSize:12 }}>
+                {daysLeft <= 3 ? "🔴" : daysLeft <= 7 ? "🟠" : daysLeft <= 14 ? "🟡" : "🟢"}
+              </span>
+              <span style={{ color:daysColor, fontSize:11, fontWeight:700 }}>
+                {daysLeft === 0
+                  ? tr(trendsLang,"ui.expirestoday")    || "Expires today"
+                  : daysLeft === 1
+                  ? tr(trendsLang,"ui.expiresTomorrow")  || "Expires tomorrow"
+                  : `${daysLeft} ${tr(trendsLang,"ui.daysLeft") || "days left"}`}
+              </span>
+              {daysLeft <= 7 && (
+                <span
+                  onClick={e => { e.stopPropagation(); setTab("profile"); }}
+                  style={{ color:daysColor, fontSize:10, fontWeight:800, cursor:"pointer", textDecoration:"underline", marginLeft:2 }}>
+                  {tr(trendsLang,"ui.renew") || "Renew →"}
+                </span>
+              )}
+            </div>
+          )}
+
+          {plan === "Free" && (
+            <div style={{
+              display:"inline-flex", alignItems:"center", gap:6,
+              background:"rgba(239,68,68,0.06)", border:"1px solid rgba(239,68,68,0.2)",
+              borderRadius:10, padding:"5px 12px", cursor:"pointer",
+            }} onClick={() => setTab("profile")}>
+              <span style={{ color:"#ef4444", fontSize:11, fontWeight:700 }}>
+                {tr(trendsLang,"ui.upgradeNow") || "Upgrade →"}
+              </span>
+            </div>
+          )}
+
+          {/* Stats */}
           {stats?.posts !== undefined && (
             <div style={{ color:"#334155", fontSize:11, letterSpacing:"0.5px" }}>
               {stats.posts} {tr(trendsLang,"ui.statPosts").toLowerCase()} · {stats.projects || 0} {tr(trendsLang,"ui.statProjects").toLowerCase()}
