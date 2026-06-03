@@ -190,144 +190,98 @@ function App() {
     }
   };
 
-  /* ── Menu radial arc ─────────────────────────────────────────────────────── */
-
-  // Items du menu — desktop
+  /* ── Menu dropdown vertical ──────────────────────────────────────────────── */
   const MENU_ITEMS = [
-    { icon:"🏠", label:"Accueil",   action: () => { if(token){ sessionStorage.setItem("gp_tab","home"); window.dispatchEvent(new CustomEvent("navigateTab",{detail:"home"})); setPage("generator"); } else setPage("landing"); } },
-    { icon:"🌍", label:"Langue",    action: () => setShowLangMenu(m => !m) },
-    { icon:"💳", label:"Upgrade",   action: () => setPage("pricing") },
-    { icon:"👤", label:"Profil",    action: () => window.dispatchEvent(new CustomEvent("openProfile")) },
+    { icon:"🏠", label:"Accueil",     action: () => { if(token){ sessionStorage.setItem("gp_tab","home"); window.dispatchEvent(new CustomEvent("navigateTab",{detail:"home"})); setPage("generator"); } else setPage("landing"); } },
+    { icon:"🌍", label:"Langue",      action: () => setShowLangMenu(m => !m) },
+    { icon:"💳", label:"Upgrade",     action: () => setPage("pricing") },
+    { icon:"👤", label:"Profil",      action: () => window.dispatchEvent(new CustomEvent("openProfile")) },
     { icon:"↩",  label:"Déconnexion", action: logout },
   ];
 
-  // Arc depuis coin haut-droit → déploiement vers bas et gauche
-  const ARC_START = 195;
-  const ARC_END   = 265;
-  const RADIUS    = 130;
-  const getPos = (i, total) => {
-    const angle = ARC_START + (ARC_END - ARC_START) * (i / (total - 1));
-    const rad   = (angle * Math.PI) / 180;
-    return { x: Math.cos(rad) * RADIUS, y: Math.sin(rad) * RADIUS };
-  };
-
   const floatingBar = (
-    <div style={{ position:"fixed", top:60, right:24, zIndex:9999 }}>
+    <div style={{ position:"fixed", top:20, right:20, zIndex:9999 }}>
 
-      {/* Overlay click-outside pour fermer */}
+      {/* Overlay click-outside */}
       {menuOpen && (
-        <div
-          style={{ position:"fixed", inset:0, zIndex:-1 }}
-          onClick={() => { setMenuOpen(false); setShowLangMenu(false); setTooltip(null); }}
-        />
+        <div style={{ position:"fixed", inset:0, zIndex:-1 }}
+          onClick={() => { setMenuOpen(false); setShowLangMenu(false); }} />
       )}
 
-      {/* Tooltip */}
-      {tooltip && menuOpen && (
-        <div style={{
-          position:"absolute", top:"50%", right:70,
-          transform:"translateY(-50%)",
-          background:"#0f172a", border:"1px solid rgba(255,255,255,0.12)",
-          borderRadius:8, padding:"5px 12px",
-          color:"#e2e8f0", fontSize:12, fontWeight:700,
-          whiteSpace:"nowrap", pointerEvents:"none",
-          boxShadow:"0 4px 20px rgba(0,0,0,0.4)",
-          zIndex:10000,
-        }}>
-          {tooltip}
-        </div>
-      )}
-
-      {/* Boutons arc */}
-      {MENU_ITEMS.map((item, i) => {
-        const pos = getPos(i, MENU_ITEMS.length);
-        return (
-          <div
-            key={i}
-            style={{
-              position:"absolute",
-              top:  `calc(26px + ${menuOpen ? pos.y : 0}px)`,
-              right:`calc(26px - ${menuOpen ? pos.x : 0}px)`,
-              transition:`all ${0.25 + i * 0.04}s cubic-bezier(0.34,1.56,0.64,1)`,
-              opacity: menuOpen ? 1 : 0,
-              pointerEvents: menuOpen ? "auto" : "none",
-              transform:`scale(${menuOpen ? 1 : 0.3})`,
-            }}
-            onMouseEnter={() => setTooltip(item.label)}
-            onMouseLeave={() => setTooltip(null)}
-          >
-            {/* Bouton action */}
-            <button
-              onClick={() => { item.action(); if(item.label !== "Langue") { setMenuOpen(false); setTooltip(null); } }}
-              style={{
-                width:48, height:48, borderRadius:"50%",
-                border:"2px solid rgba(255,255,255,0.1)",
-                background:"rgba(15,23,42,0.95)",
-                backdropFilter:"blur(12px)",
-                color:"white", cursor:"pointer", fontSize:18,
-                boxShadow:"0 8px 24px rgba(0,0,0,0.4)",
-                display:"flex", alignItems:"center", justifyContent:"center",
-                transition:"all 0.15s ease",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background="rgba(220,38,38,0.2)"; e.currentTarget.style.borderColor="rgba(220,38,38,0.5)"; e.currentTarget.style.transform="scale(1.15)"; }}
-              onMouseLeave={e => { e.currentTarget.style.background="rgba(15,23,42,0.95)"; e.currentTarget.style.borderColor="rgba(255,255,255,0.1)"; e.currentTarget.style.transform="scale(1)"; }}
-            >
-              {item.icon}
-            </button>
-
-            {/* Sous-menu langue */}
-            {item.label === "Langue" && showLangMenu && (
-              <div style={{
-                position:"absolute", top:0, right:56,
-                background:"#0f172a",
-                border:"1px solid rgba(220,38,38,0.3)",
-                borderRadius:12, overflow:"hidden",
-                zIndex:99999, minWidth:130,
-                boxShadow:"0 20px 60px rgba(0,0,0,0.6)",
-              }}>
-                {LANGS.map(l => (
-                  <button key={l.key} style={{
-                    width:"100%", padding:"9px 14px",
-                    background: trendsLang===l.key ? "rgba(220,38,38,0.15)" : "transparent",
-                    border:"none",
-                    borderLeft: trendsLang===l.key ? "3px solid #ef4444" : "3px solid transparent",
-                    color: trendsLang===l.key ? "#ef4444" : "#94a3b8",
-                    fontWeight: trendsLang===l.key ? 800 : 600,
-                    fontSize:12, cursor:"pointer", textAlign:"left",
-                    display:"flex", alignItems:"center", gap:8,
-                  }} onClick={() => { setLang(l.key); setShowLangMenu(false); }}>
-                    {l.flag} {l.key.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      })}
-
-      {/* Bouton principal — trigger */}
+      {/* Bouton principal ⚡ */}
       <button
         onClick={() => { setMenuOpen(o => !o); setShowLangMenu(false); setTooltip(null); }}
         style={{
-          width:52, height:52, borderRadius:"50%",
-          border:"none",
-          background: menuOpen
-            ? "linear-gradient(135deg,#ef4444,#dc2626)"
-            : "linear-gradient(135deg,#1e293b,#0f172a)",
-          color:"white", cursor:"pointer",
-          fontSize: menuOpen ? "20px" : "22px",
-          boxShadow: menuOpen
-            ? "0 0 0 3px rgba(220,38,38,0.3), 0 12px 32px rgba(220,38,38,0.3)"
-            : "0 10px 30px rgba(0,0,0,0.4)",
-          transition:"all 0.3s cubic-bezier(0.34,1.56,0.64,1)",
+          width:48, height:48, borderRadius:"50%", border:"none",
+          background: menuOpen ? "linear-gradient(135deg,#ef4444,#dc2626)" : "linear-gradient(135deg,#1e293b,#0f172a)",
+          color:"white", cursor:"pointer", fontSize:20,
+          boxShadow: menuOpen ? "0 0 0 3px rgba(220,38,38,0.3),0 12px 32px rgba(220,38,38,0.3)" : "0 8px 24px rgba(0,0,0,0.4)",
+          transition:"all 0.25s cubic-bezier(0.34,1.56,0.64,1)",
           transform: menuOpen ? "rotate(45deg)" : "rotate(0deg)",
           display:"flex", alignItems:"center", justifyContent:"center",
-          zIndex:10001, position:"relative",
+          position:"relative", zIndex:10001,
         }}
-        title={menuOpen ? "Fermer" : "Menu"}
-      >
-        {menuOpen ? "✕" : "⚡"}
-      </button>
+      >{menuOpen ? "✕" : "⚡"}</button>
+
+      {/* Menu dropdown vertical */}
+      {menuOpen && (
+        <div style={{
+          position:"absolute", top:56, right:0,
+          display:"flex", flexDirection:"column", gap:6,
+          background:"rgba(10,16,30,0.97)",
+          border:"1px solid rgba(255,255,255,0.1)",
+          borderRadius:14, padding:"8px",
+          boxShadow:"0 20px 60px rgba(0,0,0,0.6)",
+          minWidth:160,
+          animation:"fadeSlideDown 0.2s ease",
+        }}>
+          {MENU_ITEMS.map((item, i) => (
+            <div key={i} style={{ position:"relative" }}>
+              <button
+                onClick={() => { item.action(); if(item.label !== "Langue") { setMenuOpen(false); } }}
+                style={{
+                  width:"100%", display:"flex", alignItems:"center", gap:10,
+                  background:"transparent", border:"none",
+                  borderRadius:9, padding:"9px 12px",
+                  color:"#cbd5e1", cursor:"pointer", fontSize:13, fontWeight:600,
+                  transition:"all 0.15s ease", textAlign:"left",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background="rgba(220,38,38,0.15)"; e.currentTarget.style.color="#fff"; }}
+                onMouseLeave={e => { e.currentTarget.style.background="transparent"; e.currentTarget.style.color="#cbd5e1"; }}
+              >
+                <span style={{ fontSize:16, width:22, textAlign:"center" }}>{item.icon}</span>
+                {item.label}
+                {item.label === "Langue" && <span style={{ marginLeft:"auto", fontSize:10, color:"#475569" }}>›</span>}
+              </button>
+
+              {/* Sous-menu langue */}
+              {item.label === "Langue" && showLangMenu && (
+                <div style={{
+                  position:"absolute", top:0, right:"calc(100% + 6px)",
+                  background:"#0f172a", border:"1px solid rgba(220,38,38,0.3)",
+                  borderRadius:12, overflow:"hidden", zIndex:99999, minWidth:130,
+                  boxShadow:"0 20px 60px rgba(0,0,0,0.6)",
+                }}>
+                  {LANGS.map(l => (
+                    <button key={l.key} style={{
+                      width:"100%", padding:"9px 14px",
+                      background: trendsLang===l.key ? "rgba(220,38,38,0.15)" : "transparent",
+                      border:"none",
+                      borderLeft: trendsLang===l.key ? "3px solid #ef4444" : "3px solid transparent",
+                      color: trendsLang===l.key ? "#ef4444" : "#94a3b8",
+                      fontWeight: trendsLang===l.key ? 800 : 600,
+                      fontSize:12, cursor:"pointer", textAlign:"left",
+                      display:"flex", alignItems:"center", gap:8,
+                    }} onClick={() => { setLang(l.key); setShowLangMenu(false); setMenuOpen(false); }}>
+                      {l.flag} {l.key.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 
