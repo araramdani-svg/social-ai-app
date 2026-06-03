@@ -986,7 +986,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
             <div style={{ display:"flex", borderBottom:"1px solid rgba(255,255,255,0.07)", marginBottom:16 }}>
               <button style={s.tabBtn(mainTab==="team")}   onClick={()=>setMainTab("team")}>{tr(trendsLang,"ui.team.tabTeam")}</button>
               <button style={s.tabBtn(mainTab==="agency","#8b5cf6")} onClick={()=>setMainTab("agency")}>{tr(trendsLang,"ui.team.tabAgence")}</button>
-              {isAgency && <button style={s.tabBtn(mainTab==="analytics","#ec4899")} onClick={()=>setMainTab("analytics")}>📊 {tr(trendsLang,"ui.team.tabAnalytics") || "ANALYTICS"}</button>}
+              {isAgency && <button style={s.tabBtn(mainTab==="analytics","#ec4899")} onClick={()=>setMainTab("analytics")}>{tr(trendsLang,"ui.team.tabAnalytics") || "📊 ANALYTICS"}</button>}
             </div>
           )}
 
@@ -1003,7 +1003,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                   {isOwner && <button style={s.tabBtn(activeTab==="approvals","#f59e0b")} onClick={()=>{ setActiveTab("approvals"); fetchApprovals(); }}>{tr(trendsLang,"ui.team.tabApprovals")} {approvals.length > 0 && <span style={{ background:"#ef4444", color:"#fff", borderRadius:"50%", padding:"1px 5px", fontSize:9, marginLeft:4 }}>{approvals.length}</span>}</button>}
                   {isOwner && <button style={s.tabBtn(activeTab==="logs")}  onClick={()=>{ setActiveTab("logs"); fetchTeamLogs(); }}>{tr(trendsLang,"ui.team.tabHistory")}</button>}
                   {isOwner && <button style={s.tabBtn(activeTab==="plans")} onClick={()=>setActiveTab("plans")}>{tr(trendsLang,"ui.team.tabPlans")}</button>}
-                  <button style={s.tabBtn(activeTab==="calendar","#22c55e")} onClick={()=>{ setActiveTab("calendar"); if (!teamCalLoaded) fetchTeamCal(); }}>📅 {tr(trendsLang,"ui.team.tabCalendar") || "CALENDRIER"}</button>
+                  <button style={s.tabBtn(activeTab==="calendar","#22c55e")} onClick={()=>{ setActiveTab("calendar"); if (!teamCalLoaded) fetchTeamCal(); }}>{tr(trendsLang,"ui.team.tabCalendar") || "📅 CALENDRIER"}</button>
                 </div>
 
                 {/* Members */}
@@ -1103,37 +1103,101 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
 
                 {/* Permissions */}
                 {activeTab === "perms" && (
-                  <div style={s.card}>
-                    <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:4 }}>🔐 {tr(trendsLang,"ui.team.rolePerms")}</div>
-                    <div style={{ color:"#475569", fontSize:12, marginBottom:16 }}>{tr(trendsLang,"ui.team.rolePermsDesc")}</div>
-                    <div style={{ overflowX:"auto" }}>
-                      <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
-                        <thead>
-                          <tr>
-                            <th style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"8px 0", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>PERMISSION</th>
-                            {ROLES.map(r=><th key={r.id} style={{ textAlign:"center", color:r.color, fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"8px 8px", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>{r.label.toUpperCase()}</th>)}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {[
-                            [tr(trendsLang,"ui.team.perm.generate"),    true,  true,  false],
-                            [tr(trendsLang,"ui.team.perm.publish"),       true,  false, true ],
-                            [tr(trendsLang,"ui.team.perm.analyze"),     true,  true,  true ],
-                            [tr(trendsLang,"ui.team.perm.brandMemory"),   true,  true,  false],
-                            [tr(trendsLang,"ui.team.perm.manageTeam"), true,  false, false],
-                            [tr(trendsLang,"ui.team.perm.projects"), true,  true,  true ],
-                            [tr(trendsLang,"ui.team.perm.analytics"),      true,  true,  true ],
-                          ].map(([label,admin,editor,publisher]) => (
-                            <tr key={label}>
-                              <td style={{ color:"#94a3b8", padding:"10px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>{label}</td>
-                              {[admin,editor,publisher].map((v,i) => (
-                                <td key={i} style={{ textAlign:"center", padding:"10px 8px", borderBottom:"1px solid rgba(255,255,255,0.04)", color:v?"#22c55e":"#334155", fontSize:15 }}>{v?"✓":"✗"}</td>
-                              ))}
+                  <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+
+                    {/* Tableau référence par rôle */}
+                    <div style={s.card}>
+                      <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:4 }}>🔐 {tr(trendsLang,"ui.team.rolePerms")}</div>
+                      <div style={{ color:"#475569", fontSize:12, marginBottom:16 }}>{tr(trendsLang,"ui.team.rolePermsDesc")}</div>
+                      <div style={{ overflowX:"auto" }}>
+                        <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+                          <thead>
+                            <tr>
+                              <th style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"8px 0", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>PERMISSION</th>
+                              {ROLES.map(r=><th key={r.id} style={{ textAlign:"center", color:r.color, fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"8px 8px", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>{r.label.toUpperCase()}</th>)}
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody>
+                            {[
+                              [tr(trendsLang,"ui.team.perm.generate"),    true,  true,  false],
+                              [tr(trendsLang,"ui.team.perm.publish"),      true,  false, true ],
+                              [tr(trendsLang,"ui.team.perm.analyze"),      true,  true,  true ],
+                              [tr(trendsLang,"ui.team.perm.brandMemory"),  true,  true,  false],
+                              [tr(trendsLang,"ui.team.perm.manageTeam"),   true,  false, false],
+                              [tr(trendsLang,"ui.team.perm.projects"),     true,  true,  true ],
+                              [tr(trendsLang,"ui.team.perm.analytics"),    true,  true,  true ],
+                            ].map(([label,admin,editor,publisher]) => (
+                              <tr key={label}>
+                                <td style={{ color:"#94a3b8", padding:"10px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>{label}</td>
+                                {[admin,editor,publisher].map((v,i) => (
+                                  <td key={i} style={{ textAlign:"center", padding:"10px 8px", borderBottom:"1px solid rgba(255,255,255,0.04)", color:v?"#22c55e":"#334155", fontSize:15 }}>{v?"✓":"✗"}</td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
+
+                    {/* Permissions granulaires par membre */}
+                    {isOwner && members.filter(m => m.status === "active" && m.role !== "owner").length > 0 && (
+                      <div style={s.card}>
+                        <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:4 }}>⚙️ Permissions par membre</div>
+                        <div style={{ color:"#475569", fontSize:12, marginBottom:16 }}>Personnalisez les permissions individuellement au-delà du rôle par défaut.</div>
+                        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                          {members.filter(m => m.status === "active" && m.role !== "owner").map(m => {
+                            const perms = m.permissions || {};
+                            const roleInfo = ROLES.find(r => r.id === m.role) || ROLES[1];
+
+                            const togglePerm = async (permKey, currentVal) => {
+                              const newPerms = { ...perms, [permKey]: !currentVal };
+                              try {
+                                const r = await fetch(`${API}/team/members/${m.id}/permissions`, {
+                                  method: "PATCH",
+                                  headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+                                  body: JSON.stringify({ permissions: newPerms }),
+                                });
+                                if (r.ok) fetchMembers();
+                              } catch {}
+                            };
+
+                            const PERM_ITEMS = [
+                              { key:"canGenerate",       label:"Générer", icon:"✍️" },
+                              { key:"canPublish",        label:"Publier",  icon:"📤" },
+                              { key:"canApprove",        label:"Approuver",icon:"✅" },
+                              { key:"canManageCalendar", label:"Calendrier",icon:"📅" },
+                            ];
+
+                            return (
+                              <div key={m.id} style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:12, padding:"14px 16px" }}>
+                                <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
+                                  <div style={{ width:32, height:32, borderRadius:"50%", background:`${roleInfo.color}20`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:800, color:roleInfo.color }}>
+                                    {(m.display_name || m.member_email || "?").slice(0,2).toUpperCase()}
+                                  </div>
+                                  <div>
+                                    <div style={{ color:"#e2e8f0", fontSize:12, fontWeight:700 }}>{m.display_name || m.member_email}</div>
+                                    <span style={{ background:`${roleInfo.color}20`, color:roleInfo.color, fontSize:9, fontWeight:700, padding:"2px 8px", borderRadius:10 }}>{roleInfo.label}</span>
+                                  </div>
+                                </div>
+                                <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:6 }}>
+                                  {PERM_ITEMS.map(({ key, label, icon }) => {
+                                    const val = perms[key] !== false; // défaut true
+                                    return (
+                                      <button key={key} onClick={() => togglePerm(key, val)}
+                                        style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, padding:"8px 6px", borderRadius:10, border:`1px solid ${val ? "rgba(34,197,94,0.4)" : "rgba(255,255,255,0.06)"}`, background:val ? "rgba(34,197,94,0.08)" : "rgba(255,255,255,0.02)", cursor:"pointer", transition:"all 0.15s" }}>
+                                        <span style={{ fontSize:16 }}>{icon}</span>
+                                        <span style={{ color:val ? "#22c55e" : "#475569", fontSize:9, fontWeight:700 }}>{label}</span>
+                                        <span style={{ fontSize:12 }}>{val ? "✓" : "✗"}</span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 

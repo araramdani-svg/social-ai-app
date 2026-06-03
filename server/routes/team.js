@@ -1824,4 +1824,129 @@ router.get("/notifications/counts", auth, async (req, res) => {
   }
 });
 
+// ─── Helper : vérifier une permission granulaire d'un membre ─────────────────
+async function checkPermission(userId, permKey) {
+  try {
+    const r = await db.query(
+      `SELECT tm.permissions, tm.role
+       FROM team_members tm
+       WHERE tm.member_id = $1 AND tm.status = 'active'
+       LIMIT 1`,
+      [userId]
+    );
+    if (!r.rows.length) return true; // pas membre → owner, accès libre
+    const perms = r.rows[0].permissions || {};
+    // Admin team a toujours accès
+    if (r.rows[0].role === "admin") return true;
+    return perms[permKey] !== false; // défaut true si non défini
+  } catch {
+    return true; // fail open
+  }
+}
+
+// ─── GET /team/my-permissions — permissions du membre connecté ────────────────
+router.get("/my-permissions", auth, async (req, res) => {
+  try {
+    // Vérifier si owner (Business/Agency)
+    const ownerCheck = await db.query(
+      "SELECT plan FROM users WHERE id=$1", [req.user.id]
+    );
+    const plan = ownerCheck.rows[0]?.plan || "Free";
+    if (plan === "Business" || plan === "Agency") {
+      return res.json({
+        isOwner: true, role: "owner",
+        permissions: {
+          canGenerate: true, canPublish: true, canApprove: true,
+          canDelete: true, canInvite: true, canManageCalendar: true,
+        },
+      });
+    }
+
+    // Membre
+    const r = await db.query(
+      `SELECT tm.role, tm.permissions, tm.status,
+              u.email as owner_email, u.display_name as owner_name
+       FROM team_members tm
+       JOIN users u ON u.id = tm.owner_id
+       WHERE tm.member_id = $1 AND tm.status = 'active'
+       LIMIT 1`,
+      [req.user.id]
+    );
+    if (!r.rows.length) return res.json({ isOwner: false, role: null, permissions: {} });
+
+    const member = r.rows[0];
+    res.json({
+      isOwner:    false,
+      role:       member.role,
+      ownerEmail: member.owner_email,
+      ownerName:  member.owner_name,
+      permissions: member.permissions || {},
+    });
+  } catch (err) {
+    console.error("GET /team/my-permissions:", err.message);
+    res.status(500).json({ error: "Failed to fetch permissions" });
+  }
+});
+
+// ─── PATCH /team/members/:id/permissions — modifier permissions d'un membre ───
+router.patch("/members/:id/permissions", auth, requireBusiness, async (req, res) => {
+  const { permissions, role } = req.body;
+  try {
+    const fields = []; const vals = []; let i = 1;
+    if (permissions !== undefined) {
+      fields.push(`permissions=$${i++}`);
+      vals.push(JSON.stringify(permissions));
+    }
+    if (role !== undefined) {
+      fields.push(`role=$${i++}`);
+      vals.push(role);
+    }
+    if (!fields.length) return res.status(400).json({ error: "Nothing to update" });
+
+    vals.push(req.params.id, req.user.id);
+    const result = await db.query(
+      `UPDATE team_members SET ${fields.join(",")}
+       WHERE id=$${i} AND owner_id=$${i+1} RETURNING id, role, permissions`,
+      vals
+    );
+    if (!result.rows.length) return res.status(404).json({ error: "Member not found" });
+
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,'team_permissions_updated',$2,NOW())`,
+      [req.user.id, JSON.stringify({ member_id: req.params.id, role, permissions })]
+    ).catch(() => {});
+
+    console.log(`[team] PATCH /members/${req.params.id}/permissions by owner=${req.user.id}`);
+    res.json({ success: true, member: result.rows[0] });
+  } catch (err) {
+    console.error("PATCH /team/members/:id/permissions:", err.message);
+    res.status(500).json({ error: "Failed to update permissions" });
+  }
+});
+
+// ─── Middleware : enforcer canGenerate pour les membres team ──────────────────
+export const requireCanGenerate = async (req, res, next) => {
+  // Si user normal (pas membre d'une équipe) → passer
+  const teamCheck = await db.query(
+    "SELECT plan_managed_by FROM users WHERE id=$1", [req.user.id]
+  ).catch(() => ({ rows: [] }));
+  if (teamCheck.rows[0]?.plan_managed_by !== "team") return next();
+
+  const can = await checkPermission(req.user.id, "canGenerate");
+  if (!can) return res.status(403).json({ error: "You don't have permission to generate posts", code: "NO_GENERATE_PERMISSION" });
+  next();
+};
+
+// ─── Middleware : enforcer canPublish pour les membres team ───────────────────
+export const requireCanPublish = async (req, res, next) => {
+  const teamCheck = await db.query(
+    "SELECT plan_managed_by FROM users WHERE id=$1", [req.user.id]
+  ).catch(() => ({ rows: [] }));
+  if (teamCheck.rows[0]?.plan_managed_by !== "team") return next();
+
+  const can = await checkPermission(req.user.id, "canPublish");
+  if (!can) return res.status(403).json({ error: "You don't have permission to publish posts", code: "NO_PUBLISH_PERMISSION" });
+  next();
+};
+
 export default router;

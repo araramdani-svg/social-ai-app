@@ -466,17 +466,14 @@ const publishScheduledPosts = async () => {
         }
 
         if (success) {
-          // Marquer comme publié
           await db.query(
             "UPDATE calendar_posts SET col='published', published_at=NOW() WHERE id=$1",
             [post.id]
           );
-          // Log publish_log
           await db.query(
             "INSERT INTO publish_log (user_id, platform, post_id, status, created_at) VALUES ($1,$2,$3,'published',NOW())",
             [post.user_id, platform.toLowerCase(), post.id]
           );
-          // Log user_logs
           await db.query(
             "INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,'publish_post',$2,NOW())",
             [post.user_id, JSON.stringify({ platform, post_id: post.id, auto: true })]
@@ -492,11 +489,92 @@ const publishScheduledPosts = async () => {
   }
 };
 
+// ─── Auto-publish depuis le calendrier partagé (team_calendar) ───────────────
+const publishTeamCalendar = async () => {
+  try {
+    const result = await db.query(`
+      SELECT tc.*,
+             u.linkedin_access_token, u.linkedin_user_id,
+             u.facebook_page_token,   u.facebook_page_id
+      FROM team_calendar tc
+      JOIN users u ON u.id = tc.owner_id
+      WHERE tc.col = 'scheduled'
+        AND tc.date <= CURRENT_DATE
+        AND tc.published_at IS NULL
+        AND tc.content IS NOT NULL
+    `);
+
+    if (!result.rows.length) return;
+    logger.info(`📅 Team calendar auto-publish: ${result.rows.length} post(s)`);
+
+    for (const post of result.rows) {
+      try {
+        const platform = (post.platform || "LinkedIn").toUpperCase();
+        const text = post.content || post.title;
+        let success = false;
+
+        if (platform === "LINKEDIN" && post.linkedin_access_token) {
+          const r = await fetch("https://api.linkedin.com/v2/ugcPosts", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${post.linkedin_access_token}`,
+              "Content-Type": "application/json",
+              "X-Restli-Protocol-Version": "2.0.0",
+            },
+            body: JSON.stringify({
+              author: `urn:li:person:${post.linkedin_user_id}`,
+              lifecycleState: "PUBLISHED",
+              specificContent: {
+                "com.linkedin.ugc.ShareContent": {
+                  shareCommentary: { text },
+                  shareMediaCategory: "NONE",
+                },
+              },
+              visibility: { "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC" },
+            }),
+          });
+          success = r.ok;
+        } else if (platform === "FACEBOOK" && post.facebook_page_token) {
+          const r = await fetch(`https://graph.facebook.com/v19.0/${post.facebook_page_id}/feed`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: text, access_token: post.facebook_page_token }),
+          });
+          const d = await r.json();
+          success = !!d.id;
+        }
+
+        if (success) {
+          await db.query(
+            "UPDATE team_calendar SET col='published', published_at=NOW() WHERE id=$1",
+            [post.id]
+          );
+          await db.query(
+            "INSERT INTO publish_log (user_id, platform, post_id, status, created_at) VALUES ($1,$2,$3,'published',NOW())",
+            [post.owner_id, platform.toLowerCase(), post.id]
+          );
+          await db.query(
+            "INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,'team_calendar_published',$2,NOW())",
+            [post.owner_id, JSON.stringify({ platform, team_calendar_id: post.id, auto: true, assigned_to: post.user_id })]
+          );
+          logger.info(`✅ Team calendar published id=${post.id} on ${platform} for owner=${post.owner_id}`);
+        }
+      } catch (err) {
+        logger.error(`❌ Team calendar publish failed for id=${post.id}`, { error: err.message });
+      }
+    }
+  } catch (err) {
+    logger.error("❌ Team calendar auto-publish cron error", { error: err.message });
+  }
+};
+
 // Lancer toutes les minutes
 setInterval(publishScheduledPosts, 60 * 1000);
+setInterval(publishTeamCalendar,   60 * 1000);
 // Et au démarrage
 publishScheduledPosts();
-logger.info("⏰ Auto-publish cron started (every 60s)");
+publishTeamCalendar();
+logger.info("⏰ Auto-publish cron started (every 60s) — personal + team calendar");
 
 // ─── Import mailer pour les crons billing ─────────────────────────────────────
 import {
