@@ -204,7 +204,7 @@ function App() {
   // Arc depuis coin haut-droit → déploiement vers bas et gauche
   const ARC_START = 195;
   const ARC_END   = 265;
-  const RADIUS    = 80;
+  const RADIUS    = 130;
   const getPos = (i, total) => {
     const angle = ARC_START + (ARC_END - ARC_START) * (i / (total - 1));
     const rad   = (angle * Math.PI) / 180;
