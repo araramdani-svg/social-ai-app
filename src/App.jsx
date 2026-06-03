@@ -212,7 +212,7 @@ function App() {
   };
 
   const floatingBar = (
-    <div style={{ position:"fixed", top:36, right:24, zIndex:9999 }}>
+    <div style={{ position:"fixed", top:60, right:24, zIndex:9999 }}>
 
       {/* Overlay click-outside pour fermer */}
       {menuOpen && (

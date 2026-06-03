@@ -22,18 +22,18 @@ const SPOTLIGHT = [
 
 // Modules secondaires enrichis avec descriptions
 const MODULES = [
-  { key:"dashboard",    icon:"📊", color:"#3b82f6",  descKey:"ui.mod.dashboard"    },
-  { key:"memory",       icon:"🧠", color:"#8b5cf6",  descKey:"ui.mod.memory"       },
-  { key:"carousel",     icon:"🎠", color:"#f97316",  descKey:"ui.mod.carousel"     },
-  { key:"ghostwrite",   icon:"✨", color:"#ec4899",  descKey:"ui.mod.ghostwrite"   },
-  { key:"autorepost",   icon:"🔄", color:"#22c55e",  descKey:"ui.mod.autorepost"   },
-  { key:"scheduler",    icon:"⏰", color:"#f59e0b",  descKey:"ui.mod.scheduler"    },
-  { key:"autopost",     icon:"🚀", color:"#ef4444",  descKey:"ui.mod.autopost"     },
-  { key:"analyze",      icon:"🔍", color:"#60a5fa",  descKey:"ui.mod.analyze"      },
-  { key:"planner",      icon:"🗓️", color:"#a78bfa",  descKey:"ui.mod.planner"      },
-  { key:"publish",      icon:"📤", color:"#34d399",  descKey:"ui.mod.publish"      },
-  { key:"team",         icon:"👥", color:"#fb923c",  descKey:"ui.mod.team"         },
-  { key:"integrations", icon:"🔗", color:"#94a3b8",  descKey:"ui.mod.integrations" },
+  { key:"dashboard",    icon:"📊", color:"#3b82f6",  descKey:"ui.modDashboard"    },
+  { key:"memory",       icon:"🧠", color:"#8b5cf6",  descKey:"ui.modMemory"       },
+  { key:"carousel",     icon:"🎠", color:"#f97316",  descKey:"ui.modCarousel"     },
+  { key:"ghostwrite",   icon:"✨", color:"#ec4899",  descKey:"ui.modGhostwrite"   },
+  { key:"autorepost",   icon:"🔄", color:"#22c55e",  descKey:"ui.modAutorepost"   },
+  { key:"scheduler",    icon:"⏰", color:"#f59e0b",  descKey:"ui.modScheduler"    },
+  { key:"autopost",     icon:"🚀", color:"#ef4444",  descKey:"ui.modAutopost"     },
+  { key:"analyze",      icon:"🔍", color:"#60a5fa",  descKey:"ui.modAnalyze"      },
+  { key:"planner",      icon:"🗓️", color:"#a78bfa",  descKey:"ui.modPlanner"      },
+  { key:"publish",      icon:"📤", color:"#34d399",  descKey:"ui.modPublish"      },
+  { key:"team",         icon:"👥", color:"#fb923c",  descKey:"ui.modTeam"         },
+  { key:"integrations", icon:"🔗", color:"#94a3b8",  descKey:"ui.modIntegrations" },
 ];
 
 export default function Home({ trendsLang, isMobile, setTab, stats, userPlan, firstName, displayName }) {
