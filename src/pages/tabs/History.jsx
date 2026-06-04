@@ -359,7 +359,7 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
           style={{ padding:"10px 20px", background:"none", border:"none", borderBottom: activeTab==="team" ? "2px solid #60a5fa" : "2px solid transparent", color: activeTab==="team" ? "#60a5fa" : "#475569", fontWeight:700, fontSize:12, cursor:"pointer", letterSpacing:"0.5px", display:"flex", alignItems:"center", gap:6 }}
           onClick={() => setActiveTab("team")}
         >
-          🎯 {tr(trendsLang,"ui.team.tabMyTeamPosts") || "TEAM"}
+          {tr(trendsLang,"ui.team.tabMyTeamPosts") || "🎯 TEAM"}
           {assignedPosts.length > 0 && (
             <span style={{ background:"#60a5fa", color:"#fff", borderRadius:"50%", padding:"1px 5px", fontSize:9, fontWeight:800 }}>{assignedPosts.length}</span>
           )}
