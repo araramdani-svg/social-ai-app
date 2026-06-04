@@ -117,12 +117,18 @@ export async function triggerWebhooks(userId, event, payload = {}) {
 // ─── GET /webhooks — lister ses webhooks ──────────────────────────────────────
 router.get("/", auth, async (req, res) => {
   try {
-    const result = await db.query(
-      `SELECT id, type, url, events, label, active, created_at, last_triggered_at, trigger_count
-       FROM user_webhooks WHERE user_id = $1 ORDER BY created_at DESC`,
-      [req.user.id]
-    );
-    res.json({ webhooks: result.rows, available_events: WEBHOOK_EVENTS });
+    const [whResult, userResult] = await Promise.all([
+      db.query(
+        `SELECT id, type, url, events, label, active, created_at, last_triggered_at, trigger_count
+         FROM user_webhooks WHERE user_id = $1 ORDER BY created_at DESC`,
+        [req.user.id]
+      ),
+      db.query("SELECT plan FROM users WHERE id=$1", [req.user.id]),
+    ]);
+    const plan = userResult.rows[0]?.plan || "Free";
+    const limits = { Pro: 2, Business: 5, Agency: 10 };
+    const maxWebhooks = limits[plan] || 0;
+    res.json({ webhooks: whResult.rows, available_events: WEBHOOK_EVENTS, max: maxWebhooks, plan });
   } catch (err) {
     console.error("GET /webhooks:", err.message);
     res.status(500).json({ error: "Failed to fetch webhooks" });
@@ -139,9 +145,15 @@ router.post("/subscribe", auth, async (req, res) => {
   const invalidEvents = events.filter(e => !WEBHOOK_EVENTS.includes(e));
   if (invalidEvents.length) return res.status(400).json({ error: `Invalid events: ${invalidEvents.join(", ")}` });
 
-  // Limite : 10 webhooks par user
+  // Limite par plan : Pro=2, Business=5, Agency=10
+  const userResult = await db.query("SELECT plan FROM users WHERE id=$1", [req.user.id]);
+  const plan = userResult.rows[0]?.plan || "Free";
+  const limits = { Pro: 2, Business: 5, Agency: 10 };
+  const maxWebhooks = limits[plan] || 0;
+  if (maxWebhooks === 0) return res.status(403).json({ error: "Webhooks require at least Pro plan" });
+
   const count = await db.query("SELECT COUNT(*)::int AS c FROM user_webhooks WHERE user_id=$1", [req.user.id]);
-  if (count.rows[0].c >= 10) return res.status(400).json({ error: "Max 10 webhooks per account" });
+  if (count.rows[0].c >= maxWebhooks) return res.status(400).json({ error: `Max ${maxWebhooks} webhooks for ${plan} plan` });
 
   try {
     const result = await db.query(

@@ -60,6 +60,22 @@ function BusinessGate({ setPage }) {
   );
 }
 
+function ProGate({ setPage }) {
+  return (
+    <div style={{ ...s.card, textAlign:"center", padding:"60px 32px", border:"1px solid rgba(139,92,246,0.3)", background:"rgba(139,92,246,0.04)" }}>
+      <div style={{ fontSize:48, marginBottom:16 }}>🏢</div>
+      <div style={{ color:"#a855f7", fontSize:18, fontWeight:800, marginBottom:8 }}>Team features require Business</div>
+      <div style={{ color:"#475569", fontSize:14, lineHeight:1.7, maxWidth:400, margin:"0 auto 24px" }}>
+        Team management, approvals and collaboration are available on the <strong style={{ color:"#a855f7" }}>Business plan</strong>.<br/>
+        Your Pro plan includes <strong style={{ color:"#e2e8f0" }}>2 webhook integrations</strong> (Zapier & Slack).
+      </div>
+      <button style={{ ...s.btn, padding:"14px 28px", fontSize:13, background:"linear-gradient(135deg,#a855f7,#7c3aed)" }} onClick={() => setPage && setPage("pricing")}>
+        💎 Upgrade to Business →
+      </button>
+    </div>
+  );
+}
+
 /* ── Invite Modal ─────────────────────────────────────────────────────────── */
 function InviteModal({ token, onClose, onSuccess }) {
   const [email,   setEmail]   = useState("");
@@ -223,6 +239,7 @@ function IntegrationsTab({ token, trendsLang }) {
   const headers = { "Content-Type":"application/json", Authorization:`Bearer ${token}` };
 
   const [webhooks,   setWebhooks]   = useState([]);
+  const [maxWebhooks,setMaxWebhooks]= useState(10);
   const [loading,    setLoading]    = useState(false);
   const [showForm,   setShowForm]   = useState(null); // "zapier" | "slack" | null
   const [form,       setForm]       = useState({ url:"", label:"", events:[] });
@@ -237,6 +254,7 @@ function IntegrationsTab({ token, trendsLang }) {
       const r = await fetch(`${API}/webhooks`, { headers });
       const d = await r.json();
       setWebhooks(d.webhooks || []);
+      if (d.max) setMaxWebhooks(d.max);
     } catch {}
     setLoading(false);
   };
@@ -409,7 +427,7 @@ function IntegrationsTab({ token, trendsLang }) {
       ) : (
         <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
           <div style={{ color:"#475569", fontSize:10, fontWeight:700, letterSpacing:"2px" }}>
-            {tr_("activeWebhooks","ACTIVE INTEGRATIONS")} ({webhooks.length}/10)
+            {tr_("activeWebhooks","ACTIVE INTEGRATIONS")} ({webhooks.length}/{maxWebhooks})
           </div>
           {webhooks.map(wh => {
             const isZapier = wh.type === "zapier";
@@ -881,7 +899,8 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
 
   const isBusiness = userPlan === "Business" || userPlan === "Agency";
   const isAgency   = userPlan === "Agency";
-  const isOwner    = isBusiness; // l'owner est celui qui a le plan Business/Agency
+  const isPro      = userPlan === "Pro";
+  const isOwner    = isBusiness;
   const MAX_MEMBERS = isAgency ? MAX_MEMBERS_AGENCY : MAX_MEMBERS_BUSINESS;
 
   const headers = { "Content-Type":"application/json", Authorization:`Bearer ${token}` };
@@ -1265,17 +1284,18 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
       )}
 
       {/* Gate */}
-      {planManagedBy === "team" ? null : !isBusiness ? <BusinessGate setPage={setPage} /> : (
+      {planManagedBy === "team" ? null : (!isBusiness && !isPro) ? <BusinessGate setPage={setPage} /> : (
         <>
-          {/* Main tabs — Agency uniquement */}
-          {isAgency && (
-            <div style={{ display:"flex", borderBottom:"1px solid rgba(255,255,255,0.07)", marginBottom:16 }}>
-              <button style={s.tabBtn(mainTab==="team")}   onClick={()=>setMainTab("team")}>{tr(trendsLang,"ui.team.tabTeam")}</button>
-              <button style={s.tabBtn(mainTab==="agency","#8b5cf6")} onClick={()=>setMainTab("agency")}>{tr(trendsLang,"ui.team.tabAgence")}</button>
-              {isAgency && <button style={s.tabBtn(mainTab==="analytics","#ec4899")} onClick={()=>setMainTab("analytics")}>{tr(trendsLang,"ui.team.tabAnalytics") || "📊 ANALYTICS"}</button>}
-              <button style={s.tabBtn(mainTab==="integrations","#38bdf8")} onClick={()=>setMainTab("integrations")}>{tr(trendsLang,"ui.team.tabIntegrations") || "🔗 INTEGRATIONS"}</button>
-            </div>
-          )}
+          {/* Main tabs */}
+          <div style={{ display:"flex", borderBottom:"1px solid rgba(255,255,255,0.07)", marginBottom:16, flexWrap:"wrap" }}>
+            {isBusiness && <button style={s.tabBtn(mainTab==="team")}   onClick={()=>setMainTab("team")}>{tr(trendsLang,"ui.team.tabTeam")}</button>}
+            {isAgency   && <button style={s.tabBtn(mainTab==="agency","#8b5cf6")} onClick={()=>setMainTab("agency")}>{tr(trendsLang,"ui.team.tabAgence")}</button>}
+            {isAgency   && <button style={s.tabBtn(mainTab==="analytics","#ec4899")} onClick={()=>setMainTab("analytics")}>{tr(trendsLang,"ui.team.tabAnalytics") || "📊 ANALYTICS"}</button>}
+            <button style={s.tabBtn(mainTab==="integrations","#38bdf8")} onClick={()=>setMainTab("integrations")}>{tr(trendsLang,"ui.team.tabIntegrations") || "🔗 INTEGRATIONS"}</button>
+          </div>
+
+          {/* Pro : affiche ProGate + onglet Intégrations */}
+          {isPro && mainTab !== "integrations" && <ProGate setPage={setPage} />}
 
           {/* ── TAB TEAM ── */}
           {mainTab === "team" && (
