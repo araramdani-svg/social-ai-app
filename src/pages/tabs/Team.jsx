@@ -471,19 +471,19 @@ function IntegrationsTab({ token, trendsLang }) {
           <div>
             <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:11, marginBottom:6 }}>⚡ Zapier</div>
             <ol style={{ color:"#475569", fontSize:11, lineHeight:1.8, margin:0, paddingLeft:16 }}>
-              <li>Create a new Zap on zapier.com</li>
-              <li>Choose <strong style={{ color:"#e2e8f0" }}>Webhooks by Zapier</strong> → Catch Hook</li>
-              <li>Copy the webhook URL and paste it above</li>
-              <li>Select the events you want to trigger</li>
+              <li>{tr_("guideZapier1","Create a new Zap on zapier.com")}</li>
+              <li>{tr_("guideZapier2","Choose")} <strong style={{ color:"#e2e8f0" }}>Webhooks by Zapier</strong> → Catch Hook</li>
+              <li>{tr_("guideZapier3","Copy the webhook URL and paste it above")}</li>
+              <li>{tr_("guideZapier4","Select the events you want to trigger")}</li>
             </ol>
           </div>
           <div>
             <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:11, marginBottom:6 }}>💬 Slack</div>
             <ol style={{ color:"#475569", fontSize:11, lineHeight:1.8, margin:0, paddingLeft:16 }}>
-              <li>Go to <strong style={{ color:"#e2e8f0" }}>api.slack.com/apps</strong></li>
-              <li>Create app → Incoming Webhooks</li>
-              <li>Add to workspace and copy the URL</li>
-              <li>Select events to get notified in your channel</li>
+              <li>{tr_("guideSlack1","Go to")} <strong style={{ color:"#e2e8f0" }}>api.slack.com/apps</strong></li>
+              <li>{tr_("guideSlack2","Create app → Incoming Webhooks")}</li>
+              <li>{tr_("guideSlack3","Add to workspace and copy the URL")}</li>
+              <li>{tr_("guideSlack4","Select events to get notified in your channel")}</li>
             </ol>
           </div>
         </div>
