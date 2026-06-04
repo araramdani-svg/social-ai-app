@@ -206,6 +206,292 @@ function AddClientModal({ token, onClose, onSuccess, editClient, trendsLang }) {
 }
 
 /* ── Agency Dashboard ─────────────────────────────────────────────────────── */
+// ─── Integrations Tab (Zapier + Slack) ───────────────────────────────────────
+const WEBHOOK_EVENTS = [
+  { key:"post.created",       label:"Post created",        icon:"✍️" },
+  { key:"post.approved",      label:"Post approved",       icon:"✅" },
+  { key:"post.rejected",      label:"Post rejected",       icon:"❌" },
+  { key:"post.assigned",      label:"Post assigned",       icon:"🎯" },
+  { key:"post.published",     label:"Post published",      icon:"📤" },
+  { key:"comment.added",      label:"Comment added",       icon:"💬" },
+  { key:"team.member_joined", label:"Member joined",       icon:"👥" },
+  { key:"client.added",       label:"Client added",        icon:"🏢" },
+];
+
+function IntegrationsTab({ token, trendsLang }) {
+  const API = "https://social-ai-app-production.up.railway.app";
+  const headers = { "Content-Type":"application/json", Authorization:`Bearer ${token}` };
+
+  const [webhooks,   setWebhooks]   = useState([]);
+  const [loading,    setLoading]    = useState(false);
+  const [showForm,   setShowForm]   = useState(null); // "zapier" | "slack" | null
+  const [form,       setForm]       = useState({ url:"", label:"", events:[] });
+  const [saving,     setSaving]     = useState(false);
+  const [testing,    setTesting]    = useState(null); // webhook id
+  const [testResult, setTestResult] = useState({}); // { [id]: "ok" | "fail" }
+  const [msg,        setMsg]        = useState(null);
+
+  const fetchWebhooks = async () => {
+    setLoading(true);
+    try {
+      const r = await fetch(`${API}/webhooks`, { headers });
+      const d = await r.json();
+      setWebhooks(d.webhooks || []);
+    } catch {}
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchWebhooks(); }, []);
+
+  const openForm = (type) => {
+    setShowForm(type);
+    setForm({ url:"", label:"", events:[] });
+    setMsg(null);
+  };
+
+  const toggleEvent = (key) => {
+    setForm(f => ({
+      ...f,
+      events: f.events.includes(key) ? f.events.filter(e => e !== key) : [...f.events, key],
+    }));
+  };
+
+  const subscribe = async () => {
+    if (!form.url.startsWith("https://")) return setMsg({ type:"error", text: tr(trendsLang,"ui.team.integ.urlError") || "URL must start with https://" });
+    if (!form.events.length) return setMsg({ type:"error", text: tr(trendsLang,"ui.team.integ.eventsError") || "Select at least one event" });
+    setSaving(true); setMsg(null);
+    try {
+      const r = await fetch(`${API}/webhooks/subscribe`, {
+        method:"POST", headers,
+        body: JSON.stringify({ url:form.url, label:form.label, events:form.events, type:showForm }),
+      });
+      const d = await r.json();
+      if (d.success) {
+        setMsg({ type:"success", text: tr(trendsLang,"ui.team.integ.connected") || "Connected! Test sent." });
+        fetchWebhooks();
+        setTimeout(() => { setShowForm(null); setMsg(null); }, 1500);
+      } else {
+        setMsg({ type:"error", text: d.error || "Error" });
+      }
+    } catch { setMsg({ type:"error", text:"Network error" }); }
+    setSaving(false);
+  };
+
+  const deleteWebhook = async (id) => {
+    await fetch(`${API}/webhooks/${id}`, { method:"DELETE", headers });
+    fetchWebhooks();
+  };
+
+  const testWebhook = async (id) => {
+    setTesting(id);
+    try {
+      const r = await fetch(`${API}/webhooks/${id}/test`, { method:"POST", headers });
+      const d = await r.json();
+      setTestResult(prev => ({ ...prev, [id]: d.success ? "ok" : "fail" }));
+      setTimeout(() => setTestResult(prev => ({ ...prev, [id]: null })), 3000);
+    } catch { setTestResult(prev => ({ ...prev, [id]: "fail" })); }
+    setTesting(null);
+  };
+
+  const toggleActive = async (wh) => {
+    await fetch(`${API}/webhooks/${wh.id}`, {
+      method:"PATCH", headers,
+      body: JSON.stringify({ active: !wh.active }),
+    });
+    fetchWebhooks();
+  };
+
+  const tr_ = (key, fallback) => tr(trendsLang, `ui.team.integ.${key}`) || fallback;
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
+
+      {/* Header */}
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:12 }}>
+        <div>
+          <div style={{ color:"#e2e8f0", fontWeight:800, fontSize:16, marginBottom:4 }}>🔗 {tr_("title","Integrations")}</div>
+          <div style={{ color:"#475569", fontSize:13 }}>{tr_("desc","Connect GrowthPILOT to Zapier, Slack and any webhook-compatible tool.")}</div>
+        </div>
+        <div style={{ display:"flex", gap:8 }}>
+          <button onClick={() => openForm("zapier")}
+            style={{ padding:"9px 16px", borderRadius:10, border:"1px solid rgba(255,165,0,0.4)", background:"rgba(255,165,0,0.08)", color:"#fb923c", fontSize:12, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
+            ⚡ {tr_("connectZapier","Connect Zapier")}
+          </button>
+          <button onClick={() => openForm("slack")}
+            style={{ padding:"9px 16px", borderRadius:10, border:"1px solid rgba(74,222,128,0.4)", background:"rgba(74,222,128,0.08)", color:"#4ade80", fontSize:12, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
+            💬 {tr_("connectSlack","Connect Slack")}
+          </button>
+        </div>
+      </div>
+
+      {/* Formulaire connexion */}
+      {showForm && (
+        <div style={{ background:"rgba(255,255,255,0.02)", border:`1px solid ${showForm==="zapier"?"rgba(251,146,60,0.3)":"rgba(74,222,128,0.3)"}`, borderRadius:14, padding:"20px 24px" }}>
+          <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:14, marginBottom:16 }}>
+            {showForm === "zapier" ? "⚡ Zapier Webhook" : "💬 Slack Incoming Webhook"}
+          </div>
+
+          {/* URL */}
+          <div style={{ marginBottom:12 }}>
+            <div style={{ color:"#64748b", fontSize:11, fontWeight:700, letterSpacing:"1px", marginBottom:6 }}>
+              {showForm === "zapier" ? "ZAPIER WEBHOOK URL" : "SLACK WEBHOOK URL"}
+            </div>
+            <input
+              value={form.url}
+              onChange={e => setForm(f => ({ ...f, url:e.target.value }))}
+              placeholder={showForm === "zapier" ? "https://hooks.zapier.com/hooks/catch/..." : "https://hooks.slack.com/services/..."}
+              style={{ width:"100%", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, padding:"10px 14px", color:"#e2e8f0", fontSize:13, outline:"none", boxSizing:"border-box" }}
+            />
+          </div>
+
+          {/* Label optionnel */}
+          <div style={{ marginBottom:16 }}>
+            <div style={{ color:"#64748b", fontSize:11, fontWeight:700, letterSpacing:"1px", marginBottom:6 }}>LABEL (optionnel)</div>
+            <input
+              value={form.label}
+              onChange={e => setForm(f => ({ ...f, label:e.target.value }))}
+              placeholder="ex: Mon Zapier LinkedIn..."
+              style={{ width:"100%", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, padding:"10px 14px", color:"#e2e8f0", fontSize:13, outline:"none", boxSizing:"border-box" }}
+            />
+          </div>
+
+          {/* Events */}
+          <div style={{ marginBottom:16 }}>
+            <div style={{ color:"#64748b", fontSize:11, fontWeight:700, letterSpacing:"1px", marginBottom:10 }}>ÉVÉNEMENTS DÉCLENCHEURS</div>
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:6 }}>
+              {WEBHOOK_EVENTS.map(ev => {
+                const selected = form.events.includes(ev.key);
+                return (
+                  <button key={ev.key} onClick={() => toggleEvent(ev.key)}
+                    style={{ padding:"8px 10px", borderRadius:10, border:`1px solid ${selected?"rgba(56,189,248,0.5)":"rgba(255,255,255,0.08)"}`, background:selected?"rgba(56,189,248,0.1)":"rgba(255,255,255,0.02)", color:selected?"#38bdf8":"#475569", fontSize:11, fontWeight:700, cursor:"pointer", display:"flex", flexDirection:"column", alignItems:"center", gap:4, transition:"all 0.15s" }}>
+                    <span>{ev.icon}</span>
+                    <span style={{ fontSize:9 }}>{ev.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <button onClick={() => setForm(f => ({ ...f, events: f.events.length === WEBHOOK_EVENTS.length ? [] : WEBHOOK_EVENTS.map(e => e.key) }))}
+              style={{ marginTop:8, background:"none", border:"none", color:"#38bdf8", fontSize:11, cursor:"pointer", fontWeight:600 }}>
+              {form.events.length === WEBHOOK_EVENTS.length ? "Tout désélectionner" : "Tout sélectionner"}
+            </button>
+          </div>
+
+          {msg && <div style={{ padding:"8px 12px", borderRadius:8, marginBottom:12, background:msg.type==="success"?"rgba(34,197,94,0.1)":"rgba(239,68,68,0.1)", color:msg.type==="success"?"#22c55e":"#ef4444", fontSize:12 }}>{msg.text}</div>}
+
+          <div style={{ display:"flex", gap:10 }}>
+            <button onClick={() => setShowForm(null)}
+              style={{ flex:1, padding:"10px", borderRadius:8, border:"1px solid rgba(255,255,255,0.1)", background:"rgba(255,255,255,0.03)", color:"#64748b", fontSize:12, fontWeight:700, cursor:"pointer" }}>
+              Annuler
+            </button>
+            <button onClick={subscribe} disabled={saving}
+              style={{ flex:2, padding:"10px", borderRadius:8, border:"none", background:showForm==="zapier"?"linear-gradient(135deg,#fb923c,#f97316)":"linear-gradient(135deg,#4ade80,#22c55e)", color:"#fff", fontSize:12, fontWeight:800, cursor:"pointer", opacity:saving?0.7:1 }}>
+              {saving ? "Connexion..." : `🔗 ${tr_("connect","Connect")} & ${tr_("test","Test")}`}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Liste webhooks existants */}
+      {loading ? (
+        <div style={{ textAlign:"center", padding:40, color:"#475569" }}>⏳ Chargement...</div>
+      ) : webhooks.length === 0 ? (
+        <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:14, padding:"48px 24px", textAlign:"center" }}>
+          <div style={{ fontSize:48, marginBottom:12 }}>🔗</div>
+          <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:15, marginBottom:6 }}>{tr_("noWebhooks","No integrations yet")}</div>
+          <div style={{ color:"#475569", fontSize:13, marginBottom:20 }}>{tr_("noWebhooksDesc","Connect Zapier or Slack to automate your workflow.")}</div>
+          <div style={{ display:"flex", gap:10, justifyContent:"center" }}>
+            <button onClick={() => openForm("zapier")}
+              style={{ padding:"10px 20px", borderRadius:10, border:"1px solid rgba(251,146,60,0.4)", background:"rgba(251,146,60,0.1)", color:"#fb923c", fontSize:13, fontWeight:700, cursor:"pointer" }}>⚡ Zapier</button>
+            <button onClick={() => openForm("slack")}
+              style={{ padding:"10px 20px", borderRadius:10, border:"1px solid rgba(74,222,128,0.4)", background:"rgba(74,222,128,0.1)", color:"#4ade80", fontSize:13, fontWeight:700, cursor:"pointer" }}>💬 Slack</button>
+          </div>
+        </div>
+      ) : (
+        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+          <div style={{ color:"#475569", fontSize:10, fontWeight:700, letterSpacing:"2px" }}>
+            {tr_("activeWebhooks","ACTIVE INTEGRATIONS")} ({webhooks.length}/10)
+          </div>
+          {webhooks.map(wh => {
+            const isZapier = wh.type === "zapier";
+            const color    = isZapier ? "#fb923c" : "#4ade80";
+            const testR    = testResult[wh.id];
+            return (
+              <div key={wh.id} style={{ background:"rgba(255,255,255,0.02)", border:`1px solid ${wh.active?`${color}30`:"rgba(255,255,255,0.05)"}`, borderRadius:12, padding:"14px 16px", opacity:wh.active?1:0.5 }}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:10 }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                    <span style={{ fontSize:20 }}>{isZapier?"⚡":"💬"}</span>
+                    <div>
+                      <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13 }}>{wh.label || (isZapier?"Zapier Webhook":"Slack Webhook")}</div>
+                      <div style={{ color:"#334155", fontSize:10, marginTop:2, maxWidth:300, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{wh.url}</div>
+                    </div>
+                  </div>
+                  <div style={{ display:"flex", gap:6, alignItems:"center" }}>
+                    {/* Toggle actif */}
+                    <button onClick={() => toggleActive(wh)}
+                      style={{ padding:"4px 10px", borderRadius:20, border:`1px solid ${wh.active?"rgba(34,197,94,0.4)":"rgba(255,255,255,0.1)"}`, background:wh.active?"rgba(34,197,94,0.1)":"rgba(255,255,255,0.03)", color:wh.active?"#22c55e":"#475569", fontSize:10, fontWeight:700, cursor:"pointer" }}>
+                      {wh.active ? "✓ Actif" : "Désactivé"}
+                    </button>
+                    {/* Test */}
+                    <button onClick={() => testWebhook(wh.id)} disabled={testing===wh.id}
+                      style={{ padding:"4px 10px", borderRadius:20, border:`1px solid ${testR==="ok"?"rgba(34,197,94,0.4)":testR==="fail"?"rgba(239,68,68,0.4)":"rgba(255,255,255,0.08)"}`, background:testR==="ok"?"rgba(34,197,94,0.1)":testR==="fail"?"rgba(239,68,68,0.1)":"rgba(255,255,255,0.03)", color:testR==="ok"?"#22c55e":testR==="fail"?"#ef4444":"#64748b", fontSize:10, fontWeight:700, cursor:"pointer" }}>
+                      {testing===wh.id?"⏳":testR==="ok"?"✓ OK":testR==="fail"?"✗ Fail":"🧪 Test"}
+                    </button>
+                    {/* Supprimer */}
+                    <button onClick={() => deleteWebhook(wh.id)}
+                      style={{ padding:"4px 8px", borderRadius:20, border:"1px solid rgba(239,68,68,0.2)", background:"rgba(239,68,68,0.05)", color:"#ef4444", fontSize:10, cursor:"pointer" }}>🗑️</button>
+                  </div>
+                </div>
+
+                {/* Events + stats */}
+                <div style={{ display:"flex", flexWrap:"wrap", gap:4, marginBottom:8 }}>
+                  {(wh.events || []).map(ev => {
+                    const info = WEBHOOK_EVENTS.find(e => e.key === ev);
+                    return (
+                      <span key={ev} style={{ background:`${color}12`, color, fontSize:9, fontWeight:700, padding:"2px 8px", borderRadius:10 }}>
+                        {info?.icon} {info?.label || ev}
+                      </span>
+                    );
+                  })}
+                </div>
+                <div style={{ color:"#334155", fontSize:10 }}>
+                  {wh.trigger_count > 0 ? `🔥 ${wh.trigger_count} déclenchements` : "Aucun déclenchement"}
+                  {wh.last_triggered_at && ` · dernier: ${new Date(wh.last_triggered_at).toLocaleDateString("fr-FR")}`}
+                  {` · créé: ${new Date(wh.created_at).toLocaleDateString("fr-FR")}`}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Guide rapide */}
+      <div style={{ background:"rgba(56,189,248,0.04)", border:"1px solid rgba(56,189,248,0.15)", borderRadius:12, padding:"16px 20px" }}>
+        <div style={{ color:"#38bdf8", fontWeight:700, fontSize:12, marginBottom:10 }}>💡 {tr_("guideTitle","How to connect")}</div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+          <div>
+            <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:11, marginBottom:6 }}>⚡ Zapier</div>
+            <ol style={{ color:"#475569", fontSize:11, lineHeight:1.8, margin:0, paddingLeft:16 }}>
+              <li>Create a new Zap on zapier.com</li>
+              <li>Choose <strong style={{ color:"#e2e8f0" }}>Webhooks by Zapier</strong> → Catch Hook</li>
+              <li>Copy the webhook URL and paste it above</li>
+              <li>Select the events you want to trigger</li>
+            </ol>
+          </div>
+          <div>
+            <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:11, marginBottom:6 }}>💬 Slack</div>
+            <ol style={{ color:"#475569", fontSize:11, lineHeight:1.8, margin:0, paddingLeft:16 }}>
+              <li>Go to <strong style={{ color:"#e2e8f0" }}>api.slack.com/apps</strong></li>
+              <li>Create app → Incoming Webhooks</li>
+              <li>Add to workspace and copy the URL</li>
+              <li>Select events to get notified in your channel</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Analytics Agency ─────────────────────────────────────────────────────────
 function AgencyAnalytics({ token, trendsLang }) {
   const [data,    setData]    = useState(null);
@@ -987,6 +1273,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
               <button style={s.tabBtn(mainTab==="team")}   onClick={()=>setMainTab("team")}>{tr(trendsLang,"ui.team.tabTeam")}</button>
               <button style={s.tabBtn(mainTab==="agency","#8b5cf6")} onClick={()=>setMainTab("agency")}>{tr(trendsLang,"ui.team.tabAgence")}</button>
               {isAgency && <button style={s.tabBtn(mainTab==="analytics","#ec4899")} onClick={()=>setMainTab("analytics")}>{tr(trendsLang,"ui.team.tabAnalytics") || "📊 ANALYTICS"}</button>}
+              <button style={s.tabBtn(mainTab==="integrations","#38bdf8")} onClick={()=>setMainTab("integrations")}>{tr(trendsLang,"ui.team.tabIntegrations") || "🔗 INTEGRATIONS"}</button>
             </div>
           )}
 
@@ -1695,6 +1982,10 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
 
           {mainTab === "analytics" && isAgency && (
             <AgencyAnalytics token={token} trendsLang={trendsLang} />
+          )}
+
+          {mainTab === "integrations" && (
+            <IntegrationsTab token={token} trendsLang={trendsLang} />
           )}
         </>
       )}
