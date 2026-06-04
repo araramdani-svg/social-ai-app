@@ -47,6 +47,35 @@ export default function History({ trendsLang, isMobile, history, projects, loadH
     team_role_updated: "#8b5cf6", team_removed: "#ef4444", team_joined: "#22c55e",
     team_invite: "#3b82f6", team_member_joined: "#22c55e", quota_exceeded: "#ef4444",
     post_assigned: "#60a5fa", post_assigned_to_me: "#60a5fa", team_view_assigned_posts: "#64748b",
+    // Team — nouvelles actions
+    post_approved:               "#22c55e",
+    post_rejected:               "#ef4444",
+    post_comment_added:          "#60a5fa",
+    post_comment_deleted:        "#ef4444",
+    post_linked_to_client:       "#a78bfa",
+    post_unlinked_from_client:   "#64748b",
+    team_calendar_add:           "#22c55e",
+    team_calendar_move:          "#f59e0b",
+    team_calendar_delete:        "#ef4444",
+    team_calendar_published:     "#3b82f6",
+    team_permissions_updated:    "#8b5cf6",
+    agency_analytics_view:       "#ec4899",
+    // Webhooks
+    webhook_subscribed:          "#38bdf8",
+    webhook_deleted:             "#ef4444",
+    // Billing
+    subscription_renewed:            "#22c55e",
+    payment_failed:                  "#ef4444",
+    renewal_reminder_3d:             "#f59e0b",
+    renewal_reminder_30d:            "#f97316",
+    grace_period_warning_24h:        "#ef4444",
+    grace_period_expired_downgrade:  "#ef4444",
+    winback_7d:                      "#8b5cf6",
+    winback_30d:                     "#8b5cf6",
+    winback_90d:                     "#8b5cf6",
+    override_expired:                "#f59e0b",
+    // Notifications
+    notif_read:                  "#64748b",
   };
 
   const getActionLabel = (action) => tr(trendsLang, `ui.actionLabels.${action}`) || action;

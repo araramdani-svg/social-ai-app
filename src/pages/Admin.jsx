@@ -42,6 +42,16 @@ const ACTION_LABELS = {
   post_assigned:                   { label:"🎯 Post assigné",           color:"#60a5fa" },
   post_comment_added:              { label:"💬 Commentaire",            color:"#60a5fa" },
   team_calendar_add:               { label:"📅 Cal. équipe ajout",      color:"#22c55e" },
+  // Override admin
+  override_expired:                { label:"⏰ Override expiré",        color:"#f59e0b" },
+  edit_user_plan:                  { label:"✏️ Plan modifié",           color:"#3b82f6" },
+  // Webhooks
+  webhook_subscribed:              { label:"🔗 Webhook connecté",       color:"#38bdf8" },
+  webhook_deleted:                 { label:"🗑️ Webhook supprimé",      color:"#ef4444" },
+  // Team permissions
+  team_permissions_updated:        { label:"🔐 Permissions mises à jour", color:"#8b5cf6" },
+  team_calendar_published:         { label:"📤 Cal. publié",            color:"#3b82f6" },
+  agency_analytics_view:           { label:"📊 Analytics consultés",   color:"#ec4899" },
 };
 
 const s = {
@@ -304,6 +314,92 @@ function EditUserModal({ user, token, onClose, onSave }) {
   );
 }
 
+// ─── Onglet Team Logs ─────────────────────────────────────────────────────────
+function TeamLogsTab({ token }) {
+  const [logs,    setLogs]    = useState([]);
+  const [pages,   setPages]   = useState(1);
+  const [page,    setPage]    = useState(1);
+  const [loading, setLoading] = useState(false);
+
+  const TEAM_QUICK_FILTERS = [
+    { label:"Tout",        value:"" },
+    { label:"✅ Approbations", value:"post_approved" },
+    { label:"❌ Rejets",       value:"post_rejected" },
+    { label:"🎯 Assignations", value:"post_assigned" },
+    { label:"💬 Commentaires", value:"post_comment" },
+    { label:"🔗 Webhooks",     value:"webhook" },
+    { label:"📅 Calendrier",   value:"team_calendar" },
+    { label:"🏢 Clients",      value:"post_linked" },
+    { label:"🔐 Permissions",  value:"team_permissions" },
+  ];
+
+  const [filterAction, setFilterAction] = useState("");
+
+  const fetchLogs = useCallback(async (p = 1, action = filterAction) => {
+    setLoading(true);
+    const params = new URLSearchParams({ page: p, type: "team" });
+    if (action) params.append("action_filter", action);
+    const r = await fetch(`${API}/admin/logs?${params}`, { headers:{ Authorization:`Bearer ${token}` } });
+    const d = await r.json();
+    setLogs(d.logs || []); setPages(d.pages || 1); setPage(p);
+    setLoading(false);
+  }, [token, filterAction]);
+
+  useEffect(() => { fetchLogs(1); }, []);
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+      <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+        {TEAM_QUICK_FILTERS.map(f => (
+          <button key={f.value} onClick={() => { setFilterAction(f.value); fetchLogs(1, f.value); }}
+            style={{ padding:"5px 12px", borderRadius:20, border:`1px solid ${filterAction===f.value?"rgba(96,165,250,0.5)":"rgba(255,255,255,0.08)"}`, background:filterAction===f.value?"rgba(96,165,250,0.1)":"rgba(255,255,255,0.02)", color:filterAction===f.value?"#60a5fa":"#475569", fontSize:11, fontWeight:700, cursor:"pointer" }}>
+            {f.label}
+          </button>
+        ))}
+        <button onClick={() => fetchLogs(1)} style={{ padding:"5px 12px", borderRadius:20, border:"1px solid rgba(255,255,255,0.08)", background:"rgba(255,255,255,0.03)", color:"#64748b", fontSize:11, cursor:"pointer" }}>🔄</button>
+      </div>
+      <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:12, overflow:"hidden" }}>
+        <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+          <thead>
+            <tr style={{ background:"rgba(255,255,255,0.03)" }}>
+              {["DATE","USER","ACTION","DÉTAILS"].map(h => (
+                <th key={h} style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"14px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {loading && <tr><td colSpan={4} style={{ textAlign:"center", padding:40, color:"#475569" }}>Chargement...</td></tr>}
+            {!loading && logs.length === 0 && <tr><td colSpan={4} style={{ textAlign:"center", padding:40, color:"#475569" }}>Aucun événement team</td></tr>}
+            {logs.map(log => {
+              const cfg = ACTION_LABELS[log.action] || { label:log.action, color:"#94a3b8" };
+              let details = "—";
+              try {
+                const d = typeof log.details==="string" ? JSON.parse(log.details) : log.details;
+                if (d?.post_id) details = `Post #${d.post_id}`;
+                if (d?.member_id) details = `Member #${d.member_id}`;
+                if (d?.client_name) details = `Client: ${d.client_name}`;
+                if (d?.type) details = `Type: ${d.type}`;
+                if (d?.role) details += ` · Role: ${d.role}`;
+              } catch {}
+              return (
+                <tr key={log.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+                  <td style={{ padding:"12px 16px", color:"#475569", fontSize:11, whiteSpace:"nowrap" }}>{new Date(log.created_at).toLocaleString("fr-FR")}</td>
+                  <td style={{ padding:"12px 16px", color:"#94a3b8", fontSize:11 }}>{log.target_email || `#${log.target_user_id}`}</td>
+                  <td style={{ padding:"12px 16px" }}>
+                    <span style={{ background:`${cfg.color}15`, border:`1px solid ${cfg.color}40`, borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:700, color:cfg.color }}>{cfg.label}</span>
+                  </td>
+                  <td style={{ padding:"12px 16px", color:"#64748b", fontSize:11 }}>{details}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        {pages > 1 && <div style={{ display:"flex", justifyContent:"center", gap:6, padding:14 }}>{Array.from({length:pages},(_,i)=>i+1).map(p=><button key={p} style={{ ...s.btnSm, background:page===p?"rgba(96,165,250,0.15)":"rgba(255,255,255,0.04)", border:`1px solid ${page===p?"rgba(96,165,250,0.4)":"rgba(255,255,255,0.1)"}`, color:page===p?"#60a5fa":"#64748b", width:32, height:32 }} onClick={()=>fetchLogs(p)}>{p}</button>)}</div>}
+      </div>
+    </div>
+  );
+}
+
 // ─── Onglet Overrides Admin ───────────────────────────────────────────────────
 function OverridesTab({ token }) {
   const [overrides, setOverrides] = useState([]);
@@ -545,6 +641,15 @@ const USER_ACTION_LABELS = {
   team_calendar_delete:            { label:"📅 Cal. équipe supprim.",    color:"#ef4444" },
   team_view_assigned_posts:        { label:"🎯 Posts assignés vus",      color:"#64748b" },
   notif_read:                      { label:"🔔 Notifs lues",             color:"#64748b" },
+  // Webhooks
+  webhook_subscribed:              { label:"🔗 Webhook connecté",        color:"#38bdf8" },
+  webhook_deleted:                 { label:"🗑️ Webhook supprimé",       color:"#ef4444" },
+  // Team nouvelles
+  team_permissions_updated:        { label:"🔐 Permissions mises à jour",color:"#8b5cf6" },
+  team_calendar_published:         { label:"📤 Cal. équipe publié",      color:"#3b82f6" },
+  agency_analytics_view:           { label:"📊 Analytics consultés",    color:"#ec4899" },
+  // Billing override
+  override_expired:                { label:"⏰ Override expiré",         color:"#f59e0b" },
 };
 
 function UserLogsTab({ token }) {
@@ -1368,11 +1473,13 @@ export default function Admin({ token, logout }) {
               <button style={{ ...s.tabBtn(logsSubTab==="users"),      fontSize:11, padding:"8px 16px" }} onClick={() => setLogsSubTab("users")}>👥 Actions Users</button>
               <button style={{ ...s.tabBtn(logsSubTab==="userevents"), fontSize:11, padding:"8px 16px" }} onClick={() => setLogsSubTab("userevents")}>📊 Events Users</button>
               <button style={{ ...s.tabBtn(logsSubTab==="billing"),    fontSize:11, padding:"8px 16px" }} onClick={() => setLogsSubTab("billing")}>💳 Billing</button>
+              <button style={{ ...s.tabBtn(logsSubTab==="team"),       fontSize:11, padding:"8px 16px" }} onClick={() => setLogsSubTab("team")}>👥 Team</button>
             </div>
             {logsSubTab === "admin"      && <AdminLogsTab      token={token} />}
             {logsSubTab === "users"      && <UsersActionsTab   token={token} />}
             {logsSubTab === "userevents" && <UserLogsTab       token={token} />}
             {logsSubTab === "billing"    && <BillingLogsTab    token={token} />}
+            {logsSubTab === "team"       && <TeamLogsTab       token={token} />}
           </div>
         )}
 

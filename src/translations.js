@@ -182,7 +182,7 @@ const translations = {
         watch_search: "🌍 Watch", cancel_subscription: "❌ Subscription cancelled", subscription_renewed: "🔄 Subscription renewed", payment_failed: "⚠️ Payment failed", renewal_reminder_3d: "📧 Renewal reminder (3d)", renewal_reminder_30d: "📧 Renewal reminder (30d)", grace_period_warning_24h: "⏰ Grace period warning", grace_period_expired_downgrade: "⬇️ Grace expired → Free", winback_7d: "📨 Win-back +7d", winback_30d: "📨 Win-back +30d", winback_90d: "📨 Win-back +90d",
         plan_upgrade: "⬆️ Plan upgraded", plan_downgrade: "⬇️ Plan downgraded",
         publish_post: "📤 Published",
-        team_member_joined: "👥 Member joined", joined_team: "👥 Joined team", quota_exceeded: "⛔ Quota exceeded",
+        team_member_joined: "👥 Member joined", joined_team: "👥 Joined team", quota_exceeded: "⛔ Quota exceeded", post_approved: "✅ Post approved", post_rejected: "❌ Post rejected", post_comment_added: "💬 Comment added", post_comment_deleted: "🗑️ Comment deleted", post_linked_to_client: "🏢 Linked to client", post_unlinked_from_client: "🏢 Unlinked from client", team_calendar_add: "📅 Team cal. added", team_calendar_move: "📅 Team cal. moved", team_calendar_delete: "📅 Team cal. deleted", team_calendar_published: "📤 Team cal. published", team_permissions_updated: "🔐 Permissions updated", agency_analytics_view: "📊 Analytics viewed", webhook_subscribed: "🔗 Webhook connected", webhook_deleted: "🗑️ Webhook deleted", override_expired: "⏰ Override expired", notif_read: "🔔 Notifs read",
         team: {
           tabTeam: "👥 TEAM",
           tabAgence: "🏢 AGENCY", tabAnalytics: "📊 ANALYTICS", tabIntegrations: "🔗 INTEGRATIONS",
@@ -732,7 +732,7 @@ const translations = {
         watch_search: "🌍 Veille", cancel_subscription: "❌ Abonnement annulé", subscription_renewed: "🔄 Abonnement renouvelé", payment_failed: "⚠️ Paiement échoué", renewal_reminder_3d: "📧 Rappel renouvellement (3j)", renewal_reminder_30d: "📧 Rappel renouvellement (30j)", grace_period_warning_24h: "⏰ Avertissement grace period", grace_period_expired_downgrade: "⬇️ Grace expiré → Free", winback_7d: "📨 Win-back +7j", winback_30d: "📨 Win-back +30j", winback_90d: "📨 Win-back +90j",
         plan_upgrade: "⬆️ Plan upgradé", plan_downgrade: "⬇️ Plan downgradé",
         publish_post: "📤 Publié",
-        team_member_joined: "👥 Membre rejoint", joined_team: "👥 A rejoint l'équipe", quota_exceeded: "⛔ Quota dépassé",
+        team_member_joined: "👥 Membre rejoint", joined_team: "👥 A rejoint l'équipe", quota_exceeded: "⛔ Quota dépassé", post_approved: "✅ Post approuvé", post_rejected: "❌ Post rejeté", post_comment_added: "💬 Commentaire ajouté", post_comment_deleted: "🗑️ Commentaire supprimé", post_linked_to_client: "🏢 Lié au client", post_unlinked_from_client: "🏢 Délié du client", team_calendar_add: "📅 Cal. équipe ajout", team_calendar_move: "📅 Cal. équipe déplace", team_calendar_delete: "📅 Cal. équipe supprimé", team_calendar_published: "📤 Cal. équipe publié", team_permissions_updated: "🔐 Permissions mises à jour", agency_analytics_view: "📊 Analytics consultés", webhook_subscribed: "🔗 Webhook connecté", webhook_deleted: "🗑️ Webhook supprimé", override_expired: "⏰ Override expiré", notif_read: "🔔 Notifs lues",
         team: {
           tabTeam: "👥 ÉQUIPE",
           tabAgence: "🏢 AGENCE", tabAnalytics: "📊 ANALYTICS", tabIntegrations: "🔗 INTÉGRATIONS",
@@ -1267,7 +1267,7 @@ const translations = {
         plan_upgrade: "⬆️ Plan mejorado",
         plan_downgrade: "⬇️ Plan reducido",
         publish_post: "📤 Publicado",
-        team_member_joined: "👥 Miembro unido", joined_team: "👥 Se unió al equipo", quota_exceeded: "⛔ Cuota superada",
+        team_member_joined: "👥 Miembro unido", joined_team: "👥 Se unió al equipo", quota_exceeded: "⛔ Cuota superada", post_approved: "✅ Post aprobado", post_rejected: "❌ Post rechazado", post_comment_added: "💬 Comentario añadido", post_comment_deleted: "🗑️ Comentario eliminado", post_linked_to_client: "🏢 Vinculado al cliente", post_unlinked_from_client: "🏢 Desvinculado del cliente", team_calendar_add: "📅 Cal. equipo añadido", team_calendar_move: "📅 Cal. equipo movido", team_calendar_delete: "📅 Cal. equipo eliminado", team_calendar_published: "📤 Cal. equipo publicado", team_permissions_updated: "🔐 Permisos actualizados", agency_analytics_view: "📊 Analytics vistos", webhook_subscribed: "🔗 Webhook conectado", webhook_deleted: "🗑️ Webhook eliminado", override_expired: "⏰ Override expirado", notif_read: "🔔 Notifs leídas",
         team: {
           tabTeam: "👥 EQUIPO",
           tabAgence: "🏢 AGENCIA", tabAnalytics: "📊 ANALYTICS", tabIntegrations: "🔗 INTEGRACIONES",
@@ -1738,7 +1738,7 @@ const translations = {
         plan_upgrade: "⬆️ Plan aufgewertet",
         plan_downgrade: "⬇️ Plan reduziert",
         publish_post: "📤 Veröffentlicht",
-        team_member_joined: "👥 Mitglied beigetreten", joined_team: "👥 Team beigetreten", quota_exceeded: "⛔ Kontingent überschritten",
+        team_member_joined: "👥 Mitglied beigetreten", joined_team: "👥 Team beigetreten", quota_exceeded: "⛔ Kontingent überschritten", post_approved: "✅ Beitrag genehmigt", post_rejected: "❌ Beitrag abgelehnt", post_comment_added: "💬 Kommentar hinzugefügt", post_comment_deleted: "🗑️ Kommentar gelöscht", post_linked_to_client: "🏢 Mit Kunde verknüpft", post_unlinked_from_client: "🏢 Von Kunde getrennt", team_calendar_add: "📅 Team-Kal. hinzugefügt", team_calendar_move: "📅 Team-Kal. verschoben", team_calendar_delete: "📅 Team-Kal. gelöscht", team_calendar_published: "📤 Team-Kal. veröffentlicht", team_permissions_updated: "🔐 Berechtigungen aktualisiert", agency_analytics_view: "📊 Analytics angesehen", webhook_subscribed: "🔗 Webhook verbunden", webhook_deleted: "🗑️ Webhook gelöscht", override_expired: "⏰ Override abgelaufen", notif_read: "🔔 Benachrichtigungen gelesen",
         team: {
           tabTeam: "👥 TEAM",
           tabAgence: "🏢 AGENTUR", tabAnalytics: "📊 ANALYTICS", tabIntegrations: "🔗 INTEGRATIONEN",
@@ -2211,7 +2211,7 @@ const translations = {
         plan_upgrade: "⬆️ Piano aggiornato",
         plan_downgrade: "⬇️ Piano ridotto",
         publish_post: "📤 Pubblicato",
-        team_member_joined: "👥 Membro entrato", joined_team: "👥 Entrato nel team", quota_exceeded: "⛔ Quota superata",
+        team_member_joined: "👥 Membro entrato", joined_team: "👥 Entrato nel team", quota_exceeded: "⛔ Quota superata", post_approved: "✅ Post approvato", post_rejected: "❌ Post rifiutato", post_comment_added: "💬 Commento aggiunto", post_comment_deleted: "🗑️ Commento eliminato", post_linked_to_client: "🏢 Collegato al cliente", post_unlinked_from_client: "🏢 Scollegato dal cliente", team_calendar_add: "📅 Cal. team aggiunto", team_calendar_move: "📅 Cal. team spostato", team_calendar_delete: "📅 Cal. team eliminato", team_calendar_published: "📤 Cal. team pubblicato", team_permissions_updated: "🔐 Permessi aggiornati", agency_analytics_view: "📊 Analytics visti", webhook_subscribed: "🔗 Webhook connesso", webhook_deleted: "🗑️ Webhook eliminato", override_expired: "⏰ Override scaduto", notif_read: "🔔 Notifiche lette",
         team: {
           tabTeam: "👥 TEAM",
           tabAgence: "🏢 AGENZIA", tabAnalytics: "📊 ANALYTICS", tabIntegrations: "🔗 INTEGRAZIONI",
@@ -2683,7 +2683,7 @@ const translations = {
         plan_upgrade: "⬆️ Plano atualizado",
         plan_downgrade: "⬇️ Plano reduzido",
         publish_post: "📤 Publicado",
-        team_member_joined: "👥 Membro entrou", joined_team: "👥 Entrou na equipa", quota_exceeded: "⛔ Cota excedida",
+        team_member_joined: "👥 Membro entrou", joined_team: "👥 Entrou na equipa", quota_exceeded: "⛔ Cota excedida", post_approved: "✅ Post aprovado", post_rejected: "❌ Post rejeitado", post_comment_added: "💬 Comentário adicionado", post_comment_deleted: "🗑️ Comentário eliminado", post_linked_to_client: "🏢 Ligado ao cliente", post_unlinked_from_client: "🏢 Desligado do cliente", team_calendar_add: "📅 Cal. equipa adicionado", team_calendar_move: "📅 Cal. equipa movido", team_calendar_delete: "📅 Cal. equipa eliminado", team_calendar_published: "📤 Cal. equipa publicado", team_permissions_updated: "🔐 Permissões atualizadas", agency_analytics_view: "📊 Analytics vistos", webhook_subscribed: "🔗 Webhook conectado", webhook_deleted: "🗑️ Webhook eliminado", override_expired: "⏰ Override expirado", notif_read: "🔔 Notificações lidas",
         team: {
           tabTeam: "👥 EQUIPA",
           tabAgence: "🏢 AGÊNCIA", tabAnalytics: "📊 ANALYTICS", tabIntegrations: "🔗 INTEGRAÇÕES",

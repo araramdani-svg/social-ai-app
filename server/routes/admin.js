@@ -385,16 +385,17 @@ router.get("/logs", adminAuth, async (req, res) => {
 
     // Actions admin vs user vs billing
     const ADMIN_ACTIONS   = ["create_admin","delete_admin","reset_admin_password"];
-    const USER_ACTIONS    = ["edit_user","ban_user","unban_user","reset_quota","delete_user","verify_email","resend_verification","force_password_reset","send_password_reset"];
-    const BILLING_ACTIONS = ["plan_upgrade","cancel_subscription","subscription_renewed","payment_failed","renewal_reminder_3d","renewal_reminder_30d","grace_period_warning_24h","grace_period_expired_downgrade","winback_7d","winback_30d","winback_90d"];
+    const USER_ACTIONS    = ["edit_user","ban_user","unban_user","reset_quota","delete_user","verify_email","resend_verification","force_password_reset","send_password_reset","edit_user_plan"];
+    const BILLING_ACTIONS = ["plan_upgrade","cancel_subscription","subscription_renewed","payment_failed","renewal_reminder_3d","renewal_reminder_30d","grace_period_warning_24h","grace_period_expired_downgrade","winback_7d","winback_30d","winback_90d","override_expired"];
+    const TEAM_ACTIONS    = ["post_approved","post_rejected","post_assigned","post_assigned_to_me","post_comment_added","post_comment_deleted","post_linked_to_client","post_unlinked_from_client","team_calendar_add","team_calendar_move","team_calendar_delete","team_calendar_published","team_permissions_updated","webhook_subscribed","webhook_deleted","agency_analytics_view"];
 
     let whereClause = "";
     if (type === "admin")   whereClause = `WHERE l.action = ANY(ARRAY[${ADMIN_ACTIONS.map(a   => `'${a}'`).join(",")}])`;
     if (type === "users")   whereClause = `WHERE l.action = ANY(ARRAY[${USER_ACTIONS.map(a    => `'${a}'`).join(",")}])`;
+    if (type === "team")    whereClause = `WHERE l.action = ANY(ARRAY[${TEAM_ACTIONS.map(a    => `'${a}'`).join(",")}])`;
     if (type === "billing") {
       const actionFilter = req.query.action_filter || "";
       if (actionFilter) {
-        // Filtre partiel (ex: "winback" matche winback_7d, winback_30d, winback_90d)
         whereClause = `WHERE l.action ILIKE '%${actionFilter.replace(/'/g,"''")}%'`;
       } else {
         whereClause = `WHERE l.action = ANY(ARRAY[${BILLING_ACTIONS.map(a => `'${a}'`).join(",")}])`;
