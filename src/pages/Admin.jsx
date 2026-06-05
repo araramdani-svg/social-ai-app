@@ -40,18 +40,22 @@ const ACTION_LABELS = {
   winback_90d:                     { label:"📨 Win-back +90j",          color:"#8b5cf6" },
   // Team actions
   post_assigned:                   { label:"🎯 Post assigné",           color:"#60a5fa" },
+  post_approved:                   { label:"✅ Post approuvé",           color:"#22c55e" },
+  post_rejected:                   { label:"❌ Post rejeté",             color:"#ef4444" },
   post_comment_added:              { label:"💬 Commentaire",            color:"#60a5fa" },
+  post_comment_deleted:            { label:"🗑️ Commentaire supprimé",   color:"#ef4444" },
+  post_linked_to_client:           { label:"🏢 Lié à client",           color:"#a78bfa" },
+  post_unlinked_from_client:       { label:"🏢 Délié client",           color:"#64748b" },
   team_calendar_add:               { label:"📅 Cal. équipe ajout",      color:"#22c55e" },
+  team_calendar_published:         { label:"📤 Cal. équipe publié",     color:"#3b82f6" },
+  team_permissions_updated:        { label:"🔐 Permissions mises à jour",color:"#8b5cf6" },
+  agency_analytics_view:           { label:"📊 Analytics consultés",    color:"#ec4899" },
   // Override admin
   override_expired:                { label:"⏰ Override expiré",        color:"#f59e0b" },
   edit_user_plan:                  { label:"✏️ Plan modifié",           color:"#3b82f6" },
   // Webhooks
   webhook_subscribed:              { label:"🔗 Webhook connecté",       color:"#38bdf8" },
   webhook_deleted:                 { label:"🗑️ Webhook supprimé",      color:"#ef4444" },
-  // Team permissions
-  team_permissions_updated:        { label:"🔐 Permissions mises à jour", color:"#8b5cf6" },
-  team_calendar_published:         { label:"📤 Cal. publié",            color:"#3b82f6" },
-  agency_analytics_view:           { label:"📊 Analytics consultés",   color:"#ec4899" },
 };
 
 const s = {

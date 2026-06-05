@@ -392,7 +392,14 @@ router.get("/logs", adminAuth, async (req, res) => {
     let whereClause = "";
     if (type === "admin")   whereClause = `WHERE l.action = ANY(ARRAY[${ADMIN_ACTIONS.map(a   => `'${a}'`).join(",")}])`;
     if (type === "users")   whereClause = `WHERE l.action = ANY(ARRAY[${USER_ACTIONS.map(a    => `'${a}'`).join(",")}])`;
-    if (type === "team")    whereClause = `WHERE l.action = ANY(ARRAY[${TEAM_ACTIONS.map(a    => `'${a}'`).join(",")}])`;
+    if (type === "team") {
+      const actionFilter = req.query.action_filter || "";
+      if (actionFilter) {
+        whereClause = `WHERE l.action ILIKE '%${actionFilter.replace(/'/g,"''")}%'`;
+      } else {
+        whereClause = `WHERE l.action = ANY(ARRAY[${TEAM_ACTIONS.map(a => `'${a}'`).join(",")}])`;
+      }
+    }
     if (type === "billing") {
       const actionFilter = req.query.action_filter || "";
       if (actionFilter) {
