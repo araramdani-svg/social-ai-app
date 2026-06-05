@@ -1310,18 +1310,54 @@ export default function Admin({ token, logout }) {
 
       <div style={s.content}>
 
-        {/* Stats globales */}
+        {/* ── Stats compactes ── */}
         {stats && (
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:12, marginBottom:32 }}>
-            <StatCard label="UTILISATEURS"  value={stats.totalUsers}  color="#e2e8f0" />
-            <StatCard label="ACTIFS 30J"    value={stats.activeUsers} color="#22c55e" />
-            <StatCard label="BANNIS"        value={stats.bannedUsers || 0} color="#ef4444" />
-            <StatCard label="POSTS TOTAL"   value={stats.totalPosts}  color="#94a3b8" />
-            <StatCard label="MRR ESTIMÉ"    value={`€${stats.mrr}`}   color="#f59e0b" />
-            <StatCard label="FREE"     value={stats.plans?.Free     || 0} color="#64748b" />
-            <StatCard label="PRO"      value={stats.plans?.Pro      || 0} color="#3b82f6" />
-            <StatCard label="BUSINESS" value={stats.plans?.Business || 0} color="#f59e0b" />
-            <StatCard label="AGENCY"   value={stats.plans?.Agency   || 0} color="#8b5cf6" />
+          <div style={{ marginBottom:20 }}>
+
+            {/* Ligne 1 : MRR en vedette + métriques clés */}
+            <div style={{ display:"flex", alignItems:"center", gap:12, flexWrap:"wrap", marginBottom:10 }}>
+
+              {/* MRR — mis en avant */}
+              <div style={{ background:"linear-gradient(135deg,rgba(245,158,11,0.12),rgba(245,158,11,0.04))", border:"1px solid rgba(245,158,11,0.3)", borderRadius:12, padding:"10px 20px", display:"flex", alignItems:"baseline", gap:8 }}>
+                <span style={{ color:"#f59e0b", fontSize:26, fontWeight:900, letterSpacing:"-1px" }}>€{stats.mrr}</span>
+                <span style={{ color:"#92400e", fontSize:10, fontWeight:700, letterSpacing:"1px" }}>MRR ESTIMÉ</span>
+              </div>
+
+              {/* Séparateur */}
+              <div style={{ width:1, height:36, background:"rgba(255,255,255,0.06)" }} />
+
+              {/* Métriques inline */}
+              {[
+                { label:"Users",    value:stats.totalUsers,       color:"#e2e8f0", icon:"👥" },
+                { label:"Actifs",   value:stats.activeUsers,      color:"#22c55e", icon:"✅" },
+                { label:"Bannis",   value:stats.bannedUsers || 0, color:"#ef4444", icon:"🚫" },
+                { label:"Posts",    value:stats.totalPosts,        color:"#94a3b8", icon:"📝" },
+              ].map(s => (
+                <div key={s.label} style={{ display:"flex", flexDirection:"column", alignItems:"center", minWidth:52 }}>
+                  <span style={{ color:s.color, fontSize:20, fontWeight:900 }}>{s.value}</span>
+                  <span style={{ color:"#334155", fontSize:9, fontWeight:700, letterSpacing:"0.5px" }}>{s.icon} {s.label}</span>
+                </div>
+              ))}
+
+              {/* Séparateur */}
+              <div style={{ width:1, height:36, background:"rgba(255,255,255,0.06)" }} />
+
+              {/* Plans inline */}
+              <div style={{ display:"flex", gap:6, alignItems:"center" }}>
+                <span style={{ color:"#475569", fontSize:9, fontWeight:700, letterSpacing:"1px", marginRight:4 }}>PLANS</span>
+                {[
+                  { label:"Free",     value:stats.plans?.Free     || 0, color:"#64748b" },
+                  { label:"Pro",      value:stats.plans?.Pro      || 0, color:"#3b82f6" },
+                  { label:"Business", value:stats.plans?.Business || 0, color:"#f59e0b" },
+                  { label:"Agency",   value:stats.plans?.Agency   || 0, color:"#8b5cf6" },
+                ].map(p => (
+                  <div key={p.label} style={{ background:`${p.color}12`, border:`1px solid ${p.color}30`, borderRadius:20, padding:"4px 10px", display:"flex", alignItems:"center", gap:5 }}>
+                    <span style={{ color:p.color, fontSize:14, fontWeight:900 }}>{p.value}</span>
+                    <span style={{ color:p.color, fontSize:9, fontWeight:700, opacity:0.8 }}>{p.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
