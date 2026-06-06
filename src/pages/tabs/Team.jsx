@@ -1473,8 +1473,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
               {approvals.length > 0 && <span style={{ background:"#ef4444", color:"#fff", borderRadius:"50%", padding:"1px 5px", fontSize:9, marginLeft:4 }}>{approvals.length}</span>}
             </button>}
             {canAccess("logs")      && <button style={s.tabBtn(mainTab==="logs")}               onClick={()=>{ setMainTab("logs"); fetchTeamLogs(); }}>{tr(trendsLang,"ui.team.tabHistory")}</button>}
-            {canAccess("calendar")  && <button style={s.tabBtn(mainTab==="calendar","#22c55e")} onClick={()=>{ setMainTab("calendar"); if (!teamCalLoaded) fetchTeamCal(); }}>{tr(trendsLang,"ui.team.tabCalendar")||"CALENDRIER"}</button>}
-            <button style={s.tabBtn(mainTab==="chat","#22c55e")} onClick={()=>setMainTab("chat")}>💬 CHAT</button>
+            {canAccess("calendar")  && <button style={s.tabBtn(mainTab==="calendar","#22c55e")} onClick={()=>{ setMainTab("calendar"); if (!teamCalLoaded) fetchTeamCal(); }}>{tr(trendsLang,"ui.team.tabCalendar")||"CALENDRIER"}</button>}            <button style={s.tabBtn(mainTab==="chat","#22c55e")} onClick={()=>setMainTab("chat")}>💬 CHAT</button>
           </div>
 
           {/* Badge lecture seule */}
@@ -1538,16 +1537,16 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
           {/* Activité */}
           {mainTab === "activity" && canAccess("activity") && (
             <div style={s.card}>
-              <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:12 }}>📊 {tr(trendsLang,"ui.team.tabActivity")}</div>
-              <div style={{ color:"#475569", fontSize:12 }}>Activité de l'équipe disponible pour les owners.</div>
+              <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:12 }}>{tr(trendsLang,"ui.team.tabActivity")}</div>
+              <div style={{ color:"#475569", fontSize:12 }}>{tr(trendsLang,"ui.team.historyDesc") || "All actions by team members"}</div>
             </div>
           )}
 
           {/* Rôles — lecture seule pour admin */}
           {mainTab === "perms" && canAccess("perms") && (
             <div style={s.card}>
-              <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:4 }}>🔑 {tr(trendsLang,"ui.team.tabRoles")}</div>
-              <div style={{ color:"#475569", fontSize:12, marginBottom:16 }}>Permissions par défaut par rôle</div>
+              <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:4 }}>{tr(trendsLang,"ui.team.tabRoles")}</div>
+              <div style={{ color:"#475569", fontSize:12, marginBottom:16 }}>{tr(trendsLang,"ui.team.permsDesc") || tr(trendsLang,"ui.team.perm.generate") && "Default permissions by role"}</div>
               <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
                 <thead>
                   <tr>
@@ -1580,11 +1579,12 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
           {/* Approbations — admin + owner */}
           {mainTab === "approvals" && canAccess("approvals") && (
             <div style={s.card}>
-              <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:12 }}>✅ {tr(trendsLang,"ui.team.tabApprovals")}</div>
+              <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:4 }}>{tr(trendsLang,"ui.team.tabApprovals")}</div>
+              <div style={{ color:"#475569", fontSize:12, marginBottom:16 }}>{tr(trendsLang,"ui.team.approvalDesc")}</div>
               {approvals.length === 0 ? (
-                <div style={{ textAlign:"center", color:"#334155", padding:24 }}>Aucun post en attente d'approbation</div>
+                <div style={{ textAlign:"center", color:"#334155", padding:24 }}>{tr(trendsLang,"ui.team.noApprovals")}</div>
               ) : (
-                <div style={{ color:"#94a3b8", fontSize:12 }}>{approvals.length} post(s) en attente</div>
+                <div style={{ color:"#94a3b8", fontSize:12 }}>{approvals.length} {tr(trendsLang,"ui.team.tabApprovals")?.toLowerCase()}</div>
               )}
             </div>
           )}
@@ -1592,16 +1592,56 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
           {/* Historique — admin + editor + owner */}
           {mainTab === "logs" && canAccess("logs") && (
             <div style={s.card}>
-              <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:12 }}>📋 {tr(trendsLang,"ui.team.tabHistory")}</div>
-              <div style={{ color:"#475569", fontSize:12 }}>Historique de l'équipe disponible pour les owners.</div>
+              <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:4 }}>{tr(trendsLang,"ui.team.tabHistory")}</div>
+              <div style={{ color:"#475569", fontSize:12 }}>{tr(trendsLang,"ui.team.historyDesc") || "All actions by team members"}</div>
             </div>
           )}
 
-          {/* Calendrier — tous */}
+          {/* Calendrier — admin + editor + publisher + owner → vrai calendrier partagé */}
           {mainTab === "calendar" && canAccess("calendar") && (
-            <div style={s.card}>
-              <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:12 }}>📅 {tr(trendsLang,"ui.team.tabCalendar")||"Calendrier partagé"}</div>
-              <div style={{ color:"#475569", fontSize:12 }}>Le calendrier partagé est accessible via l'onglet Équipe (owner).</div>
+            <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                <div>
+                  <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:14 }}>{tr(trendsLang,"ui.team.sharedCalendar") || "Shared Calendar"}</div>
+                  <div style={{ color:"#475569", fontSize:12, marginTop:2 }}>{tr(trendsLang,"ui.team.sharedCalendarDesc")}</div>
+                </div>
+                <div style={{ display:"flex", gap:6 }}>
+                  <button onClick={() => setCalView("kanban")} style={{ padding:"6px 12px", borderRadius:6, border:`1px solid ${calView==="kanban"?"rgba(34,197,94,0.4)":"rgba(255,255,255,0.08)"}`, background:calView==="kanban"?"rgba(34,197,94,0.1)":"rgba(255,255,255,0.03)", color:calView==="kanban"?"#22c55e":"#64748b", fontSize:10, fontWeight:700, cursor:"pointer" }}>📋 Kanban</button>
+                  <button onClick={() => setCalView("timeline")} style={{ padding:"6px 12px", borderRadius:6, border:`1px solid ${calView==="timeline"?"rgba(34,197,94,0.4)":"rgba(255,255,255,0.08)"}`, background:calView==="timeline"?"rgba(34,197,94,0.1)":"rgba(255,255,255,0.03)", color:calView==="timeline"?"#22c55e":"#64748b", fontSize:10, fontWeight:700, cursor:"pointer" }}>📅 Timeline</button>
+                  <button onClick={()=>{ if(!teamCalLoaded) fetchTeamCal(); else fetchTeamCal(); }} style={{ padding:"6px 10px", borderRadius:6, border:"1px solid rgba(255,255,255,0.08)", background:"rgba(255,255,255,0.03)", color:"#64748b", fontSize:10, cursor:"pointer" }}>🔄</button>
+                </div>
+              </div>
+              <div style={{ display:"flex", gap:8 }}>
+                {CAL_COLS.map(col=>(
+                  <div key={col.id} style={{ flex:1, background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderTop:`3px solid ${col.color}`, borderRadius:8, padding:"8px 10px", textAlign:"center" }}>
+                    <div style={{ color:col.color, fontSize:16, fontWeight:900 }}>{teamCal.filter(c=>c.col===col.id).length}</div>
+                    <div style={{ color:"#475569", fontSize:8, fontWeight:700 }}>{col.label.replace(/^[^\w\u00C0-\u024F]*/,"").toUpperCase()}</div>
+                  </div>
+                ))}
+              </div>
+              {teamCalLoading ? (
+                <div style={{ textAlign:"center", padding:40, color:"#475569" }}>⏳</div>
+              ) : (
+                <div style={{ display:"flex", gap:10, overflowX:"auto", paddingBottom:4 }}>
+                  {CAL_COLS.map(col=>(
+                    <div key={col.id} style={{ minWidth:200, flex:1, background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:10, padding:12 }}>
+                      <div style={{ display:"flex", justifyContent:"space-between", marginBottom:10 }}>
+                        <span style={{ color:col.color, fontSize:11, fontWeight:700 }}>{col.label}</span>
+                        <span style={{ background:"rgba(255,255,255,0.06)", borderRadius:20, padding:"1px 8px", fontSize:10, color:"#64748b" }}>{teamCal.filter(c=>c.col===col.id).length}</span>
+                      </div>
+                      {teamCal.filter(c=>c.col===col.id).map(card=>(
+                        <div key={card.id} style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:8, padding:"10px 12px", marginBottom:8 }}>
+                          <div style={{ color:"#e2e8f0", fontSize:12, fontWeight:600, marginBottom:4 }}>{card.title}</div>
+                          {card.platform && <span style={{ background:"rgba(59,130,246,0.12)", border:"1px solid rgba(59,130,246,0.25)", borderRadius:20, padding:"1px 8px", fontSize:9, color:"#60a5fa" }}>{card.platform}</span>}
+                        </div>
+                      ))}
+                      {teamCal.filter(c=>c.col===col.id).length===0 && (
+                        <div style={{ textAlign:"center", color:"#334155", fontSize:11, padding:"12px 0" }}>{tr(trendsLang,"ui.team.calendarEmpty")}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
