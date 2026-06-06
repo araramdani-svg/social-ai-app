@@ -199,8 +199,120 @@ const validateEmailPassword = (email, password) => {
 };
 
 // ─── Auth routes (publiques) ───────────────────────────────────────────────────
+// ─── Helper : générer un referral_code unique ─────────────────────────────────
+const generateReferralCode = async () => {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code, exists = true;
+  while (exists) {
+    code = Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+    const r = await db.query("SELECT id FROM users WHERE referral_code=$1", [code]);
+    exists = r.rows.length > 0;
+  }
+  return code;
+};
+
+// ─── Helper : appliquer un code promo à un user ───────────────────────────────
+// Retourne { applied: bool, message, plan, expires_at }
+const applyPromoCode = async (code, userId) => {
+  if (!code) return { applied: false, message: null };
+  const codeUpper = code.toUpperCase().trim();
+
+  // Récupérer le code
+  const codeRes = await db.query(
+    "SELECT * FROM promo_codes WHERE code=$1 AND active=true",
+    [codeUpper]
+  );
+  if (!codeRes.rows.length) return { applied: false, message: "Code promo invalide ou inactif" };
+  const promo = codeRes.rows[0];
+
+  // Vérifier expiration
+  if (promo.expires_at && new Date(promo.expires_at) < new Date()) {
+    return { applied: false, message: "Code promo expiré" };
+  }
+  // Vérifier usage max
+  if (promo.max_uses && promo.used_count >= promo.max_uses) {
+    return { applied: false, message: "Code promo épuisé" };
+  }
+  // Vérifier que l'user ne l'a pas déjà utilisé
+  const alreadyUsed = await db.query(
+    "SELECT id FROM promo_uses WHERE code_id=$1 AND user_id=$2",
+    [promo.id, userId]
+  );
+  if (alreadyUsed.rows.length) return { applied: false, message: "Code déjà utilisé" };
+
+  let grantedPlan = null;
+  let grantExpires = null;
+
+  if (promo.type === "access") {
+    grantedPlan = promo.plan;
+    grantExpires = promo.duration_days
+      ? new Date(Date.now() + promo.duration_days * 86400000)
+      : null; // permanent
+
+    // Mettre à jour le plan de l'user
+    await db.query(
+      `UPDATE users SET plan=$1, admin_override=true, admin_override_plan=$1,
+       override_expires_at=$2, override_reason='promo_code'
+       WHERE id=$3`,
+      [promo.plan, grantExpires, userId]
+    );
+  }
+  // Pour type=discount : on ne fait rien à l'inscription (pas de plan payant encore)
+  // Le coupon Stripe sera appliqué lors du checkout — on note juste l'usage
+
+  // Enregistrer l'usage
+  await db.query(
+    `INSERT INTO promo_uses (code_id, user_id, used_at, plan_granted, expires_at)
+     VALUES ($1,$2,NOW(),$3,$4)`,
+    [promo.id, userId, grantedPlan, grantExpires]
+  );
+
+  // Incrémenter used_count
+  await db.query(
+    "UPDATE promo_codes SET used_count=used_count+1 WHERE id=$1",
+    [promo.id]
+  );
+
+  // Notification admin + log
+  try {
+    await db.query(
+      `INSERT INTO admin_notifications (type, title, body, created_at)
+       VALUES ('promo_used', $1, $2, NOW())`,
+      [
+        `🎁 Code ${codeUpper} activé`,
+        `user_id: ${userId} | Plan: ${grantedPlan || promo.type} | Code: ${codeUpper}`
+      ]
+    );
+    await db.query(
+      `INSERT INTO admin_logs (admin_id, action, target_user_id, details, created_at)
+       VALUES ($1, 'promo_code_used', $2, $3, NOW())`,
+      [userId, userId, JSON.stringify({ code: codeUpper, plan: grantedPlan, type: promo.type })]
+    );
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,'promo_code_used',$2,NOW())`,
+      [userId, JSON.stringify({ code: codeUpper, plan: grantedPlan })]
+    );
+  } catch {}
+
+  // Vérifier si le code est maintenant épuisé → notif admin
+  if (promo.max_uses && promo.used_count + 1 >= promo.max_uses) {
+    try {
+      await db.query(
+        `INSERT INTO admin_notifications (type, title, body, created_at)
+         VALUES ('promo_exhausted', $1, $2, NOW())`,
+        [
+          `⚠️ Code ${codeUpper} épuisé`,
+          `${promo.used_count + 1} usages sur ${promo.max_uses} atteints`
+        ]
+      );
+    } catch {}
+  }
+
+  return { applied: true, plan: grantedPlan, expires_at: grantExpires, message: "Code promo appliqué !" };
+};
+
 router.post("/register", async (req, res) => {
-  const { email, password, first_name, last_name, display_name } = req.body;
+  const { email, password, first_name, last_name, display_name, promo_code, ref_code } = req.body;
 
   const validationError = validateEmailPassword(email, password);
   if (validationError) return res.status(400).json({ message: validationError });
@@ -219,32 +331,172 @@ router.post("/register", async (req, res) => {
 
   const hashed = await bcrypt.hash(password, 10);
   const verificationToken = crypto.randomBytes(32).toString("hex");
+  const referralCode = await generateReferralCode();
+
+  // Résoudre le parrain (ref_code)
+  let referredById = null;
+  if (ref_code) {
+    const refRes = await db.query(
+      "SELECT id FROM users WHERE referral_code=$1",
+      [ref_code.toUpperCase().trim()]
+    );
+    if (refRes.rows.length) referredById = refRes.rows[0].id;
+  }
 
   try {
     const result = await db.query(
-      "INSERT INTO users(email,password,plan,generations_count,email_verified,verification_token,first_name,last_name,display_name) VALUES($1,$2,'Free',0,false,$3,$4,$5,$6) RETURNING id",
-      [email, hashed, verificationToken, first_name || null, last_name || null, display_name || null]
+      `INSERT INTO users
+         (email,password,plan,generations_count,email_verified,verification_token,
+          first_name,last_name,display_name,referral_code,referred_by)
+       VALUES($1,$2,'Free',0,false,$3,$4,$5,$6,$7,$8)
+       RETURNING id`,
+      [email, hashed, verificationToken, first_name||null, last_name||null, display_name||null, referralCode, referredById]
     );
+    const newUserId = result.rows[0].id;
+
+    // ── Parrainage : créditer le parrain ──────────────────────────────────────
+    if (referredById) {
+      try {
+        // Incrémenter referral_count du parrain
+        await db.query(
+          "UPDATE users SET referral_count=referral_count+1 WHERE id=$1",
+          [referredById]
+        );
+        // Récupérer le nouveau count pour vérifier les paliers
+        const parrainRes = await db.query(
+          "SELECT referral_count, email FROM users WHERE id=$1",
+          [referredById]
+        );
+        const parrain = parrainRes.rows[0];
+        const count = parrain.referral_count;
+
+        // Paliers de récompense
+        const PALIERS = [
+          { at: 1,  days: 7,    label: "+7 jours" },
+          { at: 3,  days: 30,   label: "+1 mois" },
+          { at: 5,  days: 60,   label: "+2 mois" },
+          { at: 10, days: 90,   label: "+3 mois" },
+          { at: 20, days: 365,  label: "Agency 1 an" },
+        ];
+        const palier = PALIERS.find(p => p.at === count);
+        if (palier) {
+          // Créditer les jours de récompense
+          await db.query(
+            "UPDATE users SET referral_reward_days=referral_reward_days+$1 WHERE id=$2",
+            [palier.days, referredById]
+          );
+          // Si Agency 1 an → upgrade plan aussi
+          if (count === 20) {
+            await db.query(
+              `UPDATE users SET plan='Agency', admin_override=true, admin_override_plan='Agency',
+               override_expires_at=NOW()+INTERVAL '1 year', override_reason='referral_reward_20'
+               WHERE id=$1`,
+              [referredById]
+            );
+          }
+          // Notif admin + log
+          await db.query(
+            `INSERT INTO admin_notifications (type, title, body, created_at)
+             VALUES ('referral_reward', $1, $2, NOW())`,
+            [
+              `🏆 ${parrain.email} a atteint ${count} filleul(s)`,
+              `Récompense: ${palier.label} offerte automatiquement`
+            ]
+          ).catch(() => {});
+          await db.query(
+            `INSERT INTO admin_logs (admin_id, action, target_user_id, details, created_at)
+             VALUES ($1,'referral_reward',$1,$2,NOW())`,
+            [referredById, JSON.stringify({ filleuls: count, reward: palier.label })]
+          ).catch(() => {});
+          await db.query(
+            `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,'referral_reward',$2,NOW())`,
+            [referredById, JSON.stringify({ filleuls: count, reward_days: palier.days })]
+          ).catch(() => {});
+        }
+
+        // Notif admin : nouveau filleul
+        await db.query(
+          `INSERT INTO admin_notifications (type, title, body, created_at)
+           VALUES ('referral', $1, $2, NOW())`,
+          [
+            `👥 Nouveau filleul pour ${parrain.email}`,
+            `${email} s'est inscrit via le lien de parrainage (filleul #${count})`
+          ]
+        ).catch(() => {});
+      } catch (err) {
+        console.error("Referral reward error:", err.message);
+      }
+    }
+
+    // ── Appliquer le code promo si fourni ─────────────────────────────────────
+    let promoResult = null;
+    if (promo_code) {
+      try {
+        promoResult = await applyPromoCode(promo_code, newUserId);
+      } catch (err) {
+        console.error("Promo code apply error:", err.message);
+      }
+    }
 
     // Envoyer email de vérification
     try {
       await sendVerificationEmail(email, verificationToken);
     } catch (emailErr) {
       console.error("Email send error:", emailErr.message);
-      // On crée quand même le compte mais on avertit
     }
 
     // Log l'inscription
     try {
       await db.query(
         `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
-        [result.rows[0].id, "register", JSON.stringify({ email })]
+        [newUserId, "register", JSON.stringify({ email, promo_code: promo_code || null, ref_code: ref_code || null })]
       );
     } catch {}
 
-    res.json({ success: true, message: "Account created. Please check your email to verify your account." });
+    res.json({
+      success: true,
+      message: "Account created. Please check your email to verify your account.",
+      promo: promoResult || null,
+      referral_code: referralCode,
+    });
   } catch {
     res.status(400).json({ message: "User already exists" });
+  }
+});
+
+// ─── GET /auth/validate-promo — Vérifier un code promo (public) ──────────────
+router.get("/validate-promo", async (req, res) => {
+  const { code } = req.query;
+  if (!code) return res.status(400).json({ valid: false, message: "Code requis" });
+  try {
+    const codeRes = await db.query(
+      "SELECT code, type, plan, duration_days, discount_percent, discount_months, max_uses, used_count, expires_at FROM promo_codes WHERE code=$1 AND active=true",
+      [code.toUpperCase().trim()]
+    );
+    if (!codeRes.rows.length) return res.json({ valid: false, message: "Code invalide ou inactif" });
+    const promo = codeRes.rows[0];
+    if (promo.expires_at && new Date(promo.expires_at) < new Date())
+      return res.json({ valid: false, message: "Code expiré" });
+    if (promo.max_uses && promo.used_count >= promo.max_uses)
+      return res.json({ valid: false, message: "Code épuisé" });
+    res.json({ valid: true, promo });
+  } catch (err) {
+    console.error("validate-promo error:", err.message);
+    res.status(500).json({ valid: false, message: "Erreur serveur" });
+  }
+});
+
+// ─── POST /auth/apply-promo — Appliquer un code promo (user connecté) ────────
+router.post("/apply-promo", authenticateToken, async (req, res) => {
+  const { code } = req.body;
+  if (!code) return res.status(400).json({ success: false, message: "Code requis" });
+  try {
+    const result = await applyPromoCode(code, req.user.id);
+    if (!result.applied) return res.status(400).json({ success: false, message: result.message });
+    res.json({ success: true, ...result });
+  } catch (err) {
+    console.error("apply-promo error:", err.message);
+    res.status(500).json({ success: false, message: "Erreur serveur" });
   }
 });
 

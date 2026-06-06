@@ -39,6 +39,19 @@ const logAction = async (adminId, action, targetId = null, details = null) => {
   }
 };
 
+// ─── Helper : créer notification admin ───────────────────────────────────────
+const addAdminNotif = async (type, title, body = null) => {
+  try {
+    await db.query(
+      `INSERT INTO admin_notifications (type, title, body, created_at)
+       VALUES ($1, $2, $3, NOW())`,
+      [type, title, body]
+    );
+  } catch (err) {
+    console.error("admin notif error:", err.message);
+  }
+};
+
 // ─── GET /admin/admins — Liste des administrateurs ───────────────────────────
 router.get("/admins", adminAuth, async (req, res) => {
   try {
@@ -194,199 +207,77 @@ router.patch("/users/:id", adminAuth, async (req, res) => {
           override_duration, override_reason } = req.body;
   // override_duration : "7d" | "30d" | "90d" | "permanent" | null (= sync Stripe)
 
-  const fields = [];
-  const values = [];
-  let i = 1;
-
-  // ── Changement de plan avec gestion override ──────────────────────────────
-  if (plan !== undefined) {
-    fields.push(`plan=$${i++}`);
-    values.push(plan);
-
-    // Toujours mettre à jour had_paid_plan et highest_plan_ever
-    if (plan !== "Free") {
-      fields.push(`had_paid_plan=TRUE`);
-      fields.push(`highest_plan_ever=CASE
-        WHEN highest_plan_ever='Agency' THEN 'Agency'
-        WHEN $${i}='Agency' THEN 'Agency'
-        WHEN highest_plan_ever='Business' AND $${i} IN ('Business','Agency') THEN $${i}
-        WHEN $${i}='Pro' AND (highest_plan_ever IS NULL OR highest_plan_ever='Free') THEN 'Pro'
-        ELSE COALESCE(highest_plan_ever, $${i})
-      END`);
-      values.push(plan); i++;
-    }
-
-    // Override temporaire
-    if (override_duration && plan !== "Free") {
-      let expiresAt = null;
-      if (override_duration === "7d")       expiresAt = new Date(Date.now() + 7  * 86400000);
-      else if (override_duration === "30d") expiresAt = new Date(Date.now() + 30 * 86400000);
-      else if (override_duration === "90d") expiresAt = new Date(Date.now() + 90 * 86400000);
-      // "permanent" → expiresAt reste null
-
-      fields.push(`admin_override=TRUE`);
-      fields.push(`admin_override_plan=$${i++}`);
-      values.push(plan);
-      fields.push(`override_expires_at=$${i++}`);
-      values.push(expiresAt);
-      fields.push(`override_granted_by=$${i++}`);
-      values.push(req.user.id);
-      fields.push(`override_reason=$${i++}`);
-      values.push(override_reason || null);
-
-      // Reset quota si upgrade
-      fields.push(`generations_count=0`);
-      fields.push(`quota_reset_date=NOW()`);
-
-    } else if (plan === "Free") {
-      // Downgrade admin → effacer l'override
-      fields.push(`admin_override=FALSE`);
-      fields.push(`admin_override_plan=NULL`);
-      fields.push(`override_expires_at=NULL`);
-      fields.push(`override_granted_by=NULL`);
-      fields.push(`downgraded_at=NOW()`);
-    }
-  }
-
-  if (generations_count !== undefined) { fields.push(`generations_count=$${i++}`); values.push(parseInt(generations_count)); }
-  if (banned            !== undefined) { fields.push(`banned=$${i++}`);            values.push(banned); }
-  if (email_verified    !== undefined) { fields.push(`email_verified=$${i++}`);    values.push(email_verified); }
-
-  if (!fields.length) return res.status(400).json({ error: "Nothing to update" });
-  values.push(req.params.id);
-
   try {
-    const result = await db.query(
-      `UPDATE users SET ${fields.join(",")} WHERE id=$${i} RETURNING id, email, plan, generations_count, admin_override, override_expires_at`,
-      values
-    );
-    if (!result.rows.length) return res.status(404).json({ error: "User not found" });
-    const updatedUser = result.rows[0];
+    const userRes = await db.query("SELECT * FROM users WHERE id=$1", [req.params.id]);
+    if (!userRes.rows.length) return res.status(404).json({ message: "User introuvable" });
+    const user = userRes.rows[0];
 
-    // ── Logs ────────────────────────────────────────────────────────────────
-    const adminAction =
-      banned !== undefined         ? (banned ? "ban_user" : "unban_user") :
-      email_verified !== undefined ? "verify_email" :
-      plan !== undefined           ? "edit_user_plan" :
-      "edit_user";
-
-    await logAction(req.user.id, adminAction, req.params.id, {
-      plan, generations_count, banned, email_verified,
-      override_duration, override_reason,
-      override_expires_at: updatedUser.override_expires_at,
-      note: override_duration ? `Admin override (${override_duration}) — no Stripe charge` : undefined,
-    });
+    const fields = [];
+    const values = [];
+    let i = 1;
 
     if (plan !== undefined) {
-      await db.query(
-        `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,$2,$3,NOW())`,
-        [req.params.id, plan === "Free" ? "cancel_subscription" : "plan_upgrade",
-         JSON.stringify({
-           plan,
-           changed_by: "admin",
-           admin_id: req.user.id,
-           override_duration: override_duration || null,
-           override_reason: override_reason || null,
-           no_stripe_charge: true,
-         })]
-      ).catch(() => {});
+      fields.push(`plan=$${i++}`); values.push(plan);
+      // Override admin
+      if (override_duration) {
+        let expiresAt = null;
+        if (override_duration === "7d")        expiresAt = new Date(Date.now() + 7*86400000);
+        else if (override_duration === "30d")  expiresAt = new Date(Date.now() + 30*86400000);
+        else if (override_duration === "90d")  expiresAt = new Date(Date.now() + 90*86400000);
+        // permanent → null
+
+        fields.push(`admin_override=true`);
+        fields.push(`admin_override_plan=$${i++}`); values.push(plan);
+        fields.push(`override_expires_at=$${i++}`); values.push(expiresAt);
+        fields.push(`override_reason=$${i++}`);     values.push(override_reason || null);
+        fields.push(`override_granted_by=$${i++}`); values.push(req.user.id);
+      }
     }
-    if (banned === true)  await db.query(`INSERT INTO user_logs (user_id,action,details,created_at) VALUES ($1,'account_banned',$2,NOW())`,   [req.params.id, JSON.stringify({ by:"admin" })]).catch(() => {});
-    if (banned === false) await db.query(`INSERT INTO user_logs (user_id,action,details,created_at) VALUES ($1,'account_unbanned',$2,NOW())`, [req.params.id, JSON.stringify({ by:"admin" })]).catch(() => {});
+    if (generations_count !== undefined) { fields.push(`generations_count=$${i++}`); values.push(generations_count); }
+    if (banned !== undefined)             { fields.push(`banned=$${i++}`);             values.push(banned); }
+    if (email_verified !== undefined)     { fields.push(`email_verified=$${i++}`);     values.push(email_verified); }
 
-    console.log(`[admin] PATCH user=${req.params.id} plan=${plan} override=${override_duration || "none"} by admin=${req.user.id}`);
-    res.json({ success: true, user: updatedUser });
-  } catch (err) {
-    console.error("Admin patch user error:", err.message);
-    res.status(500).json({ error: "Failed to update user" });
-  }
-});
+    if (!fields.length) return res.status(400).json({ message: "Nothing to update" });
 
-// ─── POST /admin/users/:id/reset-quota ───────────────────────────────────────
-router.post("/users/:id/reset-quota", adminAuth, async (req, res) => {
-  try {
-    await db.query(
-      "UPDATE users SET generations_count=0, quota_reset_date=NOW() WHERE id=$1",
-      [req.params.id]
-    );
-    await logAction(req.user.id, "reset_quota", req.params.id);
-    try {
-      await db.query(
-        `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
-        [req.params.id, "quota_reset", JSON.stringify({ by: "admin", reset_to: 0 })]
-      );
-    } catch {}
+    values.push(req.params.id);
+    await db.query(`UPDATE users SET ${fields.join(",")} WHERE id=$${i}`, values);
+
+    const details = { plan, generations_count, banned, email_verified, override_duration, override_reason };
+    await logAction(req.user.id, banned !== undefined ? (banned ? "ban_user" : "unban_user") : "edit_user", req.params.id, details);
+
     res.json({ success: true });
   } catch (err) {
-    console.error("Reset quota error:", err.message);
-    res.status(500).json({ error: "Failed to reset quota" });
+    console.error("Patch user error:", err.message);
+    res.status(500).json({ error: err.message });
   }
 });
 
 // ─── DELETE /admin/users/:id ──────────────────────────────────────────────────
 router.delete("/users/:id", adminAuth, async (req, res) => {
-  const id = req.params.id;
   try {
-    // Supprimer dans l'ordre pour respecter les contraintes FK
-    await db.query("DELETE FROM publish_log    WHERE user_id=$1", [id]);
-    await db.query("DELETE FROM calendar_posts WHERE user_id=$1", [id]);
-    await db.query("DELETE FROM user_logs      WHERE user_id=$1", [id]);
-    await db.query("DELETE FROM brand_memory WHERE project_name IN (SELECT name FROM projects WHERE user_id=$1)", [id]);
-    await db.query("DELETE FROM posts          WHERE user_id=$1", [id]);
-    await db.query("DELETE FROM projects       WHERE user_id=$1", [id]);
-    await db.query("DELETE FROM team_members   WHERE owner_id=$1 OR member_id=$1", [id]);
-    await db.query("DELETE FROM agency_clients WHERE agency_id=$1", [id]);
-    await db.query("DELETE FROM users          WHERE id=$1", [id]);
-    await logAction(req.user.id, "delete_user", id);
+    const userRes = await db.query("SELECT email FROM users WHERE id=$1", [req.params.id]);
+    if (!userRes.rows.length) return res.status(404).json({ message: "User introuvable" });
+    if (userRes.rows[0].email === ADMIN_EMAIL)
+      return res.status(403).json({ message: "Impossible de supprimer l'admin principal" });
+    await db.query("DELETE FROM users WHERE id=$1", [req.params.id]);
+    await logAction(req.user.id, "delete_user", req.params.id, { email: userRes.rows[0].email });
     res.json({ success: true });
   } catch (err) {
-    console.error("Admin delete user error:", err.message);
+    console.error("Delete user error:", err.message);
     res.status(500).json({ error: "Failed to delete user" });
-  }
-});
-
-// ─── POST /admin/logs — Enregistrer une action admin ─────────────────────────
-router.post("/logs", adminAuth, async (req, res) => {
-  const { action, target_user_id, details } = req.body;
-  if (!action) return res.status(400).json({ error: "action required" });
-  try {
-    await logAction(req.user.id, action, target_user_id || null, details ? JSON.parse(details) : null);
-
-    // Sync dans user_logs pour les actions impactant le user
-    const userImpactActions = {
-      "force_password_reset": "reset_password",
-      "send_password_reset":  "reset_password",
-      "resend_verification":  "verify_email",
-      "ban_user":             "account_banned",
-      "unban_user":           "account_unbanned",
-    };
-    if (target_user_id && userImpactActions[action]) {
-      try {
-        await db.query(
-          `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1, $2, $3, NOW())`,
-          [target_user_id, userImpactActions[action], JSON.stringify({ by: "admin", admin_action: action })]
-        );
-      } catch {}
-    }
-
-    res.json({ success: true });
-  } catch (err) {
-    console.error("Admin log error:", err.message);
-    res.status(500).json({ error: "Failed to log action" });
   }
 });
 
 // ─── GET /admin/logs ──────────────────────────────────────────────────────────
 router.get("/logs", adminAuth, async (req, res) => {
   try {
-    const { page = 1, type } = req.query;
-    const limit  = 30;
+    const { page = 1, type = "admin" } = req.query;
+    const limit  = 50;
     const offset = (page - 1) * limit;
 
-    // Actions admin vs user vs billing
-    const ADMIN_ACTIONS   = ["create_admin","delete_admin","reset_admin_password"];
-    const USER_ACTIONS    = ["edit_user","ban_user","unban_user","reset_quota","delete_user","verify_email","resend_verification","force_password_reset","send_password_reset","edit_user_plan"];
-    const BILLING_ACTIONS = ["plan_upgrade","cancel_subscription","subscription_renewed","payment_failed","renewal_reminder_3d","renewal_reminder_30d","grace_period_warning_24h","grace_period_expired_downgrade","winback_7d","winback_30d","winback_90d","override_expired"];
+    const ADMIN_ACTIONS   = ["edit_user","ban_user","unban_user","reset_quota","delete_user","verify_email","resend_verification","force_password_reset","send_password_reset","create_admin","delete_admin","reset_admin_password","edit_user_plan","override_expired","promo_code_created","promo_code_deleted","promo_code_toggled"];
+    const BILLING_ACTIONS = ["plan_upgrade","cancel_subscription","subscription_renewed","payment_failed","renewal_reminder_3d","renewal_reminder_30d","grace_period_warning_24h","grace_period_expired_downgrade","winback_7d","winback_30d","winback_90d"];
+    const USER_ACTIONS    = ["register","login","save_post","generate","promo_code_used","referral_reward"];
     const TEAM_ACTIONS    = ["post_approved","post_rejected","post_assigned","post_assigned_to_me","post_comment_added","post_comment_deleted","post_linked_to_client","post_unlinked_from_client","team_calendar_add","team_calendar_move","team_calendar_delete","team_calendar_published","team_permissions_updated","webhook_subscribed","webhook_deleted","agency_analytics_view"];
 
     let whereClause = "";
@@ -581,4 +472,217 @@ router.get("/billing-stats", adminAuth, async (req, res) => {
   }
 });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// ─── CODES PROMO ──────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── GET /admin/promo-codes — Liste tous les codes ───────────────────────────
+router.get("/promo-codes", adminAuth, async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT pc.*, u.email AS created_by_email
+       FROM promo_codes pc
+       LEFT JOIN users u ON u.id = pc.created_by
+       ORDER BY pc.created_at DESC`
+    );
+    res.json({ codes: result.rows });
+  } catch (err) {
+    console.error("promo-codes list error:", err.message);
+    res.status(500).json({ error: "Failed to fetch promo codes" });
+  }
+});
+
+// ─── POST /admin/promo-codes — Créer un code ────────────────────────────────
+router.post("/promo-codes", adminAuth, async (req, res) => {
+  const {
+    code, type, plan, duration_days,
+    discount_percent, discount_months,
+    max_uses, expires_at, note,
+  } = req.body;
+
+  if (!code || !type) return res.status(400).json({ message: "code et type requis" });
+  if (type === "access" && !plan) return res.status(400).json({ message: "plan requis pour type=access" });
+  if (type === "discount" && (!discount_percent || !discount_months))
+    return res.status(400).json({ message: "discount_percent et discount_months requis pour type=discount" });
+
+  try {
+    const result = await db.query(
+      `INSERT INTO promo_codes
+         (code, type, plan, duration_days, discount_percent, discount_months,
+          max_uses, expires_at, created_by, note, active)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,true)
+       RETURNING *`,
+      [
+        code.toUpperCase().trim(),
+        type,
+        plan || null,
+        duration_days || null,
+        discount_percent || null,
+        discount_months || null,
+        max_uses || 1,
+        expires_at || null,
+        req.user.id,
+        note || null,
+      ]
+    );
+
+    await logAction(req.user.id, "promo_code_created", null, { code, type, plan, max_uses });
+    await addAdminNotif(
+      "promo_created",
+      `🎁 Code créé : ${code.toUpperCase()}`,
+      `Type: ${type} | Plan: ${plan || "-"} | Max usages: ${max_uses || 1}`
+    );
+
+    res.json({ success: true, code: result.rows[0] });
+  } catch (err) {
+    if (err.code === "23505") return res.status(400).json({ message: "Ce code existe déjà" });
+    console.error("promo-codes create error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── DELETE /admin/promo-codes/:id — Supprimer un code ──────────────────────
+router.delete("/promo-codes/:id", adminAuth, async (req, res) => {
+  try {
+    const codeRes = await db.query("SELECT code FROM promo_codes WHERE id=$1", [req.params.id]);
+    if (!codeRes.rows.length) return res.status(404).json({ message: "Code introuvable" });
+    await db.query("DELETE FROM promo_codes WHERE id=$1", [req.params.id]);
+    await logAction(req.user.id, "promo_code_deleted", null, { code: codeRes.rows[0].code });
+    res.json({ success: true });
+  } catch (err) {
+    console.error("promo-codes delete error:", err.message);
+    res.status(500).json({ error: "Failed to delete promo code" });
+  }
+});
+
+// ─── PATCH /admin/promo-codes/:id/toggle — Activer/désactiver un code ───────
+router.patch("/promo-codes/:id/toggle", adminAuth, async (req, res) => {
+  try {
+    const result = await db.query(
+      "UPDATE promo_codes SET active = NOT active WHERE id=$1 RETURNING code, active",
+      [req.params.id]
+    );
+    if (!result.rows.length) return res.status(404).json({ message: "Code introuvable" });
+    await logAction(req.user.id, "promo_code_toggled", null, { code: result.rows[0].code, active: result.rows[0].active });
+    res.json({ success: true, active: result.rows[0].active });
+  } catch (err) {
+    console.error("promo-codes toggle error:", err.message);
+    res.status(500).json({ error: "Failed to toggle promo code" });
+  }
+});
+
+// ─── GET /admin/promo-codes/:id/uses — Usages d'un code ─────────────────────
+router.get("/promo-codes/:id/uses", adminAuth, async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT pu.*, u.email AS user_email, u.plan AS user_plan
+       FROM promo_uses pu
+       LEFT JOIN users u ON u.id = pu.user_id
+       WHERE pu.code_id = $1
+       ORDER BY pu.used_at DESC`,
+      [req.params.id]
+    );
+    res.json({ uses: result.rows });
+  } catch (err) {
+    console.error("promo-codes uses error:", err.message);
+    res.status(500).json({ error: "Failed to fetch uses" });
+  }
+});
+
+// ─── GET /admin/promo-stats — Stats globales codes promo ────────────────────
+router.get("/promo-stats", adminAuth, async (req, res) => {
+  try {
+    const [totalCodes, activeCodes, totalUses, referrals] = await Promise.all([
+      db.query("SELECT COUNT(*)::int AS total FROM promo_codes"),
+      db.query("SELECT COUNT(*)::int AS total FROM promo_codes WHERE active=true"),
+      db.query("SELECT COUNT(*)::int AS total FROM promo_uses"),
+      db.query("SELECT COUNT(*)::int AS total FROM users WHERE referred_by IS NOT NULL"),
+    ]);
+    res.json({
+      totalCodes:  totalCodes.rows[0].total,
+      activeCodes: activeCodes.rows[0].total,
+      totalUses:   totalUses.rows[0].total,
+      totalReferrals: referrals.rows[0].total,
+    });
+  } catch (err) {
+    console.error("promo-stats error:", err.message);
+    res.status(500).json({ error: "Failed to fetch promo stats" });
+  }
+});
+
+// ─── GET /admin/referrals — Liste des parrainages ────────────────────────────
+router.get("/referrals", adminAuth, async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT u.id, u.email, u.referral_code, u.referral_count, u.referral_reward_days,
+              COUNT(r.id)::int AS actual_referrals
+       FROM users u
+       LEFT JOIN users r ON r.referred_by = u.id
+       WHERE u.referral_code IS NOT NULL
+       GROUP BY u.id
+       ORDER BY actual_referrals DESC
+       LIMIT 100`
+    );
+    res.json({ referrals: result.rows });
+  } catch (err) {
+    console.error("referrals error:", err.message);
+    res.status(500).json({ error: "Failed to fetch referrals" });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ─── NOTIFICATIONS ADMIN ──────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── GET /admin/notifications — Liste des notifs (non lues en premier) ───────
+router.get("/notifications", adminAuth, async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT * FROM admin_notifications
+       ORDER BY read ASC, created_at DESC
+       LIMIT 50`
+    );
+    const unread = result.rows.filter(n => !n.read).length;
+    res.json({ notifications: result.rows, unread });
+  } catch (err) {
+    console.error("notifications error:", err.message);
+    res.status(500).json({ error: "Failed to fetch notifications" });
+  }
+});
+
+// ─── PATCH /admin/notifications/:id/read — Marquer comme lue ─────────────────
+router.patch("/notifications/:id/read", adminAuth, async (req, res) => {
+  try {
+    await db.query("UPDATE admin_notifications SET read=true WHERE id=$1", [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("notification read error:", err.message);
+    res.status(500).json({ error: "Failed to mark notification" });
+  }
+});
+
+// ─── PATCH /admin/notifications/read-all — Tout marquer comme lu ─────────────
+router.patch("/notifications/read-all", adminAuth, async (req, res) => {
+  try {
+    await db.query("UPDATE admin_notifications SET read=true WHERE read=false");
+    res.json({ success: true });
+  } catch (err) {
+    console.error("notifications read-all error:", err.message);
+    res.status(500).json({ error: "Failed to mark all notifications" });
+  }
+});
+
+// ─── DELETE /admin/notifications — Vider toutes les notifs ───────────────────
+router.delete("/notifications", adminAuth, async (req, res) => {
+  try {
+    await db.query("DELETE FROM admin_notifications");
+    res.json({ success: true });
+  } catch (err) {
+    console.error("notifications clear error:", err.message);
+    res.status(500).json({ error: "Failed to clear notifications" });
+  }
+});
+
 export default router;
+// export addAdminNotif pour usage dans auth.js / server.js
+export { addAdminNotif };

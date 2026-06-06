@@ -56,6 +56,13 @@ const ACTION_LABELS = {
   // Webhooks
   webhook_subscribed:              { label:"🔗 Webhook connecté",       color:"#38bdf8" },
   webhook_deleted:                 { label:"🗑️ Webhook supprimé",      color:"#ef4444" },
+  // Promo & Referral
+  promo_code_created:              { label:"🎁 Code créé",              color:"#22c55e" },
+  promo_code_deleted:              { label:"🗑️ Code supprimé",         color:"#ef4444" },
+  promo_code_toggled:              { label:"🔄 Code toggle",            color:"#f59e0b" },
+  promo_code_used:                 { label:"🎟️ Code utilisé",          color:"#a78bfa" },
+  promo_expired:                   { label:"⏰ Code/accès expiré",      color:"#f97316" },
+  referral_reward:                 { label:"🏆 Récompense parrainage",  color:"#f59e0b" },
 };
 
 const s = {
@@ -1138,6 +1145,518 @@ function AdminsTab({ token }) {
   );
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// ─── PromoTab — Gestion des codes promo ──────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+function PromoTab({ token }) {
+  const [codes, setCodes]         = useState([]);
+  const [stats, setStats]         = useState({});
+  const [loading, setLoading]     = useState(true);
+  const [creating, setCreating]   = useState(false);
+  const [usesModal, setUsesModal] = useState(null); // { code, uses }
+  const [form, setForm]           = useState({
+    code: "", type: "access", plan: "Pro", duration_days: 30,
+    discount_percent: "", discount_months: "", max_uses: 1,
+    expires_at: "", note: "",
+  });
+  const [formErr, setFormErr]     = useState("");
+  const [saving, setSaving]       = useState(false);
+
+  const headers = { Authorization: `Bearer ${token}` };
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const [codesRes, statsRes] = await Promise.all([
+        fetch(`${API}/admin/promo-codes`, { headers }).then(r => r.json()),
+        fetch(`${API}/admin/promo-stats`, { headers }).then(r => r.json()),
+      ]);
+      setCodes(codesRes.codes || []);
+      setStats(statsRes);
+    } catch {}
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const createCode = async () => {
+    setFormErr("");
+    if (!form.code) return setFormErr("Le code est requis");
+    if (form.type === "access" && !form.plan) return setFormErr("Plan requis");
+    if (form.type === "discount" && (!form.discount_percent || !form.discount_months))
+      return setFormErr("Réduction % et durée requis");
+    setSaving(true);
+    try {
+      const r = await fetch(`${API}/admin/promo-codes`, {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...form,
+          code: form.code.toUpperCase().trim(),
+          duration_days: form.duration_days || null,
+          max_uses: parseInt(form.max_uses) || 1,
+          expires_at: form.expires_at || null,
+        }),
+      });
+      const d = await r.json();
+      if (!d.success) { setFormErr(d.message || "Erreur"); setSaving(false); return; }
+      setCreating(false);
+      setForm({ code:"", type:"access", plan:"Pro", duration_days:30, discount_percent:"", discount_months:"", max_uses:1, expires_at:"", note:"" });
+      load();
+    } catch { setFormErr("Erreur serveur"); }
+    setSaving(false);
+  };
+
+  const toggleCode = async (id) => {
+    await fetch(`${API}/admin/promo-codes/${id}/toggle`, { method:"PATCH", headers });
+    load();
+  };
+
+  const deleteCode = async (id, code) => {
+    if (!confirm(`Supprimer le code ${code} ?`)) return;
+    await fetch(`${API}/admin/promo-codes/${id}`, { method:"DELETE", headers });
+    load();
+  };
+
+  const loadUses = async (id, code) => {
+    const r = await fetch(`${API}/admin/promo-codes/${id}/uses`, { headers });
+    const d = await r.json();
+    setUsesModal({ code, uses: d.uses || [] });
+  };
+
+  const TYPE_COLORS = { access:"#22c55e", discount:"#f59e0b" };
+  const DURATIONS = [
+    { label:"7 jours",    value:7 },
+    { label:"30 jours",   value:30 },
+    { label:"60 jours",   value:60 },
+    { label:"90 jours",   value:90 },
+    { label:"Permanent",  value:null },
+  ];
+
+  return (
+    <div>
+      {/* Stats */}
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:24 }}>
+        {[
+          { label:"CODES TOTAL",    value:stats.totalCodes  || 0, color:"#e2e8f0" },
+          { label:"CODES ACTIFS",   value:stats.activeCodes || 0, color:"#22c55e" },
+          { label:"TOTAL USAGES",   value:stats.totalUses   || 0, color:"#a78bfa" },
+          { label:"FILLEULS TOTAL", value:stats.totalReferrals || 0, color:"#f59e0b" },
+        ].map(s => <StatCard key={s.label} label={s.label} value={s.value} color={s.color} />)}
+      </div>
+
+      {/* Header + bouton créer */}
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+        <div style={{ color:"#e2e8f0", fontWeight:800, fontSize:16 }}>🎁 Codes Promo</div>
+        <button style={s.btn} onClick={() => setCreating(c => !c)}>
+          {creating ? "✕ Annuler" : "+ Créer un code"}
+        </button>
+      </div>
+
+      {/* Formulaire création */}
+      {creating && (
+        <div style={{ ...s.card, marginBottom:20, border:"1px solid rgba(34,197,94,0.2)" }}>
+          <div style={{ color:"#22c55e", fontWeight:800, fontSize:13, marginBottom:16 }}>🆕 Nouveau code promo</div>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))", gap:12 }}>
+            {/* Code */}
+            <div>
+              <label style={s.label}>CODE *</label>
+              <input style={{ ...s.input, width:"100%", boxSizing:"border-box", textTransform:"uppercase" }}
+                placeholder="ex: LAUNCH2026"
+                value={form.code}
+                onChange={e => setForm(f => ({ ...f, code: e.target.value.toUpperCase() }))}
+              />
+            </div>
+            {/* Type */}
+            <div>
+              <label style={s.label}>TYPE *</label>
+              <select style={{ ...s.input, width:"100%", boxSizing:"border-box" }}
+                value={form.type}
+                onChange={e => setForm(f => ({ ...f, type: e.target.value }))}>
+                <option value="access">Accès gratuit</option>
+                <option value="discount">Réduction %</option>
+              </select>
+            </div>
+            {/* Plan (si access) */}
+            {form.type === "access" && (
+              <div>
+                <label style={s.label}>PLAN *</label>
+                <select style={{ ...s.input, width:"100%", boxSizing:"border-box" }}
+                  value={form.plan}
+                  onChange={e => setForm(f => ({ ...f, plan: e.target.value }))}>
+                  {["Pro","Business","Agency"].map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+            )}
+            {/* Durée (si access) */}
+            {form.type === "access" && (
+              <div>
+                <label style={s.label}>DURÉE</label>
+                <select style={{ ...s.input, width:"100%", boxSizing:"border-box" }}
+                  value={form.duration_days ?? "null"}
+                  onChange={e => setForm(f => ({ ...f, duration_days: e.target.value === "null" ? null : parseInt(e.target.value) }))}>
+                  {DURATIONS.map(d => <option key={d.label} value={d.value ?? "null"}>{d.label}</option>)}
+                </select>
+              </div>
+            )}
+            {/* Réduction % (si discount) */}
+            {form.type === "discount" && (
+              <div>
+                <label style={s.label}>RÉDUCTION % *</label>
+                <input type="number" min="1" max="100" style={{ ...s.input, width:"100%", boxSizing:"border-box" }}
+                  placeholder="ex: 50"
+                  value={form.discount_percent}
+                  onChange={e => setForm(f => ({ ...f, discount_percent: e.target.value }))}
+                />
+              </div>
+            )}
+            {/* Durée réduction (si discount) */}
+            {form.type === "discount" && (
+              <div>
+                <label style={s.label}>DURÉE (MOIS) *</label>
+                <input type="number" min="1" style={{ ...s.input, width:"100%", boxSizing:"border-box" }}
+                  placeholder="ex: 3"
+                  value={form.discount_months}
+                  onChange={e => setForm(f => ({ ...f, discount_months: e.target.value }))}
+                />
+              </div>
+            )}
+            {/* Max usages */}
+            <div>
+              <label style={s.label}>MAX USAGES</label>
+              <input type="number" min="1" style={{ ...s.input, width:"100%", boxSizing:"border-box" }}
+                placeholder="1"
+                value={form.max_uses}
+                onChange={e => setForm(f => ({ ...f, max_uses: e.target.value }))}
+              />
+              <div style={{ color:"#475569", fontSize:10, marginTop:4 }}>1 = usage unique</div>
+            </div>
+            {/* Expiration */}
+            <div>
+              <label style={s.label}>DATE D'EXPIRATION</label>
+              <input type="date" style={{ ...s.input, width:"100%", boxSizing:"border-box" }}
+                value={form.expires_at}
+                onChange={e => setForm(f => ({ ...f, expires_at: e.target.value }))}
+              />
+            </div>
+            {/* Note */}
+            <div style={{ gridColumn:"1/-1" }}>
+              <label style={s.label}>NOTE INTERNE</label>
+              <input style={{ ...s.input, width:"100%", boxSizing:"border-box" }}
+                placeholder="ex: Campagne LinkedIn Q1 2026"
+                value={form.note}
+                onChange={e => setForm(f => ({ ...f, note: e.target.value }))}
+              />
+            </div>
+          </div>
+          {formErr && <div style={{ color:"#ef4444", fontSize:12, marginTop:10 }}>❌ {formErr}</div>}
+          <div style={{ marginTop:16, display:"flex", gap:10 }}>
+            <button style={s.btn} onClick={createCode} disabled={saving}>
+              {saving ? "Création..." : "✅ Créer le code"}
+            </button>
+            <button style={{ ...s.btnSm, background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.1)", color:"#64748b", padding:"9px 16px" }} onClick={() => setCreating(false)}>
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Table des codes */}
+      {loading ? (
+        <div style={{ textAlign:"center", padding:40, color:"#475569" }}>Chargement...</div>
+      ) : codes.length === 0 ? (
+        <div style={{ ...s.card, textAlign:"center", color:"#475569", padding:40 }}>Aucun code promo créé</div>
+      ) : (
+        <div style={{ ...s.card, padding:0, overflow:"hidden" }}>
+          <div style={{ overflowX:"auto" }}>
+            <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+              <thead>
+                <tr style={{ background:"rgba(255,255,255,0.03)" }}>
+                  {["CODE","TYPE","PLAN/RÉDUCTION","DURÉE","USAGES","EXPIRE","NOTE","STATUT","ACTIONS"].map(h => (
+                    <th key={h} style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"12px 14px", borderBottom:"1px solid rgba(255,255,255,0.06)", whiteSpace:"nowrap" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {codes.map(c => {
+                  const isExpired = c.expires_at && new Date(c.expires_at) < new Date();
+                  const isExhausted = c.max_uses && c.used_count >= c.max_uses;
+                  return (
+                    <tr key={c.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)", opacity: (!c.active || isExpired || isExhausted) ? 0.5 : 1 }}>
+                      <td style={{ padding:"10px 14px" }}>
+                        <span style={{ fontFamily:"monospace", fontWeight:800, color:"#e2e8f0", fontSize:13, letterSpacing:"1px" }}>{c.code}</span>
+                      </td>
+                      <td style={{ padding:"10px 14px" }}>
+                        <span style={{ background:`${TYPE_COLORS[c.type]}15`, border:`1px solid ${TYPE_COLORS[c.type]}30`, borderRadius:20, padding:"2px 8px", fontSize:10, fontWeight:700, color:TYPE_COLORS[c.type] }}>
+                          {c.type === "access" ? "🎁 Accès" : "💰 Réduction"}
+                        </span>
+                      </td>
+                      <td style={{ padding:"10px 14px", color:"#94a3b8" }}>
+                        {c.type === "access"
+                          ? <span style={s.badge(c.plan)}>{c.plan}</span>
+                          : <span style={{ color:"#f59e0b", fontWeight:700 }}>-{c.discount_percent}% · {c.discount_months} mois</span>
+                        }
+                      </td>
+                      <td style={{ padding:"10px 14px", color:"#64748b" }}>
+                        {c.type === "access"
+                          ? (c.duration_days ? `${c.duration_days}j` : "∞ Permanent")
+                          : `${c.discount_months} mois`
+                        }
+                      </td>
+                      <td style={{ padding:"10px 14px" }}>
+                        <span style={{ color: isExhausted ? "#ef4444" : "#94a3b8", fontWeight:700 }}>
+                          {c.used_count}/{c.max_uses || "∞"}
+                        </span>
+                      </td>
+                      <td style={{ padding:"10px 14px", color: isExpired ? "#ef4444" : "#64748b", fontSize:11 }}>
+                        {c.expires_at ? new Date(c.expires_at).toLocaleDateString("fr-FR") : "—"}
+                      </td>
+                      <td style={{ padding:"10px 14px", color:"#475569", fontSize:11, maxWidth:140, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                        {c.note || "—"}
+                      </td>
+                      <td style={{ padding:"10px 14px" }}>
+                        <span style={{ color: c.active && !isExpired && !isExhausted ? "#22c55e" : "#ef4444", fontSize:10, fontWeight:700 }}>
+                          {c.active && !isExpired && !isExhausted ? "✅ Actif" : isExpired ? "⏰ Expiré" : isExhausted ? "🔴 Épuisé" : "⏸ Inactif"}
+                        </span>
+                      </td>
+                      <td style={{ padding:"10px 14px" }}>
+                        <div style={{ display:"flex", gap:6, flexWrap:"nowrap" }}>
+                          <button title="Voir les usages" style={{ ...s.btnSm, background:"rgba(139,92,246,0.1)", border:"1px solid rgba(139,92,246,0.3)", color:"#a78bfa" }} onClick={() => loadUses(c.id, c.code)}>👁</button>
+                          <button title={c.active ? "Désactiver" : "Activer"} style={{ ...s.btnSm, background:"rgba(245,158,11,0.1)", border:"1px solid rgba(245,158,11,0.3)", color:"#f59e0b" }} onClick={() => toggleCode(c.id)}>{c.active ? "⏸" : "▶"}</button>
+                          <button title="Supprimer" style={{ ...s.btnSm, background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", color:"#ef4444" }} onClick={() => deleteCode(c.id, c.code)}>🗑</button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Section Parrainage */}
+      <div style={{ marginTop:32 }}>
+        <div style={{ color:"#e2e8f0", fontWeight:800, fontSize:16, marginBottom:16 }}>👥 Parrainages</div>
+        <ReferralsTab token={token} />
+      </div>
+
+      {/* Modal usages */}
+      {usesModal && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center" }}
+          onClick={() => setUsesModal(null)}>
+          <div style={{ background:"#0f172a", border:"1px solid rgba(220,38,38,0.2)", borderRadius:16, padding:24, maxWidth:600, width:"90%", maxHeight:"80vh", overflow:"auto" }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+              <div style={{ color:"#e2e8f0", fontWeight:800, fontSize:14 }}>Usages — <span style={{ fontFamily:"monospace", color:"#ef4444" }}>{usesModal.code}</span></div>
+              <button style={{ background:"none", border:"none", color:"#64748b", cursor:"pointer", fontSize:18 }} onClick={() => setUsesModal(null)}>✕</button>
+            </div>
+            {usesModal.uses.length === 0 ? (
+              <div style={{ color:"#475569", textAlign:"center", padding:24 }}>Aucun usage enregistré</div>
+            ) : (
+              <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+                <thead>
+                  <tr style={{ borderBottom:"1px solid rgba(255,255,255,0.07)" }}>
+                    {["USER","PLAN","DATE"].map(h => (
+                      <th key={h} style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, padding:"8px 12px" }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {usesModal.uses.map(u => (
+                    <tr key={u.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+                      <td style={{ padding:"8px 12px", color:"#94a3b8" }}>{u.user_email}</td>
+                      <td style={{ padding:"8px 12px" }}><span style={s.badge(u.plan_granted || u.user_plan)}>{u.plan_granted || u.user_plan || "—"}</span></td>
+                      <td style={{ padding:"8px 12px", color:"#64748b" }}>{new Date(u.used_at).toLocaleString("fr-FR")}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ReferralsTab({ token }) {
+  const [refs, setRefs]     = useState([]);
+  const [loading, setLoading] = useState(true);
+  const headers = { Authorization: `Bearer ${token}` };
+
+  useEffect(() => {
+    fetch(`${API}/admin/referrals`, { headers })
+      .then(r => r.json())
+      .then(d => { setRefs(d.referrals || []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const PALIERS = [1,3,5,10,20];
+  const PALIER_LABELS = { 1:"+7j", 3:"+1m", 5:"+2m", 10:"+3m", 20:"Agency 1an" };
+
+  if (loading) return <div style={{ color:"#475569", padding:20 }}>Chargement...</div>;
+  if (!refs.length) return <div style={{ ...s.card, textAlign:"center", color:"#475569", padding:24 }}>Aucun utilisateur avec un lien de parrainage actif</div>;
+
+  return (
+    <div style={{ ...s.card, padding:0, overflow:"hidden" }}>
+      <div style={{ overflowX:"auto" }}>
+        <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+          <thead>
+            <tr style={{ background:"rgba(255,255,255,0.03)" }}>
+              {["USER","CODE PARRAINAGE","FILLEULS","JOURS RÉCOMPENSE","PROCHAIN PALIER"].map(h => (
+                <th key={h} style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"12px 14px", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {refs.map(r => {
+              const nextPalier = PALIERS.find(p => p > r.actual_referrals);
+              return (
+                <tr key={r.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+                  <td style={{ padding:"10px 14px", color:"#94a3b8" }}>{r.email}</td>
+                  <td style={{ padding:"10px 14px" }}>
+                    <span style={{ fontFamily:"monospace", color:"#60a5fa", fontSize:12, fontWeight:700 }}>{r.referral_code}</span>
+                    <span style={{ color:"#334155", fontSize:10, marginLeft:8 }}>aigrowthpilot.app/ref/{r.referral_code}</span>
+                  </td>
+                  <td style={{ padding:"10px 14px" }}>
+                    <span style={{ color:"#f59e0b", fontWeight:800, fontSize:14 }}>{r.actual_referrals}</span>
+                    {PALIERS.includes(r.actual_referrals) && (
+                      <span style={{ marginLeft:8, background:"rgba(245,158,11,0.15)", border:"1px solid rgba(245,158,11,0.3)", borderRadius:20, padding:"2px 8px", fontSize:10, fontWeight:700, color:"#f59e0b" }}>🏆 {PALIER_LABELS[r.actual_referrals]}</span>
+                    )}
+                  </td>
+                  <td style={{ padding:"10px 14px", color:"#22c55e", fontWeight:700 }}>
+                    {r.referral_reward_days > 0 ? `+${r.referral_reward_days}j` : "—"}
+                  </td>
+                  <td style={{ padding:"10px 14px", color:"#475569" }}>
+                    {nextPalier ? `${nextPalier} filleuls → ${PALIER_LABELS[nextPalier]}` : "🎉 Max atteint"}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ─── NotificationsPanel — Panel notifications en temps réel ──────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+function NotificationsPanel({ token, onClose }) {
+  const [notifs, setNotifs]   = useState([]);
+  const [unread, setUnread]   = useState(0);
+  const [loading, setLoading] = useState(true);
+  const headers = { Authorization: `Bearer ${token}` };
+
+  const load = async () => {
+    try {
+      const r = await fetch(`${API}/admin/notifications`, { headers });
+      const d = await r.json();
+      setNotifs(d.notifications || []);
+      setUnread(d.unread || 0);
+    } catch {}
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    load();
+    const interval = setInterval(load, 30000); // refresh toutes les 30s
+    return () => clearInterval(interval);
+  }, []);
+
+  const markRead = async (id) => {
+    await fetch(`${API}/admin/notifications/${id}/read`, { method:"PATCH", headers });
+    setNotifs(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    setUnread(u => Math.max(0, u - 1));
+  };
+
+  const markAllRead = async () => {
+    await fetch(`${API}/admin/notifications/read-all`, { method:"PATCH", headers });
+    setNotifs(prev => prev.map(n => ({ ...n, read: true })));
+    setUnread(0);
+  };
+
+  const clearAll = async () => {
+    await fetch(`${API}/admin/notifications`, { method:"DELETE", headers });
+    setNotifs([]);
+    setUnread(0);
+  };
+
+  const TYPE_ICON = {
+    promo_used:     "🎁",
+    promo_created:  "✅",
+    promo_expired:  "⚠️",
+    promo_exhausted:"🔴",
+    referral:       "👥",
+    referral_reward:"🏆",
+  };
+
+  return (
+    <div style={{ position:"fixed", top:0, right:0, bottom:0, width:380, background:"#0a0f1e", borderLeft:"1px solid rgba(220,38,38,0.2)", zIndex:99999, display:"flex", flexDirection:"column", boxShadow:"-20px 0 60px rgba(0,0,0,0.5)" }}>
+      {/* Header */}
+      <div style={{ padding:"20px 20px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <span style={{ fontSize:18 }}>🔔</span>
+          <span style={{ color:"#e2e8f0", fontWeight:800, fontSize:15 }}>Notifications</span>
+          {unread > 0 && (
+            <span style={{ background:"#ef4444", borderRadius:20, padding:"1px 8px", fontSize:10, fontWeight:800, color:"#fff" }}>{unread}</span>
+          )}
+        </div>
+        <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+          {unread > 0 && (
+            <button style={{ ...s.btnSm, background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.3)", color:"#22c55e", fontSize:10 }} onClick={markAllRead}>
+              ✓ Tout lu
+            </button>
+          )}
+          <button style={{ ...s.btnSm, background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", color:"#ef4444", fontSize:10 }} onClick={clearAll}>
+            🗑 Vider
+          </button>
+          <button style={{ background:"none", border:"none", color:"#64748b", cursor:"pointer", fontSize:18, lineHeight:1 }} onClick={onClose}>✕</button>
+        </div>
+      </div>
+
+      {/* Liste */}
+      <div style={{ flex:1, overflowY:"auto", padding:"8px 0" }}>
+        {loading && <div style={{ textAlign:"center", padding:32, color:"#475569" }}>Chargement...</div>}
+        {!loading && notifs.length === 0 && (
+          <div style={{ textAlign:"center", padding:40, color:"#334155" }}>
+            <div style={{ fontSize:32, marginBottom:8 }}>🔕</div>
+            <div style={{ fontSize:13 }}>Aucune notification</div>
+          </div>
+        )}
+        {notifs.map(n => (
+          <div key={n.id}
+            style={{
+              padding:"14px 20px",
+              borderBottom:"1px solid rgba(255,255,255,0.04)",
+              background: n.read ? "transparent" : "rgba(220,38,38,0.04)",
+              cursor: n.read ? "default" : "pointer",
+              transition:"background 0.15s",
+            }}
+            onClick={() => !n.read && markRead(n.id)}
+          >
+            <div style={{ display:"flex", gap:10, alignItems:"flex-start" }}>
+              <span style={{ fontSize:18, flexShrink:0, marginTop:1 }}>{TYPE_ICON[n.type] || "📌"}</span>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ color: n.read ? "#64748b" : "#e2e8f0", fontWeight: n.read ? 500 : 700, fontSize:13, marginBottom:3, lineHeight:1.4 }}>
+                  {n.title}
+                </div>
+                {n.body && <div style={{ color:"#475569", fontSize:11, lineHeight:1.5 }}>{n.body}</div>}
+                <div style={{ color:"#334155", fontSize:10, marginTop:6 }}>
+                  {new Date(n.created_at).toLocaleString("fr-FR")}
+                </div>
+              </div>
+              {!n.read && <span style={{ width:8, height:8, borderRadius:"50%", background:"#ef4444", flexShrink:0, marginTop:5 }} />}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function Admin({ token, logout }) {
   const [tab,         setTab]         = useState("users");
   const [logsSubTab,  setLogsSubTab]  = useState("admin");
@@ -1155,8 +1674,24 @@ export default function Admin({ token, logout }) {
   const [editUser,  setEditUser]  = useState(null);
   const [resetUser, setResetUser] = useState(null);
   const [confirm,   setConfirm]   = useState(null);
+  const [showNotifs, setShowNotifs] = useState(false);
+  const [unreadNotifs, setUnreadNotifs] = useState(0);
 
   const headers = { Authorization:`Bearer ${token}` };
+
+  // Polling notifs non lues
+  useEffect(() => {
+    const fetchUnread = async () => {
+      try {
+        const r = await fetch(`${API}/admin/notifications`, { headers });
+        const d = await r.json();
+        setUnreadNotifs(d.unread || 0);
+      } catch {}
+    };
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 60000); // toutes les 60s
+    return () => clearInterval(interval);
+  }, [token]);
 
   const fetchStats = useCallback(async () => {
     const r = await fetch(`${API}/admin/stats`, { headers });
@@ -1305,7 +1840,22 @@ export default function Admin({ token, logout }) {
           <div style={{ color:"#ef4444", fontSize:20, fontWeight:900, letterSpacing:"-0.5px" }}>GrowthPILOT</div>
           <div style={{ background:"rgba(220,38,38,0.15)", border:"1px solid rgba(220,38,38,0.3)", borderRadius:6, padding:"3px 10px", fontSize:10, fontWeight:700, color:"#ef4444", letterSpacing:"1px" }}>ADMIN</div>
         </div>
-        <button style={{ ...s.btnSm, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", color:"#94a3b8", padding:"8px 16px" }} onClick={logout}>↩ Logout</button>
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          {/* Bouton notifications */}
+          <button
+            style={{ ...s.btnSm, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", color:"#94a3b8", padding:"8px 14px", position:"relative" }}
+            onClick={() => setShowNotifs(v => !v)}
+            title="Notifications"
+          >
+            🔔
+            {unreadNotifs > 0 && (
+              <span style={{ position:"absolute", top:-6, right:-6, background:"#ef4444", borderRadius:"50%", width:18, height:18, fontSize:10, fontWeight:800, color:"#fff", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                {unreadNotifs > 9 ? "9+" : unreadNotifs}
+              </span>
+            )}
+          </button>
+          <button style={{ ...s.btnSm, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", color:"#94a3b8", padding:"8px 16px" }} onClick={logout}>↩ Logout</button>
+        </div>
       </div>
 
       <div style={s.content}>
@@ -1366,6 +1916,7 @@ export default function Admin({ token, logout }) {
           <button style={s.tabBtn(tab==="users")}      onClick={()=>setTab("users")}>👥 Comptes</button>
           <button style={s.tabBtn(tab==="logs")}       onClick={()=>setTab("logs")}>📋 Historique</button>
           <button style={s.tabBtn(tab==="overrides")}  onClick={()=>setTab("overrides")}>🎁 Overrides</button>
+          <button style={s.tabBtn(tab==="promos")}     onClick={()=>setTab("promos")}>🎟️ Promos</button>
           <button style={s.tabBtn(tab==="analytics")}  onClick={()=>setTab("analytics")}>📊 Visites</button>
         </div>
 
@@ -1525,8 +2076,17 @@ export default function Admin({ token, logout }) {
 
         {/* ── Onglet Visites ── */}
         {tab === "overrides" && <OverridesTab token={token} />}
+        {tab === "promos"    && <PromoTab token={token} />}
         {tab === "analytics" && <AnalyticsTab token={token} />}
       </div>
+
+      {/* ── Panel Notifications ── */}
+      {showNotifs && (
+        <NotificationsPanel
+          token={token}
+          onClose={() => { setShowNotifs(false); setUnreadNotifs(0); }}
+        />
+      )}
 
       {editUser  && <EditUserModal user={editUser} token={token} onClose={()=>setEditUser(null)} onSave={()=>{ fetchUsers(page); fetchStats(); }} />}
       {resetUser && <ResetPasswordModal user={resetUser} token={token} onClose={()=>setResetUser(null)} />}

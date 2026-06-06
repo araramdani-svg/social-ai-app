@@ -94,6 +94,45 @@ function App() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    const pathname = window.location.pathname;
+
+    // ── Route /ref/CODE — Lien parrainage ──────────────────────────────────────
+    const refMatch = pathname.match(/^\/ref\/([A-Z0-9]{6,12})$/i);
+    if (refMatch) {
+      const refCode = refMatch[1].toUpperCase();
+      sessionStorage.setItem("gp_ref_code", refCode);
+      window.history.replaceState({}, "", "/");
+      setPage("register");
+      showToast(`🎁 Lien de parrainage activé ! Créez votre compte pour bénéficier de l'offre.`, "success");
+    }
+
+    // ── Route /promo?code=XXX — Code promo pré-rempli ──────────────────────────
+    const promoCode = params.get("code");
+    const promoPath = pathname === "/promo" || params.get("promo");
+    if (promoCode || promoPath) {
+      if (promoCode) sessionStorage.setItem("gp_promo_code", promoCode.toUpperCase());
+      window.history.replaceState({}, "", "/");
+      if (!token) {
+        setPage("register");
+        showToast(`🎟️ Code promo détecté ! Créez votre compte pour l'activer.`, "success");
+      } else {
+        // User déjà connecté → appliquer directement
+        const savedToken = localStorage.getItem("token");
+        if (promoCode && savedToken) {
+          fetch("https://social-ai-app-production.up.railway.app/auth/apply-promo", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${savedToken}` },
+            body: JSON.stringify({ code: promoCode }),
+          })
+            .then(r => r.json())
+            .then(d => {
+              if (d.success) showToast(`✅ Code ${promoCode} appliqué ! Plan ${d.plan} activé.`, "success");
+              else showToast(`❌ ${d.message}`, "error");
+            })
+            .catch(() => showToast("❌ Erreur lors de l'application du code promo", "error"));
+        }
+      }
+    }
 
     // Vérification email
     const verifyToken = params.get("verify");

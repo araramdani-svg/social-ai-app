@@ -859,3 +859,87 @@ setInterval(runWinbackEmails, 12 * 60 * 60 * 1000);
 // Et au démarrage (après 30s pour laisser le temps aux connexions DB)
 setTimeout(() => { runBillingReminders(); runWinbackEmails(); }, 30000);
 logger.info("💳 Billing & win-back crons started (billing: 1h, winback: 12h)");
+
+// ─── Cron : Codes promo expirés + Overrides parrainage ───────────────────────
+const runPromoAndReferralChecks = async () => {
+  logger.info("🎁 Running promo codes & referral expiry check...");
+
+  try {
+    // 1. Désactiver les codes promo expirés
+    const expiredCodes = await db.query(
+      `UPDATE promo_codes SET active=false
+       WHERE active=true AND expires_at IS NOT NULL AND expires_at < NOW()
+       RETURNING code, max_uses, used_count`
+    );
+    for (const code of expiredCodes.rows) {
+      await db.query(
+        `INSERT INTO admin_notifications (type, title, body, created_at)
+         VALUES ('promo_expired', $1, $2, NOW())`,
+        [
+          `⚠️ Code ${code.code} expiré`,
+          `${code.used_count} usages sur ${code.max_uses || "∞"} réalisés`
+        ]
+      ).catch(() => {});
+      await db.query(
+        `INSERT INTO admin_logs (admin_id, action, target_user_id, details, created_at)
+         VALUES (0, 'promo_expired', NULL, $1, NOW())`,
+        [JSON.stringify({ code: code.code, used_count: code.used_count })]
+      ).catch(() => {});
+      logger.info(`⚠️ Promo code ${code.code} expired and deactivated`);
+    }
+
+    // 2. Révoquer les overrides codes promo expirés (ramener à Free si pas de plan Stripe)
+    const expiredOverrides = await db.query(
+      `SELECT u.id, u.email, u.stripe_subscription_id, u.had_paid_plan
+       FROM users u
+       WHERE u.admin_override = true
+         AND u.override_expires_at IS NOT NULL
+         AND u.override_expires_at < NOW()
+         AND u.override_reason IN ('promo_code','referral_reward_20')`
+    );
+    for (const u of expiredOverrides.rows) {
+      // Si l'user a un abonnement Stripe actif → ne pas toucher
+      if (u.stripe_subscription_id) {
+        await db.query(
+          `UPDATE users SET admin_override=false, admin_override_plan=NULL,
+           override_expires_at=NULL, override_reason=NULL WHERE id=$1`,
+          [u.id]
+        );
+        continue;
+      }
+      // Sinon → ramener à Free
+      await db.query(
+        `UPDATE users SET plan='Free', admin_override=false, admin_override_plan=NULL,
+         override_expires_at=NULL, override_reason=NULL WHERE id=$1`,
+        [u.id]
+      );
+      await db.query(
+        `INSERT INTO admin_notifications (type, title, body, created_at)
+         VALUES ('promo_expired', $1, $2, NOW())`,
+        [
+          `⏰ Accès promo expiré pour ${u.email}`,
+          `Retour au plan Free (pas d'abonnement Stripe actif)`
+        ]
+      ).catch(() => {});
+      await db.query(
+        `INSERT INTO admin_logs (admin_id, action, target_user_id, details, created_at)
+         VALUES (0, 'override_expired', $1, $2, NOW())`,
+        [u.id, JSON.stringify({ email: u.email, reason: "promo_expired" })]
+      ).catch(() => {});
+      logger.info(`⏰ Promo access expired for ${u.email} → downgraded to Free`);
+    }
+
+    if (expiredCodes.rows.length || expiredOverrides.rows.length) {
+      logger.info(`🎁 Promo check done: ${expiredCodes.rows.length} codes deactivated, ${expiredOverrides.rows.length} overrides revoked`);
+    }
+  } catch (err) {
+    logger.error("🎁 Promo & referral check error", { error: err.message });
+  }
+};
+
+// Lancer le check codes promo toutes les heures
+setInterval(runPromoAndReferralChecks, 60 * 60 * 1000);
+// Et au démarrage (après 60s)
+setTimeout(() => runPromoAndReferralChecks(), 60000);
+logger.info("🎁 Promo codes & referral expiry cron started (every 1h)");
+
