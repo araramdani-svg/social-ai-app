@@ -71,6 +71,7 @@ const s = {
   content: { padding:"32px", maxWidth:1400, margin:"0 auto" },
   card:    { background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:12, padding:20 },
   input:   { background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, padding:"9px 14px", color:"#e2e8f0", fontSize:13, outline:"none", fontFamily:"inherit" },
+  select:  { background:"#0f172a", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, padding:"9px 14px", color:"#e2e8f0", fontSize:13, outline:"none", fontFamily:"inherit", cursor:"pointer" },
   btn:     { background:"linear-gradient(135deg,#ef4444,#dc2626)", border:"none", borderRadius:8, color:"#fff", fontSize:11, fontWeight:700, letterSpacing:"1px", padding:"9px 16px", cursor:"pointer" },
   btnSm:   { border:"none", borderRadius:6, fontSize:10, fontWeight:700, padding:"5px 10px", cursor:"pointer" },
   label:   { fontSize:10, fontWeight:700, letterSpacing:"1.5px", color:"#64748b", marginBottom:4, display:"block" },
@@ -1270,7 +1271,7 @@ function PromoTab({ token }) {
             {/* Type */}
             <div>
               <label style={s.label}>TYPE *</label>
-              <select style={{ ...s.input, width:"100%", boxSizing:"border-box" }}
+              <select style={{ ...s.select, width:"100%", boxSizing:"border-box" }}
                 value={form.type}
                 onChange={e => setForm(f => ({ ...f, type: e.target.value }))}>
                 <option value="access">Accès gratuit</option>
@@ -1281,7 +1282,7 @@ function PromoTab({ token }) {
             {form.type === "access" && (
               <div>
                 <label style={s.label}>PLAN *</label>
-                <select style={{ ...s.input, width:"100%", boxSizing:"border-box" }}
+                <select style={{ ...s.select, width:"100%", boxSizing:"border-box" }}
                   value={form.plan}
                   onChange={e => setForm(f => ({ ...f, plan: e.target.value }))}>
                   {["Pro","Business","Agency"].map(p => <option key={p} value={p}>{p}</option>)}
@@ -1292,7 +1293,7 @@ function PromoTab({ token }) {
             {form.type === "access" && (
               <div>
                 <label style={s.label}>DURÉE</label>
-                <select style={{ ...s.input, width:"100%", boxSizing:"border-box" }}
+                <select style={{ ...s.select, width:"100%", boxSizing:"border-box" }}
                   value={form.duration_days ?? "null"}
                   onChange={e => setForm(f => ({ ...f, duration_days: e.target.value === "null" ? null : parseInt(e.target.value) }))}>
                   {DURATIONS.map(d => <option key={d.label} value={d.value ?? "null"}>{d.label}</option>)}
@@ -1303,7 +1304,7 @@ function PromoTab({ token }) {
             {form.type === "discount" && (
               <div>
                 <label style={s.label}>RÉDUCTION % *</label>
-                <input type="number" min="1" max="100" style={{ ...s.input, width:"100%", boxSizing:"border-box" }}
+                <input type="number" min="1" max="100" style={{ ...s.select, width:"100%", boxSizing:"border-box" }}
                   placeholder="ex: 50"
                   value={form.discount_percent}
                   onChange={e => setForm(f => ({ ...f, discount_percent: e.target.value }))}
@@ -1314,7 +1315,7 @@ function PromoTab({ token }) {
             {form.type === "discount" && (
               <div>
                 <label style={s.label}>DURÉE (MOIS) *</label>
-                <input type="number" min="1" style={{ ...s.input, width:"100%", boxSizing:"border-box" }}
+                <input type="number" min="1" style={{ ...s.select, width:"100%", boxSizing:"border-box" }}
                   placeholder="ex: 3"
                   value={form.discount_months}
                   onChange={e => setForm(f => ({ ...f, discount_months: e.target.value }))}
@@ -1324,7 +1325,7 @@ function PromoTab({ token }) {
             {/* Max usages */}
             <div>
               <label style={s.label}>MAX USAGES</label>
-              <input type="number" min="1" style={{ ...s.input, width:"100%", boxSizing:"border-box" }}
+              <input type="number" min="1" style={{ ...s.select, width:"100%", boxSizing:"border-box" }}
                 placeholder="1"
                 value={form.max_uses}
                 onChange={e => setForm(f => ({ ...f, max_uses: e.target.value }))}
@@ -1334,7 +1335,7 @@ function PromoTab({ token }) {
             {/* Expiration */}
             <div>
               <label style={s.label}>DATE D'EXPIRATION</label>
-              <input type="date" style={{ ...s.input, width:"100%", boxSizing:"border-box" }}
+              <input type="date" style={{ ...s.select, width:"100%", boxSizing:"border-box" }}
                 value={form.expires_at}
                 onChange={e => setForm(f => ({ ...f, expires_at: e.target.value }))}
               />
@@ -1342,7 +1343,7 @@ function PromoTab({ token }) {
             {/* Note */}
             <div style={{ gridColumn:"1/-1" }}>
               <label style={s.label}>NOTE INTERNE</label>
-              <input style={{ ...s.input, width:"100%", boxSizing:"border-box" }}
+              <input style={{ ...s.select, width:"100%", boxSizing:"border-box" }}
                 placeholder="ex: Campagne LinkedIn Q1 2026"
                 value={form.note}
                 onChange={e => setForm(f => ({ ...f, note: e.target.value }))}
