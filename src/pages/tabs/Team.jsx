@@ -1413,8 +1413,8 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
         ))}
       </div>
 
-      {/* Vue membre — résumé affiché uniquement si l'onglet members n'est PAS actif */}
-      {planManagedBy === "team" && myTeamView && mainTab !== "members" && (
+      {/* Vue membre — résumé affiché uniquement si le membre n'a PAS accès à l'onglet Membres */}
+      {planManagedBy === "team" && myTeamView && !canAccess("members") && (
         <div style={{ padding:"0 0 24px" }}>
           <div style={{ ...s.card, marginBottom:12 }}>
             <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:12 }}>👥 {tr(trendsLang,"ui.team.myTeam")}</div>
@@ -1488,6 +1488,8 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
           {mainTab === "members" && canAccess("members") && (
             <div style={s.card}>
               <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:12 }}>👥 {tr(trendsLang,"ui.team.myTeam")}</div>
+
+              {/* Owner */}
               {myTeamView?.owner && (
                 <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 0", borderBottom:"1px solid rgba(255,255,255,0.05)", marginBottom:10 }}>
                   <div style={{ width:32, height:32, borderRadius:"50%", background:"rgba(239,68,68,0.15)", display:"flex", alignItems:"center", justifyContent:"center", color:"#ef4444", fontWeight:800, fontSize:12 }}>
@@ -1497,20 +1499,39 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                     <div style={{ color:"#e2e8f0", fontSize:12, fontWeight:600 }}>{myTeamView.owner.name||myTeamView.owner.email}</div>
                     <div style={{ color:"#475569", fontSize:10 }}>Owner</div>
                   </div>
-                  <div style={{ marginLeft:"auto", background:"rgba(239,68,68,0.1)", border:"1px solid #ef444433", borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:700, color:"#ef4444" }}>OWNER</div>
+                  <div style={{ marginLeft:"auto", background:"rgba(239,68,68,0.1)", border:"1px solid #ef444433", borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:700, color:"#ef4444" }}>{tr(trendsLang,"ui.team.owner")}</div>
                 </div>
               )}
-              {myTeamView?.colleagues?.map((c,i)=>(
-                <div key={i} style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
-                  <div style={{ width:28, height:28, borderRadius:"50%", background:"rgba(100,116,139,0.15)", display:"flex", alignItems:"center", justifyContent:"center", color:"#64748b", fontWeight:800, fontSize:11 }}>
-                    {(c.name||c.email||"?")[0].toUpperCase()}
-                  </div>
-                  <div style={{ flex:1 }}>
-                    <div style={{ color:"#e2e8f0", fontSize:12 }}>{c.name||c.email}</div>
-                    <div style={{ color:"#475569", fontSize:10 }}>{c.role?.toUpperCase()}</div>
-                  </div>
+
+              {/* Mon rôle */}
+              <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:8, padding:"10px 14px", marginBottom:10 }}>
+                <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px", marginBottom:4 }}>{tr(trendsLang,"ui.team.myRole")}</div>
+                <div style={{ color:"#f59e0b", fontWeight:800, fontSize:13 }}>{myTeamView?.myRole?.toUpperCase()}</div>
+                <div style={{ color:"#475569", fontSize:11, marginTop:2 }}>
+                  {tr(trendsLang,"ui.team.joined")} {myTeamView?.joinedAt ? new Date(myTeamView.joinedAt).toLocaleDateString() : "—"}
                 </div>
-              ))}
+              </div>
+
+              {/* Collègues — mêmes clés que le bloc du haut */}
+              {myTeamView?.colleagues?.length > 0 && (
+                <div>
+                  <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px", marginBottom:8 }}>TEAM MEMBERS</div>
+                  {myTeamView.colleagues.map((c, i) => (
+                    <div key={i} style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 0", borderBottom:"1px solid rgba(255,255,255,0.03)" }}>
+                      <div style={{ width:26, height:26, borderRadius:"50%", background:"rgba(255,255,255,0.05)", display:"flex", alignItems:"center", justifyContent:"center", color:"#94a3b8", fontWeight:800, fontSize:10 }}>
+                        {(c.member_name||c.name||c.member_email||c.email||"?")[0].toUpperCase()}
+                      </div>
+                      <div style={{ flex:1 }}>
+                        <div style={{ color:"#e2e8f0", fontSize:11 }}>{c.member_name||c.name||c.member_email||c.email}</div>
+                        <div style={{ color:"#475569", fontSize:10 }}>{c.role?.toUpperCase()}</div>
+                      </div>
+                      <div style={{ fontSize:10, color: c.status === "active" ? "#22c55e" : "#f59e0b", fontWeight:700 }}>
+                        {c.status?.toUpperCase()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
