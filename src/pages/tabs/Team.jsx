@@ -57,7 +57,7 @@ function TeamChat({ token, teamId, trendsLang, isMobile, currentUserEmail, membe
 
   const fetchMessages = useCallback(async () => {
     try {
-      const r = await fetch(`${API}/team/chat?team_id=${teamId}`, { headers });
+    const r = await fetch(`${API}/team/chat`, { headers });
       const d = await r.json();
       setMessages(d.messages || []);
       setLoading(false);
@@ -83,7 +83,7 @@ function TeamChat({ token, teamId, trendsLang, isMobile, currentUserEmail, membe
     try {
       await fetch(`${API}/team/chat`, {
         method: "POST", headers,
-        body: JSON.stringify({ team_id: teamId, content }),
+        body: JSON.stringify({ content }),
       });
       await fetchMessages();
     } catch {}
