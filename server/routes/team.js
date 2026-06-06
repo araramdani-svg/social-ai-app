@@ -1958,7 +1958,7 @@ const canAccessChat = async (userId, teamId) => {
 };
 
 // ─── GET /team/chat — Récupérer les messages ─────────────────────────────────
-router.get("/chat", authenticateToken, async (req, res) => {
+router.get("/chat", auth, async (req, res) => {
   try {
     const teamId = req.query.team_id
       ? parseInt(req.query.team_id)
@@ -2003,7 +2003,7 @@ router.get("/chat", authenticateToken, async (req, res) => {
 });
 
 // ─── POST /team/chat — Envoyer un message ────────────────────────────────────
-router.post("/chat", authenticateToken, async (req, res) => {
+router.post("/chat", auth, async (req, res) => {
   const { content, team_id } = req.body;
   if (!content?.trim()) return res.status(400).json({ error: "content required" });
 
@@ -2052,7 +2052,7 @@ router.post("/chat", authenticateToken, async (req, res) => {
 });
 
 // ─── GET /team/chat/unread — Nombre de messages non lus ─────────────────────
-router.get("/chat/unread", authenticateToken, async (req, res) => {
+router.get("/chat/unread", auth, async (req, res) => {
   try {
     const teamId = await resolveTeamId(req.user.id);
     if (!teamId) return res.json({ unread: 0 });
@@ -2076,7 +2076,7 @@ router.get("/chat/unread", authenticateToken, async (req, res) => {
 });
 
 // ─── DELETE /team/chat/:id — Supprimer un message (owner ou auteur) ──────────
-router.delete("/chat/:id", authenticateToken, async (req, res) => {
+router.delete("/chat/:id", auth, async (req, res) => {
   try {
     const msgRes = await db.query(
       "SELECT sender_id, team_id FROM team_messages WHERE id=$1",
