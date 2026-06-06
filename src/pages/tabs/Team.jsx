@@ -1464,7 +1464,15 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
       {/* ── VUE MEMBRES : onglets selon rôle ── */}
       {planManagedBy === "team" && (
         <>
-          <div style={{ display:"flex", borderBottom:"1px solid rgba(255,255,255,0.07)", marginBottom:16, flexWrap:"wrap" }}>
+          {/* Loader pendant le fetch de myTeamView */}
+          {!myTeamView ? (
+            <div style={{ textAlign:"center", padding:"40px 20px", color:"#475569" }}>
+              <div style={{ fontSize:24, marginBottom:8 }}>⏳</div>
+              <div style={{ fontSize:12 }}>{tr(trendsLang,"ui.team.loading") || "Loading..."}</div>
+            </div>
+          ) : (
+          <div>
+            <div style={{ display:"flex", borderBottom:"1px solid rgba(255,255,255,0.07)", marginBottom:16, flexWrap:"wrap" }}>
             {canAccess("members")   && <button style={s.tabBtn(mainTab==="members")}            onClick={()=>setMainTab("members")}>{tr(trendsLang,"ui.team.tabMembers")}</button>}
             {canAccess("activity")  && <button style={s.tabBtn(mainTab==="activity")}           onClick={()=>setMainTab("activity")}>{tr(trendsLang,"ui.team.tabActivity")}</button>}
             {canAccess("perms")     && <button style={s.tabBtn(mainTab==="perms")}              onClick={()=>setMainTab("perms")}>{tr(trendsLang,"ui.team.tabRoles")}</button>}
@@ -1645,11 +1653,13 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
             </div>
           )}
 
-          {/* Chat */}
+          {/* Chat — toujours accessible */}
           {mainTab === "chat" && (
             <div style={{ ...s.card, padding:0, overflow:"hidden" }}>
               <TeamChat token={token} trendsLang={trendsLang} isMobile={isMobile} currentUserEmail={myEmail} members={[]} />
             </div>
+          )}
+          </div>
           )}
         </>
       )}
