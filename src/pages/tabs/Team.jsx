@@ -1044,6 +1044,14 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
   const isOwner    = isBusiness;
   const MAX_MEMBERS = isAgency ? MAX_MEMBERS_AGENCY : MAX_MEMBERS_BUSINESS;
 
+  // Décoder l'email depuis le JWT pour identifier les propres messages dans le chat
+  const myEmail = (() => {
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      return payload.email || "";
+    } catch { return ""; }
+  })();
+
   const headers = { "Content-Type":"application/json", Authorization:`Bearer ${token}` };
 
   const fetchTeamData = useCallback(async () => {
@@ -1421,6 +1429,29 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Chat accessible aux membres d'équipe directement */}
+      {planManagedBy === "team" && mainTab === "chat" && (
+        <div style={{ ...s.card, padding: 0, overflow: "hidden" }}>
+          <TeamChat
+            token={token}
+            trendsLang={trendsLang}
+            isMobile={isMobile}
+            currentUserEmail={myEmail}
+            members={[]}
+          />
+        </div>
+      )}
+      {planManagedBy === "team" && mainTab !== "chat" && null}
+
+      {/* Bouton Chat visible pour les membres */}
+      {planManagedBy === "team" && (
+        <div style={{ display:"flex", borderBottom:"1px solid rgba(255,255,255,0.07)", marginBottom:16 }}>
+          <button style={{ ...s.tabBtn(mainTab==="chat","#22c55e") }} onClick={()=>setMainTab("chat")}>
+            💬 CHAT
+          </button>
         </div>
       )}
 
@@ -2159,7 +2190,7 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
                 teamId={ownerInfo?.id || null}
                 trendsLang={trendsLang}
                 isMobile={isMobile}
-                currentUserEmail={ownerInfo?.email || ""}
+                currentUserEmail={myEmail}
                 members={members}
               />
             </div>
