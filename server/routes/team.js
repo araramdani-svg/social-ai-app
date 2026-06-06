@@ -1924,6 +1924,180 @@ router.patch("/members/:id/permissions", auth, requireBusiness, async (req, res)
   }
 });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// ─── CHAT ÉQUIPE ──────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Helper : résoudre le team_id (owner de l'équipe) depuis un user quelconque
+const resolveTeamId = async (userId) => {
+  // Si owner → son propre id
+  const ownerCheck = await db.query(
+    "SELECT id FROM users WHERE id=$1 AND plan IN ('Business','Agency')",
+    [userId]
+  );
+  if (ownerCheck.rows.length) return userId;
+
+  // Si membre → trouver l'owner via team_members
+  const memberCheck = await db.query(
+    "SELECT owner_id FROM team_members WHERE member_id=$1 AND status='active'",
+    [userId]
+  );
+  return memberCheck.rows[0]?.owner_id || null;
+};
+
+// Helper : vérifier qu'un user a accès au chat d'une équipe
+const canAccessChat = async (userId, teamId) => {
+  // Owner de l'équipe
+  if (parseInt(teamId) === userId) return true;
+  // Membre actif
+  const r = await db.query(
+    "SELECT id FROM team_members WHERE owner_id=$1 AND member_id=$2 AND status='active'",
+    [teamId, userId]
+  );
+  return r.rows.length > 0;
+};
+
+// ─── GET /team/chat — Récupérer les messages ─────────────────────────────────
+router.get("/chat", authenticateToken, async (req, res) => {
+  try {
+    const teamId = req.query.team_id
+      ? parseInt(req.query.team_id)
+      : await resolveTeamId(req.user.id);
+
+    if (!teamId) return res.status(400).json({ error: "Team not found" });
+
+    const ok = await canAccessChat(req.user.id, teamId);
+    if (!ok) return res.status(403).json({ error: "Access denied" });
+
+    const limit = Math.min(parseInt(req.query.limit) || 100, 200);
+    const r = await db.query(
+      `SELECT tm.id, tm.sender_id, tm.sender_email, tm.sender_name, tm.content, tm.created_at,
+              CASE WHEN tmr.id IS NOT NULL THEN true ELSE false END AS read_by_me
+       FROM team_messages tm
+       LEFT JOIN team_message_reads tmr ON tmr.message_id=tm.id AND tmr.user_id=$1
+       WHERE tm.team_id=$2
+       ORDER BY tm.created_at ASC
+       LIMIT $3`,
+      [req.user.id, teamId, limit]
+    );
+
+    // Marquer tous les messages non lus comme lus
+    await db.query(
+      `INSERT INTO team_message_reads (message_id, user_id, read_at)
+       SELECT tm.id, $1, NOW()
+       FROM team_messages tm
+       WHERE tm.team_id=$2
+         AND NOT EXISTS (
+           SELECT 1 FROM team_message_reads tmr
+           WHERE tmr.message_id=tm.id AND tmr.user_id=$1
+         )
+       ON CONFLICT DO NOTHING`,
+      [req.user.id, teamId]
+    );
+
+    res.json({ messages: r.rows, team_id: teamId });
+  } catch (err) {
+    console.error("GET /team/chat error:", err.message);
+    res.status(500).json({ error: "Failed to fetch messages" });
+  }
+});
+
+// ─── POST /team/chat — Envoyer un message ────────────────────────────────────
+router.post("/chat", authenticateToken, async (req, res) => {
+  const { content, team_id } = req.body;
+  if (!content?.trim()) return res.status(400).json({ error: "content required" });
+
+  try {
+    const teamId = team_id
+      ? parseInt(team_id)
+      : await resolveTeamId(req.user.id);
+
+    if (!teamId) return res.status(400).json({ error: "Team not found" });
+
+    const ok = await canAccessChat(req.user.id, teamId);
+    if (!ok) return res.status(403).json({ error: "Access denied" });
+
+    // Récupérer infos sender
+    const userRes = await db.query(
+      "SELECT email, first_name, last_name, display_name FROM users WHERE id=$1",
+      [req.user.id]
+    );
+    const u = userRes.rows[0];
+    const senderName = u.display_name || `${u.first_name || ""} ${u.last_name || ""}`.trim() || u.email;
+
+    const r = await db.query(
+      `INSERT INTO team_messages (team_id, sender_id, sender_email, sender_name, content)
+       VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+      [teamId, req.user.id, u.email, senderName, content.trim()]
+    );
+
+    // Log admin
+    await db.query(
+      `INSERT INTO admin_logs (admin_id, action, target_user_id, details, created_at)
+       VALUES ($1,'team_chat_message',$1,$2,NOW())`,
+      [req.user.id, JSON.stringify({ team_id: teamId, length: content.trim().length })]
+    ).catch(() => {});
+
+    // Log user
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,'team_chat_message',$2,NOW())`,
+      [req.user.id, JSON.stringify({ team_id: teamId })]
+    ).catch(() => {});
+
+    res.json({ success: true, message: r.rows[0] });
+  } catch (err) {
+    console.error("POST /team/chat error:", err.message);
+    res.status(500).json({ error: "Failed to send message" });
+  }
+});
+
+// ─── GET /team/chat/unread — Nombre de messages non lus ─────────────────────
+router.get("/chat/unread", authenticateToken, async (req, res) => {
+  try {
+    const teamId = await resolveTeamId(req.user.id);
+    if (!teamId) return res.json({ unread: 0 });
+
+    const r = await db.query(
+      `SELECT COUNT(*)::int AS unread
+       FROM team_messages tm
+       WHERE tm.team_id=$1
+         AND tm.sender_id != $2
+         AND NOT EXISTS (
+           SELECT 1 FROM team_message_reads tmr
+           WHERE tmr.message_id=tm.id AND tmr.user_id=$2
+         )`,
+      [teamId, req.user.id]
+    );
+    res.json({ unread: r.rows[0]?.unread || 0 });
+  } catch (err) {
+    console.error("GET /team/chat/unread error:", err.message);
+    res.json({ unread: 0 });
+  }
+});
+
+// ─── DELETE /team/chat/:id — Supprimer un message (owner ou auteur) ──────────
+router.delete("/chat/:id", authenticateToken, async (req, res) => {
+  try {
+    const msgRes = await db.query(
+      "SELECT sender_id, team_id FROM team_messages WHERE id=$1",
+      [req.params.id]
+    );
+    if (!msgRes.rows.length) return res.status(404).json({ error: "Message not found" });
+    const msg = msgRes.rows[0];
+
+    // Autoriser si auteur ou owner de l'équipe
+    const isAuthor = msg.sender_id === req.user.id;
+    const isOwner  = msg.team_id   === req.user.id;
+    if (!isAuthor && !isOwner) return res.status(403).json({ error: "Not authorized" });
+
+    await db.query("DELETE FROM team_messages WHERE id=$1", [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("DELETE /team/chat/:id error:", err.message);
+    res.status(500).json({ error: "Failed to delete message" });
+  }
+});
+
 // ─── Middleware : enforcer canGenerate pour les membres team ──────────────────
 export const requireCanGenerate = async (req, res, next) => {
   // Si user normal (pas membre d'une équipe) → passer

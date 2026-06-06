@@ -10,9 +10,20 @@ export default function Auth({ loginSuccess, initialMode = "login" }) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName]   = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [pendingEmail, setPendingEmail] = useState(""); // email en attente de vérification
+  const [pendingEmail, setPendingEmail] = useState("");
   const [resendSent, setResendSent]     = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
+  // ── MFA ──
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [mfaEmail, setMfaEmail]       = useState("");
+  const [mfaCode, setMfaCode]         = useState("");
+  const [mfaLoading, setMfaLoading]   = useState(false);
+  const [mfaError, setMfaError]       = useState("");
+  const [mfaResent, setMfaResent]     = useState(false);
+  // ── Password expiry ──
+  const [pwExpired, setPwExpired]     = useState(false);
+  const [expiredToken, setExpiredToken] = useState(null);
+
   const [isMobile, setIsMobile] = useState(
     typeof window !== "undefined" && window.innerWidth < 480
   );
@@ -22,7 +33,6 @@ export default function Auth({ loginSuccess, initialMode = "login" }) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Detect invite token
   const inviteToken = typeof window !== "undefined"
     ? new URLSearchParams(window.location.search).get("invite")
     : null;
@@ -49,27 +59,31 @@ export default function Auth({ loginSuccess, initialMode = "login" }) {
       const data = await res.json();
 
       if (!res.ok) {
-        // Email non vérifié → afficher l'écran de vérification
-        if (data.code === "email_not_verified") {
-          setPendingEmail(email);
+        if (data.code === "email_not_verified") { setPendingEmail(email); return; }
+        // Mot de passe expiré
+        if (data.code === "password_expired") {
+          setPwExpired(true);
+          setExpiredToken(data.reset_token || null);
           return;
         }
         setError(data.message || "Authentication failed");
         return;
       }
 
-      // Register → afficher écran "vérifiez votre email"
       if (mode === "register") {
-        // Sauvegarder le token d'invitation pour l'accepter après vérification email
         if (inviteToken) localStorage.setItem("pendingInviteToken", inviteToken);
         setPendingEmail(email);
         return;
       }
 
-      // Login OK
-      localStorage.setItem("token", data.token);
+      // Vérifier si MFA requis
+      if (data.mfa_required) {
+        setMfaRequired(true);
+        setMfaEmail(email);
+        return;
+      }
 
-      // Accepter l'invitation en attente (depuis register ou lien direct)
+      localStorage.setItem("token", data.token);
       const pendingInvite = inviteToken || localStorage.getItem("pendingInviteToken");
       if (pendingInvite) {
         try {
@@ -89,6 +103,35 @@ export default function Auth({ loginSuccess, initialMode = "login" }) {
     }
   };
 
+  const submitMFA = async () => {
+    if (!mfaCode.trim() || mfaCode.length !== 6) { setMfaError("Code à 6 chiffres requis"); return; }
+    setMfaLoading(true); setMfaError("");
+    try {
+      const r = await fetch(`${API}/auth/mfa/verify-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: mfaEmail, otp: mfaCode }),
+      });
+      const d = await r.json();
+      if (!r.ok) { setMfaError(d.error || "Code incorrect"); setMfaLoading(false); return; }
+      localStorage.setItem("token", d.token);
+      loginSuccess(d.token, mfaEmail);
+    } catch { setMfaError("Erreur serveur"); }
+    setMfaLoading(false);
+  };
+
+  const resendMFA = async () => {
+    setMfaResent(false);
+    try {
+      await fetch(`${API}/auth/mfa/send-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: mfaEmail }),
+      });
+      setMfaResent(true);
+    } catch {}
+  };
+
   const resendVerification = async () => {
     setResendLoading(true);
     try {
@@ -101,6 +144,63 @@ export default function Auth({ loginSuccess, initialMode = "login" }) {
     } catch {}
     setResendLoading(false);
   };
+
+  // ── Écran MFA ──────────────────────────────────────────────────────────────
+  if (mfaRequired) {
+    return (
+      <div style={styles.page}>
+        <div style={{ ...styles.card, textAlign: "center" }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>🔐</div>
+          <h1 style={{ margin: "0 0 8px", fontSize: 20 }}>Vérification en 2 étapes</h1>
+          <p style={{ color: "#64748b", fontSize: 14, lineHeight: 1.7, margin: "0 0 8px" }}>
+            Un code à 6 chiffres a été envoyé à
+          </p>
+          <div style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.2)", borderRadius: 8, padding: "10px 16px", marginBottom: 24, color: "#ef4444", fontWeight: 700, fontSize: 14 }}>
+            {mfaEmail}
+          </div>
+          <input
+            style={{ ...styles.input, textAlign: "center", fontSize: 24, fontWeight: 800, letterSpacing: "8px" }}
+            placeholder="000000"
+            value={mfaCode}
+            maxLength={6}
+            onChange={e => setMfaCode(e.target.value.replace(/\D/g, ""))}
+            onKeyDown={e => e.key === "Enter" && submitMFA()}
+            autoFocus
+          />
+          {mfaError && <p style={styles.error}>{mfaError}</p>}
+          <button style={{ ...styles.button, opacity: mfaLoading ? 0.7 : 1 }} onClick={submitMFA} disabled={mfaLoading}>
+            {mfaLoading ? "Vérification..." : "VÉRIFIER LE CODE"}
+          </button>
+          {mfaResent
+            ? <div style={{ color: "#22c55e", fontSize: 13, marginTop: 12 }}>✅ Code renvoyé !</div>
+            : <button style={styles.switch} onClick={resendMFA}>Renvoyer le code</button>
+          }
+          <button style={{ ...styles.switch, marginTop: 4 }} onClick={() => { setMfaRequired(false); setMfaCode(""); setMfaError(""); }}>
+            ← Retour
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Écran mot de passe expiré ──────────────────────────────────────────────
+  if (pwExpired) {
+    return (
+      <div style={styles.page}>
+        <div style={{ ...styles.card, textAlign: "center" }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>🔑</div>
+          <h1 style={{ margin: "0 0 8px", fontSize: 20 }}>Mot de passe expiré</h1>
+          <p style={{ color: "#64748b", fontSize: 14, lineHeight: 1.7, marginBottom: 24 }}>
+            Votre mot de passe a expiré (politique de sécurité 60 jours). Vous devez le renouveler pour accéder à votre compte.
+          </p>
+          <button style={styles.button} onClick={() => window.location.href = `/?reset_token=${expiredToken || ""}`}>
+            🔄 Changer mon mot de passe
+          </button>
+          <button style={styles.switch} onClick={() => setPwExpired(false)}>← Retour</button>
+        </div>
+      </div>
+    );
+  }
 
   // ── Écran "Vérifiez votre email" ──────────────────────────────────────────
   if (pendingEmail) {

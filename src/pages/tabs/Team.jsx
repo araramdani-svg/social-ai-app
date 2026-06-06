@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { t as tr } from "../../translations.js";
 import { st, PageHeader, ConfirmModal } from "./shared.js";
 
@@ -44,7 +44,148 @@ function timeAgo(dateStr, lang) {
   return fmt(Math.floor(h/24), "d");
 }
 
-/* ── Gate ─────────────────────────────────────────────────────────────────── */
+/* ── TeamChat ─────────────────────────────────────────────────────────────── */
+function TeamChat({ token, teamId, trendsLang, isMobile, currentUserEmail, members }) {
+  const [messages,  setMessages]  = useState([]);
+  const [input,     setInput]     = useState("");
+  const [loading,   setLoading]   = useState(true);
+  const [sending,   setSending]   = useState(false);
+  const [unread,    setUnread]    = useState(0);
+  const bottomRef  = useRef(null);
+  const pollRef    = useRef(null);
+  const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+
+  const fetchMessages = useCallback(async () => {
+    try {
+      const r = await fetch(`${API}/team/chat?team_id=${teamId}`, { headers });
+      const d = await r.json();
+      setMessages(d.messages || []);
+      setLoading(false);
+    } catch { setLoading(false); }
+  }, [token, teamId]);
+
+  useEffect(() => {
+    fetchMessages();
+    // Polling toutes les 5 secondes
+    pollRef.current = setInterval(fetchMessages, 5000);
+    return () => clearInterval(pollRef.current);
+  }, [fetchMessages]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const sendMessage = async () => {
+    const content = input.trim();
+    if (!content || sending) return;
+    setSending(true);
+    setInput("");
+    try {
+      await fetch(`${API}/team/chat`, {
+        method: "POST", headers,
+        body: JSON.stringify({ team_id: teamId, content }),
+      });
+      await fetchMessages();
+    } catch {}
+    setSending(false);
+  };
+
+  const formatTime = (dateStr) => {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const isToday = d.toDateString() === now.toDateString();
+    if (isToday) return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" }) + " " + d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  };
+
+  const getInitials = (email, name) => (name || email || "?").slice(0, 2).toUpperCase();
+  const getColor = (email) => {
+    const colors = ["#ef4444","#f97316","#f59e0b","#22c55e","#06b6d4","#8b5cf6","#ec4899"];
+    let hash = 0;
+    for (let i = 0; i < (email || "").length; i++) hash += email.charCodeAt(i);
+    return colors[hash % colors.length];
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: isMobile ? "60vh" : 520, gap: 0 }}>
+      {/* Header */}
+      <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", boxShadow: "0 0 6px #22c55e" }} />
+        <span style={{ color: "#e2e8f0", fontWeight: 700, fontSize: 13 }}>Chat Équipe</span>
+        <span style={{ color: "#475569", fontSize: 11, marginLeft: 4 }}>{members.length + 1} membre{members.length > 0 ? "s" : ""}</span>
+        <button onClick={fetchMessages} style={{ marginLeft: "auto", background: "none", border: "none", color: "#475569", cursor: "pointer", fontSize: 14 }}>🔄</button>
+      </div>
+
+      {/* Messages */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "16px", display: "flex", flexDirection: "column", gap: 12 }}>
+        {loading && <div style={{ textAlign: "center", color: "#475569", padding: 20 }}>⏳ Chargement...</div>}
+        {!loading && messages.length === 0 && (
+          <div style={{ textAlign: "center", padding: "40px 20px", color: "#334155" }}>
+            <div style={{ fontSize: 32, marginBottom: 8 }}>💬</div>
+            <div style={{ color: "#475569", fontSize: 13 }}>Aucun message — soyez le premier !</div>
+          </div>
+        )}
+        {messages.map((msg, i) => {
+          const isMe = msg.sender_email === currentUserEmail;
+          const color = getColor(msg.sender_email);
+          const showAvatar = !isMe && (i === 0 || messages[i-1]?.sender_email !== msg.sender_email);
+          return (
+            <div key={msg.id} style={{ display: "flex", flexDirection: isMe ? "row-reverse" : "row", gap: 8, alignItems: "flex-end" }}>
+              {!isMe && (
+                <div style={{ width: 28, height: 28, borderRadius: "50%", background: showAvatar ? `${color}22` : "transparent", border: showAvatar ? `1px solid ${color}44` : "none", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 800, color, flexShrink: 0 }}>
+                  {showAvatar ? getInitials(msg.sender_email, msg.sender_name) : ""}
+                </div>
+              )}
+              <div style={{ maxWidth: "72%", display: "flex", flexDirection: "column", alignItems: isMe ? "flex-end" : "flex-start", gap: 3 }}>
+                {showAvatar && !isMe && (
+                  <span style={{ fontSize: 10, color, fontWeight: 700, paddingLeft: 4 }}>
+                    {msg.sender_name || msg.sender_email?.split("@")[0]}
+                  </span>
+                )}
+                <div style={{
+                  background: isMe ? "linear-gradient(135deg,#dc2626,#991b1b)" : "rgba(255,255,255,0.05)",
+                  border: isMe ? "none" : "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: isMe ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
+                  padding: "9px 13px",
+                  color: isMe ? "#fff" : "#e2e8f0",
+                  fontSize: 13, lineHeight: 1.5,
+                  wordBreak: "break-word",
+                }}>
+                  {msg.content}
+                </div>
+                <span style={{ fontSize: 9, color: "#334155", paddingLeft: 4, paddingRight: 4 }}>
+                  {formatTime(msg.created_at)}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Input */}
+      <div style={{ padding: "12px 16px", borderTop: "1px solid rgba(255,255,255,0.07)", display: "flex", gap: 8 }}>
+        <input
+          style={{ ...s.input, flex: 1, padding: "10px 14px", fontSize: 13 }}
+          placeholder="Envoyer un message..."
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+          disabled={sending}
+        />
+        <button
+          style={{ ...s.btn, padding: "10px 16px", opacity: !input.trim() || sending ? 0.5 : 1 }}
+          onClick={sendMessage}
+          disabled={!input.trim() || sending}
+        >
+          {sending ? "⏳" : "↑"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
 function BusinessGate({ setPage }) {
   return (
     <div style={{ ...s.card, textAlign:"center", padding:"60px 32px", border:"1px solid rgba(249,115,22,0.3)", background:"rgba(249,115,22,0.04)" }}>
@@ -1292,6 +1433,9 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
             {isAgency   && <button style={s.tabBtn(mainTab==="agency","#8b5cf6")} onClick={()=>setMainTab("agency")}>{tr(trendsLang,"ui.team.tabAgence")}</button>}
             {isAgency   && <button style={s.tabBtn(mainTab==="analytics","#ec4899")} onClick={()=>setMainTab("analytics")}>{tr(trendsLang,"ui.team.tabAnalytics") || "📊 ANALYTICS"}</button>}
             <button style={s.tabBtn(mainTab==="integrations","#38bdf8")} onClick={()=>setMainTab("integrations")}>{tr(trendsLang,"ui.team.tabIntegrations") || "🔗 INTEGRATIONS"}</button>
+            <button style={{ ...s.tabBtn(mainTab==="chat","#22c55e"), position:"relative" }} onClick={()=>setMainTab("chat")}>
+              💬 CHAT
+            </button>
           </div>
 
           {/* Pro : affiche ProGate + onglet Intégrations */}
@@ -2006,6 +2150,19 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
 
           {mainTab === "integrations" && (
             <IntegrationsTab token={token} trendsLang={trendsLang} />
+          )}
+
+          {mainTab === "chat" && (
+            <div style={{ ...s.card, padding: 0, overflow: "hidden" }}>
+              <TeamChat
+                token={token}
+                teamId={ownerInfo?.id || null}
+                trendsLang={trendsLang}
+                isMobile={isMobile}
+                currentUserEmail={ownerInfo?.email || ""}
+                members={members}
+              />
+            </div>
           )}
         </>
       )}

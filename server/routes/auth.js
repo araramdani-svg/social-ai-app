@@ -1145,3 +1145,325 @@ router.get("/publish-log", authenticateToken, async (req, res) => {
 });
 
 export default router;
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ─── MFA + POLITIQUE MOT DE PASSE ─────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ─── Helper : générer un OTP 6 chiffres ───────────────────────────────────────
+const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
+
+// ─── Helper : envoyer OTP par email ──────────────────────────────────────────
+const sendOTPEmail = async (email, otp) => {
+  await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+    body: JSON.stringify({
+      from: "GrowthPILOT <team@aigrowthpilot.app>",
+      to: email,
+      subject: "Votre code de vérification GrowthPILOT",
+      html: `
+        <div style="background:#050a14;padding:40px;font-family:sans-serif;">
+          <div style="max-width:480px;margin:0 auto;background:#0d1626;border:1px solid rgba(220,38,38,0.2);border-radius:16px;overflow:hidden;">
+            <div style="background:linear-gradient(135deg,#dc2626,#991b1b);padding:24px;text-align:center;">
+              <h1 style="color:#fff;margin:0;font-size:22px;font-weight:900;">GrowthPILOT</h1>
+            </div>
+            <div style="padding:32px;text-align:center;">
+              <p style="color:#64748b;font-size:14px;margin:0 0 24px;">Votre code de vérification à usage unique :</p>
+              <div style="background:rgba(220,38,38,0.08);border:2px dashed rgba(220,38,38,0.3);border-radius:12px;padding:20px;margin-bottom:24px;">
+                <span style="color:#ef4444;font-size:36px;font-weight:900;letter-spacing:8px;">${otp}</span>
+              </div>
+              <p style="color:#475569;font-size:12px;">Ce code expire dans 10 minutes. Ne le partagez jamais.</p>
+            </div>
+          </div>
+        </div>
+      `,
+    }),
+  });
+};
+
+// ─── POST /auth/mfa/send-otp — Envoyer un OTP email ─────────────────────────
+router.post("/mfa/send-otp", async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: "email required" });
+  try {
+    const userRes = await db.query("SELECT id FROM users WHERE email=$1 AND email_verified=true", [email]);
+    if (!userRes.rows.length) return res.status(404).json({ error: "User not found" });
+    const userId = userRes.rows[0].id;
+
+    const otp     = generateOTP();
+    const otpHash = await bcrypt.hash(otp, 8);
+    const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+
+    // Invalider les anciens OTPs
+    await db.query("UPDATE mfa_otp SET used=true WHERE user_id=$1 AND used=false", [userId]);
+
+    await db.query(
+      "INSERT INTO mfa_otp (user_id, otp_hash, expires_at) VALUES ($1,$2,$3)",
+      [userId, otpHash, expires]
+    );
+
+    await sendOTPEmail(email, otp);
+    res.json({ success: true, message: "OTP envoyé par email" });
+  } catch (err) {
+    console.error("send-otp error:", err.message);
+    res.status(500).json({ error: "Failed to send OTP" });
+  }
+});
+
+// ─── POST /auth/mfa/verify-otp — Vérifier l'OTP et finaliser le login ────────
+router.post("/mfa/verify-otp", async (req, res) => {
+  const { email, otp } = req.body;
+  if (!email || !otp) return res.status(400).json({ error: "email et otp requis" });
+  try {
+    const userRes = await db.query(
+      "SELECT id, email, plan, is_admin, mfa_enabled FROM users WHERE email=$1",
+      [email]
+    );
+    if (!userRes.rows.length) return res.status(404).json({ error: "User not found" });
+    const user = userRes.rows[0];
+
+    // Récupérer l'OTP valide le plus récent
+    const otpRes = await db.query(
+      "SELECT * FROM mfa_otp WHERE user_id=$1 AND used=false AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1",
+      [user.id]
+    );
+    if (!otpRes.rows.length) return res.status(400).json({ error: "Code expiré ou invalide" });
+
+    const otpRow = otpRes.rows[0];
+    const valid  = await bcrypt.compare(otp, otpRow.otp_hash);
+    if (!valid) return res.status(400).json({ error: "Code incorrect" });
+
+    // Invalider l'OTP
+    await db.query("UPDATE mfa_otp SET used=true WHERE id=$1", [otpRow.id]);
+
+    // Générer le JWT
+    const token = jwt.sign({ id: user.id, email: user.email, plan: user.plan }, JWT_SECRET, { expiresIn: "30d" });
+
+    await db.query(
+      "INSERT INTO user_logs (user_id,action,details,created_at) VALUES ($1,'login',$2,NOW())",
+      [user.id, JSON.stringify({ email, mfa: true })]
+    ).catch(() => {});
+
+    res.json({ success: true, token, plan: user.plan, is_admin: user.is_admin });
+  } catch (err) {
+    console.error("verify-otp error:", err.message);
+    res.status(500).json({ error: "Failed to verify OTP" });
+  }
+});
+
+// ─── GET /auth/mfa/status — Statut MFA de l'user connecté ───────────────────
+router.get("/mfa/status", authenticateToken, async (req, res) => {
+  try {
+    const r = await db.query(
+      "SELECT mfa_enabled, password_changed_at, password_expires_at, force_password_change FROM users WHERE id=$1",
+      [req.user.id]
+    );
+    const u = r.rows[0];
+    res.json({
+      mfa_enabled:           u?.mfa_enabled || false,
+      password_changed_at:   u?.password_changed_at,
+      password_expires_at:   u?.password_expires_at,
+      force_password_change: u?.force_password_change || false,
+      days_until_expiry:     u?.password_expires_at
+        ? Math.max(0, Math.floor((new Date(u.password_expires_at) - Date.now()) / 86400000))
+        : null,
+    });
+  } catch (err) {
+    console.error("mfa/status error:", err.message);
+    res.status(500).json({ error: "Failed" });
+  }
+});
+
+// ─── POST /auth/mfa/toggle — Activer/désactiver MFA ─────────────────────────
+router.post("/mfa/toggle", authenticateToken, async (req, res) => {
+  const { enable, currentPassword } = req.body;
+  try {
+    // Vérifier le mot de passe actuel avant de modifier MFA
+    const r = await db.query("SELECT password, mfa_enabled FROM users WHERE id=$1", [req.user.id]);
+    if (!r.rows.length) return res.status(404).json({ error: "User not found" });
+    const valid = await bcrypt.compare(currentPassword, r.rows[0].password);
+    if (!valid) return res.status(400).json({ error: "Mot de passe incorrect" });
+
+    await db.query(
+      "UPDATE users SET mfa_enabled=$1, mfa_verified_at=CASE WHEN $1 THEN NOW() ELSE NULL END WHERE id=$2",
+      [!!enable, req.user.id]
+    );
+
+    await db.query(
+      "INSERT INTO user_logs (user_id,action,details,created_at) VALUES ($1,$2,$3,NOW())",
+      [req.user.id, enable ? "mfa_enabled" : "mfa_disabled", JSON.stringify({})]
+    ).catch(() => {});
+
+    res.json({ success: true, mfa_enabled: !!enable });
+  } catch (err) {
+    console.error("mfa/toggle error:", err.message);
+    res.status(500).json({ error: "Failed" });
+  }
+});
+
+// ─── POST /auth/change-password — Changement MDP avec historique ─────────────
+// Remplace l'ancienne route si elle existe — ajoute vérification historique + mise à jour expiration
+router.post("/change-password-secure", authenticateToken, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword)
+    return res.status(400).json({ error: "currentPassword et newPassword requis" });
+  if (newPassword.length < 8)
+    return res.status(400).json({ error: "Mot de passe min. 8 caractères" });
+
+  try {
+    const r = await db.query(
+      "SELECT password, password_history FROM users WHERE id=$1",
+      [req.user.id]
+    );
+    if (!r.rows.length) return res.status(404).json({ error: "User not found" });
+    const user = r.rows[0];
+
+    // Vérifier le mot de passe actuel
+    const valid = await bcrypt.compare(currentPassword, user.password);
+    if (!valid) return res.status(400).json({ error: "Mot de passe actuel incorrect" });
+
+    // Vérifier que le nouveau n'est pas dans les 3 derniers
+    const history = user.password_history || [];
+    for (const oldHash of history) {
+      const reused = await bcrypt.compare(newPassword, oldHash);
+      if (reused) return res.status(400).json({
+        error: "Vous ne pouvez pas réutiliser un de vos 3 derniers mots de passe",
+        code: "PASSWORD_REUSED",
+      });
+    }
+
+    const newHash    = await bcrypt.hash(newPassword, 10);
+    const newHistory = [user.password, ...history].slice(0, 3); // garder les 3 derniers
+
+    await db.query(
+      `UPDATE users SET
+         password=$1,
+         password_history=$2,
+         password_changed_at=NOW(),
+         password_expires_at=NOW() + INTERVAL '60 days',
+         force_password_change=false
+       WHERE id=$3`,
+      [newHash, newHistory, req.user.id]
+    );
+
+    await db.query(
+      "INSERT INTO user_logs (user_id,action,details,created_at) VALUES ($1,'change_password',$2,NOW())",
+      [req.user.id, JSON.stringify({ secure: true })]
+    ).catch(() => {});
+
+    res.json({ success: true, message: "Mot de passe mis à jour. Expire dans 60 jours." });
+  } catch (err) {
+    console.error("change-password-secure error:", err.message);
+    res.status(500).json({ error: "Failed to change password" });
+  }
+});
+
+// ─── GET /auth/benchmark — Données benchmark anonymisées ─────────────────────
+router.get("/benchmark", authenticateToken, async (req, res) => {
+  try {
+    // Score moyen de l'user
+    const userScoreRes = await db.query(
+      `SELECT
+         AVG(NULLIF((details->>'score')::numeric,0))::numeric(5,2) AS avg_score,
+         AVG(NULLIF((details->>'hookScore')::numeric,0))::numeric(5,2) AS avg_hook,
+         AVG(NULLIF((details->>'viralScore')::numeric,0))::numeric(5,2) AS avg_viral,
+         AVG(NULLIF((details->>'clarityScore')::numeric,0))::numeric(5,2) AS avg_clarity,
+         AVG(NULLIF((details->>'ctaScore')::numeric,0))::numeric(5,2) AS avg_cta,
+         COUNT(*)::int AS post_count
+       FROM user_logs
+       WHERE user_id=$1 AND action='analyze' AND details->>'score' IS NOT NULL`,
+      [req.user.id]
+    );
+    const userStats = userScoreRes.rows[0];
+
+    // Score moyen de la plateforme (anonymisé)
+    const platformRes = await db.query(
+      `SELECT
+         AVG(NULLIF((details->>'score')::numeric,0))::numeric(5,2) AS avg_score,
+         AVG(NULLIF((details->>'hookScore')::numeric,0))::numeric(5,2) AS avg_hook,
+         AVG(NULLIF((details->>'viralScore')::numeric,0))::numeric(5,2) AS avg_viral,
+         AVG(NULLIF((details->>'clarityScore')::numeric,0))::numeric(5,2) AS avg_clarity,
+         AVG(NULLIF((details->>'ctaScore')::numeric,0))::numeric(5,2) AS avg_cta,
+         COUNT(DISTINCT user_id)::int AS total_users
+       FROM user_logs
+       WHERE action='analyze' AND details->>'score' IS NOT NULL`
+    );
+    const platform = platformRes.rows[0];
+
+    const userScore = parseFloat(userStats.avg_score) || 0;
+    const platScore = parseFloat(platform.avg_score)  || 65;
+
+    // Calcul du percentile approximatif
+    const percentile = platScore > 0
+      ? Math.min(99, Math.round((userScore / platScore) * 50))
+      : 50;
+
+    // Forces et faiblesses
+    const scores = {
+      Hook:    parseFloat(userStats.avg_hook)    || 0,
+      Viralité: parseFloat(userStats.avg_viral)  || 0,
+      Clarté:  parseFloat(userStats.avg_clarity) || 0,
+      CTA:     parseFloat(userStats.avg_cta)     || 0,
+    };
+    const platScores = {
+      Hook:    parseFloat(platform.avg_hook)    || 60,
+      Viralité: parseFloat(platform.avg_viral)  || 60,
+      Clarté:  parseFloat(platform.avg_clarity) || 60,
+      CTA:     parseFloat(platform.avg_cta)     || 60,
+    };
+
+    const strengths  = Object.entries(scores).filter(([k,v]) => v >= (platScores[k] || 60)).map(([k]) => k);
+    const weaknesses = Object.entries(scores).filter(([k,v]) => v <  (platScores[k] || 60)).map(([k]) => k);
+
+    res.json({
+      userScore:   Math.round(userScore),
+      platformAvg: Math.round(platScore),
+      percentile,
+      totalUsers:  platform.total_users || 0,
+      strengths:   strengths.length  ? strengths  : ["Hook"],
+      weaknesses:  weaknesses.length ? weaknesses : ["CTA"],
+      radarYou: [
+        Math.round(scores.Hook),
+        Math.round(scores.Viralité),
+        Math.round(userScore),
+        Math.round(scores.Clarté),
+        Math.round(scores.CTA),
+        Math.round(userScore),
+      ],
+      radarAvg: [
+        Math.round(platScores.Hook),
+        Math.round(platScores.Viralité),
+        Math.round(platScore),
+        Math.round(platScores.Clarté),
+        Math.round(platScores.CTA),
+        Math.round(platScore),
+      ],
+    });
+  } catch (err) {
+    console.error("benchmark error:", err.message);
+    res.status(500).json({ error: "Failed to compute benchmark" });
+  }
+});
+
+// ─── GET /auth/score-avg — Scores moyens de l'user pour le radar ─────────────
+router.get("/score-avg", authenticateToken, async (req, res) => {
+  try {
+    const r = await db.query(
+      `SELECT
+         ROUND(AVG(NULLIF((details->>'score')::numeric,0)))::int       AS score,
+         ROUND(AVG(NULLIF((details->>'hookScore')::numeric,0)))::int   AS hook,
+         ROUND(AVG(NULLIF((details->>'viralScore')::numeric,0)))::int  AS viral,
+         ROUND(AVG(NULLIF((details->>'clarityScore')::numeric,0)))::int AS clarity,
+         ROUND(AVG(NULLIF((details->>'ctaScore')::numeric,0)))::int    AS cta
+       FROM user_logs
+       WHERE user_id=$1 AND action='analyze' AND details->>'score' IS NOT NULL`,
+      [req.user.id]
+    );
+    res.json(r.rows[0] || {});
+  } catch (err) {
+    console.error("score-avg error:", err.message);
+    res.json({});
+  }
+});
+
