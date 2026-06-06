@@ -2124,3 +2124,125 @@ export const requireCanPublish = async (req, res, next) => {
 };
 
 export default router;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ─── CHAT ÉQUIPE ──────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const resolveTeamId = async (userId) => {
+  const r = await db.query(
+    "SELECT id, plan, team_owner_id, plan_managed_by FROM users WHERE id=$1",
+    [userId]
+  );
+  if (!r.rows.length) return null;
+  const u = r.rows[0];
+  if (["Business","Agency"].includes(u.plan)) return userId;
+  if (u.plan_managed_by === "team" && u.team_owner_id) return u.team_owner_id;
+  return null;
+};
+
+const canAccessChat = async (userId, teamId) => {
+  if (userId === teamId) return true;
+  const r = await db.query(
+    "SELECT id FROM team_members WHERE owner_id=$1 AND member_id=$2 AND status='active'",
+    [teamId, userId]
+  );
+  return r.rows.length > 0;
+};
+
+router.get("/chat", auth, async (req, res) => {
+  try {
+    const teamId = req.query.team_id
+      ? parseInt(req.query.team_id)
+      : await resolveTeamId(req.user.id);
+    if (!teamId) return res.status(400).json({ error: "Team not found — upgrade to Business or join a team" });
+    const ok = await canAccessChat(req.user.id, teamId);
+    if (!ok) return res.status(403).json({ error: "Access denied" });
+    const limit = Math.min(parseInt(req.query.limit) || 100, 200);
+    const r = await db.query(
+      `SELECT tm.id, tm.sender_id, tm.sender_email, tm.sender_name, tm.content, tm.created_at,
+              CASE WHEN tmr.id IS NOT NULL THEN true ELSE false END AS read_by_me
+       FROM team_messages tm
+       LEFT JOIN team_message_reads tmr ON tmr.message_id=tm.id AND tmr.user_id=$1
+       WHERE tm.team_id=$2
+       ORDER BY tm.created_at ASC LIMIT $3`,
+      [req.user.id, teamId, limit]
+    );
+    await db.query(
+      `INSERT INTO team_message_reads (message_id, user_id, read_at)
+       SELECT tm.id, $1, NOW() FROM team_messages tm
+       WHERE tm.team_id=$2
+         AND NOT EXISTS (SELECT 1 FROM team_message_reads tmr2 WHERE tmr2.message_id=tm.id AND tmr2.user_id=$1)
+       ON CONFLICT DO NOTHING`,
+      [req.user.id, teamId]
+    ).catch(() => {});
+    res.json({ messages: r.rows, team_id: teamId });
+  } catch (err) {
+    console.error("GET /team/chat error:", err.message);
+    res.status(500).json({ error: "Failed to fetch messages" });
+  }
+});
+
+router.post("/chat", auth, async (req, res) => {
+  const { content, team_id } = req.body;
+  if (!content?.trim()) return res.status(400).json({ error: "content required" });
+  try {
+    const teamId = team_id ? parseInt(team_id) : await resolveTeamId(req.user.id);
+    if (!teamId) return res.status(400).json({ error: "Team not found" });
+    const ok = await canAccessChat(req.user.id, teamId);
+    if (!ok) return res.status(403).json({ error: "Access denied" });
+    const uRes = await db.query(
+      "SELECT email, first_name, last_name, display_name FROM users WHERE id=$1",
+      [req.user.id]
+    );
+    const u = uRes.rows[0];
+    const senderName = u.display_name || `${u.first_name||""} ${u.last_name||""}`.trim() || u.email;
+    const r = await db.query(
+      `INSERT INTO team_messages (team_id, sender_id, sender_email, sender_name, content)
+       VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+      [teamId, req.user.id, u.email, senderName, content.trim()]
+    );
+    await db.query(
+      `INSERT INTO user_logs (user_id, action, details, created_at) VALUES ($1,'team_chat_message',$2,NOW())`,
+      [req.user.id, JSON.stringify({ team_id: teamId })]
+    ).catch(() => {});
+    res.json({ success: true, message: r.rows[0] });
+  } catch (err) {
+    console.error("POST /team/chat error:", err.message);
+    res.status(500).json({ error: "Failed to send message" });
+  }
+});
+
+router.get("/chat/unread", auth, async (req, res) => {
+  try {
+    const teamId = await resolveTeamId(req.user.id);
+    if (!teamId) return res.json({ unread: 0 });
+    const r = await db.query(
+      `SELECT COUNT(*)::int AS unread FROM team_messages tm
+       WHERE tm.team_id=$1 AND tm.sender_id != $2
+         AND NOT EXISTS (SELECT 1 FROM team_message_reads tmr WHERE tmr.message_id=tm.id AND tmr.user_id=$2)`,
+      [teamId, req.user.id]
+    );
+    res.json({ unread: r.rows[0]?.unread || 0 });
+  } catch (err) {
+    console.error("GET /team/chat/unread error:", err.message);
+    res.json({ unread: 0 });
+  }
+});
+
+router.delete("/chat/:id", auth, async (req, res) => {
+  try {
+    const msgRes = await db.query(
+      "SELECT sender_id, team_id FROM team_messages WHERE id=$1", [req.params.id]
+    );
+    if (!msgRes.rows.length) return res.status(404).json({ error: "Message not found" });
+    const msg = msgRes.rows[0];
+    if (msg.sender_id !== req.user.id && msg.team_id !== req.user.id)
+      return res.status(403).json({ error: "Not authorized" });
+    await db.query("DELETE FROM team_messages WHERE id=$1", [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("DELETE /team/chat/:id error:", err.message);
+    res.status(500).json({ error: "Failed to delete message" });
+  }
+});
