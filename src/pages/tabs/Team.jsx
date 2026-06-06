@@ -1044,13 +1044,42 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
   const isOwner    = isBusiness;
   const MAX_MEMBERS = isAgency ? MAX_MEMBERS_AGENCY : MAX_MEMBERS_BUSINESS;
 
-  // Décoder l'email depuis le JWT pour identifier les propres messages dans le chat
+  // Email depuis JWT pour le chat
   const myEmail = (() => {
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      return payload.email || "";
-    } catch { return ""; }
+    try { return JSON.parse(atob(token.split(".")[1])).email || ""; } catch { return ""; }
   })();
+
+  // Rôle du membre connecté (si planManagedBy === "team")
+  const myRole = myTeamView?.myRole?.toLowerCase() || null;
+  // isTeamAdmin : membre avec rôle admin dans l'équipe
+  const isTeamAdmin = myRole === "admin";
+
+  // ── Permissions par rôle ──────────────────────────────────────────────────
+  // owner   → tout
+  // admin   → membres (lecture), activité, rôles (lecture), approbations, historique, calendrier, chat
+  // editor  → activité, historique, calendrier, chat
+  // publisher → activité, calendrier, chat
+  const canAccess = (tab) => {
+    if (isOwner) return true; // owner voit tout
+    if (!myRole) return tab === "chat"; // non membre → seulement chat
+    const perms = {
+      owner:     ["members","activity","perms","approvals","logs","plans","calendar","chat"],
+      admin:     ["members","activity","perms","approvals","logs","calendar","chat"],
+      editor:    ["activity","logs","calendar","chat"],
+      publisher: ["activity","calendar","chat"],
+    };
+    return (perms[myRole] || ["chat"]).includes(tab);
+  };
+
+  // Lecture seule pour certains onglets selon le rôle
+  const isReadOnly = (tab) => {
+    if (isOwner) return false;
+    const readOnly = {
+      admin:  ["members","perms"],
+      editor: [],
+    };
+    return (readOnly[myRole] || []).includes(tab);
+  };
 
   const headers = { "Content-Type":"application/json", Authorization:`Bearer ${token}` };
 
@@ -1432,30 +1461,138 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
         </div>
       )}
 
-      {/* Chat accessible aux membres d'équipe directement */}
-      {planManagedBy === "team" && mainTab === "chat" && (
-        <div style={{ ...s.card, padding: 0, overflow: "hidden" }}>
-          <TeamChat
-            token={token}
-            trendsLang={trendsLang}
-            isMobile={isMobile}
-            currentUserEmail={myEmail}
-            members={[]}
-          />
-        </div>
-      )}
-      {planManagedBy === "team" && mainTab !== "chat" && null}
-
-      {/* Bouton Chat visible pour les membres */}
+      {/* ── VUE MEMBRES : onglets selon rôle ── */}
       {planManagedBy === "team" && (
-        <div style={{ display:"flex", borderBottom:"1px solid rgba(255,255,255,0.07)", marginBottom:16 }}>
-          <button style={{ ...s.tabBtn(mainTab==="chat","#22c55e") }} onClick={()=>setMainTab("chat")}>
-            💬 CHAT
-          </button>
-        </div>
+        <>
+          <div style={{ display:"flex", borderBottom:"1px solid rgba(255,255,255,0.07)", marginBottom:16, flexWrap:"wrap" }}>
+            {canAccess("members")   && <button style={s.tabBtn(mainTab==="members")}            onClick={()=>setMainTab("members")}>👥 {tr(trendsLang,"ui.team.tabMembers")}</button>}
+            {canAccess("activity")  && <button style={s.tabBtn(mainTab==="activity")}           onClick={()=>setMainTab("activity")}>📊 {tr(trendsLang,"ui.team.tabActivity")}</button>}
+            {canAccess("perms")     && <button style={s.tabBtn(mainTab==="perms")}              onClick={()=>setMainTab("perms")}>🔑 {tr(trendsLang,"ui.team.tabRoles")}</button>}
+            {canAccess("approvals") && <button style={s.tabBtn(mainTab==="approvals","#f59e0b")} onClick={()=>{ setMainTab("approvals"); fetchApprovals(); }}>
+              ✅ {tr(trendsLang,"ui.team.tabApprovals")}
+              {approvals.length > 0 && <span style={{ background:"#ef4444", color:"#fff", borderRadius:"50%", padding:"1px 5px", fontSize:9, marginLeft:4 }}>{approvals.length}</span>}
+            </button>}
+            {canAccess("logs")      && <button style={s.tabBtn(mainTab==="logs")}               onClick={()=>{ setMainTab("logs"); fetchTeamLogs(); }}>📋 {tr(trendsLang,"ui.team.tabHistory")}</button>}
+            {canAccess("calendar")  && <button style={s.tabBtn(mainTab==="calendar","#22c55e")} onClick={()=>{ setMainTab("calendar"); if (!teamCalLoaded) fetchTeamCal(); }}>📅 {tr(trendsLang,"ui.team.tabCalendar")||"CALENDRIER"}</button>}
+            <button style={s.tabBtn(mainTab==="chat","#22c55e")} onClick={()=>setMainTab("chat")}>💬 CHAT</button>
+          </div>
+
+          {/* Badge lecture seule */}
+          {mainTab !== "chat" && isReadOnly(mainTab) && (
+            <div style={{ background:"rgba(245,158,11,0.08)", border:"1px solid rgba(245,158,11,0.2)", borderRadius:8, padding:"8px 14px", marginBottom:12, fontSize:11, color:"#f59e0b", display:"flex", alignItems:"center", gap:8 }}>
+              👁 Lecture seule — votre rôle <strong>{myRole?.toUpperCase()}</strong> ne permet pas de modifier cet onglet
+            </div>
+          )}
+
+          {/* Membres */}
+          {mainTab === "members" && canAccess("members") && (
+            <div style={s.card}>
+              <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:12 }}>👥 {tr(trendsLang,"ui.team.myTeam")}</div>
+              {myTeamView?.owner && (
+                <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 0", borderBottom:"1px solid rgba(255,255,255,0.05)", marginBottom:10 }}>
+                  <div style={{ width:32, height:32, borderRadius:"50%", background:"rgba(239,68,68,0.15)", display:"flex", alignItems:"center", justifyContent:"center", color:"#ef4444", fontWeight:800, fontSize:12 }}>
+                    {(myTeamView.owner.name||myTeamView.owner.email||"?")[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <div style={{ color:"#e2e8f0", fontSize:12, fontWeight:600 }}>{myTeamView.owner.name||myTeamView.owner.email}</div>
+                    <div style={{ color:"#475569", fontSize:10 }}>Owner</div>
+                  </div>
+                  <div style={{ marginLeft:"auto", background:"rgba(239,68,68,0.1)", border:"1px solid #ef444433", borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:700, color:"#ef4444" }}>OWNER</div>
+                </div>
+              )}
+              {myTeamView?.colleagues?.map((c,i)=>(
+                <div key={i} style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+                  <div style={{ width:28, height:28, borderRadius:"50%", background:"rgba(100,116,139,0.15)", display:"flex", alignItems:"center", justifyContent:"center", color:"#64748b", fontWeight:800, fontSize:11 }}>
+                    {(c.name||c.email||"?")[0].toUpperCase()}
+                  </div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ color:"#e2e8f0", fontSize:12 }}>{c.name||c.email}</div>
+                    <div style={{ color:"#475569", fontSize:10 }}>{c.role?.toUpperCase()}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Activité */}
+          {mainTab === "activity" && canAccess("activity") && (
+            <div style={s.card}>
+              <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:12 }}>📊 {tr(trendsLang,"ui.team.tabActivity")}</div>
+              <div style={{ color:"#475569", fontSize:12 }}>Activité de l'équipe disponible pour les owners.</div>
+            </div>
+          )}
+
+          {/* Rôles — lecture seule pour admin */}
+          {mainTab === "perms" && canAccess("perms") && (
+            <div style={s.card}>
+              <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:4 }}>🔑 {tr(trendsLang,"ui.team.tabRoles")}</div>
+              <div style={{ color:"#475569", fontSize:12, marginBottom:16 }}>Permissions par défaut par rôle</div>
+              <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"8px 0", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>PERMISSION</th>
+                    {ROLES.map(r=><th key={r.id} style={{ textAlign:"center", color:r.color, fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"8px 8px", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>{r.label.toUpperCase()}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    [tr(trendsLang,"ui.team.perm.generate"),   true,  true,  false],
+                    [tr(trendsLang,"ui.team.perm.publish"),     true,  false, true ],
+                    [tr(trendsLang,"ui.team.perm.analyze"),     true,  true,  true ],
+                    [tr(trendsLang,"ui.team.perm.brandMemory"), true,  true,  false],
+                    [tr(trendsLang,"ui.team.perm.manageTeam"),  true,  false, false],
+                    [tr(trendsLang,"ui.team.perm.projects"),    true,  true,  true ],
+                    [tr(trendsLang,"ui.team.perm.analytics"),   true,  true,  true ],
+                  ].map(([label,admin,editor,publisher])=>(
+                    <tr key={label}>
+                      <td style={{ color:"#94a3b8", padding:"10px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>{label}</td>
+                      {[admin,editor,publisher].map((v,i)=>(
+                        <td key={i} style={{ textAlign:"center", padding:"10px 8px", borderBottom:"1px solid rgba(255,255,255,0.04)", color:v?"#22c55e":"#334155", fontSize:15 }}>{v?"✓":"✗"}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Approbations — admin + owner */}
+          {mainTab === "approvals" && canAccess("approvals") && (
+            <div style={s.card}>
+              <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:12 }}>✅ {tr(trendsLang,"ui.team.tabApprovals")}</div>
+              {approvals.length === 0 ? (
+                <div style={{ textAlign:"center", color:"#334155", padding:24 }}>Aucun post en attente d'approbation</div>
+              ) : (
+                <div style={{ color:"#94a3b8", fontSize:12 }}>{approvals.length} post(s) en attente</div>
+              )}
+            </div>
+          )}
+
+          {/* Historique — admin + editor + owner */}
+          {mainTab === "logs" && canAccess("logs") && (
+            <div style={s.card}>
+              <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:12 }}>📋 {tr(trendsLang,"ui.team.tabHistory")}</div>
+              <div style={{ color:"#475569", fontSize:12 }}>Historique de l'équipe disponible pour les owners.</div>
+            </div>
+          )}
+
+          {/* Calendrier — tous */}
+          {mainTab === "calendar" && canAccess("calendar") && (
+            <div style={s.card}>
+              <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:12 }}>📅 {tr(trendsLang,"ui.team.tabCalendar")||"Calendrier partagé"}</div>
+              <div style={{ color:"#475569", fontSize:12 }}>Le calendrier partagé est accessible via l'onglet Équipe (owner).</div>
+            </div>
+          )}
+
+          {/* Chat */}
+          {mainTab === "chat" && (
+            <div style={{ ...s.card, padding:0, overflow:"hidden" }}>
+              <TeamChat token={token} trendsLang={trendsLang} isMobile={isMobile} currentUserEmail={myEmail} members={[]} />
+            </div>
+          )}
+        </>
       )}
 
-      {/* Gate */}
       {planManagedBy === "team" ? null : (!isBusiness && !isPro) ? <BusinessGate setPage={setPage} /> : (
         <>
           {/* Main tabs */}
