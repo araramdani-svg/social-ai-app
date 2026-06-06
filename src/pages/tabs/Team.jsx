@@ -1413,8 +1413,8 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
         ))}
       </div>
 
-      {/* Vue membre lecture seule */}
-      {planManagedBy === "team" && myTeamView && (
+      {/* Vue membre — résumé affiché uniquement si l'onglet members n'est PAS actif */}
+      {planManagedBy === "team" && myTeamView && mainTab !== "members" && (
         <div style={{ padding:"0 0 24px" }}>
           <div style={{ ...s.card, marginBottom:12 }}>
             <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:13, marginBottom:12 }}>👥 {tr(trendsLang,"ui.team.myTeam")}</div>
@@ -1465,22 +1465,22 @@ export default function Team({ trendsLang, isMobile, token, userPlan, planManage
       {planManagedBy === "team" && (
         <>
           <div style={{ display:"flex", borderBottom:"1px solid rgba(255,255,255,0.07)", marginBottom:16, flexWrap:"wrap" }}>
-            {canAccess("members")   && <button style={s.tabBtn(mainTab==="members")}            onClick={()=>setMainTab("members")}>👥 {tr(trendsLang,"ui.team.tabMembers")}</button>}
-            {canAccess("activity")  && <button style={s.tabBtn(mainTab==="activity")}           onClick={()=>setMainTab("activity")}>📊 {tr(trendsLang,"ui.team.tabActivity")}</button>}
-            {canAccess("perms")     && <button style={s.tabBtn(mainTab==="perms")}              onClick={()=>setMainTab("perms")}>🔑 {tr(trendsLang,"ui.team.tabRoles")}</button>}
+            {canAccess("members")   && <button style={s.tabBtn(mainTab==="members")}            onClick={()=>setMainTab("members")}>{tr(trendsLang,"ui.team.tabMembers")}</button>}
+            {canAccess("activity")  && <button style={s.tabBtn(mainTab==="activity")}           onClick={()=>setMainTab("activity")}>{tr(trendsLang,"ui.team.tabActivity")}</button>}
+            {canAccess("perms")     && <button style={s.tabBtn(mainTab==="perms")}              onClick={()=>setMainTab("perms")}>{tr(trendsLang,"ui.team.tabRoles")}</button>}
             {canAccess("approvals") && <button style={s.tabBtn(mainTab==="approvals","#f59e0b")} onClick={()=>{ setMainTab("approvals"); fetchApprovals(); }}>
-              ✅ {tr(trendsLang,"ui.team.tabApprovals")}
+              {tr(trendsLang,"ui.team.tabApprovals")}
               {approvals.length > 0 && <span style={{ background:"#ef4444", color:"#fff", borderRadius:"50%", padding:"1px 5px", fontSize:9, marginLeft:4 }}>{approvals.length}</span>}
             </button>}
-            {canAccess("logs")      && <button style={s.tabBtn(mainTab==="logs")}               onClick={()=>{ setMainTab("logs"); fetchTeamLogs(); }}>📋 {tr(trendsLang,"ui.team.tabHistory")}</button>}
-            {canAccess("calendar")  && <button style={s.tabBtn(mainTab==="calendar","#22c55e")} onClick={()=>{ setMainTab("calendar"); if (!teamCalLoaded) fetchTeamCal(); }}>📅 {tr(trendsLang,"ui.team.tabCalendar")||"CALENDRIER"}</button>}
+            {canAccess("logs")      && <button style={s.tabBtn(mainTab==="logs")}               onClick={()=>{ setMainTab("logs"); fetchTeamLogs(); }}>{tr(trendsLang,"ui.team.tabHistory")}</button>}
+            {canAccess("calendar")  && <button style={s.tabBtn(mainTab==="calendar","#22c55e")} onClick={()=>{ setMainTab("calendar"); if (!teamCalLoaded) fetchTeamCal(); }}>{tr(trendsLang,"ui.team.tabCalendar")||"CALENDRIER"}</button>}
             <button style={s.tabBtn(mainTab==="chat","#22c55e")} onClick={()=>setMainTab("chat")}>💬 CHAT</button>
           </div>
 
           {/* Badge lecture seule */}
           {mainTab !== "chat" && isReadOnly(mainTab) && (
             <div style={{ background:"rgba(245,158,11,0.08)", border:"1px solid rgba(245,158,11,0.2)", borderRadius:8, padding:"8px 14px", marginBottom:12, fontSize:11, color:"#f59e0b", display:"flex", alignItems:"center", gap:8 }}>
-              👁 Lecture seule — votre rôle <strong>{myRole?.toUpperCase()}</strong> ne permet pas de modifier cet onglet
+              👁 {tr(trendsLang,"ui.team.readOnlyMsg") || `Read only — your role ${myRole?.toUpperCase()} cannot edit this tab`}
             </div>
           )}
 
