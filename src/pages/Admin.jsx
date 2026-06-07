@@ -1827,9 +1827,10 @@ export default function Admin({ token, logout }) {
   const [banFilter,   setBanFilter]   = useState("all");
   const [verifyFilter,setVerifyFilter]= useState("all");
   const [loading,   setLoading]   = useState(false);
-  const [editUser,  setEditUser]  = useState(null);
-  const [resetUser, setResetUser] = useState(null);
-  const [confirm,   setConfirm]   = useState(null);
+  const [editUser,   setEditUser]   = useState(null);
+  const [resetUser,  setResetUser]  = useState(null);
+  const [confirm,    setConfirm]    = useState(null);
+  const [emailPopup, setEmailPopup] = useState(null);
   const [showNotifs, setShowNotifs] = useState(false);
   const [unreadNotifs, setUnreadNotifs] = useState(0);
 
@@ -2124,7 +2125,7 @@ export default function Admin({ token, logout }) {
                 <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
                   <thead>
                     <tr style={{ background:"rgba(255,255,255,0.03)" }}>
-                      {["ID","NOM","DISPLAY NAME","PLAN","TEAM","GÉNÉRATIONS","POSTS","STRIPE","STATUT","VÉRIFIÉ","ACTIONS"].map(h => (
+                      {["ID","UTILISATEUR","PLAN","TEAM","GÉNÉRATIONS","POSTS","STRIPE","STATUT","VÉRIFIÉ","ACTIONS"].map(h => (
                         <th key={h} style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"14px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)", whiteSpace:"nowrap" }}>{h}</th>
                       ))}
                     </tr>
@@ -2136,14 +2137,14 @@ export default function Admin({ token, logout }) {
                       <tr key={u.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)", background: u.banned ? "rgba(239,68,68,0.03)" : "transparent" }}>
                         <td style={{ padding:"12px 16px", color:"#475569" }}>#{u.id}</td>
                         <td style={{ padding:"12px 16px" }}>
-                          {(u.first_name || u.last_name)
-                            ? <span style={{ color:"#e2e8f0", fontSize:12 }}>{[u.first_name, u.last_name].filter(Boolean).join(" ")}</span>
-                            : <span style={{ color:"#334155" }}>—</span>}
-                        </td>
-                        <td style={{ padding:"12px 16px" }}>
-                          {u.display_name
-                            ? <span style={{ background:"rgba(139,92,246,0.08)", border:"1px solid rgba(139,92,246,0.2)", borderRadius:8, padding:"2px 8px", color:"#a78bfa", fontSize:11, fontWeight:600 }}>@{u.display_name}</span>
-                            : <span style={{ color:"#334155" }}>—</span>}
+                          <div style={{ display:"flex", flexDirection:"column", gap:3 }}>
+                            {(u.first_name || u.last_name)
+                              ? <span style={{ color:"#e2e8f0", fontSize:12, fontWeight:600 }}>{[u.first_name, u.last_name].filter(Boolean).join(" ")}</span>
+                              : <span style={{ color:"#334155", fontSize:12 }}>—</span>}
+                            {u.display_name
+                              ? <span style={{ background:"rgba(139,92,246,0.08)", border:"1px solid rgba(139,92,246,0.2)", borderRadius:8, padding:"1px 6px", color:"#a78bfa", fontSize:10, fontWeight:600, alignSelf:"flex-start" }}>@{u.display_name}</span>
+                              : null}
+                          </div>
                         </td>
                         <td style={{ padding:"12px 16px" }}>
                           <span style={s.badge(u.plan)}>{u.plan}</span>
@@ -2189,7 +2190,7 @@ export default function Admin({ token, logout }) {
                             <button
                               title={u.email}
                               style={{ ...s.btnSm, background:"rgba(100,116,139,0.1)", border:"1px solid rgba(100,116,139,0.3)", color:"#94a3b8" }}
-                              onClick={()=>alert(`📧 ${u.email}${u.banned ? "\n🚫 SUSPENDU" : ""}`)}
+                              onClick={()=>setEmailPopup(u)}
                             >ℹ️</button>
                             <button title="Modifier" style={{ ...s.btnSm, background:"rgba(59,130,246,0.1)", border:"1px solid rgba(59,130,246,0.3)", color:"#60a5fa" }} onClick={()=>setEditUser(u)}>✏️</button>
                             <button title="Reset mot de passe" style={{ ...s.btnSm, background:"rgba(245,158,11,0.1)", border:"1px solid rgba(245,158,11,0.3)", color:"#f59e0b" }} onClick={()=>setResetUser(u)}>🔑</button>
@@ -2262,6 +2263,49 @@ export default function Admin({ token, logout }) {
       {editUser  && <EditUserModal user={editUser} token={token} onClose={()=>setEditUser(null)} onSave={()=>{ fetchUsers(page); fetchStats(); }} />}
       {resetUser && <ResetPasswordModal user={resetUser} token={token} onClose={()=>setResetUser(null)} />}
       {confirm   && <ConfirmModal message={confirm.message} onConfirm={confirm.onConfirm} onCancel={()=>setConfirm(null)} />}
+
+      {emailPopup && (
+        <div onClick={()=>setEmailPopup(null)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.6)", backdropFilter:"blur(4px)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:9999 }}>
+          <div onClick={e=>e.stopPropagation()} style={{ background:"#0f172a", border:"1px solid rgba(255,255,255,0.1)", borderRadius:16, padding:"24px 28px", minWidth:320, boxShadow:"0 25px 60px rgba(0,0,0,0.5)" }}>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 }}>
+              <span style={{ color:"#94a3b8", fontSize:10, fontWeight:700, letterSpacing:"1.5px" }}>INFOS UTILISATEUR</span>
+              <button onClick={()=>setEmailPopup(null)} style={{ background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:6, color:"#64748b", fontSize:12, padding:"2px 8px", cursor:"pointer" }}>✕</button>
+            </div>
+            <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:10, background:"rgba(255,255,255,0.03)", borderRadius:10, padding:"10px 14px" }}>
+                <span style={{ fontSize:16 }}>📧</span>
+                <div>
+                  <div style={{ color:"#475569", fontSize:9, fontWeight:700, letterSpacing:"1px", marginBottom:2 }}>EMAIL</div>
+                  <div style={{ color:"#e2e8f0", fontSize:13, fontWeight:600 }}>{emailPopup.email}</div>
+                </div>
+              </div>
+              {(emailPopup.first_name || emailPopup.last_name) && (
+                <div style={{ display:"flex", alignItems:"center", gap:10, background:"rgba(255,255,255,0.03)", borderRadius:10, padding:"10px 14px" }}>
+                  <span style={{ fontSize:16 }}>👤</span>
+                  <div>
+                    <div style={{ color:"#475569", fontSize:9, fontWeight:700, letterSpacing:"1px", marginBottom:2 }}>NOM</div>
+                    <div style={{ color:"#e2e8f0", fontSize:13, fontWeight:600 }}>{[emailPopup.first_name, emailPopup.last_name].filter(Boolean).join(" ")}</div>
+                  </div>
+                </div>
+              )}
+              {emailPopup.display_name && (
+                <div style={{ display:"flex", alignItems:"center", gap:10, background:"rgba(255,255,255,0.03)", borderRadius:10, padding:"10px 14px" }}>
+                  <span style={{ fontSize:16 }}>✨</span>
+                  <div>
+                    <div style={{ color:"#475569", fontSize:9, fontWeight:700, letterSpacing:"1px", marginBottom:2 }}>DISPLAY NAME</div>
+                    <div style={{ color:"#a78bfa", fontSize:13, fontWeight:600 }}>@{emailPopup.display_name}</div>
+                  </div>
+                </div>
+              )}
+              {emailPopup.banned && (
+                <div style={{ background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:10, padding:"10px 14px", color:"#ef4444", fontSize:12, fontWeight:700, textAlign:"center" }}>
+                  🚫 COMPTE SUSPENDU
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
