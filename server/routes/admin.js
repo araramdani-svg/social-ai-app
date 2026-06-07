@@ -163,16 +163,17 @@ router.get("/users", adminAuth, async (req, res) => {
     const { search, plan, page = 1, banned, verified } = req.query;
     const limit  = 20;
     const offset = (page - 1) * limit;
-    const conditions = ["email != $1", "(is_admin IS NULL OR is_admin = false)"];
+    const conditions = ["u.email != $1", "(u.is_admin IS NULL OR u.is_admin = false)"];
     const values     = [ADMIN_EMAIL];
     let i = 2;
 
-    if (search)   { conditions.push(`(email ILIKE $${i} OR linkedin_name ILIKE $${i})`); values.push(`%${search}%`); i++; }
-    if (plan)     { conditions.push(`plan = $${i}`); values.push(plan); i++; }
-    if (banned !== undefined)  { conditions.push(`banned = $${i}`);          values.push(banned === "true"); i++; }
-    if (verified !== undefined){ conditions.push(`email_verified = $${i}`);  values.push(verified === "true"); i++; }
+    if (search)   { conditions.push(`(u.email ILIKE $${i} OR u.linkedin_name ILIKE $${i})`); values.push(`%${search}%`); i++; }
+    if (plan)     { conditions.push(`u.plan = $${i}`); values.push(plan); i++; }
+    if (banned !== undefined)  { conditions.push(`u.banned = $${i}`);          values.push(banned === "true"); i++; }
+    if (verified !== undefined){ conditions.push(`u.email_verified = $${i}`);  values.push(verified === "true"); i++; }
 
-    const where = conditions.join(" AND ");
+    const where      = conditions.join(" AND ");
+    const whereCount = conditions.join(" AND ").replace(/\bu\./g, ""); // sans alias pour COUNT
 
     const [usersRes, countRes] = await Promise.all([
       db.query(
@@ -194,7 +195,7 @@ router.get("/users", adminAuth, async (req, res) => {
          LIMIT $${i} OFFSET $${i+1}`,
         [...values, limit, offset]
       ),
-      db.query(`SELECT COUNT(*)::int AS total FROM users WHERE ${where}`, values),
+      db.query(`SELECT COUNT(*)::int AS total FROM users WHERE ${whereCount}`, values),
     ]);
 
     res.json({
@@ -310,9 +311,14 @@ router.get("/logs", adminAuth, async (req, res) => {
 
     const [logsRes, countRes] = await Promise.all([
       db.query(
-        `SELECT l.*, u.email AS target_email
+        `SELECT l.*, u.email AS target_email,
+                admin_u.email AS admin_email,
+                (SELECT tm.team_name FROM team_members tm
+                 WHERE tm.owner_id = l.admin_id AND tm.status = 'active' LIMIT 1
+                ) AS team_name
          FROM admin_logs l
          LEFT JOIN users u ON u.id = l.target_user_id::integer
+         LEFT JOIN users admin_u ON admin_u.id = l.admin_id
          ${whereClause}
          ORDER BY l.created_at DESC
          LIMIT $1 OFFSET $2`,

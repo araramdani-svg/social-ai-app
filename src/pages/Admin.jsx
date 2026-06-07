@@ -346,6 +346,7 @@ function TeamLogsTab({ token }) {
   ];
 
   const [filterAction, setFilterAction] = useState("");
+  const [selectedLog,  setSelectedLog]  = useState(null);
 
   const fetchLogs = useCallback(async (p = 1, action = filterAction) => {
     setLoading(true);
@@ -361,6 +362,55 @@ function TeamLogsTab({ token }) {
 
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+
+      {/* ── Modal détails ── */}
+      {selectedLog && (
+        <>
+          <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", zIndex:9998 }} onClick={() => setSelectedLog(null)} />
+          <div style={{ position:"fixed", top:"50%", left:"50%", transform:"translate(-50%,-50%)", zIndex:9999, width:"min(580px,95vw)", maxHeight:"75vh", background:"#0f172a", border:"1px solid rgba(255,255,255,0.12)", borderRadius:16, overflow:"hidden", display:"flex", flexDirection:"column" }}>
+            <div style={{ padding:"16px 20px", borderBottom:"1px solid rgba(255,255,255,0.07)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+              {(() => { const cfg = ACTION_LABELS[selectedLog.action] || { label:selectedLog.action, color:"#94a3b8" }; return <span style={{ color:cfg.color, fontWeight:800, fontSize:14 }}>{cfg.label}</span>; })()}
+              <div style={{ display:"flex", gap:12, alignItems:"center" }}>
+                <span style={{ color:"#475569", fontSize:11 }}>{new Date(selectedLog.created_at).toLocaleString("fr-FR")}</span>
+                <button onClick={() => setSelectedLog(null)} style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, color:"#94a3b8", width:32, height:32, cursor:"pointer", fontSize:16 }}>✕</button>
+              </div>
+            </div>
+            <div style={{ overflowY:"auto", padding:20, display:"flex", flexDirection:"column", gap:12 }}>
+              <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:10, padding:"14px 16px" }}>
+                <div style={{ color:"#64748b", fontSize:10, fontWeight:700, letterSpacing:"1px", marginBottom:10 }}>👤 UTILISATEUR</div>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+                  {[["User", selectedLog.target_email || `#${selectedLog.target_user_id}` || "—"],["Admin", selectedLog.admin_email || "—"],["Team", selectedLog.team_name || "—"]].map(([label,val])=>(
+                    <div key={label}>
+                      <div style={{ color:"#475569", fontSize:9, fontWeight:700, letterSpacing:"1px" }}>{label}</div>
+                      <div style={{ color:"#e2e8f0", fontSize:12, fontWeight:600, marginTop:2 }}>{val}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:10, padding:"14px 16px" }}>
+                <div style={{ color:"#64748b", fontSize:10, fontWeight:700, letterSpacing:"1px", marginBottom:10 }}>📋 DÉTAILS COMPLETS</div>
+                {(() => {
+                  try {
+                    const d = typeof selectedLog.details==="string" ? JSON.parse(selectedLog.details) : selectedLog.details;
+                    if (!d) return <span style={{ color:"#334155" }}>—</span>;
+                    return (
+                      <div style={{ display:"flex", flexDirection:"column", gap:0 }}>
+                        {Object.entries(d).map(([k,v])=>(
+                          <div key={k} style={{ display:"flex", gap:12, padding:"7px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+                            <span style={{ color:"#64748b", fontSize:11, fontWeight:700, minWidth:110, flexShrink:0 }}>{k}</span>
+                            <span style={{ color:"#e2e8f0", fontSize:12, wordBreak:"break-all", lineHeight:1.5 }}>{typeof v==="object"?JSON.stringify(v):String(v)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  } catch { return <span style={{ color:"#94a3b8", fontSize:12 }}>{String(selectedLog.details||"—")}</span>; }
+                })()}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
       <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
         {TEAM_QUICK_FILTERS.map(f => (
           <button key={f.value} onClick={() => { setFilterAction(f.value); fetchLogs(1, f.value); }}
@@ -374,29 +424,39 @@ function TeamLogsTab({ token }) {
         <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
           <thead>
             <tr style={{ background:"rgba(255,255,255,0.03)" }}>
-              {["DATE","USER","ACTION","DÉTAILS"].map(h => (
+              {["DATE","USER","TEAM","ACTION","DÉTAILS"].map(h => (
                 <th key={h} style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"14px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {loading && <tr><td colSpan={4} style={{ textAlign:"center", padding:40, color:"#475569" }}>Chargement...</td></tr>}
-            {!loading && logs.length === 0 && <tr><td colSpan={4} style={{ textAlign:"center", padding:40, color:"#475569" }}>Aucun événement team</td></tr>}
+            {loading && <tr><td colSpan={5} style={{ textAlign:"center", padding:40, color:"#475569" }}>Chargement...</td></tr>}
+            {!loading && logs.length === 0 && <tr><td colSpan={5} style={{ textAlign:"center", padding:40, color:"#475569" }}>Aucun événement team</td></tr>}
             {logs.map(log => {
               const cfg = ACTION_LABELS[log.action] || { label:log.action, color:"#94a3b8" };
               let details = "—";
               try {
                 const d = typeof log.details==="string" ? JSON.parse(log.details) : log.details;
-                if (d?.post_id) details = `Post #${d.post_id}`;
-                if (d?.member_id) details = `Member #${d.member_id}`;
+                if (d?.post_id)    details = `Post #${d.post_id}`;
+                if (d?.member_id)  details = `Member #${d.member_id}`;
                 if (d?.client_name) details = `Client: ${d.client_name}`;
-                if (d?.type) details = `Type: ${d.type}`;
-                if (d?.role) details += ` · Role: ${d.role}`;
+                if (d?.type)       details = `Type: ${d.type}`;
+                if (d?.role)       details += ` · Role: ${d.role}`;
               } catch {}
               return (
-                <tr key={log.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+                <tr key={log.id}
+                  style={{ borderBottom:"1px solid rgba(255,255,255,0.04)", cursor:"pointer", transition:"background 0.15s" }}
+                  onClick={() => setSelectedLog(log)}
+                  onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.03)"}
+                  onMouseLeave={e => e.currentTarget.style.background="transparent"}
+                >
                   <td style={{ padding:"12px 16px", color:"#475569", fontSize:11, whiteSpace:"nowrap" }}>{new Date(log.created_at).toLocaleString("fr-FR")}</td>
                   <td style={{ padding:"12px 16px", color:"#94a3b8", fontSize:11 }}>{log.target_email || `#${log.target_user_id}`}</td>
+                  <td style={{ padding:"12px 16px", fontSize:11 }}>
+                    {log.team_name
+                      ? <span style={{ background:"rgba(139,92,246,0.1)", border:"1px solid rgba(139,92,246,0.25)", borderRadius:8, padding:"2px 8px", color:"#a78bfa", fontSize:10, fontWeight:700 }}>{log.team_name}</span>
+                      : <span style={{ color:"#334155" }}>—</span>}
+                  </td>
                   <td style={{ padding:"12px 16px" }}>
                     <span style={{ background:`${cfg.color}15`, border:`1px solid ${cfg.color}40`, borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:700, color:cfg.color }}>{cfg.label}</span>
                   </td>
