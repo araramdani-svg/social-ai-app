@@ -2180,8 +2180,8 @@ export default function Admin({ token, logout }) {
                         </td>
                         <td style={{ padding:"12px 16px" }}>
                           {u.banned
-                            ? <span style={{ background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:20, padding:"2px 8px", fontSize:10, fontWeight:700, color:"#ef4444" }}>🚫 Banni</span>
-                            : <span style={{ background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.3)", borderRadius:20, padding:"2px 8px", fontSize:10, fontWeight:700, color:"#22c55e" }}>✓ Actif</span>}
+                            ? <span style={{ background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:20, padding:"2px 8px", fontSize:10, fontWeight:700, color:"#ef4444", whiteSpace:"nowrap" }}>🚫 Banni</span>
+                            : <span style={{ background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.3)", borderRadius:20, padding:"2px 8px", fontSize:10, fontWeight:700, color:"#22c55e", whiteSpace:"nowrap" }}>✓ Actif</span>}
                         </td>
                         <td style={{ padding:"12px 16px" }}>
                           {u.email_verified
