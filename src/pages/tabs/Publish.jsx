@@ -24,7 +24,7 @@ export default function Publish({
               in LinkedIn {linkedinStatus?.connected ? "✓" : "🔗"}
             </button>
             <button style={{ ...st.button, margin:0, opacity: twitterStatus?.connected ? 1 : 0.5, background:"linear-gradient(135deg,#000,#1a1a1a)" }} onClick={() => twitterStatus?.connected ? postToTwitter() : null} disabled={twitterPosting}>
-              𝕏 {twitterPosting ? tr(trendsLang,"buttons.publishing") : "X (Twitter)"} {twitterStatus?.connected ? "✓" : "🔗"}
+              {twitterPosting ? tr(trendsLang,"buttons.publishing") : "𝕏 X (Twitter)"} {twitterStatus?.connected ? "✓" : "🔗"}
             </button>
             <button style={{ ...st.button, margin:0, opacity: facebookStatus?.connected ? 1 : 0.5, background:"linear-gradient(135deg,#1877f2,#0d5cbf)" }} onClick={() => facebookStatus?.connected ? postToFacebook() : null} disabled={facebookPosting}>
               f {facebookPosting ? tr(trendsLang,"buttons.publishing") : "Facebook"} {facebookStatus?.connected ? "✓" : "🔗"}
