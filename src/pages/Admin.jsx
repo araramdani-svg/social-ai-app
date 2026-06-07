@@ -2124,7 +2124,7 @@ export default function Admin({ token, logout }) {
                 <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
                   <thead>
                     <tr style={{ background:"rgba(255,255,255,0.03)" }}>
-                      {["ID","EMAIL","NOM","DISPLAY NAME","PLAN","TEAM","GÉNÉRATIONS","POSTS","STRIPE","STATUT","VÉRIFIÉ","ACTIONS"].map(h => (
+                      {["ID","NOM","DISPLAY NAME","PLAN","TEAM","GÉNÉRATIONS","POSTS","STRIPE","STATUT","VÉRIFIÉ","ACTIONS"].map(h => (
                         <th key={h} style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"14px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)", whiteSpace:"nowrap" }}>{h}</th>
                       ))}
                     </tr>
@@ -2135,10 +2135,6 @@ export default function Admin({ token, logout }) {
                     {users.map(u => (
                       <tr key={u.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)", background: u.banned ? "rgba(239,68,68,0.03)" : "transparent" }}>
                         <td style={{ padding:"12px 16px", color:"#475569" }}>#{u.id}</td>
-                        <td style={{ padding:"12px 16px" }}>
-                          <div style={{ color: u.banned ? "#ef4444" : "#e2e8f0", fontWeight:600 }}>{u.email}</div>
-                          {u.banned && <div style={{ color:"#ef4444", fontSize:10, fontWeight:700 }}>🚫 SUSPENDU</div>}
-                        </td>
                         <td style={{ padding:"12px 16px" }}>
                           {(u.first_name || u.last_name)
                             ? <span style={{ color:"#e2e8f0", fontSize:12 }}>{[u.first_name, u.last_name].filter(Boolean).join(" ")}</span>
@@ -2190,6 +2186,11 @@ export default function Admin({ token, logout }) {
                         </td>
                         <td style={{ padding:"12px 16px" }}>
                           <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+                            <button
+                              title={u.email}
+                              style={{ ...s.btnSm, background:"rgba(100,116,139,0.1)", border:"1px solid rgba(100,116,139,0.3)", color:"#94a3b8" }}
+                              onClick={()=>alert(`📧 ${u.email}${u.banned ? "\n🚫 SUSPENDU" : ""}`)}
+                            >ℹ️</button>
                             <button title="Modifier" style={{ ...s.btnSm, background:"rgba(59,130,246,0.1)", border:"1px solid rgba(59,130,246,0.3)", color:"#60a5fa" }} onClick={()=>setEditUser(u)}>✏️</button>
                             <button title="Reset mot de passe" style={{ ...s.btnSm, background:"rgba(245,158,11,0.1)", border:"1px solid rgba(245,158,11,0.3)", color:"#f59e0b" }} onClick={()=>setResetUser(u)}>🔑</button>
                             <button title="Reset quota" style={{ ...s.btnSm, background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.3)", color:"#22c55e" }} onClick={()=>resetQuota(u.id)}>↺</button>
