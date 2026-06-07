@@ -190,14 +190,14 @@ router.get("/users", adminAuth, async (req, res) => {
       db.query(`SELECT COUNT(*)::int AS total FROM users WHERE ${where}`, values),
     ]);
 
-    // Enrichir les membres d'équipe avec leur team_name (requête séparée, sécurisée)
+    // Enrichir les membres d'équipe avec leur team_name (depuis users.team_name de l'owner)
     const users = usersRes.rows;
     const memberIds = users.filter(u => u.plan_managed_by === "team").map(u => u.id);
     let teamMap = {};
     if (memberIds.length > 0) {
       try {
         const teamRes = await db.query(
-          `SELECT tm.member_id, tm.team_name, o.email AS owner_email
+          `SELECT tm.member_id, o.team_name, o.email AS owner_email
            FROM team_members tm
            JOIN users o ON o.id = tm.owner_id
            WHERE tm.member_id = ANY($1) AND tm.status = 'active'`,
@@ -206,7 +206,7 @@ router.get("/users", adminAuth, async (req, res) => {
         teamRes.rows.forEach(r => {
           teamMap[r.member_id] = { team_name: r.team_name, owner_email: r.owner_email };
         });
-      } catch {} // si team_members n'existe pas encore, on ignore
+      } catch (e) { console.error("team enrichment:", e.message); }
     }
     const enriched = users.map(u => ({
       ...u,
@@ -327,7 +327,9 @@ router.get("/logs", adminAuth, async (req, res) => {
 
     const [logsRes, countRes] = await Promise.all([
       db.query(
-        `SELECT l.*, u.email AS target_email, admin_u.email AS admin_email
+        `SELECT l.*, u.email AS target_email,
+                admin_u.email AS admin_email,
+                admin_u.team_name AS team_name
          FROM admin_logs l
          LEFT JOIN users u ON u.id = l.target_user_id::integer
          LEFT JOIN users admin_u ON admin_u.id = l.admin_id
@@ -437,8 +439,26 @@ router.get("/user-logs", adminAuth, async (req, res) => {
       db.query(`SELECT COUNT(*)::int AS total FROM user_logs l ${where}`, values),
     ]);
 
+    // Enrichir les messages chat avec leur contenu réel
+    const logs = logsRes.rows;
+    const chatLogIds = logs.filter(l => l.action === "team_chat_message");
+    if (chatLogIds.length > 0) {
+      try {
+        await Promise.all(chatLogIds.map(async (log) => {
+          const r = await db.query(
+            `SELECT content FROM team_messages
+             WHERE sender_id = $1
+             ORDER BY ABS(EXTRACT(EPOCH FROM (created_at - $2::timestamptz)))
+             LIMIT 1`,
+            [log.user_id, log.created_at]
+          );
+          log.chat_content = r.rows[0]?.content || null;
+        }));
+      } catch (e) { console.error("chat enrichment:", e.message); }
+    }
+
     res.json({
-      logs:  logsRes.rows,
+      logs,
       total: countRes.rows[0].total,
       pages: Math.ceil(countRes.rows[0].total / limit),
     });
