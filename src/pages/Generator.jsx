@@ -509,75 +509,101 @@ export default function Generator({ token: tokenProp, trendsLang: langProp, setT
             );
           })}
 
-          {/* ── Cloche notifications ── */}
-          <div style={{ position:"relative", marginTop:"auto", paddingTop:12, borderTop:"1px solid rgba(255,255,255,0.06)" }}>
-            <button
-              onClick={() => { setNotifOpen(o => !o); if (!notifOpen) markAllRead(); }}
-              style={{ width:"100%", background:"none", border:"none", borderRadius:8, color: notifUnread > 0 ? "#f59e0b" : "#475569", fontSize:12, fontWeight:700, padding:"10px 12px", cursor:"pointer", display:"flex", alignItems:"center", gap:8, position:"relative" }}
-            >
-              <span style={{ fontSize:16 }}>🔔</span>
-              {tr(trendsLang,"ui.notifications") || "Notifications"}
-              {notifUnread > 0 && (
-                <span style={{ marginLeft:"auto", background:"#ef4444", color:"#fff", borderRadius:"50%", minWidth:18, height:18, fontSize:10, fontWeight:800, display:"flex", alignItems:"center", justifyContent:"center", padding:"0 4px" }}>
-                  {notifUnread}
-                </span>
-              )}
-            </button>
-
-            {/* Panel dropdown */}
-            {notifOpen && (
-              <div style={{ position:"fixed", left:220, bottom:20, width:320, maxHeight:480, background:"#0f172a", border:"1px solid rgba(255,255,255,0.1)", borderRadius:14, boxShadow:"0 20px 60px rgba(0,0,0,0.6)", zIndex:9999, overflow:"hidden", display:"flex", flexDirection:"column" }}>
-                {/* Header */}
-                <div style={{ padding:"14px 16px", borderBottom:"1px solid rgba(255,255,255,0.07)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                  <span style={{ color:"#e2e8f0", fontWeight:800, fontSize:13 }}>🔔 {tr(trendsLang,"ui.notifications") || "Notifications"}</span>
-                  <button onClick={() => setNotifOpen(false)} style={{ background:"none", border:"none", color:"#475569", fontSize:16, cursor:"pointer" }}>✕</button>
-                </div>
-
-                {/* Liste */}
-                <div style={{ overflowY:"auto", flex:1 }}>
-                  {notifications.length === 0 ? (
-                    <div style={{ textAlign:"center", padding:"40px 20px", color:"#334155" }}>
-                      <div style={{ fontSize:32, marginBottom:10 }}>🔕</div>
-                      <div style={{ fontSize:13, fontWeight:700, color:"#475569" }}>{tr(trendsLang,"ui.noNotifications") || "No notifications"}</div>
-                    </div>
-                  ) : notifications.map(n => (
-                    <div
-                      key={n.id}
-                      onClick={() => { setTab(n.link_tab); setNotifOpen(false); }}
-                      style={{ padding:"12px 16px", borderBottom:"1px solid rgba(255,255,255,0.04)", cursor:"pointer", background: n.read ? "transparent" : `${n.color}08`, display:"flex", gap:10, alignItems:"flex-start", transition:"background 0.2s" }}
-                      onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
-                      onMouseLeave={e => e.currentTarget.style.background = n.read ? "transparent" : `${n.color}08`}
-                    >
-                      <span style={{ fontSize:18, flexShrink:0, lineHeight:1.3 }}>{n.icon}</span>
-                      <div style={{ flex:1, minWidth:0 }}>
-                        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:2 }}>
-                          <span style={{ color: n.color, fontSize:11, fontWeight:700 }}>{n.title}</span>
-                          <span style={{ color:"#334155", fontSize:9, flexShrink:0, marginLeft:6 }}>
-                            {new Date(n.created_at).toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" })}
-                          </span>
-                        </div>
-                        <div style={{ color:"#64748b", fontSize:11, lineHeight:1.4, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{n.body}</div>
-                      </div>
-                      {!n.read && <div style={{ width:6, height:6, borderRadius:"50%", background:n.color, flexShrink:0, marginTop:4 }} />}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Footer */}
-                {notifications.length > 0 && (
-                  <div style={{ padding:"10px 16px", borderTop:"1px solid rgba(255,255,255,0.07)", textAlign:"center" }}>
-                    <button onClick={markAllRead} style={{ background:"none", border:"none", color:"#475569", fontSize:11, cursor:"pointer", fontWeight:600 }}>
-                      {tr(trendsLang,"ui.markAllRead") || "Mark all as read"}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
         </aside>
       )}
 
       {/* Overlay ferme le panel notifs */}
+      {notifOpen && <div style={{ position:"fixed", inset:0, zIndex:9990 }} onClick={() => setNotifOpen(false)} />}
+
+      {/* ── Cloche notifications — fixed top right à côté du bouton ⚡ ── */}
+      <div style={{ position:"fixed", top:20, right:76, zIndex:10000 }}>
+        <button
+          onClick={() => { setNotifOpen(o => !o); if (!notifOpen) markAllRead(); }}
+          style={{
+            width:48, height:48, borderRadius:"50%", border:"none",
+            background: notifOpen ? "linear-gradient(135deg,#f59e0b,#d97706)" : "linear-gradient(135deg,#1e293b,#0f172a)",
+            color: notifUnread > 0 ? "#f59e0b" : "#64748b",
+            cursor:"pointer", fontSize:20,
+            boxShadow: notifOpen ? "0 0 0 3px rgba(245,158,11,0.3),0 12px 32px rgba(245,158,11,0.2)" : "0 8px 24px rgba(0,0,0,0.4)",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            transition:"all 0.25s cubic-bezier(0.34,1.56,0.64,1)",
+            position:"relative",
+          }}
+        >
+          🔔
+          {notifUnread > 0 && (
+            <span style={{
+              position:"absolute", top:6, right:6,
+              background:"#ef4444", color:"#fff",
+              borderRadius:"50%", minWidth:16, height:16,
+              fontSize:9, fontWeight:800,
+              display:"flex", alignItems:"center", justifyContent:"center",
+              padding:"0 3px", lineHeight:1,
+              border:"2px solid #0f172a",
+            }}>
+              {notifUnread > 9 ? "9+" : notifUnread}
+            </span>
+          )}
+        </button>
+
+        {/* Panel dropdown — s'ouvre vers le bas à droite */}
+        {notifOpen && (
+          <div style={{
+            position:"absolute", top:56, right:0,
+            width:320, maxHeight:480,
+            background:"#0f172a",
+            border:"1px solid rgba(255,255,255,0.1)",
+            borderRadius:14,
+            boxShadow:"0 20px 60px rgba(0,0,0,0.6)",
+            zIndex:10001, overflow:"hidden",
+            display:"flex", flexDirection:"column",
+            animation:"fadeSlideDown 0.2s ease",
+          }}>
+            {/* Header */}
+            <div style={{ padding:"14px 16px", borderBottom:"1px solid rgba(255,255,255,0.07)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+              <span style={{ color:"#e2e8f0", fontWeight:800, fontSize:13 }}>🔔 {tr(trendsLang,"ui.notifications") || "Notifications"}</span>
+              <button onClick={() => setNotifOpen(false)} style={{ background:"none", border:"none", color:"#475569", fontSize:16, cursor:"pointer" }}>✕</button>
+            </div>
+            {/* Liste */}
+            <div style={{ overflowY:"auto", flex:1 }}>
+              {notifications.length === 0 ? (
+                <div style={{ textAlign:"center", padding:"40px 20px", color:"#334155" }}>
+                  <div style={{ fontSize:32, marginBottom:10 }}>🔕</div>
+                  <div style={{ fontSize:13, fontWeight:700, color:"#475569" }}>{tr(trendsLang,"ui.noNotifications") || "No notifications"}</div>
+                </div>
+              ) : notifications.map(n => (
+                <div
+                  key={n.id}
+                  onClick={() => { setTab(n.link_tab); setNotifOpen(false); }}
+                  style={{ padding:"12px 16px", borderBottom:"1px solid rgba(255,255,255,0.04)", cursor:"pointer", background: n.read ? "transparent" : `${n.color}08`, display:"flex", gap:10, alignItems:"flex-start", transition:"background 0.2s" }}
+                  onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
+                  onMouseLeave={e => e.currentTarget.style.background = n.read ? "transparent" : `${n.color}08`}
+                >
+                  <span style={{ fontSize:18, flexShrink:0, lineHeight:1.3 }}>{n.icon}</span>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:2 }}>
+                      <span style={{ color: n.color, fontSize:11, fontWeight:700 }}>{n.title}</span>
+                      <span style={{ color:"#334155", fontSize:9, flexShrink:0, marginLeft:6 }}>
+                        {new Date(n.created_at).toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" })}
+                      </span>
+                    </div>
+                    <div style={{ color:"#64748b", fontSize:11, lineHeight:1.4, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{n.body}</div>
+                  </div>
+                  {!n.read && <div style={{ width:6, height:6, borderRadius:"50%", background:n.color, flexShrink:0, marginTop:4 }} />}
+                </div>
+              ))}
+            </div>
+            {/* Footer */}
+            {notifications.length > 0 && (
+              <div style={{ padding:"10px 16px", borderTop:"1px solid rgba(255,255,255,0.07)", textAlign:"center" }}>
+                <button onClick={markAllRead} style={{ background:"none", border:"none", color:"#475569", fontSize:11, cursor:"pointer", fontWeight:600 }}>
+                  {tr(trendsLang,"ui.markAllRead") || "Mark all as read"}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
       {notifOpen && <div style={{ position:"fixed", inset:0, zIndex:9998 }} onClick={() => setNotifOpen(false)} />}
 
       {/* Mobile drawer */}
