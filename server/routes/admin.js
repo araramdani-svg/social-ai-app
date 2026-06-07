@@ -429,7 +429,7 @@ router.get("/user-logs", adminAuth, async (req, res) => {
 
     const [logsRes, countRes] = await Promise.all([
       db.query(
-        `SELECT l.*, u.email AS user_email, u.plan AS user_plan
+        `SELECT l.*, u.email AS user_email, u.plan AS user_plan, u.team_name AS user_team_name
          FROM user_logs l
          LEFT JOIN users u ON u.id = l.user_id
          ${where}
