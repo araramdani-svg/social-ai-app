@@ -327,11 +327,7 @@ router.get("/logs", adminAuth, async (req, res) => {
 
     const [logsRes, countRes] = await Promise.all([
       db.query(
-        `SELECT l.*, u.email AS target_email,
-                admin_u.email AS admin_email,
-                (SELECT tm.team_name FROM team_members tm
-                 WHERE tm.owner_id = l.admin_id AND tm.status = 'active' LIMIT 1
-                ) AS team_name
+        `SELECT l.*, u.email AS target_email, admin_u.email AS admin_email
          FROM admin_logs l
          LEFT JOIN users u ON u.id = l.target_user_id::integer
          LEFT JOIN users admin_u ON admin_u.id = l.admin_id
@@ -430,24 +426,9 @@ router.get("/user-logs", adminAuth, async (req, res) => {
 
     const [logsRes, countRes] = await Promise.all([
       db.query(
-        `SELECT l.*, u.email AS user_email, u.plan AS user_plan,
-                -- Contenu du message chat si action = team_chat_message
-                CASE WHEN l.action = 'team_chat_message'
-                  THEN (
-                    SELECT tm.content FROM team_messages tm
-                    WHERE tm.sender_id = l.user_id
-                    ORDER BY ABS(EXTRACT(EPOCH FROM (tm.created_at - l.created_at)))
-                    LIMIT 1
-                  )
-                  ELSE NULL
-                END AS chat_content,
-                -- Team name si membre
-                tm_member.team_name AS user_team_name,
-                owner_u.email AS team_owner_email
+        `SELECT l.*, u.email AS user_email, u.plan AS user_plan
          FROM user_logs l
          LEFT JOIN users u ON u.id = l.user_id
-         LEFT JOIN team_members tm_member ON tm_member.member_id = l.user_id AND tm_member.status = 'active'
-         LEFT JOIN users owner_u ON owner_u.id = u.team_owner_id
          ${where}
          ORDER BY l.created_at DESC
          LIMIT $${i} OFFSET $${i+1}`,
