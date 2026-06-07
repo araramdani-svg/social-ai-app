@@ -163,39 +163,40 @@ router.get("/users", adminAuth, async (req, res) => {
     const { search, plan, page = 1, banned, verified } = req.query;
     const limit  = 20;
     const offset = (page - 1) * limit;
-    const conditions = ["u.email != $1", "(u.is_admin IS NULL OR u.is_admin = false)"];
+
+    // Conditions sans alias — utilisées pour FROM users (sans u.)
+    const conditions = ["email != $1", "(is_admin IS NULL OR is_admin = false)"];
     const values     = [ADMIN_EMAIL];
     let i = 2;
 
-    if (search)   { conditions.push(`(u.email ILIKE $${i} OR u.linkedin_name ILIKE $${i})`); values.push(`%${search}%`); i++; }
-    if (plan)     { conditions.push(`u.plan = $${i}`); values.push(plan); i++; }
-    if (banned !== undefined)  { conditions.push(`u.banned = $${i}`);          values.push(banned === "true"); i++; }
-    if (verified !== undefined){ conditions.push(`u.email_verified = $${i}`);  values.push(verified === "true"); i++; }
+    if (search)              { conditions.push(`(email ILIKE $${i} OR linkedin_name ILIKE $${i})`); values.push(`%${search}%`); i++; }
+    if (plan)                { conditions.push(`plan = $${i}`);           values.push(plan);            i++; }
+    if (banned !== undefined){ conditions.push(`banned = $${i}`);         values.push(banned === "true"); i++; }
+    if (verified !== undefined){ conditions.push(`email_verified = $${i}`); values.push(verified === "true"); i++; }
 
-    const where      = conditions.join(" AND ");
-    const whereCount = conditions.join(" AND ").replace(/\bu\./g, ""); // sans alias pour COUNT
+    const where = conditions.join(" AND ");
 
     const [usersRes, countRes] = await Promise.all([
       db.query(
-        `SELECT u.id, u.email, u.plan, u.generations_count, u.quota_reset_date,
-                u.linkedin_name, u.stripe_customer_id, u.stripe_subscription_id,
-                u.banned, u.email_verified, u.first_name, u.last_name, u.display_name,
-                u.plan_managed_by, u.team_owner_id,
-                CASE WHEN u.plan_managed_by = 'team' THEN (
-                  SELECT tm.team_name FROM team_members tm
-                  WHERE tm.member_id = u.id AND tm.status = 'active' LIMIT 1
-                ) ELSE NULL END AS team_name,
-                CASE WHEN u.plan_managed_by = 'team' THEN (
-                  SELECT owner.email FROM users owner WHERE owner.id = u.team_owner_id LIMIT 1
-                ) ELSE NULL END AS team_owner_email,
-                (SELECT COUNT(*)::int FROM posts p WHERE p.user_id = u.id) AS post_count
-         FROM users u
+        `SELECT id, email, plan, generations_count, quota_reset_date,
+                linkedin_name, stripe_customer_id, stripe_subscription_id,
+                banned, email_verified, first_name, last_name, display_name,
+                plan_managed_by, team_owner_id,
+                (SELECT tm.team_name FROM team_members tm
+                 WHERE tm.member_id = users.id AND tm.status = 'active'
+                   AND users.plan_managed_by = 'team' LIMIT 1
+                ) AS team_name,
+                (SELECT o.email FROM users o WHERE o.id = users.team_owner_id
+                   AND users.plan_managed_by = 'team' LIMIT 1
+                ) AS team_owner_email,
+                (SELECT COUNT(*)::int FROM posts p WHERE p.user_id = users.id) AS post_count
+         FROM users
          WHERE ${where}
-         ORDER BY u.id DESC
+         ORDER BY id DESC
          LIMIT $${i} OFFSET $${i+1}`,
         [...values, limit, offset]
       ),
-      db.query(`SELECT COUNT(*)::int AS total FROM users WHERE ${whereCount}`, values),
+      db.query(`SELECT COUNT(*)::int AS total FROM users WHERE ${where}`, values),
     ]);
 
     res.json({
@@ -314,6 +315,7 @@ router.get("/logs", adminAuth, async (req, res) => {
         `SELECT l.*, u.email AS target_email,
                 admin_u.email AS admin_email,
                 (SELECT tm.team_name FROM team_members tm
+                 JOIN users tu ON tu.id = tm.owner_id
                  WHERE tm.owner_id = l.admin_id AND tm.status = 'active' LIMIT 1
                 ) AS team_name
          FROM admin_logs l
