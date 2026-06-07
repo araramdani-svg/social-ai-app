@@ -414,15 +414,16 @@ router.get("/analytics", adminAuth, async (req, res) => {
 // ─── GET /admin/user-logs ─────────────────────────────────────────────────────
 router.get("/user-logs", adminAuth, async (req, res) => {
   try {
-    const { page = 1, action, user_id } = req.query;
+    const { page = 1, action, user_id, exclude_action } = req.query;
     const limit  = 50;
     const offset = (page - 1) * limit;
     const conditions = [];
     const values     = [];
     let i = 1;
 
-    if (action)  { conditions.push(`l.action ILIKE $${i++}`); values.push(`%${action}%`); }
-    if (user_id) { conditions.push(`l.user_id = $${i++}`);    values.push(parseInt(user_id)); }
+    if (action)         { conditions.push(`l.action ILIKE $${i++}`);    values.push(`%${action}%`); }
+    if (user_id)        { conditions.push(`l.user_id = $${i++}`);        values.push(parseInt(user_id)); }
+    if (exclude_action) { conditions.push(`l.action != $${i++}`);        values.push(exclude_action); }
 
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
