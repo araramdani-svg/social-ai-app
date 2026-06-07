@@ -429,9 +429,12 @@ router.get("/user-logs", adminAuth, async (req, res) => {
 
     const [logsRes, countRes] = await Promise.all([
       db.query(
-        `SELECT l.*, u.email AS user_email, u.plan AS user_plan, u.team_name AS user_team_name
+        `SELECT l.*, u.email AS user_email, u.plan AS user_plan,
+                COALESCE(u.team_name, owner.team_name) AS user_team_name
          FROM user_logs l
          LEFT JOIN users u ON u.id = l.user_id
+         LEFT JOIN team_members tm ON tm.member_id = l.user_id AND tm.status = 'active'
+         LEFT JOIN users owner ON owner.id = tm.owner_id
          ${where}
          ORDER BY l.created_at DESC
          LIMIT $${i} OFFSET $${i+1}`,
