@@ -360,10 +360,17 @@ function TeamLogsTab({ token }) {
 
   const fetchLogs = useCallback(async (p = 1, action = filterAction) => {
     setLoading(true);
-    const params = new URLSearchParams({ page: p, type: "team" });
-    if (action)     params.append("action_filter", action);
-    if (filterTeam) params.append("team_id", filterTeam);
-    const r = await fetch(`${API}/admin/logs?${params}`, { headers:{ Authorization:`Bearer ${token}` } });
+    let r;
+    if (action === "team_chat_message") {
+      const params = new URLSearchParams({ page: p, action: "team_chat_message" });
+      if (filterTeam) params.append("team_id", filterTeam);
+      r = await fetch(`${API}/admin/user-logs?${params}`, { headers:{ Authorization:`Bearer ${token}` } });
+    } else {
+      const params = new URLSearchParams({ page: p, type: "team" });
+      if (action)     params.append("action_filter", action);
+      if (filterTeam) params.append("team_id", filterTeam);
+      r = await fetch(`${API}/admin/logs?${params}`, { headers:{ Authorization:`Bearer ${token}` } });
+    }
     const d = await r.json();
     setLogs(d.logs || []); setPages(d.pages || 1); setPage(p);
     setLoading(false);
