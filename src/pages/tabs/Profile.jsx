@@ -30,6 +30,7 @@ export default function Profile({
   const [pwDaysLeft,      setPwDaysLeft]      = useState(null);
   const [pwChangedAt,     setPwChangedAt]     = useState(null);
   const [secLoading,      setSecLoading]      = useState(true);
+  const [teamRole,        setTeamRole]        = useState(null);
 
   useEffect(() => {
     if (!token) return;
@@ -42,6 +43,14 @@ export default function Profile({
         setSecLoading(false);
       })
       .catch(() => setSecLoading(false));
+
+    // Récupérer le rôle team depuis l'API (pas dans le JWT)
+    if (planManagedBy === "team") {
+      fetch(`${API}/team/my-view`, { headers:{ Authorization:`Bearer ${token}` } })
+        .then(r => r.json())
+        .then(d => { if (d.myRole) setTeamRole(d.myRole); })
+        .catch(() => {});
+    }
   }, [token]);
 
   const toggleMFA = async () => {
@@ -266,21 +275,17 @@ export default function Profile({
                       {tr(trendsLang,"profile.managedBy")||"Managed by"} {managedByOwnerEmail || "your agency"}
                     </div>
                     {/* Rôle dans la team */}
-                    {(() => {
-                      try {
-                        const p = JSON.parse(atob(token.split(".")[1]));
-                        const role = p.team_role || p.role;
-                        if (!role) return null;
-                        const roleColors = { admin:"#f59e0b", editor:"#60a5fa", publisher:"#22c55e" };
-                        return (
-                          <div style={{ marginTop:8, display:"flex", alignItems:"center", gap:8 }}>
-                            <span style={{ color:"#64748b", fontSize:10, letterSpacing:"1px" }}>{tr(trendsLang,"profile.teamRoleLabel")||"YOUR ROLE"}</span>
-                            <span style={{ background:`rgba(245,158,11,0.12)`, border:`1px solid rgba(245,158,11,0.25)`, borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:800, color: roleColors[role.toLowerCase()] || "#f59e0b" }}>
-                              {role.toUpperCase()}
-                            </span>
-                          </div>
-                        );
-                      } catch { return null; }
+                    {teamRole && (() => {
+                      const roleColors = { admin:"#f59e0b", editor:"#60a5fa", publisher:"#22c55e" };
+                      const color = roleColors[teamRole.toLowerCase()] || "#f59e0b";
+                      return (
+                        <div style={{ marginTop:8, display:"flex", alignItems:"center", gap:8 }}>
+                          <span style={{ color:"#64748b", fontSize:10, letterSpacing:"1px" }}>{tr(trendsLang,"profile.teamRoleLabel")||"YOUR ROLE"}</span>
+                          <span style={{ background:`rgba(245,158,11,0.12)`, border:`1px solid ${color}44`, borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:800, color }}>
+                            {teamRole.toUpperCase()}
+                          </span>
+                        </div>
+                      );
                     })()}
                   </div>
                 )}
