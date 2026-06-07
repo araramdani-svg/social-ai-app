@@ -163,8 +163,6 @@ router.get("/users", adminAuth, async (req, res) => {
     const { search, plan, page = 1, banned, verified } = req.query;
     const limit  = 20;
     const offset = (page - 1) * limit;
-
-    // Conditions sans alias — utilisées pour FROM users (sans u.)
     const conditions = ["email != $1", "(is_admin IS NULL OR is_admin = false)"];
     const values     = [ADMIN_EMAIL];
     let i = 2;
@@ -182,13 +180,6 @@ router.get("/users", adminAuth, async (req, res) => {
                 linkedin_name, stripe_customer_id, stripe_subscription_id,
                 banned, email_verified, first_name, last_name, display_name,
                 plan_managed_by, team_owner_id,
-                (SELECT tm.team_name FROM team_members tm
-                 WHERE tm.member_id = users.id AND tm.status = 'active'
-                   AND users.plan_managed_by = 'team' LIMIT 1
-                ) AS team_name,
-                (SELECT o.email FROM users o WHERE o.id = users.team_owner_id
-                   AND users.plan_managed_by = 'team' LIMIT 1
-                ) AS team_owner_email,
                 (SELECT COUNT(*)::int FROM posts p WHERE p.user_id = users.id) AS post_count
          FROM users
          WHERE ${where}
@@ -199,8 +190,32 @@ router.get("/users", adminAuth, async (req, res) => {
       db.query(`SELECT COUNT(*)::int AS total FROM users WHERE ${where}`, values),
     ]);
 
+    // Enrichir les membres d'équipe avec leur team_name (requête séparée, sécurisée)
+    const users = usersRes.rows;
+    const memberIds = users.filter(u => u.plan_managed_by === "team").map(u => u.id);
+    let teamMap = {};
+    if (memberIds.length > 0) {
+      try {
+        const teamRes = await db.query(
+          `SELECT tm.member_id, tm.team_name, o.email AS owner_email
+           FROM team_members tm
+           JOIN users o ON o.id = tm.owner_id
+           WHERE tm.member_id = ANY($1) AND tm.status = 'active'`,
+          [memberIds]
+        );
+        teamRes.rows.forEach(r => {
+          teamMap[r.member_id] = { team_name: r.team_name, owner_email: r.owner_email };
+        });
+      } catch {} // si team_members n'existe pas encore, on ignore
+    }
+    const enriched = users.map(u => ({
+      ...u,
+      team_name:        teamMap[u.id]?.team_name  || null,
+      team_owner_email: teamMap[u.id]?.owner_email || null,
+    }));
+
     res.json({
-      users: usersRes.rows,
+      users: enriched,
       total: countRes.rows[0].total,
       page:  parseInt(page),
       pages: Math.ceil(countRes.rows[0].total / limit),
@@ -315,7 +330,6 @@ router.get("/logs", adminAuth, async (req, res) => {
         `SELECT l.*, u.email AS target_email,
                 admin_u.email AS admin_email,
                 (SELECT tm.team_name FROM team_members tm
-                 JOIN users tu ON tu.id = tm.owner_id
                  WHERE tm.owner_id = l.admin_id AND tm.status = 'active' LIMIT 1
                 ) AS team_name
          FROM admin_logs l
