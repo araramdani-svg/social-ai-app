@@ -294,6 +294,23 @@ router.delete("/users/:id", adminAuth, async (req, res) => {
 });
 
 // ─── GET /admin/logs ──────────────────────────────────────────────────────────
+// ─── GET /admin/teams ─────────────────────────────────────────────────────────
+router.get("/teams", adminAuth, async (req, res) => {
+  try {
+    const r = await db.query(
+      `SELECT DISTINCT ON (u.team_name) u.id, u.team_name AS name
+       FROM users u
+       WHERE u.team_name IS NOT NULL AND u.team_name != ''
+       ORDER BY u.team_name ASC`
+    );
+    res.json({ teams: r.rows });
+  } catch (err) {
+    console.error("Admin teams error:", err.message);
+    res.status(500).json({ error: "Failed to fetch teams" });
+  }
+});
+
+// ─── GET /admin/logs ──────────────────────────────────────────────────────────
 router.get("/logs", adminAuth, async (req, res) => {
   try {
     const { page = 1, type = "admin" } = req.query;
