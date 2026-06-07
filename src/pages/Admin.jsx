@@ -396,21 +396,19 @@ function TeamLogsTab({ token }) {
       .catch(() => {});
   }, [token]);
 
-  const fetchLogs = useCallback(async (p = 1, action = filterAction) => {
+  const fetchLogs = useCallback(async (p = 1, action = filterAction, team = filterTeam) => {
     setLoading(true);
     try {
       if (action === "team_chat_message") {
-        // Uniquement les chats depuis user_logs
         const params = new URLSearchParams({ page: p, action: "team_chat_message" });
-        if (filterTeam) params.append("team_id", filterTeam);
+        if (team) params.append("team_id", team);
         const r = await fetch(`${API}/admin/user-logs?${params}`, { headers:{ Authorization:`Bearer ${token}` } });
         const d = await r.json();
         setLogs(d.logs || []); setPages(d.pages || 1); setPage(p);
       } else if (!action) {
-        // "Tout" : merger admin_logs team + user_logs chat en parallèle
         const paramsTeam = new URLSearchParams({ page: 1, type: "team" });
         const paramsChat = new URLSearchParams({ page: 1, action: "team_chat_message" });
-        if (filterTeam) { paramsTeam.append("team_id", filterTeam); paramsChat.append("team_id", filterTeam); }
+        if (team) { paramsTeam.append("team_id", team); paramsChat.append("team_id", team); }
         const [rTeam, rChat] = await Promise.all([
           fetch(`${API}/admin/logs?${paramsTeam}`, { headers:{ Authorization:`Bearer ${token}` } }),
           fetch(`${API}/admin/user-logs?${paramsChat}`, { headers:{ Authorization:`Bearer ${token}` } }),
@@ -420,10 +418,9 @@ function TeamLogsTab({ token }) {
           .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         setLogs(merged); setPages(1); setPage(1);
       } else {
-        // Filtre spécifique (hors chat) → admin_logs uniquement
         const params = new URLSearchParams({ page: p, type: "team" });
         params.append("action_filter", action);
-        if (filterTeam) params.append("team_id", filterTeam);
+        if (team) params.append("team_id", team);
         const r = await fetch(`${API}/admin/logs?${params}`, { headers:{ Authorization:`Bearer ${token}` } });
         const d = await r.json();
         setLogs(d.logs || []); setPages(d.pages || 1); setPage(p);
@@ -496,7 +493,7 @@ function TeamLogsTab({ token }) {
           teamsList={teamsList}
           filterTeam={filterTeam}
           setFilterTeam={setFilterTeam}
-          onSelect={(teamId) => { fetchLogs(1, filterAction); }}
+          onSelect={(teamId) => { fetchLogs(1, filterAction, teamId); }}
         />
         <button onClick={() => fetchLogs(1)} style={{ padding:"5px 12px", borderRadius:20, border:"1px solid rgba(255,255,255,0.08)", background:"rgba(255,255,255,0.03)", color:"#64748b", fontSize:11, cursor:"pointer" }}>🔄</button>
       </div>
