@@ -672,6 +672,7 @@ function UserLogsTab({ token }) {
   const [filterAction, setFilterAction] = useState("");
   const [filterUser, setFilterUser] = useState("");
   const [usersList, setUsersList] = useState([]);
+  const [selectedLog, setSelectedLog] = useState(null);
 
   // Charger la liste des users pour le filtre
   useEffect(() => {
@@ -696,6 +697,63 @@ function UserLogsTab({ token }) {
 
   return (
     <div>
+      {/* ── Modal détails log ── */}
+      {selectedLog && (
+        <>
+          <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", zIndex:9998 }} onClick={() => setSelectedLog(null)} />
+          <div style={{ position:"fixed", top:"50%", left:"50%", transform:"translate(-50%,-50%)", zIndex:9999, width:"min(640px,95vw)", maxHeight:"80vh", background:"#0f172a", border:"1px solid rgba(255,255,255,0.12)", borderRadius:16, overflow:"hidden", display:"flex", flexDirection:"column" }}>
+            <div style={{ padding:"16px 20px", borderBottom:"1px solid rgba(255,255,255,0.07)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+              <div>
+                {(() => { const cfg = USER_ACTION_LABELS[selectedLog.action] || { label:selectedLog.action, color:"#94a3b8" }; return <span style={{ color:cfg.color, fontWeight:800, fontSize:14 }}>{cfg.label}</span>; })()}
+                <div style={{ color:"#475569", fontSize:11, marginTop:2 }}>{new Date(selectedLog.created_at).toLocaleString("fr-FR")}</div>
+              </div>
+              <button onClick={() => setSelectedLog(null)} style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, color:"#94a3b8", width:32, height:32, cursor:"pointer", fontSize:16 }}>✕</button>
+            </div>
+            <div style={{ overflowY:"auto", padding:20, display:"flex", flexDirection:"column", gap:12 }}>
+              {/* User info */}
+              <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:10, padding:"14px 16px" }}>
+                <div style={{ color:"#64748b", fontSize:10, fontWeight:700, letterSpacing:"1px", marginBottom:10 }}>👤 UTILISATEUR</div>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+                  {[["ID",`#${selectedLog.user_id}`],["Email",selectedLog.user_email||"—"],["Plan",selectedLog.user_plan||"—"],["Team",selectedLog.user_team_name||"—"]].map(([label,val])=>(
+                    <div key={label}>
+                      <div style={{ color:"#475569", fontSize:9, fontWeight:700, letterSpacing:"1px" }}>{label}</div>
+                      <div style={{ color:"#e2e8f0", fontSize:12, fontWeight:600, marginTop:2 }}>{val}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Chat content */}
+              {selectedLog.chat_content && (
+                <div style={{ background:"rgba(96,165,250,0.06)", border:"1px solid rgba(96,165,250,0.2)", borderRadius:10, padding:"14px 16px" }}>
+                  <div style={{ color:"#60a5fa", fontSize:10, fontWeight:700, letterSpacing:"1px", marginBottom:8 }}>💬 MESSAGE CHAT</div>
+                  <div style={{ color:"#e2e8f0", fontSize:13, lineHeight:1.7 }}>{selectedLog.chat_content}</div>
+                </div>
+              )}
+              {/* Détails complets */}
+              {selectedLog.details && (
+                <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:10, padding:"14px 16px" }}>
+                  <div style={{ color:"#64748b", fontSize:10, fontWeight:700, letterSpacing:"1px", marginBottom:10 }}>📋 DÉTAILS COMPLETS</div>
+                  {(() => {
+                    try {
+                      const d = typeof selectedLog.details === "string" ? JSON.parse(selectedLog.details) : selectedLog.details;
+                      return (
+                        <div style={{ display:"flex", flexDirection:"column", gap:0 }}>
+                          {Object.entries(d).map(([key,val])=>(
+                            <div key={key} style={{ display:"flex", gap:12, alignItems:"flex-start", padding:"8px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+                              <span style={{ color:"#64748b", fontSize:11, fontWeight:700, minWidth:110, flexShrink:0 }}>{key}</span>
+                              <span style={{ color:"#e2e8f0", fontSize:12, wordBreak:"break-all", lineHeight:1.5 }}>{typeof val==="object"?JSON.stringify(val):String(val)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    } catch { return <div style={{ color:"#94a3b8", fontSize:12, fontFamily:"monospace" }}>{String(selectedLog.details)}</div>; }
+                  })()}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
       <div style={{ display:"flex", gap:8, marginBottom:12, flexWrap:"wrap" }}>
         <input style={{ ...s.input, flex:1, minWidth:160, fontSize:12 }} placeholder="🔍 Filtrer par action..." value={filterAction} onChange={e => setFilterAction(e.target.value)} />
         <select
@@ -724,7 +782,7 @@ function UserLogsTab({ token }) {
             {logs.map(log => {
               const cfg = USER_ACTION_LABELS[log.action] || { label: log.action, color:"#94a3b8" };
               return (
-                <tr key={log.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+                <tr key={log.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.04)", cursor:"pointer", transition:"background 0.15s" }} onClick={() => setSelectedLog(log)} onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.03)"} onMouseLeave={e => e.currentTarget.style.background="transparent"}>
                   <td style={{ padding:"12px 16px", color:"#475569", whiteSpace:"nowrap", fontSize:11 }}>{new Date(log.created_at).toLocaleString("fr-FR")}</td>
                   <td style={{ padding:"12px 16px", color:"#94a3b8", fontSize:11 }}>{log.user_email || `#${log.user_id}`}</td>
                   <td style={{ padding:"12px 16px" }}>{log.user_plan && <span style={{ background:"rgba(139,92,246,0.1)", border:"1px solid rgba(139,92,246,0.3)", borderRadius:10, padding:"2px 8px", fontSize:9, fontWeight:700, color:"#a78bfa" }}>{log.user_plan}</span>}</td>

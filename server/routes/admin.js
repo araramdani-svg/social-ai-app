@@ -180,12 +180,15 @@ router.get("/users", adminAuth, async (req, res) => {
                 u.linkedin_name, u.stripe_customer_id, u.stripe_subscription_id,
                 u.banned, u.email_verified, u.first_name, u.last_name, u.display_name,
                 u.plan_managed_by, u.team_owner_id,
-                tm.team_name AS team_name,
-                owner.email AS team_owner_email,
+                CASE WHEN u.plan_managed_by = 'team' THEN (
+                  SELECT tm.team_name FROM team_members tm
+                  WHERE tm.member_id = u.id AND tm.status = 'active' LIMIT 1
+                ) ELSE NULL END AS team_name,
+                CASE WHEN u.plan_managed_by = 'team' THEN (
+                  SELECT owner.email FROM users owner WHERE owner.id = u.team_owner_id LIMIT 1
+                ) ELSE NULL END AS team_owner_email,
                 (SELECT COUNT(*)::int FROM posts p WHERE p.user_id = u.id) AS post_count
          FROM users u
-         LEFT JOIN team_members tm ON tm.member_id = u.id AND tm.status = 'active'
-         LEFT JOIN users owner ON owner.id = u.team_owner_id
          WHERE ${where}
          ORDER BY u.id DESC
          LIMIT $${i} OFFSET $${i+1}`,
