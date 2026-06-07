@@ -22,6 +22,50 @@ export default function Profile({
   const [confirm, setConfirm] = useState(null);
   const [emailCurrentPassword, setEmailCurrentPassword] = useState("");
 
+  // ── MFA states ────────────────────────────────────────────────────────────
+  const [mfaEnabled,      setMfaEnabled]      = useState(false);
+  const [mfaLoading,      setMfaLoading]      = useState(false);
+  const [mfaPassword,     setMfaPassword]     = useState("");
+  const [mfaMsg,          setMfaMsg]          = useState(null);
+  const [pwDaysLeft,      setPwDaysLeft]      = useState(null);
+  const [pwChangedAt,     setPwChangedAt]     = useState(null);
+  const [secLoading,      setSecLoading]      = useState(true);
+
+  useEffect(() => {
+    if (!token) return;
+    fetch(`${API}/auth/mfa/status`, { headers:{ Authorization:`Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => {
+        setMfaEnabled(d.mfa_enabled || false);
+        setPwDaysLeft(d.days_until_expiry ?? null);
+        setPwChangedAt(d.password_changed_at || null);
+        setSecLoading(false);
+      })
+      .catch(() => setSecLoading(false));
+  }, [token]);
+
+  const toggleMFA = async () => {
+    if (!mfaPassword) { setMfaMsg({ type:"error", text:"Mot de passe requis" }); return; }
+    setMfaLoading(true); setMfaMsg(null);
+    try {
+      const r = await fetch(`${API}/auth/mfa/toggle`, {
+        method:"POST",
+        headers:{ "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+        body: JSON.stringify({ enable: !mfaEnabled, currentPassword: mfaPassword }),
+      });
+      const d = await r.json();
+      if (!r.ok) { setMfaMsg({ type:"error", text: d.error || "Erreur" }); }
+      else {
+        setMfaEnabled(d.mfa_enabled);
+        setMfaPassword("");
+        setMfaMsg({ type:"success", text: d.mfa_enabled ? "✅ MFA activé" : "✅ MFA désactivé" });
+        logUserAction(d.mfa_enabled ? "mfa_enabled" : "mfa_disabled");
+        setTimeout(() => setMfaMsg(null), 3000);
+      }
+    } catch { setMfaMsg({ type:"error", text:"Erreur serveur" }); }
+    setMfaLoading(false);
+  };
+
   // States locaux pour l'édition — ne pas modifier le parent avant Save
   const [localFirstName,   setLocalFirstName]   = useState(firstName   || "");
   const [localLastName,    setLocalLastName]     = useState(lastName    || "");
@@ -74,6 +118,7 @@ export default function Profile({
     { key:"account",      icon:"👤", label: tr(trendsLang, "profile.menuAccount") },
     { key:"subscription", icon:"💳", label: tr(trendsLang, "profile.menuSubscription") },
     { key:"password",     icon:"🔐", label: tr(trendsLang, "profile.menuPassword") },
+    { key:"security",     icon:"🛡️", label: tr(trendsLang, "profile.menuSecurity") || "Sécurité" },
     { key:"email",        icon:"✉️", label: tr(trendsLang, "profile.menuEmail") },
     { key:"danger",       icon:"⚠️", label: tr(trendsLang, "profile.menuDanger") },
   ];
@@ -213,23 +258,53 @@ export default function Profile({
               <div style={{ display:"grid", gap:12 }}>
                 {planManagedBy === "team" && (
                   <div style={{ padding:"12px 18px", background:"rgba(139,92,246,0.08)", borderRadius:10, border:"1px solid rgba(139,92,246,0.2)", borderLeft:"3px solid #8b5cf6" }}>
-                    <div style={{ color:"#8b5cf6", fontSize:10, letterSpacing:"1.5px", marginBottom:5 }}>MANAGED ACCOUNT</div>
+                    <div style={{ color:"#8b5cf6", fontSize:10, letterSpacing:"1.5px", marginBottom:5 }}>{tr(trendsLang,"profile.managedAccountLabel")||"MANAGED ACCOUNT"}</div>
                     <div style={{ color:"#e2e8f0", fontSize:13, fontWeight:600 }}>
                       {managedByTeamName ? `Team: ${managedByTeamName}` : "Agency Team"}
                     </div>
                     <div style={{ color:"#64748b", fontSize:11, marginTop:2 }}>
-                      Managed by {managedByOwnerEmail || "your agency"}
+                      {tr(trendsLang,"profile.managedBy")||"Managed by"} {managedByOwnerEmail || "your agency"}
                     </div>
+                    {/* Rôle dans la team */}
+                    {(() => {
+                      try {
+                        const p = JSON.parse(atob(token.split(".")[1]));
+                        const role = p.team_role || p.role;
+                        if (!role) return null;
+                        const roleColors = { admin:"#f59e0b", editor:"#60a5fa", publisher:"#22c55e" };
+                        return (
+                          <div style={{ marginTop:8, display:"flex", alignItems:"center", gap:8 }}>
+                            <span style={{ color:"#64748b", fontSize:10, letterSpacing:"1px" }}>{tr(trendsLang,"profile.teamRoleLabel")||"YOUR ROLE"}</span>
+                            <span style={{ background:`rgba(245,158,11,0.12)`, border:`1px solid rgba(245,158,11,0.25)`, borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:800, color: roleColors[role.toLowerCase()] || "#f59e0b" }}>
+                              {role.toUpperCase()}
+                            </span>
+                          </div>
+                        );
+                      } catch { return null; }
+                    })()}
                   </div>
                 )}
                 {[
                   { label: tr(trendsLang, "profile.fieldEmail"),     value: token && token !== "guest" ? getEmail() : "—" },
                   { label: tr(trendsLang, "profile.fieldWorkspace"), value: workspace || tr(trendsLang,"profile.personalWorkspace") },
-                  { label: tr(trendsLang, "profile.fieldPlan"),      value: `${userPlan.plan}${userPlan.interval ? " · " + userPlan.interval : ""}` },
-                ].map(({ label, value }) => (
+                  {
+                    label: tr(trendsLang, "profile.fieldPlan"),
+                    value: `${userPlan.plan}${userPlan.interval ? " · " + userPlan.interval : ""}`,
+                    badge: planManagedBy === "team"
+                      ? { text: tr(trendsLang,"profile.planAgencyManaged")||"Agency Managed", color:"#8b5cf6" }
+                      : null
+                  },
+                ].map(({ label, value, badge }) => (
                   <div key={label} style={{ padding:"14px 18px", background:"#0f172a", borderRadius:10, border:"1px solid rgba(220,38,38,0.1)", borderLeft:"3px solid rgba(220,38,38,0.3)" }}>
                     <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px", marginBottom:5 }}>{label.toUpperCase()}</div>
-                    <div style={{ color:"#fff", fontSize:14, fontWeight:600 }}>{value}</div>
+                    <div style={{ display:"flex", alignItems:"center", gap:10, flexWrap:"wrap" }}>
+                      <div style={{ color:"#fff", fontSize:14, fontWeight:600 }}>{value}</div>
+                      {badge && (
+                        <span style={{ background:`rgba(139,92,246,0.12)`, border:`1px solid rgba(139,92,246,0.3)`, borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:700, color:badge.color }}>
+                          🏢 {badge.text}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -240,6 +315,96 @@ export default function Profile({
               >
                 {tr(trendsLang, 'onboarding.reviewOnboarding')}
               </button>
+            </div>
+          )}
+
+          {/* Sécurité */}
+          {profileSection === "security" && (
+            <div style={{ display:"flex", flexDirection:"column", gap:20, maxWidth:520 }}>
+              <h2 style={{ color:"#fff", fontSize:18, fontWeight:800, margin:0 }}>🛡️ {tr(trendsLang,"profile.menuSecurityTitle")||"Security & Authentication"}</h2>
+
+              {secLoading ? (
+                <div style={{ textAlign:"center", padding:40, color:"#475569" }}>⏳</div>
+              ) : (<>
+
+                {/* MFA */}
+                <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:14, padding:"20px 22px" }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:14, gap:12 }}>
+                    <div>
+                      <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:14, marginBottom:4 }}>{tr(trendsLang,"profile.mfaLabel")}</div>
+                      <div style={{ color:"#475569", fontSize:12, lineHeight:1.6 }}>{tr(trendsLang,"profile.mfaDesc")}</div>
+                    </div>
+                    <div style={{ flexShrink:0, background: mfaEnabled ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.08)", border:`1px solid ${mfaEnabled ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.2)"}`, borderRadius:20, padding:"4px 12px", fontSize:11, fontWeight:800, color: mfaEnabled ? "#22c55e" : "#ef4444", whiteSpace:"nowrap" }}>
+                      {mfaEnabled ? tr(trendsLang,"profile.mfaActive") : tr(trendsLang,"profile.mfaInactive")}
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom:10 }}>
+                    <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1.5px", marginBottom:6 }}>{tr(trendsLang,"profile.mfaPasswordLabel")?.toUpperCase()}</div>
+                    <input
+                      type="password"
+                      value={mfaPassword}
+                      onChange={e => setMfaPassword(e.target.value)}
+                      placeholder={tr(trendsLang,"profile.mfaPasswordPlaceholder")}
+                      style={{ ...st.input, maxWidth:"100%", marginBottom:0 }}
+                    />
+                  </div>
+
+                  {mfaMsg && (
+                    <div style={{ padding:"8px 12px", borderRadius:8, marginBottom:10, background: mfaMsg.type==="success" ? "rgba(34,197,94,0.08)" : "rgba(239,68,68,0.08)", border:`1px solid ${mfaMsg.type==="success" ? "rgba(34,197,94,0.25)" : "rgba(239,68,68,0.25)"}`, color: mfaMsg.type==="success" ? "#22c55e" : "#ef4444", fontSize:12, fontWeight:600 }}>
+                      {mfaMsg.text}
+                    </div>
+                  )}
+
+                  <button
+                    style={{ ...st.button, margin:0, background: mfaEnabled ? "linear-gradient(135deg,#475569,#334155)" : "linear-gradient(135deg,#22c55e,#16a34a)", opacity: mfaLoading ? 0.6 : 1 }}
+                    onClick={toggleMFA}
+                    disabled={mfaLoading || !mfaPassword}
+                  >
+                    {mfaLoading ? "⏳..." : mfaEnabled ? tr(trendsLang,"profile.mfaDisable") : tr(trendsLang,"profile.mfaEnable")}
+                  </button>
+                </div>
+
+                {/* Politique mot de passe */}
+                <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:14, padding:"20px 22px" }}>
+                  <div style={{ color:"#e2e8f0", fontWeight:700, fontSize:14, marginBottom:6 }}>{tr(trendsLang,"profile.pwPolicyLabel")}</div>
+                  <div style={{ color:"#475569", fontSize:12, lineHeight:1.6, marginBottom:16 }}>{tr(trendsLang,"profile.pwPolicyDesc")}</div>
+
+                  {pwDaysLeft !== null && (
+                    <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                      {pwDaysLeft === 0 ? (
+                        <div style={{ background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.25)", borderRadius:8, padding:"10px 14px", color:"#ef4444", fontSize:12, fontWeight:700 }}>
+                          {tr(trendsLang,"profile.pwExpired")}
+                        </div>
+                      ) : (
+                        <div style={{ display:"flex", gap:16, flexWrap:"wrap" }}>
+                          <div style={{ background:"rgba(245,158,11,0.06)", border:"1px solid rgba(245,158,11,0.2)", borderRadius:8, padding:"10px 16px", flex:1 }}>
+                            <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px", marginBottom:4 }}>{tr(trendsLang,"profile.pwExpiresIn")?.toUpperCase()}</div>
+                            <div style={{ color: pwDaysLeft < 10 ? "#ef4444" : pwDaysLeft < 20 ? "#f59e0b" : "#22c55e", fontSize:22, fontWeight:900, lineHeight:1 }}>
+                              {pwDaysLeft} <span style={{ fontSize:12, fontWeight:400 }}>{tr(trendsLang,"profile.pwExpiresDays")}</span>
+                            </div>
+                            <div style={{ height:4, background:"rgba(255,255,255,0.05)", borderRadius:4, marginTop:8, overflow:"hidden" }}>
+                              <div style={{ width:`${Math.min(100,(pwDaysLeft/60)*100)}%`, height:"100%", borderRadius:4, background: pwDaysLeft < 10 ? "#ef4444" : pwDaysLeft < 20 ? "#f59e0b" : "#22c55e", transition:"width 0.6s ease" }} />
+                            </div>
+                          </div>
+                          {pwChangedAt && (
+                            <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:8, padding:"10px 16px", flex:1 }}>
+                              <div style={{ color:"#64748b", fontSize:10, letterSpacing:"1px", marginBottom:4 }}>{tr(trendsLang,"profile.pwChangedOn")?.toUpperCase()}</div>
+                              <div style={{ color:"#e2e8f0", fontSize:13, fontWeight:600 }}>{new Date(pwChangedAt).toLocaleDateString()}</div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      <button
+                        style={{ ...st.buttonSecondary, margin:0, fontSize:12 }}
+                        onClick={() => setProfileSection("password")}
+                      >
+                        🔑 {tr(trendsLang,"profile.updatePassword")}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>)}
             </div>
           )}
 
