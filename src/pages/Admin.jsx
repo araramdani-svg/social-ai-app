@@ -2152,13 +2152,13 @@ export default function Admin({ token, logout }) {
                         <td style={{ padding:"12px 16px" }}>
                           <span style={s.badge(u.plan)}>{u.plan}</span>
                         </td>
-                        <td style={{ padding:"12px 16px" }}>
+                        <td style={{ padding:"12px 16px", minWidth:180 }}>
                           {u.plan_managed_by === "team" ? (
                             <div>
-                              <div style={{ color:"#8b5cf6", fontSize:10, fontWeight:700 }}>
+                              <div style={{ color:"#8b5cf6", fontSize:10, fontWeight:700, whiteSpace:"nowrap" }}>
                                 {u.team_name || "Team"}
                               </div>
-                              <div style={{ color:"#475569", fontSize:9, marginTop:2 }}>
+                              <div style={{ color:"#475569", fontSize:9, marginTop:2, whiteSpace:"nowrap" }}>
                                 {u.team_owner_email ? `↳ ${u.team_owner_email}` : "Agency"}
                               </div>
                             </div>
