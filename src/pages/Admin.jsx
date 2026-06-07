@@ -454,16 +454,43 @@ function TeamLogsTab({ token }) {
             {f.label}
           </button>
         ))}
-        <select
-          style={{ background:"#0f172a", border:"1px solid rgba(139,92,246,0.3)", borderRadius:8, color:"white", fontSize:11, padding:"5px 10px", cursor:"pointer" }}
-          value={filterTeam}
-          onChange={e => { setFilterTeam(e.target.value); fetchLogs(1, filterAction); }}
-        >
-          <option value="">🏷️ Toutes les teams</option>
-          {teamsList.map(t => (
-            <option key={t.id} value={t.id}>{t.name || `Team #${t.id}`}</option>
-          ))}
-        </select>
+        {/* ── Dropdown Teams stylé ── */}
+        {(() => {
+          const [open, setOpen] = useState(false);
+          const selectedTeam = teamsList.find(t => String(t.id) === String(filterTeam));
+          return (
+            <div style={{ position:"relative" }}>
+              <button
+                onClick={() => setOpen(o => !o)}
+                style={{ display:"flex", alignItems:"center", gap:6, padding:"5px 12px", borderRadius:20, border:`1px solid ${filterTeam ? "rgba(139,92,246,0.5)" : "rgba(255,255,255,0.08)"}`, background:filterTeam ? "rgba(139,92,246,0.1)" : "rgba(255,255,255,0.02)", color:filterTeam ? "#a78bfa" : "#475569", fontSize:11, fontWeight:700, cursor:"pointer", whiteSpace:"nowrap" }}
+              >
+                🏷️ {selectedTeam ? selectedTeam.name || `Team #${selectedTeam.id}` : "Toutes les teams"}
+                <span style={{ fontSize:9, opacity:0.6 }}>{open ? "▲" : "▼"}</span>
+              </button>
+              {open && (
+                <>
+                  <div onClick={() => setOpen(false)} style={{ position:"fixed", inset:0, zIndex:100 }} />
+                  <div style={{ position:"absolute", top:"calc(100% + 6px)", left:0, zIndex:101, background:"#0f172a", border:"1px solid rgba(255,255,255,0.1)", borderRadius:12, minWidth:180, overflow:"hidden", boxShadow:"0 16px 40px rgba(0,0,0,0.5)" }}>
+                    {[{ id:"", name:"🏷️ Toutes les teams" }, ...teamsList].map(t => {
+                      const isSelected = String(t.id) === String(filterTeam);
+                      return (
+                        <button key={t.id}
+                          onClick={() => { setFilterTeam(t.id); fetchLogs(1, filterAction); setOpen(false); }}
+                          style={{ display:"block", width:"100%", textAlign:"left", padding:"10px 14px", background:isSelected ? "rgba(139,92,246,0.1)" : "transparent", border:"none", borderBottom:"1px solid rgba(255,255,255,0.04)", color:isSelected ? "#a78bfa" : "#94a3b8", fontSize:11, fontWeight:isSelected ? 700 : 400, cursor:"pointer" }}
+                          onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background="rgba(255,255,255,0.04)"; }}
+                          onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background="transparent"; }}
+                        >
+                          {isSelected && <span style={{ marginRight:6 }}>✓</span>}
+                          {t.name || `Team #${t.id}`}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })()}
         <button onClick={() => fetchLogs(1)} style={{ padding:"5px 12px", borderRadius:20, border:"1px solid rgba(255,255,255,0.08)", background:"rgba(255,255,255,0.03)", color:"#64748b", fontSize:11, cursor:"pointer" }}>🔄</button>
       </div>
       <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:12, overflow:"hidden" }}>
