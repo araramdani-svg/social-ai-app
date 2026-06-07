@@ -325,21 +325,64 @@ router.get("/logs", adminAuth, async (req, res) => {
       }
     }
 
-    const [logsRes, countRes] = await Promise.all([
-      db.query(
-        `SELECT l.*, u.email AS target_email,
-                admin_u.email AS admin_email,
-                admin_u.team_name AS team_name
-         FROM admin_logs l
-         LEFT JOIN users u ON u.id = l.target_user_id::integer
-         LEFT JOIN users admin_u ON admin_u.id = l.admin_id
-         ${whereClause}
-         ORDER BY l.created_at DESC
-         LIMIT $1 OFFSET $2`,
-        [limit, offset]
-      ),
-      db.query(`SELECT COUNT(*)::int AS total FROM admin_logs l ${whereClause}`),
-    ]);
+    let logsRes, countRes;
+    if (type === "team" && !req.query.action_filter) {
+      // UNION admin_logs (actions team) + user_logs (team_chat_message)
+      const teamActionsArr = TEAM_ACTIONS.map(a => `'${a}'`).join(",");
+      const unionQuery = `
+        SELECT l.id, l.action, l.created_at, l.details,
+               u.email AS target_email, NULL AS admin_email,
+               NULL AS team_name, NULL AS chat_content, 'admin' AS log_source
+        FROM admin_logs l
+        LEFT JOIN users u ON u.id = l.target_user_id::integer
+        WHERE l.action = ANY(ARRAY[${teamActionsArr}])
+        UNION ALL
+        SELECT l.id, l.action, l.created_at, l.details,
+               u.email AS target_email, NULL AS admin_email,
+               u.team_name AS team_name, NULL AS chat_content, 'user' AS log_source
+        FROM user_logs l
+        LEFT JOIN users u ON u.id = l.user_id
+        WHERE l.action = 'team_chat_message'
+        ORDER BY created_at DESC
+        LIMIT $1 OFFSET $2
+      `;
+      const countUnion = `
+        SELECT (
+          (SELECT COUNT(*) FROM admin_logs WHERE action = ANY(ARRAY[${teamActionsArr}])) +
+          (SELECT COUNT(*) FROM user_logs WHERE action = 'team_chat_message')
+        )::int AS total
+      `;
+      [logsRes, countRes] = await Promise.all([
+        db.query(unionQuery, [limit, offset]),
+        db.query(countUnion),
+      ]);
+      // Enrichir les chat_content
+      await Promise.all(logsRes.rows.filter(l => l.action === "team_chat_message").map(async (log) => {
+        try {
+          const r = await db.query(
+            `SELECT content FROM team_messages WHERE sender_id = (SELECT id FROM users WHERE email = $1) ORDER BY ABS(EXTRACT(EPOCH FROM (created_at - $2::timestamptz))) LIMIT 1`,
+            [log.target_email, log.created_at]
+          );
+          log.chat_content = r.rows[0]?.content || null;
+        } catch {}
+      }));
+    } else {
+      [logsRes, countRes] = await Promise.all([
+        db.query(
+          `SELECT l.*, u.email AS target_email,
+                  admin_u.email AS admin_email,
+                  admin_u.team_name AS team_name
+           FROM admin_logs l
+           LEFT JOIN users u ON u.id = l.target_user_id::integer
+           LEFT JOIN users admin_u ON admin_u.id = l.admin_id
+           ${whereClause}
+           ORDER BY l.created_at DESC
+           LIMIT $1 OFFSET $2`,
+          [limit, offset]
+        ),
+        db.query(`SELECT COUNT(*)::int AS total FROM admin_logs l ${whereClause}`),
+      ]);
+    }
     res.json({ logs: logsRes.rows, total: countRes.rows[0].total, pages: Math.ceil(countRes.rows[0].total / limit) });
   } catch (err) {
     console.error("Admin logs error:", err.message);

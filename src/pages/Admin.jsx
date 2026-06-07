@@ -461,16 +461,30 @@ function TeamLogsTab({ token }) {
             {loading && <tr><td colSpan={5} style={{ textAlign:"center", padding:40, color:"#475569" }}>Chargement...</td></tr>}
             {!loading && logs.length === 0 && <tr><td colSpan={5} style={{ textAlign:"center", padding:40, color:"#475569" }}>Aucun événement team</td></tr>}
             {logs.map(log => {
-              const cfg = ACTION_LABELS[log.action] || { label:log.action, color:"#94a3b8" };
-              let details = "—";
-              try {
-                const d = typeof log.details==="string" ? JSON.parse(log.details) : log.details;
-                if (d?.post_id)    details = `Post #${d.post_id}`;
-                if (d?.member_id)  details = `Member #${d.member_id}`;
-                if (d?.client_name) details = `Client: ${d.client_name}`;
-                if (d?.type)       details = `Type: ${d.type}`;
-                if (d?.role)       details += ` · Role: ${d.role}`;
-              } catch {}
+              const isChat = log.action === "team_chat_message";
+              const cfg = (isChat ? USER_ACTION_LABELS : ACTION_LABELS)[log.action] || { label:log.action, color:"#94a3b8" };
+              const userDisplay = log.target_email || `#${log.target_user_id}`;
+
+              let detailsNode;
+              if (isChat && log.chat_content) {
+                detailsNode = (
+                  <div>
+                    <span style={{ color:"#60a5fa", fontWeight:700, fontSize:9 }}>💬 CHAT</span>
+                    <div style={{ color:"#94a3b8", marginTop:3, lineHeight:1.4, overflow:"hidden", textOverflow:"ellipsis", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical" }}>{log.chat_content}</div>
+                  </div>
+                );
+              } else {
+                let details = "—";
+                try {
+                  const d = typeof log.details==="string" ? JSON.parse(log.details) : log.details;
+                  if (d?.post_id)     details = `Post #${d.post_id}`;
+                  if (d?.member_id)   details = `Member #${d.member_id}`;
+                  if (d?.client_name) details = `Client: ${d.client_name}`;
+                  if (d?.type)        details = `Type: ${d.type}`;
+                  if (d?.role)        details += ` · Role: ${d.role}`;
+                } catch {}
+                detailsNode = <span style={{ color:"#64748b" }}>{details}</span>;
+              }
               return (
                 <tr key={log.id}
                   style={{ borderBottom:"1px solid rgba(255,255,255,0.04)", cursor:"pointer", transition:"background 0.15s" }}
@@ -479,7 +493,7 @@ function TeamLogsTab({ token }) {
                   onMouseLeave={e => e.currentTarget.style.background="transparent"}
                 >
                   <td style={{ padding:"12px 16px", color:"#475569", fontSize:11, whiteSpace:"nowrap" }}>{new Date(log.created_at).toLocaleString("fr-FR")}</td>
-                  <td style={{ padding:"12px 16px", color:"#94a3b8", fontSize:11 }}>{log.target_email || `#${log.target_user_id}`}</td>
+                  <td style={{ padding:"12px 16px", color:"#94a3b8", fontSize:11 }}>{userDisplay}</td>
                   <td style={{ padding:"12px 16px", fontSize:11 }}>
                     {log.team_name
                       ? <span style={{ background:"rgba(139,92,246,0.1)", border:"1px solid rgba(139,92,246,0.25)", borderRadius:8, padding:"2px 8px", color:"#a78bfa", fontSize:10, fontWeight:700 }}>{log.team_name}</span>
@@ -488,7 +502,7 @@ function TeamLogsTab({ token }) {
                   <td style={{ padding:"12px 16px" }}>
                     <span style={{ background:`${cfg.color}15`, border:`1px solid ${cfg.color}40`, borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:700, color:cfg.color }}>{cfg.label}</span>
                   </td>
-                  <td style={{ padding:"12px 16px", color:"#64748b", fontSize:11 }}>{details}</td>
+                  <td style={{ padding:"12px 16px", fontSize:11, maxWidth:320 }}>{detailsNode}</td>
                 </tr>
               );
             })}
