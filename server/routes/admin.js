@@ -179,8 +179,13 @@ router.get("/users", adminAuth, async (req, res) => {
         `SELECT u.id, u.email, u.plan, u.generations_count, u.quota_reset_date,
                 u.linkedin_name, u.stripe_customer_id, u.stripe_subscription_id,
                 u.banned, u.email_verified, u.first_name, u.last_name, u.display_name,
+                u.plan_managed_by, u.team_owner_id,
+                tm.team_name AS team_name,
+                owner.email AS team_owner_email,
                 (SELECT COUNT(*)::int FROM posts p WHERE p.user_id = u.id) AS post_count
          FROM users u
+         LEFT JOIN team_members tm ON tm.member_id = u.id AND tm.status = 'active'
+         LEFT JOIN users owner ON owner.id = u.team_owner_id
          WHERE ${where}
          ORDER BY u.id DESC
          LIMIT $${i} OFFSET $${i+1}`,
@@ -400,9 +405,24 @@ router.get("/user-logs", adminAuth, async (req, res) => {
 
     const [logsRes, countRes] = await Promise.all([
       db.query(
-        `SELECT l.*, u.email AS user_email, u.plan AS user_plan
+        `SELECT l.*, u.email AS user_email, u.plan AS user_plan,
+                -- Contenu du message chat si action = team_chat_message
+                CASE WHEN l.action = 'team_chat_message'
+                  THEN (
+                    SELECT tm.content FROM team_messages tm
+                    WHERE tm.sender_id = l.user_id
+                    ORDER BY ABS(EXTRACT(EPOCH FROM (tm.created_at - l.created_at)))
+                    LIMIT 1
+                  )
+                  ELSE NULL
+                END AS chat_content,
+                -- Team name si membre
+                tm_member.team_name AS user_team_name,
+                owner_u.email AS team_owner_email
          FROM user_logs l
          LEFT JOIN users u ON u.id = l.user_id
+         LEFT JOIN team_members tm_member ON tm_member.member_id = l.user_id AND tm_member.status = 'active'
+         LEFT JOIN users owner_u ON owner_u.id = u.team_owner_id
          ${where}
          ORDER BY l.created_at DESC
          LIMIT $${i} OFFSET $${i+1}`,

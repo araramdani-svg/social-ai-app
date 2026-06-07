@@ -729,7 +729,44 @@ function UserLogsTab({ token }) {
                   <td style={{ padding:"12px 16px", color:"#94a3b8", fontSize:11 }}>{log.user_email || `#${log.user_id}`}</td>
                   <td style={{ padding:"12px 16px" }}>{log.user_plan && <span style={{ background:"rgba(139,92,246,0.1)", border:"1px solid rgba(139,92,246,0.3)", borderRadius:10, padding:"2px 8px", fontSize:9, fontWeight:700, color:"#a78bfa" }}>{log.user_plan}</span>}</td>
                   <td style={{ padding:"12px 16px" }}><span style={{ background:`${cfg.color}15`, border:`1px solid ${cfg.color}40`, borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:700, color:cfg.color }}>{cfg.label}</span></td>
-                  <td style={{ padding:"12px 16px", color:"#64748b", fontSize:11, maxWidth:300, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", cursor:"help" }} title={log.details ? (() => { try { return JSON.stringify(typeof log.details === "string" ? JSON.parse(log.details) : log.details, null, 0); } catch { return String(log.details); } })() : ""}>{log.details ? (() => { try { const d = typeof log.details === "string" ? JSON.parse(log.details) : log.details; return JSON.stringify(d, null, 0).slice(0, 150); } catch { return String(log.details).slice(0, 150); } })() : "—"}</td>
+                  <td style={{ padding:"12px 16px", fontSize:11, maxWidth:320 }}>
+                    {(() => {
+                      if (log.chat_content) return (
+                        <div>
+                          <span style={{ color:"#60a5fa", fontWeight:700, fontSize:9 }}>💬 CHAT</span>
+                          <div style={{ color:"#94a3b8", marginTop:3, lineHeight:1.4, overflow:"hidden", textOverflow:"ellipsis", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical" }}>{log.chat_content}</div>
+                          {log.user_team_name && <div style={{ color:"#475569", fontSize:9, marginTop:2 }}>Team: {log.user_team_name}</div>}
+                        </div>
+                      );
+                      try {
+                        const d = typeof log.details === "string" ? JSON.parse(log.details) : log.details;
+                        if (!d || Object.keys(d).length === 0) return <span style={{ color:"#334155" }}>—</span>;
+                        const items = [];
+                        if (d.template)  items.push({ label:"Template",   val:d.template,           color:"#a78bfa" });
+                        if (d.topic)     items.push({ label:"Topic",       val:d.topic,              color:"#60a5fa" });
+                        if (d.lang)      items.push({ label:"Langue",      val:d.lang.toUpperCase(), color:"#22c55e" });
+                        if (d.platform)  items.push({ label:"Plateforme",  val:d.platform,           color:"#f59e0b" });
+                        if (d.email)     items.push({ label:"Email",       val:d.email,              color:"#94a3b8" });
+                        if (d.plan)      items.push({ label:"Plan",        val:d.plan,               color:"#ef4444" });
+                        if (d.team_id)   items.push({ label:"Team ID",     val:`#${d.team_id}`,      color:"#8b5cf6" });
+                        if (d.members !== undefined) items.push({ label:"Membres", val:d.members,    color:"#60a5fa" });
+                        if (d.promo_code) items.push({ label:"Promo",      val:d.promo_code,         color:"#f59e0b" });
+                        if (d.score !== undefined)   items.push({ label:"Score",   val:d.score,      color:"#22c55e" });
+                        if (d.length)    items.push({ label:"Longueur",    val:`${d.length} car.`,   color:"#475569" });
+                        if (d.secure)    items.push({ label:"MFA",         val:"✓ sécurisé",         color:"#22c55e" });
+                        if (items.length > 0) return (
+                          <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+                            {items.map(({ label, val, color }) => (
+                              <span key={label} style={{ background:`${color}15`, border:`1px solid ${color}30`, borderRadius:6, padding:"1px 6px", fontSize:9, fontWeight:700, color, whiteSpace:"nowrap" }}>
+                                {label}: {val}
+                              </span>
+                            ))}
+                          </div>
+                        );
+                        return <span style={{ color:"#475569", fontSize:10, fontFamily:"monospace" }}>{JSON.stringify(d).slice(0,100)}</span>;
+                      } catch { return <span style={{ color:"#475569", fontSize:10 }}>{String(log.details||"").slice(0,100)}</span>; }
+                    })()}
+                  </td>
                 </tr>
               );
             })}
@@ -1969,7 +2006,7 @@ export default function Admin({ token, logout }) {
                 <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
                   <thead>
                     <tr style={{ background:"rgba(255,255,255,0.03)" }}>
-                      {["ID","EMAIL","NOM","DISPLAY NAME","PLAN","GÉNÉRATIONS","POSTS","STRIPE","STATUT","VÉRIFIÉ","ACTIONS"].map(h => (
+                      {["ID","EMAIL","NOM","DISPLAY NAME","PLAN","TEAM","GÉNÉRATIONS","POSTS","STRIPE","STATUT","VÉRIFIÉ","ACTIONS"].map(h => (
                         <th key={h} style={{ textAlign:"left", color:"#64748b", fontWeight:700, fontSize:10, letterSpacing:"1px", padding:"14px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)", whiteSpace:"nowrap" }}>{h}</th>
                       ))}
                     </tr>
@@ -1996,6 +2033,20 @@ export default function Admin({ token, logout }) {
                         </td>
                         <td style={{ padding:"12px 16px" }}>
                           <span style={s.badge(u.plan)}>{u.plan}</span>
+                        </td>
+                        <td style={{ padding:"12px 16px" }}>
+                          {u.plan_managed_by === "team" ? (
+                            <div>
+                              <div style={{ color:"#8b5cf6", fontSize:10, fontWeight:700 }}>
+                                {u.team_name || "Team"}
+                              </div>
+                              <div style={{ color:"#475569", fontSize:9, marginTop:2 }}>
+                                {u.team_owner_email ? `↳ ${u.team_owner_email}` : "Agency"}
+                              </div>
+                            </div>
+                          ) : (
+                            <span style={{ color:"#334155" }}>—</span>
+                          )}
                         </td>
                         <td style={{ padding:"12px 16px", color:"#94a3b8" }}>
                           <span style={{ color: planLimit(u.plan) !== "∞" && (u.generations_count || 0) >= PLAN_LIMITS[u.plan] ? "#ef4444" : "#94a3b8", fontWeight:700 }}>
