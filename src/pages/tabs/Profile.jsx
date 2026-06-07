@@ -75,50 +75,6 @@ export default function Profile({
     setMfaLoading(false);
   };
 
-  // ── MFA states ────────────────────────────────────────────────────────────
-  const [mfaEnabled,      setMfaEnabled]      = useState(false);
-  const [mfaLoading,      setMfaLoading]      = useState(false);
-  const [mfaPassword,     setMfaPassword]     = useState("");
-  const [mfaMsg,          setMfaMsg]          = useState(null);
-  const [pwDaysLeft,      setPwDaysLeft]      = useState(null);
-  const [pwChangedAt,     setPwChangedAt]     = useState(null);
-  const [secLoading,      setSecLoading]      = useState(true);
-
-  useEffect(() => {
-    if (!token) return;
-    fetch(`${API}/auth/mfa/status`, { headers:{ Authorization:`Bearer ${token}` } })
-      .then(r => r.json())
-      .then(d => {
-        setMfaEnabled(d.mfa_enabled || false);
-        setPwDaysLeft(d.days_until_expiry ?? null);
-        setPwChangedAt(d.password_changed_at || null);
-        setSecLoading(false);
-      })
-      .catch(() => setSecLoading(false));
-  }, [token]);
-
-  const toggleMFA = async () => {
-    if (!mfaPassword) { setMfaMsg({ type:"error", text:"Mot de passe requis" }); return; }
-    setMfaLoading(true); setMfaMsg(null);
-    try {
-      const r = await fetch(`${API}/auth/mfa/toggle`, {
-        method:"POST",
-        headers:{ "Content-Type":"application/json", Authorization:`Bearer ${token}` },
-        body: JSON.stringify({ enable: !mfaEnabled, currentPassword: mfaPassword }),
-      });
-      const d = await r.json();
-      if (!r.ok) { setMfaMsg({ type:"error", text: d.error || "Erreur" }); }
-      else {
-        setMfaEnabled(d.mfa_enabled);
-        setMfaPassword("");
-        setMfaMsg({ type:"success", text: d.mfa_enabled ? "✅ MFA activé" : "✅ MFA désactivé" });
-        logUserAction(d.mfa_enabled ? "mfa_enabled" : "mfa_disabled");
-        setTimeout(() => setMfaMsg(null), 3000);
-      }
-    } catch { setMfaMsg({ type:"error", text:"Erreur serveur" }); }
-    setMfaLoading(false);
-  };
-
   // States locaux pour l'édition — ne pas modifier le parent avant Save
   const [localFirstName,   setLocalFirstName]   = useState(firstName   || "");
   const [localLastName,    setLocalLastName]     = useState(lastName    || "");
