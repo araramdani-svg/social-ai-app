@@ -22,7 +22,7 @@ export default function Profile({
   const [confirm, setConfirm] = useState(null);
   const [emailCurrentPassword, setEmailCurrentPassword] = useState("");
 
-  // ── MFA + Sécurité ───────────────────────────────────────────────────────
+  // ── MFA + Sécurité + Rôle Team ───────────────────────────────────────────
   const [mfaEnabled,  setMfaEnabled]  = useState(false);
   const [mfaLoading,  setMfaLoading]  = useState(false);
   const [mfaPassword, setMfaPassword] = useState("");
@@ -32,10 +32,13 @@ export default function Profile({
   const [secLoading,  setSecLoading]  = useState(true);
   const [teamRole,    setTeamRole]    = useState(null);
 
+  const API = "https://social-ai-app-production.up.railway.app";
+
   useEffect(() => {
-    if (!token) return;
+    if (!token || token === "guest") return;
+    const headers = { Authorization: `Bearer ${token}` };
     // MFA status
-    fetch(`${API}/auth/mfa/status`, { headers:{ Authorization:`Bearer ${token}` } })
+    fetch(`${API}/auth/mfa/status`, { headers })
       .then(r => r.json())
       .then(d => {
         setMfaEnabled(d.mfa_enabled || false);
@@ -44,22 +47,20 @@ export default function Profile({
         setSecLoading(false);
       })
       .catch(() => setSecLoading(false));
-    // Rôle team
-    if (planManagedBy === "team") {
-      fetch(`${API}/team/my-team-view`, { headers:{ Authorization:`Bearer ${token}` } })
-        .then(r => r.json())
-        .then(d => { if (d.myRole) setTeamRole(d.myRole); })
-        .catch(() => {});
-    }
+    // Rôle team — toujours fetcher, on affiche si myRole existe
+    fetch(`${API}/team/my-team-view`, { headers })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.myRole) setTeamRole(d.myRole); })
+      .catch(() => {});
   }, [token]);
 
   const toggleMFA = async () => {
-    if (!mfaPassword) { setMfaMsg({ type:"error", text: tr(trendsLang,"profile.mfaPasswordLabel")||"Password required" }); return; }
+    if (!mfaPassword) { setMfaMsg({ type:"error", text: tr(trendsLang,"profile.mfaPasswordLabel") }); return; }
     setMfaLoading(true); setMfaMsg(null);
     try {
       const r = await fetch(`${API}/auth/mfa/toggle`, {
-        method:"POST",
-        headers:{ "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+        method: "POST",
+        headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
         body: JSON.stringify({ enable: !mfaEnabled, currentPassword: mfaPassword }),
       });
       const d = await r.json();
@@ -108,8 +109,6 @@ export default function Profile({
       showToast("❌ Server error");
     }
   };
-
-  const API = "https://social-ai-app-production.up.railway.app";
 
   const logUserAction = (action, details = {}) => {
     if (!token || token === "guest") return;
@@ -275,14 +274,18 @@ export default function Profile({
                       {tr(trendsLang,"profile.managedBy")||"Managed by"} {managedByOwnerEmail || "your agency"}
                     </div>
                     {/* Rôle dans la team */}
-                    {teamRole && (
-                      <div style={{ marginTop:8, display:"flex", alignItems:"center", gap:8 }}>
-                        <span style={{ color:"#64748b", fontSize:10, letterSpacing:"1px" }}>{tr(trendsLang,"profile.teamRoleLabel")||"YOUR ROLE"}</span>
-                        <span style={{ background:`rgba(245,158,11,0.12)`, border:`1px solid ${{ admin:"#f59e0b", editor:"#60a5fa", publisher:"#22c55e" }[teamRole.toLowerCase()]||"#f59e0b"}44`, borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:800, color:{ admin:"#f59e0b", editor:"#60a5fa", publisher:"#22c55e" }[teamRole.toLowerCase()]||"#f59e0b" }}>
-                          {teamRole.toUpperCase()}
-                        </span>
-                      </div>
-                    )}
+                    {teamRole && (() => {
+                      const roleColors = { admin:"#f59e0b", editor:"#60a5fa", publisher:"#22c55e" };
+                      const color = roleColors[teamRole.toLowerCase()] || "#f59e0b";
+                      return (
+                        <div style={{ marginTop:8, display:"flex", alignItems:"center", gap:8 }}>
+                          <span style={{ color:"#64748b", fontSize:10, letterSpacing:"1px" }}>{tr(trendsLang,"profile.teamRoleLabel")||"YOUR ROLE"}</span>
+                          <span style={{ background:`rgba(245,158,11,0.12)`, border:`1px solid ${color}55`, borderRadius:20, padding:"2px 10px", fontSize:10, fontWeight:800, color }}>
+                            {teamRole.toUpperCase()}
+                          </span>
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
                 {[
