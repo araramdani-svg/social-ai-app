@@ -328,17 +328,20 @@ function EditUserModal({ user, token, onClose, onSave }) {
 
 // ─── Onglet Team Logs ─────────────────────────────────────────────────────────
 function TeamLogsTab({ token }) {
-  const [logs,    setLogs]    = useState([]);
-  const [pages,   setPages]   = useState(1);
-  const [page,    setPage]    = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [logs,      setLogs]      = useState([]);
+  const [pages,     setPages]     = useState(1);
+  const [page,      setPage]      = useState(1);
+  const [loading,   setLoading]   = useState(false);
+  const [teamsList, setTeamsList] = useState([]);
+  const [filterTeam, setFilterTeam] = useState("");
 
   const TEAM_QUICK_FILTERS = [
-    { label:"Tout",        value:"" },
+    { label:"Tout",           value:"" },
     { label:"✅ Approbations", value:"post_approved" },
     { label:"❌ Rejets",       value:"post_rejected" },
     { label:"🎯 Assignations", value:"post_assigned" },
     { label:"💬 Commentaires", value:"post_comment" },
+    { label:"💬 Chat",         value:"team_chat_message" },
     { label:"🔗 Webhooks",     value:"webhook" },
     { label:"📅 Calendrier",   value:"team_calendar" },
     { label:"🏢 Clients",      value:"post_linked" },
@@ -348,15 +351,23 @@ function TeamLogsTab({ token }) {
   const [filterAction, setFilterAction] = useState("");
   const [selectedLog,  setSelectedLog]  = useState(null);
 
+  useEffect(() => {
+    fetch(`${API}/admin/teams`, { headers:{ Authorization:`Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => setTeamsList(d.teams || []))
+      .catch(() => {});
+  }, [token]);
+
   const fetchLogs = useCallback(async (p = 1, action = filterAction) => {
     setLoading(true);
     const params = new URLSearchParams({ page: p, type: "team" });
-    if (action) params.append("action_filter", action);
+    if (action)     params.append("action_filter", action);
+    if (filterTeam) params.append("team_id", filterTeam);
     const r = await fetch(`${API}/admin/logs?${params}`, { headers:{ Authorization:`Bearer ${token}` } });
     const d = await r.json();
     setLogs(d.logs || []); setPages(d.pages || 1); setPage(p);
     setLoading(false);
-  }, [token, filterAction]);
+  }, [token, filterAction, filterTeam]);
 
   useEffect(() => { fetchLogs(1); }, []);
 
@@ -411,13 +422,23 @@ function TeamLogsTab({ token }) {
         </>
       )}
 
-      <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+      <div style={{ display:"flex", gap:6, flexWrap:"wrap", alignItems:"center" }}>
         {TEAM_QUICK_FILTERS.map(f => (
           <button key={f.value} onClick={() => { setFilterAction(f.value); fetchLogs(1, f.value); }}
             style={{ padding:"5px 12px", borderRadius:20, border:`1px solid ${filterAction===f.value?"rgba(96,165,250,0.5)":"rgba(255,255,255,0.08)"}`, background:filterAction===f.value?"rgba(96,165,250,0.1)":"rgba(255,255,255,0.02)", color:filterAction===f.value?"#60a5fa":"#475569", fontSize:11, fontWeight:700, cursor:"pointer" }}>
             {f.label}
           </button>
         ))}
+        <select
+          style={{ background:"#0f172a", border:"1px solid rgba(139,92,246,0.3)", borderRadius:8, color:"white", fontSize:11, padding:"5px 10px", cursor:"pointer" }}
+          value={filterTeam}
+          onChange={e => { setFilterTeam(e.target.value); fetchLogs(1, filterAction); }}
+        >
+          <option value="">🏷️ Toutes les teams</option>
+          {teamsList.map(t => (
+            <option key={t.id} value={t.id}>{t.name || `Team #${t.id}`}</option>
+          ))}
+        </select>
         <button onClick={() => fetchLogs(1)} style={{ padding:"5px 12px", borderRadius:20, border:"1px solid rgba(255,255,255,0.08)", background:"rgba(255,255,255,0.03)", color:"#64748b", fontSize:11, cursor:"pointer" }}>🔄</button>
       </div>
       <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:12, overflow:"hidden" }}>
@@ -747,6 +768,7 @@ function UserLogsTab({ token }) {
     const params = new URLSearchParams({ page: p });
     if (filterAction) params.append("action", filterAction);
     if (filterUser)   params.append("user_id", filterUser);
+    params.append("exclude_action", "team_chat_message");
     const r = await fetch(`${API}/admin/user-logs?${params}`, { headers:{ Authorization:`Bearer ${token}` } });
     const d = await r.json();
     setLogs(d.logs || []); setPages(d.pages || 1); setPage(p);
