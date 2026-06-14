@@ -23,12 +23,12 @@ function useWindowWidth() {
 }
 
 function App() {
-  const [token, setToken] = useState(() => localStorage.getItem("token") || null);
+  const [token, setToken] = useState(null);
 
   const [page, setPageState] = useState(() => {
     const savedToken = localStorage.getItem("token");
     if (!savedToken) return "landing";
-    return sessionStorage.getItem("gp_page") || "generator";
+    return "loading"; // On attend la validation du token
   });
 
   const setPage = (p) => {
@@ -41,6 +41,34 @@ function App() {
       body: JSON.stringify({ page: p }),
     }).catch(() => {});
   };
+
+  // ── Validation du token au démarrage ────────────────────────────────────────
+  useEffect(() => {
+    const savedToken = localStorage.getItem("token");
+    if (!savedToken) return;
+    fetch("https://social-ai-app-production.up.railway.app/auth/me", {
+      headers: { Authorization: `Bearer ${savedToken}` }
+    })
+      .then(r => {
+        if (!r.ok) throw new Error("Token invalide");
+        return r.json();
+      })
+      .then(user => {
+        setToken(savedToken);
+        if (user.is_admin) {
+          setPageState("admin");
+        } else {
+          setPageState(sessionStorage.getItem("gp_page") || "generator");
+        }
+      })
+      .catch(() => {
+        // Token expiré ou invalide → on purge et on retourne au landing
+        localStorage.removeItem("token");
+        sessionStorage.removeItem("gp_page");
+        setToken(null);
+        setPageState("landing");
+      });
+  }, []);
 
   const setLang = (l) => {
     setTrendsLang(l);
@@ -84,13 +112,7 @@ function App() {
     { key:"pt", flag:"🇵🇹" },
   ];
 
-  useEffect(() => {
-    const savedToken = localStorage.getItem("token");
-    if (savedToken) {
-      setToken(savedToken);
-      if (!sessionStorage.getItem("gp_page")) setPage("generator");
-    }
-  }, []);
+  
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -326,6 +348,12 @@ function App() {
 
   return (
     <>
+      {page === "loading" && (
+        <div style={{ position:"fixed", inset:0, background:"#0a101e", display:"flex", alignItems:"center", justifyContent:"center" }}>
+          <div style={{ color:"#475569", fontSize:13 }}>Chargement…</div>
+        </div>
+      )}
+
       {page === "landing" && (
         <Landing
           openApp={() => setPage("register")}
